@@ -3,13 +3,22 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Upload, CheckCircle, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Upload, CheckCircle, AlertTriangle, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import RoleGuard from '@/app/components/RoleGuard';
 import UploadZone from '@/app/components/ui/UploadZone';
 import api from '@/app/api/axios';
+import { photoApi } from '@/lib/api';
 
 import { useAuth } from '@/contexts/AuthContext';
+
+interface UploadProgress {
+    total: number;
+    uploaded: number;
+    failed: number;
+    currentFile: string;
+    percent: number;
+}
 
 export default function EventUploadPage() {
     const { user } = useAuth();
@@ -21,7 +30,7 @@ export default function EventUploadPage() {
     const [loading, setLoading] = useState(true);
     const [files, setFiles] = useState<File[]>([]);
     const [uploading, setUploading] = useState(false);
-    const [progress, setProgress] = useState(0);
+    const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
 
     useEffect(() => {
         const fetchEvent = async () => {
@@ -62,27 +71,47 @@ export default function EventUploadPage() {
         }
 
         setUploading(true);
-        setProgress(0);
-        const formData = new FormData();
-        formData.append('eventId', eventId);
-        files.forEach(file => {
-            formData.append('photos', file);
+        setUploadProgress({
+            total: files.length,
+            uploaded: 0,
+            failed: 0,
+            currentFile: '',
+            percent: 0,
         });
 
         try {
-            await api.post('/photos/upload', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
+            const result = await photoApi.uploadWithPresignedUrls(
+                eventId,
+                files,
+                (fileIndex, progress) => {
+                    setUploadProgress(prev => prev ? {
+                        ...prev,
+                        currentFile: files[fileIndex].name,
+                        percent: progress.percent,
+                    } : null);
                 },
-                onUploadProgress: (progressEvent) => {
-                    if (progressEvent.total) {
-                        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                        setProgress(percentCompleted);
-                    }
+                (fileIndex) => {
+                    setUploadProgress(prev => prev ? {
+                        ...prev,
+                        uploaded: prev.uploaded + 1,
+                    } : null);
                 },
-            });
+                (fileIndex, error) => {
+                    setUploadProgress(prev => prev ? {
+                        ...prev,
+                        failed: prev.failed + 1,
+                    } : null);
+                    console.error(`Failed to upload ${files[fileIndex].name}: ${error}`);
+                }
+            );
 
-            toast.success('Photos uploaded successfully!');
+            if (result.successCount > 0) {
+                toast.success(`${result.successCount} photos uploaded successfully!`);
+            }
+            if (result.errorCount > 0) {
+                toast.error(`${result.errorCount} photos failed to upload`);
+            }
+
             // Redirect to event details or organizer dashboard
             setTimeout(() => {
                 router.push('/organizer/events');
@@ -92,6 +121,7 @@ export default function EventUploadPage() {
             console.error('Upload error:', error);
             toast.error(error.response?.data?.message || 'Failed to upload photos');
             setUploading(false);
+            setUploadProgress(null);
         }
     };
 
@@ -166,7 +196,7 @@ export default function EventUploadPage() {
                         </>
                     ) : (
                         <div className="py-16 flex flex-col items-center justify-center text-center">
-                            {progress < 100 ? (
+                            {uploadProgress && uploadProgress.uploaded + uploadProgress.failed < uploadProgress.total ? (
                                 <>
                                     <div className="w-24 h-24 mb-6 relative">
                                         <svg className="w-full h-full transform -rotate-90">
@@ -187,16 +217,35 @@ export default function EventUploadPage() {
                                                 strokeWidth="8"
                                                 fill="transparent"
                                                 strokeDasharray={251.2}
-                                                strokeDashoffset={251.2 - (251.2 * progress) / 100}
+                                                strokeDashoffset={251.2 - (251.2 * ((uploadProgress.uploaded + uploadProgress.failed) / uploadProgress.total) * 100) / 100}
                                                 className="text-primary-600 transition-all duration-300"
                                             />
                                         </svg>
                                         <div className="absolute inset-0 flex items-center justify-center font-bold text-xl text-primary-600">
-                                            {progress}%
+                                            {uploadProgress.uploaded}/{uploadProgress.total}
                                         </div>
                                     </div>
                                     <h3 className="text-xl font-bold mb-2">Uploading Photos...</h3>
-                                    <p className="text-gray-500">Please do not close this window</p>
+                                    <p className="text-gray-500 mb-2">Please do not close this window</p>
+                                    {uploadProgress.currentFile && (
+                                        <p className="text-sm text-gray-400">
+                                            Current: {uploadProgress.currentFile} ({uploadProgress.percent}%)
+                                        </p>
+                                    )}
+                                    <div className="flex items-center gap-4 mt-4 text-sm">
+                                        {uploadProgress.uploaded > 0 && (
+                                            <span className="flex items-center gap-1 text-green-600">
+                                                <CheckCircle size={16} />
+                                                {uploadProgress.uploaded} uploaded
+                                            </span>
+                                        )}
+                                        {uploadProgress.failed > 0 && (
+                                            <span className="flex items-center gap-1 text-red-600">
+                                                <AlertCircle size={16} />
+                                                {uploadProgress.failed} failed
+                                            </span>
+                                        )}
+                                    </div>
                                 </>
                             ) : (
                                 <div className="animate-scale-in">
@@ -204,6 +253,12 @@ export default function EventUploadPage() {
                                         <CheckCircle size={40} />
                                     </div>
                                     <h3 className="text-2xl font-bold text-gray-900 mb-2">Upload Complete!</h3>
+                                    {uploadProgress && (
+                                        <p className="text-gray-600 mb-2">
+                                            {uploadProgress.uploaded} photos uploaded successfully
+                                            {uploadProgress.failed > 0 && `, ${uploadProgress.failed} failed`}
+                                        </p>
+                                    )}
                                     <p className="text-gray-500">Redirecting to dashboard...</p>
                                 </div>
                             )}
