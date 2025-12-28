@@ -96,6 +96,9 @@ export default function ImageUploader({
             });
 
             const urlResponse = await photoApi.getUploadUrls(eventId, fileRequests);
+            if (!urlResponse.data?.urls) {
+                throw new Error('Failed to get upload URLs');
+            }
             const urls = urlResponse.data.urls;
 
             // Step 2: Upload each file directly to S3 using presigned URL

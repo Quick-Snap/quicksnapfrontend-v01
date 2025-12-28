@@ -147,6 +147,9 @@ export const photoApi = {
     }));
 
     const urlResponse = await photoApi.getUploadUrls(eventId, fileRequests);
+    if (!urlResponse.data?.urls) {
+      throw new Error('Failed to get upload URLs from server');
+    }
     const urls = urlResponse.data.urls;
 
     // Step 2: Upload files in parallel with concurrency limit

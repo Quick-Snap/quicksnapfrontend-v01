@@ -68,6 +68,9 @@ export default function PhotoUpload({ eventId, onUploadComplete }: PhotoUploadPr
       ));
 
       const urlResponse = await photoApi.getUploadUrls(eventId, fileRequests);
+      if (!urlResponse.data?.urls) {
+        throw new Error('Failed to get upload URLs');
+      }
       const urls = urlResponse.data.urls;
 
       // Upload files in parallel (with limit)
