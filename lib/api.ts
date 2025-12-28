@@ -56,8 +56,142 @@ export const authApi = {
   },
 };
 
+// Types for presigned URL upload
+interface UploadUrlRequest {
+  fileName: string;
+  fileType: string;
+}
+
+interface UploadUrlResponse {
+  uploadUrl: string;
+  key: string;
+  fileName: string;
+}
+
+interface UploadProgress {
+  fileName: string;
+  loaded: number;
+  total: number;
+  percent: number;
+}
+
 // Photo API
 export const photoApi = {
+  // Get presigned URLs for direct S3 upload
+  getUploadUrls: async (eventId: string, files: UploadUrlRequest[]) => {
+    const response = await api.post<ApiResponse<{ urls: UploadUrlResponse[] }>>(
+      '/photos/get-upload-urls',
+      {
+        eventId,
+        files,
+      }
+    );
+    return response.data;
+  },
+
+  // Upload a single file directly to S3 using presigned URL
+  uploadToS3: async (
+    uploadUrl: string,
+    file: File,
+    onProgress?: (progress: UploadProgress) => void
+  ): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      
+      xhr.upload.addEventListener('progress', (event) => {
+        if (event.lengthComputable && onProgress) {
+          onProgress({
+            fileName: file.name,
+            loaded: event.loaded,
+            total: event.total,
+            percent: Math.round((event.loaded * 100) / event.total),
+          });
+        }
+      });
+
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve();
+        } else {
+          reject(new Error(`S3 upload failed with status ${xhr.status}`));
+        }
+      });
+
+      xhr.addEventListener('error', () => {
+        reject(new Error('Network error during S3 upload'));
+      });
+
+      xhr.addEventListener('abort', () => {
+        reject(new Error('Upload aborted'));
+      });
+
+      xhr.open('PUT', uploadUrl);
+      xhr.setRequestHeader('Content-Type', file.type);
+      xhr.send(file);
+    });
+  },
+
+  // Upload multiple files using presigned URLs with parallel processing
+  uploadWithPresignedUrls: async (
+    eventId: string,
+    files: File[],
+    onFileProgress?: (fileIndex: number, progress: UploadProgress) => void,
+    onFileComplete?: (fileIndex: number, key: string) => void,
+    onFileError?: (fileIndex: number, error: string) => void,
+    concurrency: number = 5
+  ) => {
+    // Step 1: Get presigned URLs for all files
+    const fileRequests: UploadUrlRequest[] = files.map((file) => ({
+      fileName: file.name,
+      fileType: file.type || 'application/octet-stream',
+    }));
+
+    const urlResponse = await photoApi.getUploadUrls(eventId, fileRequests);
+    const urls = urlResponse.data.urls;
+
+    // Step 2: Upload files in parallel with concurrency limit
+    const results: { success: boolean; key?: string; error?: string }[] = [];
+    let currentIndex = 0;
+
+    const uploadFile = async (index: number): Promise<void> => {
+      const file = files[index];
+      const urlData = urls[index];
+
+      try {
+        await photoApi.uploadToS3(urlData.uploadUrl, file, (progress) => {
+          onFileProgress?.(index, progress);
+        });
+
+        results[index] = { success: true, key: urlData.key };
+        onFileComplete?.(index, urlData.key);
+      } catch (error: any) {
+        const errorMessage = error.message || 'Upload failed';
+        results[index] = { success: false, error: errorMessage };
+        onFileError?.(index, errorMessage);
+      }
+    };
+
+    // Worker pool for concurrent uploads
+    const workers = Array(Math.min(concurrency, files.length))
+      .fill(null)
+      .map(async () => {
+        while (currentIndex < files.length) {
+          const index = currentIndex++;
+          await uploadFile(index);
+        }
+      });
+
+    await Promise.all(workers);
+
+    return {
+      results,
+      successCount: results.filter((r) => r.success).length,
+      errorCount: results.filter((r) => !r.success).length,
+      uploadedKeys: results.filter((r) => r.success).map((r) => r.key!),
+    };
+  },
+
+  // Legacy upload function (fallback for single small files)
   upload: async (eventId: string, files: File[]) => {
     const formData = new FormData();
     formData.append('eventId', eventId);

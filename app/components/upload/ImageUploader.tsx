@@ -62,7 +62,6 @@ export default function ImageUploader({
         if (files.length === 0) return;
 
         setIsUploading(true);
-        const uploadedPhotos: any[] = [];
         const CONCURRENCY_LIMIT = 5;
 
         // Identify which files need uploading
@@ -75,93 +74,117 @@ export default function ImageUploader({
             return;
         }
 
-        // Helper to upload a single file
-        const processFile = async (index: number) => {
-            const fileItem = files[index];
-            try {
-                // Update status to uploading
-                setFiles(prev => {
-                    const newFiles = [...prev];
+        // Get the pending files
+        const pendingFiles = pendingIndices.map(i => files[i].file);
+
+        try {
+            // Step 1: Get presigned URLs for all pending files
+            const fileRequests = pendingFiles.map(file => ({
+                fileName: file.name,
+                fileType: file.type || 'application/octet-stream',
+            }));
+
+            // Mark all pending files as "getting URL"
+            setFiles(prev => {
+                const newFiles = [...prev];
+                pendingIndices.forEach(index => {
                     if (newFiles[index]) {
                         newFiles[index] = { ...newFiles[index], status: 'uploading', progress: 0, error: undefined };
                     }
-                    return newFiles;
                 });
+                return newFiles;
+            });
 
-                const formData = new FormData();
-                formData.append('photos', fileItem.file);
-                formData.append('eventId', eventId);
+            const urlResponse = await photoApi.getUploadUrls(eventId, fileRequests);
+            const urls = urlResponse.data.urls;
 
-                const response = await photoApi.uploadEventPhoto(formData, (progressEvent) => {
-                    const progress = progressEvent.total
-                        ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
-                        : 0;
+            // Step 2: Upload each file directly to S3 using presigned URL
+            const uploadedKeys: string[] = [];
 
+            const uploadFile = async (pendingIndex: number) => {
+                const actualIndex = pendingIndices[pendingIndex];
+                const file = pendingFiles[pendingIndex];
+                const urlData = urls[pendingIndex];
+
+                try {
+                    await photoApi.uploadToS3(urlData.uploadUrl, file, (progress) => {
+                        setFiles(prev => {
+                            const newFiles = [...prev];
+                            if (newFiles[actualIndex]) {
+                                newFiles[actualIndex] = { ...newFiles[actualIndex], progress: progress.percent };
+                            }
+                            return newFiles;
+                        });
+                    });
+
+                    // Update status to success
                     setFiles(prev => {
                         const newFiles = [...prev];
-                        if (newFiles[index]) {
-                            newFiles[index] = { ...newFiles[index], progress };
+                        if (newFiles[actualIndex]) {
+                            newFiles[actualIndex] = {
+                                ...newFiles[actualIndex],
+                                status: 'success',
+                                progress: 100,
+                                photoId: urlData.key
+                            };
                         }
                         return newFiles;
                     });
-                });
 
-                // Update status to success
-                setFiles(prev => {
-                    const newFiles = [...prev];
-                    const data = response.data as any;
+                    uploadedKeys.push(urlData.key);
 
-                    if (newFiles[index]) {
-                        newFiles[index] = {
-                            ...newFiles[index],
-                            status: 'success',
-                            progress: 100,
-                            photoId: data?.uploads?.[0]?.imageId || data?.photo?._id
-                        };
-                    }
-                    return newFiles;
-                });
-
-                const data = response.data as any;
-                if (data?.uploads?.[0]) {
-                    uploadedPhotos.push(data.uploads[0]);
-                } else if (data?.photo) {
-                    uploadedPhotos.push(data.photo);
+                } catch (error: any) {
+                    console.error(`Upload error for ${file.name}:`, error);
+                    setFiles(prev => {
+                        const newFiles = [...prev];
+                        if (newFiles[actualIndex]) {
+                            newFiles[actualIndex] = {
+                                ...newFiles[actualIndex],
+                                status: 'error',
+                                error: error.message || 'Upload to S3 failed'
+                            };
+                        }
+                        return newFiles;
+                    });
                 }
+            };
 
-            } catch (error: any) {
-                console.error(`Upload error for ${fileItem.file.name}:`, error);
-                setFiles(prev => {
-                    const newFiles = [...prev];
+            // Worker pool for concurrent S3 uploads
+            let currentIndex = 0;
+            const workers = Array(Math.min(CONCURRENCY_LIMIT, pendingIndices.length))
+                .fill(null)
+                .map(async () => {
+                    while (currentIndex < pendingIndices.length) {
+                        const index = currentIndex++;
+                        await uploadFile(index);
+                    }
+                });
+
+            await Promise.all(workers);
+
+            setIsUploading(false);
+
+            if (onUploadComplete && uploadedKeys.length > 0) {
+                onUploadComplete(uploadedKeys.map(key => ({ key, s3Key: key })));
+            }
+
+        } catch (error: any) {
+            console.error('Failed to get presigned URLs:', error);
+            // Mark all pending files as errored
+            setFiles(prev => {
+                const newFiles = [...prev];
+                pendingIndices.forEach(index => {
                     if (newFiles[index]) {
                         newFiles[index] = {
                             ...newFiles[index],
                             status: 'error',
-                            error: error.response?.data?.message || 'Upload failed'
+                            error: error.response?.data?.message || 'Failed to get upload URLs'
                         };
                     }
-                    return newFiles;
                 });
-            }
-        };
-
-        // Worker pool logic
-        let currentIndex = 0;
-        const workers = Array(Math.min(CONCURRENCY_LIMIT, pendingIndices.length))
-            .fill(null)
-            .map(async () => {
-                while (currentIndex < pendingIndices.length) {
-                    const index = pendingIndices[currentIndex++];
-                    await processFile(index);
-                }
+                return newFiles;
             });
-
-        await Promise.all(workers);
-
-        setIsUploading(false);
-
-        if (onUploadComplete && uploadedPhotos.length > 0) {
-            onUploadComplete(uploadedPhotos);
+            setIsUploading(false);
         }
     };
 

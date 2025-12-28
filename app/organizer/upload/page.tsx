@@ -3,14 +3,22 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import UploadZone from '@/app/components/ui/UploadZone';
-import { photoApi, eventApi } from '@/lib/api'; // Use consistent API lib
+import { photoApi, eventApi } from '@/lib/api';
 import toast from 'react-hot-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface Event {
     _id: string;
     name: string;
+}
+
+interface UploadProgress {
+    total: number;
+    uploaded: number;
+    failed: number;
+    currentFile: string;
+    percent: number;
 }
 
 export default function BulkUploadPage() {
@@ -21,6 +29,7 @@ export default function BulkUploadPage() {
     const [files, setFiles] = useState<File[]>([]);
     const [uploading, setUploading] = useState(false);
     const [loadingEvents, setLoadingEvents] = useState(true);
+    const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
 
     useEffect(() => {
         fetchEvents();
@@ -28,14 +37,8 @@ export default function BulkUploadPage() {
 
     const fetchEvents = async () => {
         try {
-            // Updated to use eventApi which handles auth token automatically
-            // Assuming eventApi.getAll returns data.data which is array of events
-            // Adjust based on api implementation of getAll
             const response = await eventApi.getAll({ limit: 100 });
             if (response.success && response.data) {
-                // If the user is an organizer, they should see their events.
-                // If the API returns all events, we might need filtering?
-                // Usually backend filters by role.
                 setEvents(response.data);
             }
         } catch (error) {
@@ -57,16 +60,54 @@ export default function BulkUploadPage() {
         }
 
         setUploading(true);
+        setUploadProgress({
+            total: files.length,
+            uploaded: 0,
+            failed: 0,
+            currentFile: '',
+            percent: 0,
+        });
 
         try {
-            await photoApi.upload(selectedEvent, files);
-            toast.success('Photos uploaded successfully! Processing started.');
+            const result = await photoApi.uploadWithPresignedUrls(
+                selectedEvent,
+                files,
+                (fileIndex, progress) => {
+                    setUploadProgress(prev => prev ? {
+                        ...prev,
+                        currentFile: files[fileIndex].name,
+                        percent: progress.percent,
+                    } : null);
+                },
+                (fileIndex) => {
+                    setUploadProgress(prev => prev ? {
+                        ...prev,
+                        uploaded: prev.uploaded + 1,
+                    } : null);
+                },
+                (fileIndex, error) => {
+                    setUploadProgress(prev => prev ? {
+                        ...prev,
+                        failed: prev.failed + 1,
+                    } : null);
+                    console.error(`Failed to upload ${files[fileIndex].name}: ${error}`);
+                }
+            );
+
+            if (result.successCount > 0) {
+                toast.success(`${result.successCount} photos uploaded successfully! Processing started.`);
+            }
+            if (result.errorCount > 0) {
+                toast.error(`${result.errorCount} photos failed to upload`);
+            }
+            
             setFiles([]);
         } catch (error: any) {
             console.error('Upload error:', error);
             toast.error(error.response?.data?.message || 'Failed to upload photos');
         } finally {
             setUploading(false);
+            setUploadProgress(null);
         }
     };
 
@@ -98,6 +139,42 @@ export default function BulkUploadPage() {
                 <div className="bg-white rounded-xl p-6 shadow-sm border border-neutral-200">
                     <h2 className="text-xl font-semibold mb-4">Upload Photos</h2>
                     <UploadZone onFilesSelected={setFiles} maxFiles={100} />
+
+                    {/* Upload Progress */}
+                    {uploadProgress && (
+                        <div className="mt-4 p-4 bg-neutral-50 rounded-lg border border-neutral-200">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm font-medium text-neutral-700">
+                                    Uploading: {uploadProgress.uploaded + uploadProgress.failed} / {uploadProgress.total}
+                                </span>
+                                <div className="flex items-center gap-3 text-sm">
+                                    {uploadProgress.uploaded > 0 && (
+                                        <span className="flex items-center gap-1 text-green-600">
+                                            <CheckCircle size={16} />
+                                            {uploadProgress.uploaded}
+                                        </span>
+                                    )}
+                                    {uploadProgress.failed > 0 && (
+                                        <span className="flex items-center gap-1 text-red-600">
+                                            <AlertCircle size={16} />
+                                            {uploadProgress.failed}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="w-full bg-neutral-200 rounded-full h-2 mb-2">
+                                <div 
+                                    className="bg-primary h-2 rounded-full transition-all duration-300"
+                                    style={{ width: `${((uploadProgress.uploaded + uploadProgress.failed) / uploadProgress.total) * 100}%` }}
+                                />
+                            </div>
+                            {uploadProgress.currentFile && (
+                                <p className="text-xs text-neutral-500 truncate">
+                                    Current: {uploadProgress.currentFile} ({uploadProgress.percent}%)
+                                </p>
+                            )}
+                        </div>
+                    )}
 
                     <div className="mt-6 flex justify-end">
                         <button
