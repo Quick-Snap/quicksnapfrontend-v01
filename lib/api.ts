@@ -220,7 +220,7 @@ export const photoApi = {
   },
 
   getPublicPhotos: async (eventId: string, params?: { page?: number; limit?: number }) => {
-    const response = await api.get<ApiResponse<any>>(`/photos/event/${eventId}/public`, { params });
+    const response = await api.get<ApiResponse<any>>(`/public/photos/event/${eventId}/s3`, { params });
     return response.data;
   },
 
