@@ -66,6 +66,7 @@ interface UploadUrlResponse {
   uploadUrl: string;
   key: string;
   fileName: string;
+  imageId?: string;
 }
 
 interface UploadProgress {
@@ -93,11 +94,12 @@ export const photoApi = {
   uploadToS3: async (
     uploadUrl: string,
     file: File,
-    onProgress?: (progress: UploadProgress) => void
+    onProgress?: (progress: UploadProgress) => void,
+    imageId?: string
   ): Promise<void> => {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
-      
+
       xhr.upload.addEventListener('progress', (event) => {
         if (event.lengthComputable && onProgress) {
           onProgress({
@@ -127,6 +129,9 @@ export const photoApi = {
 
       xhr.open('PUT', uploadUrl);
       xhr.setRequestHeader('Content-Type', file.type);
+      if (imageId) {
+        xhr.setRequestHeader('x-amz-meta-imageid', imageId);
+      }
       xhr.send(file);
     });
   },
@@ -163,7 +168,7 @@ export const photoApi = {
       try {
         await photoApi.uploadToS3(urlData.uploadUrl, file, (progress) => {
           onFileProgress?.(index, progress);
-        });
+        }, urlData.imageId);
 
         results[index] = { success: true, key: urlData.key };
         onFileComplete?.(index, urlData.key);

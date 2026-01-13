@@ -26,7 +26,7 @@ export default function MyPhotosPage() {
   );
 
   const allPhotos = queryData?.data?.photos || [];
-  
+
   // Pagination calculations
   const totalPhotos = allPhotos.length;
   const totalPages = Math.ceil(totalPhotos / PHOTOS_PER_PAGE);
@@ -164,7 +164,7 @@ export default function MyPhotosPage() {
                 onClick={() => setSelectedPhoto(photo)}
               >
                 <img
-                  src={photo.url}
+                  src={photo.thumbnailUrl || photo.url}
                   alt={photo.fileName}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
