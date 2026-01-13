@@ -1,4 +1,4 @@
-'use client';
+  'use client';
 
 import { useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -148,9 +148,13 @@ export default function RegisterFacePage() {
       if (registerData.success) {
         setUploadProgress(100);
         toast.success('Face registered successfully!');
-        // Update user in context
+        // Update user in context with new face registration status and cache-busted avatar
         if (user) {
-          updateUser({ ...user, faceRegistered: true });
+          updateUser({
+            ...user,
+            faceRegistered: true,
+            avatar: registerData.data?.avatarUrl || user.avatar
+          });
         }
         setTimeout(() => {
           router.push('/dashboard');

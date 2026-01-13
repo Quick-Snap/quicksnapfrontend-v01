@@ -55,7 +55,7 @@ export default function PublicEventPage() {
         }
     );
     const allPhotos = photosResult?.data?.photos || [];
-    
+
     // Pagination calculations
     const totalPhotos = allPhotos.length;
     const totalPages = Math.ceil(totalPhotos / PHOTOS_PER_PAGE);
@@ -354,7 +354,7 @@ export default function PublicEventPage() {
                                 >
                                     {/* eslint-disable-next-line @next/next/no-img-element */}
                                     <img
-                                        src={photo.url || photo.s3Url}
+                                        src={photo.thumbnailUrl || photo.url || photo.s3Url}
                                         alt={`Event photo ${startIndex + index + 1}`}
                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                     />
@@ -366,7 +366,7 @@ export default function PublicEventPage() {
                                 </div>
                             ))}
                         </div>
-                        
+
                         {/* Pagination */}
                         {totalPages > 1 && (
                             <div className="mt-8">
