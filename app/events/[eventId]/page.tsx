@@ -12,7 +12,6 @@ import {
     Share2,
     Download,
     ChevronLeft,
-    Heart,
     User,
     Sparkles,
     Camera,
@@ -25,7 +24,7 @@ import Pagination from '@/app/components/ui/Pagination';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from 'react-query';
 
-const PHOTOS_PER_PAGE = 20;
+const PHOTOS_PER_PAGE = 12;
 
 export default function PublicEventPage() {
     const { user: currentUser } = useAuth();
@@ -163,64 +162,65 @@ export default function PublicEventPage() {
     return (
         <div className="min-h-screen">
             {/* Hero Section */}
-            <div className="relative bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 text-white overflow-hidden rounded-2xl mb-8">
-                {/* Animated Background Pattern */}
-                <div className="absolute inset-0 opacity-10">
-                    <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full mix-blend-overlay filter blur-3xl animate-float" />
-                    <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full mix-blend-overlay filter blur-3xl animate-float delay-200" />
-                    <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-white rounded-full mix-blend-overlay filter blur-3xl animate-float delay-400" />
-                </div>
+            <div className="relative overflow-hidden rounded-3xl mb-10 border border-white/5 bg-gradient-to-br from-[#181025] via-[#0f0b1d] to-[#0a0d1e] shadow-[0_25px_90px_rgba(0,0,0,0.5)]">
+                <div className="absolute inset-0 bg-gradient-mesh opacity-60" />
+                <div className="absolute -left-16 -bottom-10 w-72 h-72 bg-violet-500/20 blur-3xl" />
+                <div className="absolute right-0 top-0 w-80 h-80 bg-indigo-500/15 blur-3xl" />
 
                 <div className="relative px-6 py-10 md:px-10 md:py-12">
-                    {/* Back Button */}
-                    <Link href="/events" className="inline-flex items-center gap-2 text-white/80 hover:text-white mb-6 transition-colors">
+                    <Link href="/events" className="inline-flex items-center gap-2 text-gray-300 hover:text-white mb-6 transition-colors">
                         <ChevronLeft size={20} />
                         <span className="font-medium">Back to Events</span>
                     </Link>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
                         {/* Event Info */}
-                        <div>
-                            <div className="flex items-center gap-3 mb-4">
-                                <span className={`px-4 py-1.5 rounded-full text-sm font-semibold ${isActive
-                                    ? 'bg-emerald-400/20 text-emerald-100 border border-emerald-300/30'
-                                    : 'bg-gray-400/20 text-gray-100 border border-gray-300/30'
+                        <div className="space-y-6">
+                            <div className="flex items-center gap-3 flex-wrap">
+                                <span className={`px-4 py-1.5 rounded-full text-sm font-semibold border ${isActive
+                                    ? 'bg-emerald-500/15 text-emerald-200 border-emerald-400/30'
+                                    : 'bg-white/10 text-gray-200 border-white/20'
                                     }`}>
-                                    {isActive ? '🎉 Active Event' : '📅 Past Event'}
+                                    {isActive ? 'Active Event' : 'Past Event'}
                                 </span>
                                 {event.isPublic && (
-                                    <span className="px-4 py-1.5 rounded-full text-sm font-semibold bg-blue-400/20 text-blue-100 border border-blue-300/30">
-                                        🌐 Public
+                                    <span className="px-4 py-1.5 rounded-full text-sm font-semibold bg-white/10 text-gray-200 border border-white/20">
+                                        Public
                                     </span>
                                 )}
+                                <span className="px-3 py-1 rounded-full text-xs bg-white/5 border border-white/10 text-gray-300">
+                                    {totalPhotos} photos
+                                </span>
                             </div>
 
-                            <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight">{event.name}</h1>
-                            <p className="text-xl text-white/90 mb-8 leading-relaxed">
-                                {event.description || 'Join us for an amazing event!'}
-                            </p>
+                            <div className="space-y-3">
+                                <h1 className="text-4xl md:text-5xl font-semibold text-white leading-tight">{event.name}</h1>
+                                <p className="text-lg text-gray-300 leading-relaxed max-w-2xl">
+                                    {event.description || 'Join us for an amazing event!'}
+                                </p>
+                            </div>
 
                             {/* Quick Stats */}
-                            <div className="grid grid-cols-2 gap-4 mb-8">
-                                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="bg-[#0f0c18] rounded-2xl p-4 border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.35)]">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                                            <Users className="text-white" size={24} />
+                                        <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center">
+                                            <Users className="text-violet-300" size={22} />
                                         </div>
                                         <div>
-                                            <p className="text-white/70 text-sm">Attendees</p>
-                                            <p className="text-2xl font-bold">{event.attendees?.length || 0}</p>
+                                            <p className="text-gray-400 text-sm">Attendees</p>
+                                            <p className="text-2xl font-semibold text-white">{event.attendees?.length || 0}</p>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
+                                <div className="bg-[#0f0c18] rounded-2xl p-4 border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.35)]">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                                            <Camera className="text-white" size={24} />
+                                        <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center">
+                                            <Camera className="text-indigo-300" size={22} />
                                         </div>
                                         <div>
-                                            <p className="text-white/70 text-sm">Photos</p>
-                                            <p className="text-2xl font-bold">{totalPhotos}</p>
+                                            <p className="text-gray-400 text-sm">Photos</p>
+                                            <p className="text-2xl font-semibold text-white">{totalPhotos}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -230,38 +230,29 @@ export default function PublicEventPage() {
                             <div className="flex flex-wrap gap-4">
                                 <Button
                                     onClick={handleShare}
-                                    className="bg-white/10 backdrop-blur-sm text-white hover:bg-white/20 font-semibold px-6 py-3 rounded-xl border border-white/20"
+                                    className="bg-white/5 border border-white/10 text-white hover:bg-white/10 font-semibold px-6 py-3 rounded-xl shadow-[0_10px_35px_rgba(0,0,0,0.3)]"
                                 >
                                     <Share2 size={20} className="mr-2" />
                                     Share Event
                                 </Button>
-                                {isActive && (
-                                    <Button
-                                        variant="outline"
-                                        className="border-2 border-white/30 text-white hover:bg-white/10 font-semibold px-6 py-3 rounded-xl"
-                                    >
-                                        <Heart size={20} className="mr-2" />
-                                        Register
-                                    </Button>
-                                )}
                             </div>
                         </div>
 
                         {/* Event Details Card */}
-                        <div className="bg-[#111111]/90 backdrop-blur-lg rounded-2xl shadow-2xl p-8 border border-white/10">
-                            <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-                                <Sparkles className="text-violet-400" size={24} />
+                        <div className="bg-[#0f0c18] rounded-2xl shadow-[0_16px_60px_rgba(0,0,0,0.45)] p-8 border border-white/10">
+                            <h3 className="text-2xl font-semibold text-white mb-6 flex items-center gap-2">
+                                <Sparkles className="text-violet-300" size={24} />
                                 Event Details
                             </h3>
 
                             <div className="space-y-4">
-                                <div className="flex items-start gap-4 p-4 bg-white/5 rounded-xl border border-white/5">
-                                    <div className="w-12 h-12 bg-violet-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                                        <Calendar className="text-violet-400" size={24} />
+                                <div className="flex items-start gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
+                                    <div className="w-12 h-12 bg-violet-500/15 border border-violet-400/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                                        <Calendar className="text-violet-300" size={22} />
                                     </div>
                                     <div>
                                         <p className="font-semibold text-white mb-1">Date & Time</p>
-                                        <p className="text-gray-400 text-sm">
+                                        <p className="text-gray-300 text-sm">
                                             {startDate.toLocaleDateString('en-US', {
                                                 weekday: 'long',
                                                 year: 'numeric',
@@ -270,7 +261,7 @@ export default function PublicEventPage() {
                                             })}
                                         </p>
                                         <p className="text-gray-400 text-sm flex items-center gap-2 mt-1">
-                                            <Clock size={14} className="text-violet-400" />
+                                            <Clock size={14} className="text-violet-300" />
                                             {startDate.toLocaleTimeString('en-US', {
                                                 hour: '2-digit',
                                                 minute: '2-digit'
@@ -282,37 +273,37 @@ export default function PublicEventPage() {
                                     </div>
                                 </div>
 
-                                <div className="flex items-start gap-4 p-4 bg-white/5 rounded-xl border border-white/5">
-                                    <div className="w-12 h-12 bg-pink-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                                        <MapPin className="text-pink-400" size={24} />
+                                <div className="flex items-start gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
+                                    <div className="w-12 h-12 bg-pink-500/15 border border-pink-400/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                                        <MapPin className="text-pink-300" size={22} />
                                     </div>
                                     <div>
                                         <p className="font-semibold text-white mb-1">Location</p>
-                                        <p className="text-gray-400 text-sm">{event.venue || event.location || 'To be announced'}</p>
+                                        <p className="text-gray-300 text-sm">{event.venue || event.location || 'To be announced'}</p>
                                     </div>
                                 </div>
 
                                 {event.organizer && (
-                                    <div className="flex items-start gap-4 p-4 bg-white/5 rounded-xl border border-white/5">
-                                        <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                                            <User className="text-emerald-400" size={24} />
+                                    <div className="flex items-start gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
+                                        <div className="w-12 h-12 bg-emerald-500/15 border border-emerald-400/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                                            <User className="text-emerald-300" size={22} />
                                         </div>
                                         <div>
                                             <p className="font-semibold text-white mb-1">Organized by</p>
-                                            <p className="text-gray-400 text-sm">{event.organizer.name}</p>
+                                            <p className="text-gray-300 text-sm">{event.organizer.name}</p>
                                             <p className="text-gray-500 text-xs">{event.organizer.email}</p>
                                         </div>
                                     </div>
                                 )}
 
                                 {(currentUser?.role === 'admin' || event.organizer?._id === currentUser?.id || event.organizer === currentUser?.id) && event.accessCode && (
-                                    <div className="flex items-start gap-4 p-4 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-xl border border-indigo-100">
-                                        <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                                            <Sparkles className="text-indigo-600" size={24} />
+                                    <div className="flex items-start gap-4 p-4 bg-gradient-to-r from-[#181025] to-[#121022] rounded-xl border border-violet-500/30">
+                                        <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                                            <Sparkles className="text-violet-300" size={22} />
                                         </div>
                                         <div>
-                                            <p className="font-semibold text-gray-900 mb-1">Access Code</p>
-                                            <p className="text-indigo-600 text-lg font-mono tracking-widest font-bold">{event.accessCode}</p>
+                                            <p className="font-semibold text-white mb-1">Access Code</p>
+                                            <p className="text-violet-200 text-lg font-mono tracking-widest font-semibold">{event.accessCode}</p>
                                             <p className="text-gray-500 text-xs mt-1">Share this code with guests to let them join.</p>
                                         </div>
                                     </div>
@@ -332,7 +323,7 @@ export default function PublicEventPage() {
                     </h2>
                     <p className="text-gray-400 text-lg">
                         {totalPhotos > 0
-                            ? `Browse through ${totalPhotos} amazing moments captured at this event`
+                            ? `Browse through ${totalPhotos} captured moments`
                             : 'Photos will appear here once they are uploaded'}
                     </p>
                 </div>
@@ -349,7 +340,7 @@ export default function PublicEventPage() {
                             {photos.map((photo: any, index: number) => (
                                 <div
                                     key={photo._id}
-                                    className="group relative aspect-square bg-[#111111] rounded-2xl overflow-hidden cursor-pointer transform transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-violet-500/10 border border-white/5 hover:border-violet-500/30"
+                                    className="group relative aspect-square bg-[#0f0c18] rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-violet-500/10 border border-white/5 hover:border-violet-500/30"
                                     onClick={() => setSelectedPhoto(photo)}
                                 >
                                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -358,9 +349,14 @@ export default function PublicEventPage() {
                                         alt={`Event photo ${startIndex + index + 1}`}
                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                     />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                        <div className="absolute bottom-0 left-0 right-0 p-4">
-                                            <p className="text-white text-sm font-medium">View Photo</p>
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                        <div className="absolute bottom-0 left-0 right-0 p-4 space-y-2">
+                                            <div className="flex items-center justify-between text-white text-sm">
+                                                <span className="font-medium">View Photo</span>
+                                                <span className="px-2 py-0.5 rounded-full text-[11px] bg-white/10 border border-white/15 text-gray-100 backdrop-blur-sm">
+                                                    #{(startIndex + index + 1).toString().padStart(2, '0')}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -369,7 +365,7 @@ export default function PublicEventPage() {
 
                         {/* Pagination */}
                         {totalPages > 1 && (
-                            <div className="mt-8">
+                            <div className="mt-10 card bg-[#0f0c18] border-white/5 shadow-[0_14px_50px_rgba(0,0,0,0.35)]">
                                 <Pagination
                                     currentPage={currentPage}
                                     totalPages={totalPages}
@@ -382,7 +378,7 @@ export default function PublicEventPage() {
                         )}
                     </>
                 ) : (
-                    <div className="text-center py-20 card">
+                    <div className="text-center py-20 card bg-[#0f0c18] border-white/5 shadow-[0_14px_50px_rgba(0,0,0,0.35)]">
                         <div className="w-24 h-24 bg-violet-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
                             <ImageIcon className="text-violet-400" size={48} />
                         </div>
@@ -395,7 +391,7 @@ export default function PublicEventPage() {
             {/* Photo Modal */}
             {selectedPhoto && (
                 <div
-                    className="fixed inset-0 bg-black/95 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                    className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4"
                     onClick={() => setSelectedPhoto(null)}
                 >
                     <button
@@ -411,7 +407,7 @@ export default function PublicEventPage() {
                             alt="Selected photo"
                             className="w-full h-auto rounded-2xl shadow-2xl"
                         />
-                        <div className="mt-4 flex items-center justify-between bg-[#111111]/90 backdrop-blur-lg rounded-xl p-4 border border-white/10">
+                        <div className="mt-4 flex items-center justify-between bg-[#0f0c18]/95 backdrop-blur-lg rounded-xl p-4 border border-white/10">
                             <div className="text-white">
                                 <p className="font-medium">{selectedPhoto.fileName}</p>
                                 <p className="text-sm text-gray-400">
@@ -421,7 +417,7 @@ export default function PublicEventPage() {
                             <Button
                                 onClick={() => handleDownload(selectedPhoto)}
                                 disabled={!!downloading}
-                                className="bg-violet-600 text-white hover:bg-violet-500 disabled:opacity-50"
+                                className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-500 hover:to-indigo-500 disabled:opacity-50"
                             >
                                 {downloading === selectedPhoto._id ? (
                                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />

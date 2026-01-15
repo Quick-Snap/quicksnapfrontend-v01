@@ -1,20 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Image as ImageIcon, Download, Calendar, MapPin, Users, Search, Sparkles, X, Loader2 } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Image as ImageIcon, Download, Calendar, Users, Search, Sparkles, X, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { photoApi } from '@/lib/api';
 import Pagination from '@/app/components/ui/Pagination';
 import toast from 'react-hot-toast';
 import { useQuery } from 'react-query';
 
-const PHOTOS_PER_PAGE = 20;
+const PHOTOS_PER_PAGE = 12;
 
 export default function MyPhotosPage() {
   const { user } = useAuth();
   const [downloading, setDownloading] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const { data: queryData, isLoading: loading } = useQuery(
     ['myPhotos'],
@@ -35,12 +36,22 @@ export default function MyPhotosPage() {
     return photoEventId && userJoinedEvents.includes(photoEventId);
   });
 
-  // Pagination calculations
-  const totalPhotos = allPhotos.length;
+  // Search + pagination calculations
+  const filteredPhotos = useMemo(() => {
+    if (!searchTerm.trim()) return allPhotos;
+    const term = searchTerm.trim().toLowerCase();
+    return allPhotos.filter((photo: any) => {
+      const name = photo.fileName?.toLowerCase() || '';
+      const eventName = photo.eventId?.name?.toLowerCase() || '';
+      return name.includes(term) || eventName.includes(term);
+    });
+  }, [allPhotos, searchTerm]);
+
+  const totalPhotos = filteredPhotos.length;
   const totalPages = Math.ceil(totalPhotos / PHOTOS_PER_PAGE);
   const startIndex = (currentPage - 1) * PHOTOS_PER_PAGE;
   const endIndex = startIndex + PHOTOS_PER_PAGE;
-  const photos = allPhotos.slice(startIndex, endIndex);
+  const photos = filteredPhotos.slice(startIndex, endIndex);
 
   // Reset to page 1 if current page exceeds total pages
   useEffect(() => {
@@ -106,38 +117,71 @@ export default function MyPhotosPage() {
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
       {/* Header */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 rounded-3xl p-8 md:p-10 shadow-2xl shadow-violet-500/20">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yIDItNCAyLTZzLTItNC0yLTYgMi00IDItNi0yLTQtMi02bDIgMmMwIDItMiA0LTIgNnMyIDQgMiA2LTIgNC0yIDYgMiA0IDIgNmwtMi0yeiIvPjwvZz48L2c+PC9zdmc+')] opacity-20"></div>
-        <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <Sparkles className="h-5 w-5 text-violet-200" />
-              <span className="text-violet-200 text-sm font-medium tracking-wide">AI-Powered Recognition</span>
+      <div className="relative overflow-hidden rounded-3xl p-8 md:p-10 border border-white/5 bg-gradient-to-br from-[#181025] via-[#0f0b1d] to-[#0a0d1e] shadow-[0_25px_90px_rgba(0,0,0,0.5)]">
+        <div className="absolute inset-0 bg-gradient-mesh opacity-70" />
+        <div className="absolute -left-12 -bottom-12 w-56 h-56 bg-violet-500/20 blur-3xl" />
+        <div className="absolute right-0 top-0 w-40 h-40 bg-indigo-500/20 blur-3xl" />
+
+        <div className="relative flex flex-col gap-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/5 px-4 py-1 border border-white/10">
+                <Sparkles className="h-4 w-4 text-violet-200" />
+                <span className="text-xs uppercase tracking-[0.25em] text-gray-200">My Photos</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <h1 className="text-3xl md:text-4xl font-semibold text-white tracking-tight">Curated For You</h1>
+                <span className="px-3 py-1 text-xs rounded-full bg-white/5 border border-white/10 text-gray-200">
+                  {totalPhotos} photos
+                </span>
+              </div>
+              <p className="text-gray-300 max-w-2xl">
+                Calm, focused gallery that mirrors the landing page aesthetic. Search, browse, and download the moments where you were captured.
+              </p>
             </div>
-            <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">My Photos</h1>
-            <p className="text-violet-100 mt-2 max-w-xl text-lg opacity-90">
-              Every moment you're in, captured and curated in one place.
-            </p>
+
+            {totalPhotos > 0 && (
+              <button
+                onClick={handleDownloadAll}
+                disabled={downloading}
+                className="group relative px-8 py-4 bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl text-white font-semibold transition-all hover:-translate-y-1 active:translate-y-0 disabled:opacity-50 flex items-center gap-3 overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-violet-400/20 via-transparent to-indigo-400/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                {downloading ? (
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                ) : (
+                  <Download className="h-6 w-6 group-hover:translate-y-1 transition-transform" />
+                )}
+                <div className="flex flex-col items-start leading-tight">
+                  <span className="text-base">{downloading ? 'Preparing...' : 'Download All'}</span>
+                  <span className="text-[11px] text-violet-200 font-medium uppercase tracking-widest">Archive</span>
+                </div>
+              </button>
+            )}
           </div>
 
-          {photos.length > 0 && (
-            <button
-              onClick={handleDownloadAll}
-              disabled={downloading}
-              className="group relative px-8 py-4 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-2xl text-white font-bold transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 flex items-center gap-3 overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-violet-400/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-              {downloading ? (
-                <Loader2 className="h-6 w-6 animate-spin" />
-              ) : (
-                <Download className="h-6 w-6 group-hover:translate-y-1 transition-transform" />
-              )}
-              <div className="flex flex-col items-start leading-tight">
-                <span className="text-lg">{downloading ? 'Preparing...' : 'Download All'}</span>
-                <span className="text-[10px] text-violet-200 font-medium uppercase tracking-widest">Digital Archive</span>
+          <div className="flex flex-col lg:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+                <input
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search by event name or file name"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+                />
               </div>
-            </button>
-          )}
+            </div>
+            <div className="flex items-center gap-3 text-sm text-gray-400">
+              <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
+                <ImageIcon className="h-5 w-5 text-violet-300" />
+              </div>
+              <div className="leading-tight">
+                <p className="text-white font-medium">Face recognition active</p>
+                <p className="text-xs text-gray-500">Matching across your joined events</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -149,17 +193,22 @@ export default function MyPhotosPage() {
         </div>
       ) : photos.length > 0 ? (
         <>
-          <div className="card bg-violet-500/10 border-violet-500/20">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-xl bg-violet-500/20 flex items-center justify-center">
-                <ImageIcon size={20} className="text-violet-400" />
+          <div className="card bg-[#0f0c18] border-white/5 shadow-[0_14px_50px_rgba(0,0,0,0.35)]">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-violet-500/15 flex items-center justify-center">
+                  <ImageIcon size={20} className="text-violet-300" />
+                </div>
+                <div>
+                  <p className="font-semibold text-white">Face recognition active</p>
+                  <p className="text-sm text-gray-400">
+                    Found {totalPhotos} photo{totalPhotos !== 1 ? 's' : ''} matched to you. Higher confidence = stronger match.
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="font-semibold text-white">Face Recognition Active</p>
-                <p className="text-sm text-gray-400 mt-1">
-                  Found {totalPhotos} photo{totalPhotos !== 1 ? 's' : ''} where you appear.
-                  Confidence scores indicate match accuracy.
-                </p>
+              <div className="flex items-center gap-2 text-xs text-gray-400">
+                <span className="px-2 py-1 rounded-full bg-white/5 border border-white/10">{totalPhotos} results</span>
+                <span className="px-2 py-1 rounded-full bg-white/5 border border-white/10">{totalPages} page{totalPages !== 1 ? 's' : ''}</span>
               </div>
             </div>
           </div>
@@ -168,7 +217,7 @@ export default function MyPhotosPage() {
             {photos.map((photo: any, index: number) => (
               <div
                 key={photo._id}
-                className="group relative aspect-square rounded-xl overflow-hidden bg-[#111111] border border-white/5 cursor-pointer hover:border-violet-500/30 transition-all hover:shadow-xl hover:shadow-violet-500/10"
+                className="group relative aspect-square rounded-2xl overflow-hidden bg-[#0f0c18] border border-white/5 cursor-pointer hover:border-violet-500/30 transition-all hover:shadow-xl hover:shadow-violet-500/10"
                 onClick={() => setSelectedPhoto(photo)}
               >
                 <img
@@ -176,27 +225,34 @@ export default function MyPhotosPage() {
                   alt={photo.fileName}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div className="absolute bottom-0 left-0 right-0 p-4">
-                    <p className="text-sm font-medium text-white truncate">{photo.eventId?.name || 'Event'}</p>
-                    {photo.userConfidence && (
-                      <p className="text-xs text-gray-300 mt-1">{Math.round(photo.userConfidence)}% match</p>
-                    )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="absolute bottom-0 left-0 right-0 p-4 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-medium text-white truncate">{photo.eventId?.name || 'Event'}</p>
+                      {photo.userConfidence && (
+                        <span className="text-[11px] text-emerald-200 bg-emerald-500/20 border border-emerald-400/20 rounded-full px-2 py-0.5">
+                          {Math.round(photo.userConfidence)}% match
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-300 truncate">{photo.fileName}</p>
                   </div>
                 </div>
-                {/* Confidence badge */}
                 {photo.userConfidence && (
-                  <div className="absolute top-3 right-3 bg-emerald-500/90 backdrop-blur-sm text-white text-xs px-2.5 py-1 rounded-full font-medium">
+                  <div className="absolute top-3 right-3 bg-emerald-500/15 border border-emerald-400/30 backdrop-blur-sm text-emerald-100 text-[11px] px-2.5 py-1 rounded-full font-semibold shadow-lg shadow-emerald-500/10">
                     {Math.round(photo.userConfidence)}%
                   </div>
                 )}
+                <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[11px] bg-white/10 border border-white/15 text-gray-100 backdrop-blur-sm">
+                  #{(startIndex + index + 1).toString().padStart(2, '0')}
+                </div>
               </div>
             ))}
           </div>
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="mt-8">
+            <div className="mt-10 card bg-[#0f0c18] border-white/5 shadow-[0_14px_50px_rgba(0,0,0,0.35)]">
               <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}
