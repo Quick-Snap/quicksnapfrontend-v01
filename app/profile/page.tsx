@@ -260,42 +260,6 @@ export default function ProfilePage() {
                     </div>
                 )}
             </div>
-
-            {/* Quick Links */}
-            <div className="card">
-                <h3 className="font-bold text-lg text-white mb-4">Quick Actions</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Link href="/photos" className="action-card group">
-                        <div className="w-10 h-10 rounded-lg bg-violet-500/10 flex items-center justify-center group-hover:bg-violet-500/20 transition-colors">
-                            <ImageIcon className="h-5 w-5 text-violet-400" />
-                        </div>
-                        <div>
-                            <p className="font-semibold text-white">My Photos</p>
-                            <p className="text-sm text-gray-400">View your gallery</p>
-                        </div>
-                    </Link>
-
-                    <Link href="/events" className="action-card group">
-                        <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
-                            <Calendar className="h-5 w-5 text-blue-400" />
-                        </div>
-                        <div>
-                            <p className="font-semibold text-white">My Events</p>
-                            <p className="text-sm text-gray-400">Browse joined events</p>
-                        </div>
-                    </Link>
-
-                    <Link href="/settings" className="action-card group">
-                        <div className="w-10 h-10 rounded-lg bg-slate-500/10 flex items-center justify-center group-hover:bg-slate-500/20 transition-colors">
-                            <Shield className="h-5 w-5 text-slate-400" />
-                        </div>
-                        <div>
-                            <p className="font-semibold text-white">Settings</p>
-                            <p className="text-sm text-gray-400">Manage preferences</p>
-                        </div>
-                    </Link>
-                </div>
-            </div>
         </div>
     );
 }

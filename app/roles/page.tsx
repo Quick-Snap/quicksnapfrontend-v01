@@ -15,6 +15,7 @@ export default function RoleApplicationsPage() {
   const router = useRouter();
 
   const isOrganizer = user?.roles.includes('organizer');
+  const isPhotographer = user?.roles.includes('photographer');
 
   const handleBecomeOrganizer = async () => {
     setIsUpdating(true);
@@ -168,16 +169,27 @@ export default function RoleApplicationsPage() {
               </li>
             </ul>
             <div className="flex gap-3">
-              <Link href="/photographer/upload">
-                <Button className="bg-violet-600 text-white hover:bg-violet-500 shadow-lg shadow-violet-500/20">
-                  Bulk upload to RAW
-                </Button>
-              </Link>
-              <Link href="/dashboard">
-                <Button variant="outline" className="border-white/10 text-gray-300 hover:bg-white/5">
-                  Open dashboard
-                </Button>
-              </Link>
+              {isPhotographer ? (
+                <>
+                  <Link href="/photographer/upload">
+                    <Button className="bg-violet-600 text-white hover:bg-violet-500 shadow-lg shadow-violet-500/20">
+                      Bulk upload to RAW
+                    </Button>
+                  </Link>
+                  <Link href="/dashboard">
+                    <Button variant="outline" className="border-white/10 text-gray-300 hover:bg-white/5">
+                      Open dashboard
+                    </Button>
+                  </Link>
+                </>
+              ) : (
+                <div className="w-full p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                  <p className="text-amber-300 text-sm font-medium mb-1">Access Required</p>
+                  <p className="text-gray-400 text-sm">
+                    Request an event organizer to add you as a photographer for their event to get upload access.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>

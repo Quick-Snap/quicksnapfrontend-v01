@@ -29,25 +29,26 @@ export default function PhotographerDashboard() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 rounded-2xl p-8 shadow-2xl shadow-indigo-500/20">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yIDItNCAyLTZzLTItNC0yLTYgMi00IDItNi0yLTQtMi02bDIgMmMwIDItMiA0LTIgNnMyIDQgMiA2LTIgNC0yIDYgMiA0IDIgNmwtMi0yeiIvPjwvZz48L2c+PC9zdmc+')] opacity-20"></div>
+      <div className="relative overflow-hidden rounded-2xl p-8 border border-white/5 bg-gradient-to-br from-[#181025] via-[#0f0b1d] to-[#0a0d1e] shadow-[0_20px_80px_rgba(0,0,0,0.45)]">
+        <div className="absolute inset-0 bg-gradient-mesh opacity-60" />
+        <div className="absolute -left-12 -bottom-10 w-64 h-64 bg-violet-500/20 blur-3xl" />
+        <div className="absolute right-0 top-0 w-72 h-72 bg-indigo-500/15 blur-3xl" />
         <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-          <div>
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-sm mb-3 border border-white/10">
-              <Camera className="h-4 w-4" />
+          <div className="space-y-3">
+            <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 text-white px-3 py-1.5 rounded-full text-sm">
+              <Camera className="h-4 w-4 text-violet-200" />
               Photographer Workspace
             </div>
-            <h1 className="text-3xl font-bold text-white flex items-center gap-2">
-              Bulk upload • Auto-recognition
+            <h1 className="text-3xl md:text-4xl font-semibold text-white flex items-center gap-2 tracking-tight">
+              Bulk upload · Auto-recognition
             </h1>
-            <p className="text-indigo-100 mt-2">
-              Push up to 100 RAW images per batch. Lambda + Rekognition handle moderation,
-              detection, and matching automatically.
+            <p className="text-gray-300 max-w-2xl">
+              Calm, focused UI matching the landing theme. Upload, moderate, and deliver AI-matched photos effortlessly.
             </p>
           </div>
           <div className="flex gap-3">
             <Link href="/photographer/upload">
-              <Button className="bg-white/10 backdrop-blur-sm border border-white/10 text-white hover:bg-white/20">
+              <Button className="bg-white/5 border border-white/10 text-white hover:bg-white/10 shadow-[0_10px_35px_rgba(0,0,0,0.3)]">
                 <Upload className="h-4 w-4 mr-2" />
                 Bulk Upload (RAW)
               </Button>
@@ -92,7 +93,7 @@ export default function PhotographerDashboard() {
         ].map((item, idx) => {
           const Icon = item.icon;
           return (
-            <div key={idx} className="stat-card group">
+            <div key={idx} className="stat-card group bg-gradient-to-br from-[#121022] via-[#0d0c19] to-[#0b0a14] border-white/10">
               <div className={`w-12 h-12 rounded-xl ${item.iconBg} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
                 <Icon className={`h-6 w-6 ${item.iconColor}`} />
               </div>
@@ -105,7 +106,7 @@ export default function PhotographerDashboard() {
       </div>
 
       {/* Events to target */}
-      <div className="card">
+      <div className="card bg-[#0f0c18] border-white/5 shadow-[0_14px_50px_rgba(0,0,0,0.35)]">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center">
@@ -128,11 +129,11 @@ export default function PhotographerDashboard() {
             {events.map((event: any) => (
               <div
                 key={event._id}
-                className="group bg-white/5 border border-white/5 rounded-xl p-5 hover:border-violet-500/30 hover:bg-violet-500/5 transition-all"
+                className="group bg-[#0f0c18] border border-white/5 rounded-xl p-5 hover:border-violet-500/30 hover:-translate-y-1 transition-all shadow-[0_12px_40px_rgba(0,0,0,0.35)]"
               >
                 <div className="flex items-start justify-between mb-3">
                   <p className="font-semibold text-white line-clamp-2 group-hover:text-violet-400 transition-colors">{event.name}</p>
-                  <span className="text-xs text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full font-medium border border-emerald-500/20">
+                  <span className="text-xs text-emerald-200 bg-emerald-500/10 px-2.5 py-1 rounded-full font-medium border border-emerald-500/20">
                     Active
                   </span>
                 </div>
@@ -158,7 +159,7 @@ export default function PhotographerDashboard() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12 text-gray-400">
+          <div className="text-center py-12 text-gray-400 bg-[#0f0c18] rounded-xl border border-white/5">
             <FolderOpen className="h-12 w-12 text-gray-600 mx-auto mb-4" />
             <p>No active events right now. Check back soon or ask an organizer to create one.</p>
           </div>

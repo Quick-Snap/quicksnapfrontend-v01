@@ -172,109 +172,119 @@ export default function ManageEventPage() {
 
     return (
         <RoleGuard allowedRoles={['organizer', 'admin']}>
-            <div className="max-w-4xl mx-auto space-y-8">
+            <div className="max-w-5xl mx-auto space-y-8">
                 {/* Header */}
-                <div className="flex items-center justify-between">
-                    <Link 
-                        href="/dashboard" 
-                        className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
-                    >
-                        <ChevronLeft size={20} />
-                        <span className="font-medium">Back to Dashboard</span>
-                    </Link>
-                    <div className="flex items-center gap-2">
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                            isActive 
-                                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
-                                : 'bg-gray-500/20 text-gray-400 border border-gray-500/30'
-                        }`}>
-                            {isActive ? 'Active' : 'Past'}
-                        </span>
-                    </div>
-                </div>
-
-                {/* Event Header Card */}
-                <div className="relative overflow-hidden bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 rounded-2xl p-8 shadow-2xl shadow-violet-500/20">
-                    <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yIDItNCAyLTZzLTItNC0yLTYgMi00IDItNi0yLTQtMi02bDIgMmMwIDItMiA0LTIgNnMyIDQgMiA2LTIgNC0yIDYgMiA0IDIgNmwtMi0yeiIvPjwvZz48L2c+PC9zdmc+')] opacity-20"></div>
-                    <div className="relative">
-                        <div className="flex items-center gap-2 mb-3">
-                            <Shield className="h-5 w-5 text-violet-200" />
-                            <span className="text-violet-200 text-sm font-medium">Event Management</span>
+                <div className="relative overflow-hidden rounded-2xl p-6 border border-white/5 bg-gradient-to-br from-[#181025] via-[#0f0b1d] to-[#0a0d1e] shadow-[0_20px_80px_rgba(0,0,0,0.45)]">
+                    <div className="absolute inset-0 bg-gradient-mesh opacity-60" />
+                    <div className="absolute -left-14 -bottom-10 w-60 h-60 bg-violet-500/20 blur-3xl" />
+                    <div className="absolute right-0 top-0 w-64 h-64 bg-indigo-500/15 blur-3xl" />
+                    <div className="relative flex flex-col gap-4">
+                        <div className="flex items-center justify-between">
+                            <Link 
+                                href="/dashboard" 
+                                className="inline-flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
+                            >
+                                <ChevronLeft size={20} />
+                                <span className="font-medium">Back to Dashboard</span>
+                            </Link>
+                            <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${
+                                isActive 
+                                    ? 'bg-emerald-500/15 text-emerald-200 border-emerald-500/30' 
+                                    : 'bg-white/10 text-gray-200 border-white/20'
+                            }`}>
+                                {isActive ? 'Active' : 'Past'}
+                            </span>
                         </div>
-                        <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">{event.name}</h1>
-                        <p className="text-violet-100 text-lg">{event.description || 'No description provided'}</p>
+
+                        <div className="space-y-3">
+                            <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 text-white px-3 py-1.5 rounded-full text-sm">
+                                <Shield className="h-4 w-4 text-violet-200" />
+                                <span className="text-xs uppercase tracking-[0.25em] text-gray-200">Event management</span>
+                            </div>
+                            <div className="flex items-center gap-3 flex-wrap">
+                                <h1 className="text-3xl md:text-4xl font-semibold text-white leading-tight">{event.name}</h1>
+                                <span className="px-3 py-1 text-xs rounded-full bg-white/5 border border-white/10 text-gray-200">
+                                    {event.photos?.length || 0} photos
+                                </span>
+                            </div>
+                            <p className="text-gray-300 text-lg">{event.description || 'No description provided'}</p>
+                        </div>
                     </div>
                 </div>
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="stat-card group">
+                    <div className="stat-card group bg-gradient-to-br from-[#121022] via-[#0d0c19] to-[#0b0a14] border-white/10">
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-gray-400 text-sm mb-1">Attendees</p>
-                                <p className="text-2xl font-bold text-white">{event.attendees?.length || 0}</p>
+                                <p className="text-2xl font-semibold text-white">{event.attendees?.length || 0}</p>
                             </div>
                             <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
-                                <Users className="h-5 w-5 text-emerald-400" />
+                                <Users className="h-5 w-5 text-emerald-300" />
                             </div>
                         </div>
+                        <div className="h-1 mt-4 bg-gradient-to-r from-emerald-500 to-green-400 rounded-full"></div>
                     </div>
 
-                    <div className="stat-card group">
+                    <div className="stat-card group bg-gradient-to-br from-[#121022] via-[#0d0c19] to-[#0b0a14] border-white/10">
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-gray-400 text-sm mb-1">Photos</p>
-                                <p className="text-2xl font-bold text-white">{event.photos?.length || 0}</p>
+                                <p className="text-2xl font-semibold text-white">{event.photos?.length || 0}</p>
                             </div>
                             <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center group-hover:bg-violet-500/20 transition-colors">
-                                <ImageIcon className="h-5 w-5 text-violet-400" />
+                                <ImageIcon className="h-5 w-5 text-violet-300" />
                             </div>
                         </div>
+                        <div className="h-1 mt-4 bg-gradient-to-r from-violet-500 to-indigo-500 rounded-full"></div>
                     </div>
 
-                    <div className="stat-card group">
+                    <div className="stat-card group bg-gradient-to-br from-[#121022] via-[#0d0c19] to-[#0b0a14] border-white/10">
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-gray-400 text-sm mb-1">Photographers</p>
-                                <p className="text-2xl font-bold text-white">{event.photographers?.length || 0}</p>
+                                <p className="text-2xl font-semibold text-white">{event.photographers?.length || 0}</p>
                             </div>
                             <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
-                                <Sparkles className="h-5 w-5 text-blue-400" />
+                                <Sparkles className="h-5 w-5 text-blue-300" />
                             </div>
                         </div>
+                        <div className="h-1 mt-4 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full"></div>
                     </div>
 
-                    <div className="stat-card group">
+                    <div className="stat-card group bg-gradient-to-br from-[#121022] via-[#0d0c19] to-[#0b0a14] border-white/10">
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-gray-400 text-sm mb-1">Status</p>
-                                <p className={`text-2xl font-bold ${isActive ? 'text-emerald-400' : 'text-gray-400'}`}>
+                                <p className={`text-2xl font-semibold ${isActive ? 'text-emerald-300' : 'text-gray-300'}`}>
                                     {isActive ? 'Live' : 'Ended'}
                                 </p>
                             </div>
-                            <div className={`w-10 h-10 rounded-xl ${isActive ? 'bg-emerald-500/10' : 'bg-gray-500/10'} flex items-center justify-center`}>
-                                <Clock className={`h-5 w-5 ${isActive ? 'text-emerald-400' : 'text-gray-400'}`} />
+                            <div className={`w-10 h-10 rounded-xl ${isActive ? 'bg-emerald-500/10' : 'bg-white/5'} flex items-center justify-center`}>
+                                <Clock className={`h-5 w-5 ${isActive ? 'text-emerald-300' : 'text-gray-400'}`} />
                             </div>
                         </div>
+                        <div className={`h-1 mt-4 rounded-full ${isActive ? 'bg-gradient-to-r from-emerald-500 to-green-400' : 'bg-gradient-to-r from-slate-500 to-gray-500'}`}></div>
                     </div>
                 </div>
 
                 {/* Event Details */}
-                <div className="card">
-                    <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                        <Calendar className="text-violet-400" size={24} />
+                <div className="card bg-[#0f0c18] border-white/5 shadow-[0_14px_50px_rgba(0,0,0,0.35)]">
+                    <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
+                        <Calendar className="text-violet-300" size={22} />
                         Event Details
                     </h2>
 
                     <div className="grid md:grid-cols-2 gap-6">
                         <div className="space-y-4">
-                            <div className="flex items-start gap-4 p-4 bg-white/5 rounded-xl border border-white/5">
-                                <div className="w-10 h-10 bg-violet-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                                    <Calendar className="text-violet-400" size={20} />
+                            <div className="flex items-start gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
+                                <div className="w-10 h-10 bg-violet-500/15 border border-violet-400/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                                    <Calendar className="text-violet-300" size={20} />
                                 </div>
                                 <div>
                                     <p className="font-medium text-white mb-1">Date</p>
-                                    <p className="text-gray-400 text-sm">
+                                    <p className="text-gray-300 text-sm">
                                         {startDate.toLocaleDateString('en-US', {
                                             weekday: 'long',
                                             year: 'numeric',
@@ -285,25 +295,25 @@ export default function ManageEventPage() {
                                 </div>
                             </div>
 
-                            <div className="flex items-start gap-4 p-4 bg-white/5 rounded-xl border border-white/5">
-                                <div className="w-10 h-10 bg-blue-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                                    <Clock className="text-blue-400" size={20} />
+                            <div className="flex items-start gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
+                                <div className="w-10 h-10 bg-blue-500/15 border border-blue-400/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                                    <Clock className="text-blue-300" size={20} />
                                 </div>
                                 <div>
                                     <p className="font-medium text-white mb-1">Time</p>
-                                    <p className="text-gray-400 text-sm">
+                                    <p className="text-gray-300 text-sm">
                                         {startDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} - {endDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                                     </p>
                                 </div>
                             </div>
 
-                            <div className="flex items-start gap-4 p-4 bg-white/5 rounded-xl border border-white/5">
-                                <div className="w-10 h-10 bg-pink-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                                    <MapPin className="text-pink-400" size={20} />
+                            <div className="flex items-start gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
+                                <div className="w-10 h-10 bg-pink-500/15 border border-pink-400/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                                    <MapPin className="text-pink-300" size={20} />
                                 </div>
                                 <div>
                                     <p className="font-medium text-white mb-1">Venue</p>
-                                    <p className="text-gray-400 text-sm">{event.venue || 'Not specified'}</p>
+                                    <p className="text-gray-300 text-sm">{event.venue || 'Not specified'}</p>
                                 </div>
                             </div>
                         </div>
@@ -311,26 +321,26 @@ export default function ManageEventPage() {
                         <div className="space-y-4">
                             {/* Access Code */}
                             {event.accessCode && (
-                                <div className="p-4 bg-gradient-to-r from-indigo-500/10 to-violet-500/10 rounded-xl border border-indigo-500/20">
+                                <div className="p-4 bg-gradient-to-r from-[#181025] to-[#121022] rounded-xl border border-violet-500/30">
                                     <div className="flex items-center justify-between mb-2">
                                         <p className="font-medium text-white">Access Code</p>
                                         <button
                                             onClick={handleCopyCode}
-                                            className="flex items-center gap-1 text-xs text-violet-400 hover:text-violet-300 transition-colors"
+                                            className="flex items-center gap-1 text-xs text-violet-200 hover:text-violet-100 transition-colors"
                                         >
                                             {codeCopied ? <Check size={14} /> : <Copy size={14} />}
                                             {codeCopied ? 'Copied!' : 'Copy'}
                                         </button>
                                     </div>
-                                    <p className="text-2xl font-mono font-bold text-violet-400 tracking-widest">{event.accessCode}</p>
+                                    <p className="text-2xl font-mono font-semibold text-violet-200 tracking-widest">{event.accessCode}</p>
                                     <p className="text-xs text-gray-500 mt-2">Share this code with guests to let them join</p>
                                 </div>
                             )}
 
                             {/* Visibility */}
-                            <div className="p-4 bg-white/5 rounded-xl border border-white/5">
+                            <div className="p-4 bg-white/5 rounded-xl border border-white/10">
                                 <p className="font-medium text-white mb-1">Visibility</p>
-                                <p className={`text-sm ${event.isPublic ? 'text-emerald-400' : 'text-amber-400'}`}>
+                                <p className={`text-sm ${event.isPublic ? 'text-emerald-300' : 'text-amber-300'}`}>
                                     {event.isPublic ? '🌐 Public Event' : '🔒 Private Event'}
                                 </p>
                             </div>
@@ -339,7 +349,7 @@ export default function ManageEventPage() {
                 </div>
 
                 {/* Assign Photographer Section */}
-                <div className="card">
+                <div className="card bg-[#0f0c18] border-white/5 shadow-[0_14px_50px_rgba(0,0,0,0.35)]">
                     <div className="flex items-center gap-3 mb-6">
                         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center">
                             <Camera className="h-6 w-6 text-emerald-400" />
@@ -351,7 +361,7 @@ export default function ManageEventPage() {
                     </div>
 
                     {/* Assignment Form */}
-                    <div className="bg-gradient-to-r from-emerald-500/5 to-teal-500/5 rounded-xl p-6 border border-emerald-500/10 mb-6">
+                    <div className="bg-gradient-to-r from-emerald-500/5 to-teal-500/5 rounded-xl p-6 border border-emerald-500/15 mb-6">
                         <div className="flex flex-col md:flex-row gap-4">
                             <div className="flex-1 relative">
                                 <div className="absolute left-4 top-1/2 -translate-y-1/2">
@@ -402,7 +412,7 @@ export default function ManageEventPage() {
                                         key={photographer._id || photographer.id || index}
                                         className="flex items-center gap-4 p-4 bg-white/5 rounded-xl border border-white/5 hover:border-emerald-500/20 transition-colors"
                                     >
-                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-semibold shadow-lg">
+                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-semibold shadow-lg shadow-emerald-500/20">
                                             {(photographer.name || photographer.email || 'P').charAt(0).toUpperCase()}
                                         </div>
                                         <div className="flex-1 min-w-0">
@@ -435,12 +445,12 @@ export default function ManageEventPage() {
                 </div>
 
                 {/* Quick Actions */}
-                <div className="card">
-                    <h2 className="text-xl font-bold text-white mb-6">Quick Actions</h2>
+                <div className="card bg-[#0f0c18] border-white/5 shadow-[0_14px_50px_rgba(0,0,0,0.35)]">
+                    <h2 className="text-xl font-semibold text-white mb-6">Quick Actions</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Link href={`/organizer/events/${eventId}/upload`} className="action-card group">
+                        <Link href={`/organizer/events/${eventId}/upload`} className="action-card group bg-white/5 border-white/10 hover:bg-violet-500/10 hover:border-violet-500/30">
                             <div className="w-10 h-10 rounded-lg bg-violet-500/10 flex items-center justify-center group-hover:bg-violet-500/20 transition-colors">
-                                <Upload className="h-5 w-5 text-violet-400" />
+                                <Upload className="h-5 w-5 text-violet-300" />
                             </div>
                             <div>
                                 <p className="font-semibold text-white">Upload Photos</p>
@@ -448,9 +458,9 @@ export default function ManageEventPage() {
                             </div>
                         </Link>
 
-                        <Link href={`/events/${eventId}`} className="action-card group">
+                        <Link href={`/events/${eventId}`} className="action-card group bg-white/5 border-white/10 hover:bg-blue-500/10 hover:border-blue-500/30">
                             <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
-                                <ImageIcon className="h-5 w-5 text-blue-400" />
+                                <ImageIcon className="h-5 w-5 text-blue-300" />
                             </div>
                             <div>
                                 <p className="font-semibold text-white">View Event Page</p>
@@ -461,8 +471,8 @@ export default function ManageEventPage() {
                 </div>
 
                 {/* Danger Zone */}
-                <div className="card border-red-500/20 bg-red-500/5">
-                    <h2 className="text-xl font-bold text-red-400 mb-4 flex items-center gap-2">
+                <div className="card border-red-500/25 bg-red-500/5 shadow-[0_14px_50px_rgba(0,0,0,0.35)]">
+                    <h2 className="text-xl font-semibold text-red-300 mb-4 flex items-center gap-2">
                         <AlertTriangle size={24} />
                         Danger Zone
                     </h2>
@@ -471,7 +481,7 @@ export default function ManageEventPage() {
                     </p>
                     <Button
                         onClick={() => setShowDeleteModal(true)}
-                        className="bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20 hover:border-red-500/50"
+                        className="bg-red-500/15 text-red-200 border border-red-500/40 hover:bg-red-500/25 hover:border-red-500/60"
                     >
                         <Trash2 size={18} className="mr-2" />
                         Delete Event
@@ -481,7 +491,7 @@ export default function ManageEventPage() {
                 {/* Delete Confirmation Modal */}
                 {showDeleteModal && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-                        <div className="bg-[#1a1a1a] rounded-2xl p-6 max-w-md w-full border border-white/10 shadow-2xl animate-in fade-in zoom-in duration-200">
+                        <div className="bg-[#0f0c18] rounded-2xl p-6 max-w-md w-full border border-white/10 shadow-[0_20px_80px_rgba(0,0,0,0.6)] animate-in fade-in zoom-in duration-200">
                             <div className="flex items-center justify-between mb-4">
                                 <div className="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center">
                                     <AlertTriangle className="text-red-400" size={24} />
