@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthStore } from '@/stores';
-import { Camera, Loader2, Mail, Lock as LockIcon, User, CheckCircle, ShieldCheck, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { Camera, Loader2, CheckCircle, ShieldCheck, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 declare global {
@@ -47,31 +47,23 @@ export default function RegisterPage() {
     let mounted = true;
 
     const initWidget = async () => {
-      // Wait for DOM to be ready
       await new Promise(resolve => setTimeout(resolve, 100));
-      
       if (!mounted) return;
 
-      // Remove existing scripts to force fresh load
       document.querySelectorAll('script[src*="phone.email"]').forEach(s => s.remove());
       
-      // Clear any existing widget content
       if (widgetRef.current) {
         widgetRef.current.innerHTML = '';
       }
 
-      // Wait a bit before adding new script
       await new Promise(resolve => setTimeout(resolve, 100));
-      
       if (!mounted) return;
 
-      // Create and append new script
       const script = document.createElement('script');
       script.src = 'https://www.phone.email/verify_email_v1.js';
-      script.async = false; // Load synchronously
+      script.async = false;
       document.body.appendChild(script);
 
-      // Change button text after widget loads
       const changeButtonText = () => {
         if (!mounted) return;
         const widget = widgetRef.current;
@@ -85,7 +77,6 @@ export default function RegisterPage() {
         }
       };
 
-      // Try multiple times to catch when widget renders
       setTimeout(changeButtonText, 500);
       setTimeout(changeButtonText, 1000);
       setTimeout(changeButtonText, 1500);
@@ -97,14 +88,13 @@ export default function RegisterPage() {
     return () => {
       mounted = false;
     };
-  }, [widgetKey]); // Re-run when widgetKey changes
+  }, [widgetKey]);
 
-  // Force widget reload when email verification is reset
   const resetEmailVerification = useCallback(() => {
     setEmailVerified(false);
     setVerifiedEmail('');
     setFormData(prev => ({ ...prev, email: '' }));
-    setWidgetKey(prev => prev + 1); // Force widget reload
+    setWidgetKey(prev => prev + 1);
   }, []);
 
   const handlePhoneEmailCallback = useCallback(async (userObj: { user_json_url: string }) => {
@@ -180,95 +170,108 @@ export default function RegisterPage() {
 
   if (!initialized || user) {
     return (
-      <div className="min-h-screen bg-[#1a1625] flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-violet-500 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <div className="w-12 h-12 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
     <>
-      <div className="min-h-screen bg-[#1a1625] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[#030303] flex items-center justify-center p-4">
+        {/* Background Effects */}
+        <div className="fixed inset-0 bg-gradient-mesh opacity-20 pointer-events-none" />
+        <div className="fixed top-1/4 right-1/4 w-[500px] h-[500px] bg-violet-600/8 rounded-full blur-[200px] pointer-events-none" />
+        <div className="fixed bottom-1/4 left-1/4 w-[400px] h-[400px] bg-indigo-600/8 rounded-full blur-[200px] pointer-events-none" />
+
         {/* Main Card Container */}
-        <div className="w-full max-w-[950px] bg-[#252136] rounded-3xl overflow-hidden shadow-2xl shadow-black/50 flex flex-col lg:flex-row">
+        <div className="w-full max-w-[1000px] relative z-10">
+          {/* Animated Border Beam */}
+          <div className="absolute -inset-[1px] rounded-2xl overflow-hidden">
+            <div className="absolute inset-0 rounded-2xl border border-white/10" />
+            <div 
+              className="absolute w-[200px] h-[200px] animate-border-beam"
+              style={{
+                background: 'conic-gradient(from 0deg, transparent 0%, #8b5cf6 10%, #6366f1 20%, transparent 30%)',
+                filter: 'blur(8px)',
+              }}
+            />
+          </div>
+          
+          {/* Card Content */}
+          <div className="bg-[#0f0f0f] rounded-2xl overflow-hidden flex flex-col lg:flex-row border border-white/10 relative shadow-[0_0_80px_rgba(0,0,0,0.8)]">
           
           {/* Left Side - Image Section */}
-          <div className="lg:w-[45%] relative min-h-[200px] lg:min-h-[580px]">
-            {/* Background Image */}
+          <div className="lg:w-[45%] relative min-h-[200px] lg:min-h-[620px]">
             <div 
               className="absolute inset-0 bg-cover bg-center"
               style={{
                 backgroundImage: `url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=2070')`,
               }}
             />
-            {/* Purple Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-b from-violet-900/40 via-violet-900/60 to-[#252136]" />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-violet-900/40 to-[#0f0f0f]" />
             
-            {/* Content */}
-            <div className="relative h-full flex flex-col justify-between p-6 lg:p-8">
+            <div className="relative h-full flex flex-col justify-between p-8">
               {/* Logo & Back Link */}
               <div className="flex items-center justify-between">
-                <Link href="/" className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-white/10 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                <Link href="/" className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-sm flex items-center justify-center">
                     <Camera className="h-4 w-4 text-white" />
                   </div>
-                  <span className="text-white font-bold text-lg">QuickSnap</span>
+                  <span className="text-white font-light tracking-[0.15em]">QUICKSNAP</span>
                 </Link>
                 <Link 
                   href="/" 
-                  className="hidden lg:flex items-center gap-1 text-white/70 hover:text-white text-sm transition-colors"
+                  className="hidden lg:flex items-center gap-1 text-white/60 hover:text-white text-sm font-light tracking-wider transition-colors"
                 >
                   Back to website <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>
 
               {/* Bottom Text */}
-              <div className="mt-auto lg:mt-0">
-                <h2 className="text-2xl lg:text-3xl font-bold text-white leading-tight">
+              <div className="mt-auto">
+                <h2 className="text-3xl lg:text-4xl font-light text-white leading-tight tracking-wide">
                   Capturing Moments,
                 </h2>
-                <h2 className="text-2xl lg:text-3xl font-bold text-white leading-tight">
+                <h2 className="text-3xl lg:text-4xl font-light text-white leading-tight tracking-wide">
                   Creating Memories
                 </h2>
                 
-                {/* Dots Indicator */}
-                <div className="flex gap-2 mt-6">
-                  <div className="w-8 h-1.5 rounded-full bg-white/30" />
-                  <div className="w-8 h-1.5 rounded-full bg-white/30" />
-                  <div className="w-8 h-1.5 rounded-full bg-white" />
+                <div className="flex gap-2 mt-8">
+                  <div className="w-8 h-1 rounded-full bg-white/20" />
+                  <div className="w-8 h-1 rounded-full bg-white/20" />
+                  <div className="w-8 h-1 rounded-full bg-white" />
                 </div>
               </div>
             </div>
           </div>
 
           {/* Right Side - Form Section */}
-          <div className="lg:w-[55%] p-6 lg:p-10 flex flex-col justify-center">
+          <div className="lg:w-[55%] p-8 lg:p-12 flex flex-col justify-center">
             {/* Header */}
-            <div className="mb-6">
-              <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2">Create an account</h1>
-              <p className="text-gray-400 text-sm">
+            <div className="mb-8">
+              <h1 className="text-3xl font-light text-white mb-2 tracking-wide">Create an account</h1>
+              <p className="text-white/50 text-sm font-light tracking-wide">
                 Already have an account?{' '}
-                <Link href="/login" className="text-violet-400 hover:text-violet-300 underline underline-offset-2 transition-colors">
+                <Link href="/login" className="text-violet-400 hover:text-violet-300 transition-colors">
                   Log in
                 </Link>
               </p>
             </div>
 
             {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-5">
               {/* Name Field */}
               <div>
-                <div className="relative">
-                  <input
-                    name="name"
-                    type="text"
-                    required
-                    className="w-full bg-[#1a1625] border border-white/10 rounded-xl py-3.5 px-4 text-white placeholder-gray-500 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all outline-none"
-                    placeholder="Full name"
-                    value={formData.name}
-                    onChange={handleChange}
-                  />
-                </div>
+                <input
+                  name="name"
+                  type="text"
+                  required
+                  className="w-full bg-white/5 border border-white/10 rounded-lg py-3.5 px-4 text-white placeholder-white/30 focus:border-violet-500/50 focus:outline-none focus:ring-1 focus:ring-violet-500/50 transition-all font-light tracking-wide"
+                  placeholder="Full name"
+                  value={formData.name}
+                  onChange={handleChange}
+                />
               </div>
 
               {/* Email Field with Verification */}
@@ -279,10 +282,10 @@ export default function RegisterPage() {
                     type="email"
                     required
                     disabled={emailVerified}
-                    className={`w-full bg-[#1a1625] border rounded-xl py-3.5 px-4 text-white placeholder-gray-500 focus:ring-1 transition-all outline-none ${
+                    className={`w-full bg-white/5 border rounded-lg py-3.5 px-4 text-white placeholder-white/30 focus:outline-none focus:ring-1 transition-all font-light tracking-wide ${
                       emailVerified 
-                        ? 'border-emerald-500/50 bg-emerald-500/5 pr-10' 
-                        : 'border-white/10 focus:border-violet-500 focus:ring-violet-500'
+                        ? 'border-emerald-500/50 bg-emerald-500/5 pr-12' 
+                        : 'border-white/10 focus:border-violet-500/50 focus:ring-violet-500/50'
                     }`}
                     placeholder="Email"
                     value={formData.email}
@@ -297,17 +300,16 @@ export default function RegisterPage() {
                 {!emailVerified ? (
                   <div className="mt-3">
                     {verifying ? (
-                      <div className="flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-violet-500/10 border border-violet-500/20">
+                      <div className="flex items-center justify-center gap-2 py-3.5 px-4 rounded-lg bg-violet-500/10 border border-violet-500/20">
                         <Loader2 className="w-5 h-5 text-violet-400 animate-spin" />
-                        <span className="text-sm text-violet-300">Verifying email...</span>
+                        <span className="text-sm text-violet-300 font-light">Verifying email...</span>
                       </div>
                     ) : (
                       <div className="space-y-3">
                         <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
                           <ShieldCheck className="w-4 h-4 text-amber-400 flex-shrink-0" />
-                          <p className="text-xs text-amber-200">Email verification required to continue</p>
+                          <p className="text-xs text-amber-200/80 font-light">Email verification required to continue</p>
                         </div>
-                        {/* Phone Email Widget */}
                         <div 
                           key={widgetKey}
                           ref={widgetRef}
@@ -318,14 +320,14 @@ export default function RegisterPage() {
                     )}
                   </div>
                 ) : (
-                  <div className="mt-2 flex items-center justify-between p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                    <span className="text-sm text-emerald-400 flex items-center gap-2">
+                  <div className="mt-3 flex items-center justify-between p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                    <span className="text-sm text-emerald-400 flex items-center gap-2 font-light">
                       <CheckCircle className="w-4 h-4" /> Email verified successfully
                     </span>
                     <button
                       type="button"
                       onClick={resetEmailVerification}
-                      className="text-xs text-gray-400 hover:text-white transition-colors"
+                      className="text-xs text-white/40 hover:text-white transition-colors font-light"
                     >
                       Change
                     </button>
@@ -340,7 +342,7 @@ export default function RegisterPage() {
                     name="password"
                     type={showPassword ? 'text' : 'password'}
                     required
-                    className="w-full bg-[#1a1625] border border-white/10 rounded-xl py-3.5 px-4 pr-12 text-white placeholder-gray-500 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all outline-none"
+                    className="w-full bg-white/5 border border-white/10 rounded-lg py-3.5 px-4 pr-12 text-white placeholder-white/30 focus:border-violet-500/50 focus:outline-none focus:ring-1 focus:ring-violet-500/50 transition-all font-light tracking-wide"
                     placeholder="Enter your password"
                     value={formData.password}
                     onChange={handleChange}
@@ -348,7 +350,7 @@ export default function RegisterPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
                   >
                     {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
@@ -362,7 +364,7 @@ export default function RegisterPage() {
                     name="confirmPassword"
                     type={showConfirmPassword ? 'text' : 'password'}
                     required
-                    className="w-full bg-[#1a1625] border border-white/10 rounded-xl py-3.5 px-4 pr-12 text-white placeholder-gray-500 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all outline-none"
+                    className="w-full bg-white/5 border border-white/10 rounded-lg py-3.5 px-4 pr-12 text-white placeholder-white/30 focus:border-violet-500/50 focus:outline-none focus:ring-1 focus:ring-violet-500/50 transition-all font-light tracking-wide"
                     placeholder="Confirm password"
                     value={formData.confirmPassword}
                     onChange={handleChange}
@@ -370,7 +372,7 @@ export default function RegisterPage() {
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
                   >
                     {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
@@ -382,17 +384,17 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setAgreeTerms(!agreeTerms)}
-                  className={`w-5 h-5 rounded flex items-center justify-center transition-all ${
+                  className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${
                     agreeTerms 
                       ? 'bg-violet-600 border-violet-600' 
-                      : 'bg-transparent border-2 border-white/20 hover:border-white/40'
+                      : 'bg-transparent border-white/20 hover:border-white/40'
                   }`}
                 >
                   {agreeTerms && <CheckCircle className="w-3.5 h-3.5 text-white" />}
                 </button>
-                <label className="text-sm text-gray-400">
+                <label className="text-sm text-white/50 font-light">
                   I agree to the{' '}
-                  <Link href="/terms" className="text-violet-400 hover:text-violet-300 underline underline-offset-2">
+                  <Link href="/terms" className="text-violet-400 hover:text-violet-300 transition-colors">
                     Terms & Conditions
                   </Link>
                 </label>
@@ -402,7 +404,7 @@ export default function RegisterPage() {
               <button
                 type="submit"
                 disabled={loading || !emailVerified || !agreeTerms}
-                className="w-full py-3.5 px-4 rounded-xl font-semibold text-white bg-violet-600 hover:bg-violet-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-violet-600 flex items-center justify-center gap-2 mt-2"
+                className="w-full py-3.5 px-4 rounded-lg text-white text-sm font-light tracking-wider bg-violet-600 hover:bg-violet-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed border border-violet-500 flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <><Loader2 className="w-5 h-5 animate-spin" /> Creating account...</>
@@ -417,7 +419,7 @@ export default function RegisterPage() {
                   <div className="w-full border-t border-white/10"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-4 bg-[#252136] text-gray-500">Or register with</span>
+                  <span className="px-4 bg-[#0f0f0f] text-white/30 font-light">Or register with</span>
                 </div>
               </div>
 
@@ -425,7 +427,7 @@ export default function RegisterPage() {
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
-                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#1a1625] border border-white/10 text-white hover:bg-white/5 transition-all"
+                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 hover:text-white transition-all font-light tracking-wide"
                 >
                   <svg className="w-5 h-5" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -437,7 +439,7 @@ export default function RegisterPage() {
                 </button>
                 <button
                   type="button"
-                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#1a1625] border border-white/10 text-white hover:bg-white/5 transition-all"
+                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 hover:text-white transition-all font-light tracking-wide"
                 >
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
@@ -447,10 +449,36 @@ export default function RegisterPage() {
               </div>
             </form>
           </div>
+          </div>
         </div>
       </div>
 
       <style jsx global>{`
+        @keyframes border-beam {
+          0% {
+            top: -100px;
+            left: -100px;
+          }
+          25% {
+            top: -100px;
+            left: calc(100% - 100px);
+          }
+          50% {
+            top: calc(100% - 100px);
+            left: calc(100% - 100px);
+          }
+          75% {
+            top: calc(100% - 100px);
+            left: -100px;
+          }
+          100% {
+            top: -100px;
+            left: -100px;
+          }
+        }
+        .animate-border-beam {
+          animation: border-beam 8s linear infinite;
+        }
         .pe_verify_email { 
           width: 100%; 
           min-height: 50px;
@@ -461,21 +489,19 @@ export default function RegisterPage() {
         .pe_verify_email > div > button,
         .pe_verify_email > div > a {
           width: 100% !important;
-          background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%) !important;
-          border: none !important;
-          border-radius: 12px !important;
+          background: #7c3aed !important;
+          border: 1px solid #8b5cf6 !important;
+          border-radius: 8px !important;
           padding: 14px 24px !important;
           font-size: 0 !important;
-          font-weight: 600 !important;
+          font-weight: 300 !important;
+          letter-spacing: 0.05em !important;
           color: white !important;
           cursor: pointer !important;
           transition: all 0.2s ease !important;
           display: flex !important;
           align-items: center !important;
           justify-content: center !important;
-          gap: 8px !important;
-          text-decoration: none !important;
-          box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3) !important;
         }
         .pe_verify_email button::after,
         .pe_verify_email .pe_button::after,
@@ -484,21 +510,19 @@ export default function RegisterPage() {
         .pe_verify_email > div > a::after {
           content: 'Verify Email' !important;
           font-size: 14px !important;
-          font-weight: 600 !important;
+          font-weight: 300 !important;
+          letter-spacing: 0.05em !important;
         }
         .pe_verify_email button:hover,
         .pe_verify_email .pe_button:hover,
         .pe_verify_email a:hover,
         .pe_verify_email > div > button:hover,
         .pe_verify_email > div > a:hover {
-          background: linear-gradient(135deg, #8b5cf6 0%, #818cf8 100%) !important;
-          box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4) !important;
-          transform: translateY(-1px) !important;
+          background: #8b5cf6 !important;
         }
         .pe_verify_email iframe { 
-          border-radius: 12px !important; 
+          border-radius: 8px !important; 
         }
-        /* Hide any images/icons in the button */
         .pe_verify_email button img,
         .pe_verify_email a img,
         .pe_verify_email button svg,
