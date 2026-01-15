@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthStore } from '@/stores';
 import { Camera, Loader2, Mail, Lock as LockIcon, User, CheckCircle, ShieldCheck, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
-import Script from 'next/script';
 
 declare global {
   interface Window {
@@ -29,6 +28,8 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
+  const [widgetKey, setWidgetKey] = useState(0);
+  const widgetRef = useRef<HTMLDivElement>(null);
   const { register } = useAuth();
   const router = useRouter();
 
@@ -40,6 +41,71 @@ export default function RegisterPage() {
       router.replace('/dashboard');
     }
   }, [user, initialized, router]);
+
+  // Load and initialize phone.email widget
+  useEffect(() => {
+    let mounted = true;
+
+    const initWidget = async () => {
+      // Wait for DOM to be ready
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      if (!mounted) return;
+
+      // Remove existing scripts to force fresh load
+      document.querySelectorAll('script[src*="phone.email"]').forEach(s => s.remove());
+      
+      // Clear any existing widget content
+      if (widgetRef.current) {
+        widgetRef.current.innerHTML = '';
+      }
+
+      // Wait a bit before adding new script
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      if (!mounted) return;
+
+      // Create and append new script
+      const script = document.createElement('script');
+      script.src = 'https://www.phone.email/verify_email_v1.js';
+      script.async = false; // Load synchronously
+      document.body.appendChild(script);
+
+      // Change button text after widget loads
+      const changeButtonText = () => {
+        if (!mounted) return;
+        const widget = widgetRef.current;
+        if (widget) {
+          const buttons = widget.querySelectorAll('button, a');
+          buttons.forEach((btn) => {
+            if (btn.textContent?.toLowerCase().includes('sign') || btn.textContent?.toLowerCase().includes('email')) {
+              btn.textContent = 'Verify Email';
+            }
+          });
+        }
+      };
+
+      // Try multiple times to catch when widget renders
+      setTimeout(changeButtonText, 500);
+      setTimeout(changeButtonText, 1000);
+      setTimeout(changeButtonText, 1500);
+      setTimeout(changeButtonText, 2000);
+    };
+
+    initWidget();
+    
+    return () => {
+      mounted = false;
+    };
+  }, [widgetKey]); // Re-run when widgetKey changes
+
+  // Force widget reload when email verification is reset
+  const resetEmailVerification = useCallback(() => {
+    setEmailVerified(false);
+    setVerifiedEmail('');
+    setFormData(prev => ({ ...prev, email: '' }));
+    setWidgetKey(prev => prev + 1); // Force widget reload
+  }, []);
 
   const handlePhoneEmailCallback = useCallback(async (userObj: { user_json_url: string }) => {
     setVerifying(true);
@@ -122,8 +188,6 @@ export default function RegisterPage() {
 
   return (
     <>
-      <Script src="https://www.phone.email/verify_email_v1.js" strategy="afterInteractive" />
-
       <div className="min-h-screen bg-[#1a1625] flex items-center justify-center p-4">
         {/* Main Card Container */}
         <div className="w-full max-w-[950px] bg-[#252136] rounded-3xl overflow-hidden shadow-2xl shadow-black/50 flex flex-col lg:flex-row">
@@ -243,7 +307,13 @@ export default function RegisterPage() {
                           <ShieldCheck className="w-4 h-4 text-amber-400 flex-shrink-0" />
                           <p className="text-xs text-amber-200">Email verification required to continue</p>
                         </div>
-                        <div className="pe_verify_email" data-client-id="12610092153433741136" />
+                        {/* Phone Email Widget */}
+                        <div 
+                          key={widgetKey}
+                          ref={widgetRef}
+                          className="pe_verify_email" 
+                          data-client-id="12610092153433741136"
+                        />
                       </div>
                     )}
                   </div>
@@ -254,11 +324,7 @@ export default function RegisterPage() {
                     </span>
                     <button
                       type="button"
-                      onClick={() => { 
-                        setEmailVerified(false); 
-                        setVerifiedEmail(''); 
-                        setFormData(prev => ({ ...prev, email: '' })); 
-                      }}
+                      onClick={resetEmailVerification}
                       className="text-xs text-gray-400 hover:text-white transition-colors"
                     >
                       Change
@@ -399,7 +465,7 @@ export default function RegisterPage() {
           border: none !important;
           border-radius: 12px !important;
           padding: 14px 24px !important;
-          font-size: 14px !important;
+          font-size: 0 !important;
           font-weight: 600 !important;
           color: white !important;
           cursor: pointer !important;
@@ -410,6 +476,15 @@ export default function RegisterPage() {
           gap: 8px !important;
           text-decoration: none !important;
           box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3) !important;
+        }
+        .pe_verify_email button::after,
+        .pe_verify_email .pe_button::after,
+        .pe_verify_email a::after,
+        .pe_verify_email > div > button::after,
+        .pe_verify_email > div > a::after {
+          content: 'Verify Email' !important;
+          font-size: 14px !important;
+          font-weight: 600 !important;
         }
         .pe_verify_email button:hover,
         .pe_verify_email .pe_button:hover,
@@ -422,6 +497,13 @@ export default function RegisterPage() {
         }
         .pe_verify_email iframe { 
           border-radius: 12px !important; 
+        }
+        /* Hide any images/icons in the button */
+        .pe_verify_email button img,
+        .pe_verify_email a img,
+        .pe_verify_email button svg,
+        .pe_verify_email a svg {
+          display: none !important;
         }
       `}</style>
     </>
