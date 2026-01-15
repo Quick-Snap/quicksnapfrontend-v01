@@ -5,14 +5,26 @@ import { userApi, eventApi } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { Camera, Image as ImageIcon, Calendar, TrendingUp, Download, Upload, Plus, Sparkles } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import JoinEventModal from './JoinEventModal';
 
 export default function StudentDashboard() {
   const { user } = useAuth();
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
-  const { data: stats } = useQuery('userStats', () => userApi.getStats());
-  const { data: eventsData } = useQuery('upcomingEvents', () => eventApi.getAll({ isActive: true, page: 1, limit: 6 }));
+  const { data: stats } = useQuery('userStats', () => userApi.getStats(), {
+    enabled: !!user,
+  });
+  const { data: eventsData } = useQuery(
+    ['upcomingEvents', user?.id], 
+    () => eventApi.getAll({ isActive: true, page: 1, limit: 6 }),
+    { enabled: !!user }
+  );
+  
+  // Memoize the filtered events to properly react to user.events changes
+  const myEvents = useMemo(() => {
+    if (!eventsData?.data?.events || !user?.events) return [];
+    return eventsData.data.events.filter((e: any) => user.events?.includes(e._id));
+  }, [eventsData?.data?.events, user?.events]);
 
   return (
     <div className="space-y-8">
@@ -134,24 +146,22 @@ export default function StudentDashboard() {
             View all →
           </Link>
         </div>
-        {eventsData?.data?.events && eventsData.data.events.filter((e: any) => user?.events?.includes(e._id)).length > 0 ? (
+        {myEvents.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {eventsData.data.events
-              .filter((e: any) => user?.events?.includes(e._id))
-              .map((event: any) => (
-                <Link
-                  key={event._id}
-                  href={`/events/${event._id}`}
-                  className="card-hover group"
-                >
-                  <h3 className="text-xl font-semibold text-white mb-2 group-hover:text-violet-400 transition-colors">{event.name}</h3>
-                  <p className="text-gray-400 text-sm mb-4 line-clamp-2">{event.description}</p>
-                  <div className="flex items-center text-sm text-gray-500">
-                    <Calendar className="h-4 w-4 mr-2 text-violet-400" />
-                    {new Date(event.startDate).toLocaleDateString()}
-                  </div>
-                </Link>
-              ))}
+            {myEvents.map((event: any) => (
+              <Link
+                key={event._id}
+                href={`/events/${event._id}`}
+                className="card-hover group"
+              >
+                <h3 className="text-xl font-semibold text-white mb-2 group-hover:text-violet-400 transition-colors">{event.name}</h3>
+                <p className="text-gray-400 text-sm mb-4 line-clamp-2">{event.description}</p>
+                <div className="flex items-center text-sm text-gray-500">
+                  <Calendar className="h-4 w-4 mr-2 text-violet-400" />
+                  {new Date(event.startDate).toLocaleDateString()}
+                </div>
+              </Link>
+            ))}
           </div>
         ) : (
           <div className="card text-center py-12">

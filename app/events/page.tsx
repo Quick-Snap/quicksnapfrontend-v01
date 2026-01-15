@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery } from 'react-query';
+import { useQuery, useQueryClient } from 'react-query';
 import { eventApi } from '@/lib/api';
 import {
   Calendar,
@@ -24,6 +24,7 @@ import toast from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRole } from '@/hooks/useRole';
 import { useRouter } from 'next/navigation';
+import { useAuthStore } from '@/stores/authStore';
 
 type FilterType = 'all' | 'today' | 'week' | 'upcoming' | 'my';
 
@@ -31,6 +32,8 @@ export default function EventsPage() {
   const { user } = useAuth();
   const { isOrganizer, isAdmin, isPhotographer, isUser } = useRole();
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const loadUser = useAuthStore((state) => state.loadUser);
   const { data, isLoading, refetch } = useQuery('events', () => eventApi.getAll({ isActive: true }));
   const [searchQuery, setSearchQuery] = useState('');
   // Photographers and guests only see their joined events
@@ -53,7 +56,15 @@ export default function EventsPage() {
         toast.success(`Successfully joined "${response.data.name}"!`);
         setIsJoinModalOpen(false);
         setJoinCode('');
+        
+        // Reload user data to get updated events list
+        await loadUser();
+        
+        // Invalidate all relevant queries for fresh data
+        queryClient.invalidateQueries('userStats');
+        queryClient.invalidateQueries('myPhotos');
         refetch();
+        
         router.push(`/events/${response.data.eventId}`);
       }
     } catch (error: any) {

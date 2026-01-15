@@ -112,25 +112,12 @@ export const useAuthStore = create<AuthStore>()(
           if (response.success && response.data) {
             localStorage.setItem('token', response.data.token);
             
-            const userData = response.data.user;
-            const roles = userData.roles || [userData.role || 'guest'];
-            const normalizedRoles = roles.map(normalizeRole);
-
-            const user: User = {
-              id: userData.id || userData._id || '',
-              email: userData.email || '',
-              name: userData.name || '',
-              avatar: userData.avatar,
-              role: normalizedRoles[0] || 'user',
-              roles: normalizedRoles,
-              faceRegistered: userData.faceRegistered || !!userData.faceId,
-              createdAt: userData.createdAt,
-              settings: userData.settings,
-              events: userData.events?.map((e: any) => typeof e === 'string' ? e : e._id),
-            };
-
-            set({ user, activeRole: normalizedRoles[0], initialized: true });
+            // Show success toast immediately
             toast.success('Logged in successfully!');
+            
+            // Fetch complete user data (including full events array) from /auth/me
+            const { loadUser } = get();
+            await loadUser();
           }
         } catch (error: any) {
           const message = error.response?.data?.message || 'Login failed';
@@ -146,25 +133,12 @@ export const useAuthStore = create<AuthStore>()(
           if (response.success && response.data) {
             localStorage.setItem('token', response.data.token);
             
-            const userData = response.data.user;
-            const roles = userData.roles || [userData.role || 'guest'];
-            const normalizedRoles = roles.map(normalizeRole);
-
-            const user: User = {
-              id: userData.id || userData._id || '',
-              email: userData.email || '',
-              name: userData.name || '',
-              avatar: userData.avatar,
-              role: normalizedRoles[0] || 'user',
-              roles: normalizedRoles,
-              faceRegistered: userData.faceRegistered || false,
-              createdAt: userData.createdAt,
-              settings: userData.settings,
-              events: userData.events?.map((e: any) => typeof e === 'string' ? e : e._id),
-            };
-
-            set({ user, activeRole: normalizedRoles[0], initialized: true });
+            // Show success toast immediately
             toast.success('Account created successfully!');
+            
+            // Fetch complete user data from /auth/me
+            const { loadUser } = get();
+            await loadUser();
           }
         } catch (error: any) {
           const message = error.response?.data?.message || 'Registration failed';

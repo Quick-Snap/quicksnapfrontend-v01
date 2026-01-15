@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useQuery } from 'react-query';
 import { photoApi } from '../../../lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 import { Download, Eye, Calendar, Users, Image as ImageIcon, Grid, List } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
@@ -12,13 +13,14 @@ interface PhotoGalleryProps {
 }
 
 export default function PhotoGallery({ eventId }: PhotoGalleryProps) {
+  const { user } = useAuth();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedPhoto, setSelectedPhoto] = useState<any>(null);
 
   const { data, isLoading } = useQuery(
     ['myPhotos', eventId],
     () => photoApi.getMyPhotos({ eventId, page: 1, limit: 100 }),
-    { enabled: true }
+    { enabled: !!user }
   );
 
   const handleDownload = async (photo: any) => {
@@ -52,7 +54,7 @@ export default function PhotoGallery({ eventId }: PhotoGalleryProps) {
   }
 
   // Handle both flat array and grouped by event formats
-  let photos: any[] = [];
+  let rawPhotos: any[] = [];
   if (data?.data?.photos) {
     // Check if photos are grouped by event
     if (Array.isArray(data.data.photos) && data.data.photos.length > 0) {
@@ -60,13 +62,20 @@ export default function PhotoGallery({ eventId }: PhotoGalleryProps) {
       // If first item has 'photos' property, it's grouped by event
       if (firstItem.photos && Array.isArray(firstItem.photos)) {
         // Flatten grouped photos
-        photos = data.data.photos.flatMap((group: any) => group.photos || []);
+        rawPhotos = data.data.photos.flatMap((group: any) => group.photos || []);
       } else {
         // It's a flat array
-        photos = data.data.photos;
+        rawPhotos = data.data.photos;
       }
     }
   }
+
+  // Filter photos to only include those from events the user has joined
+  const userJoinedEvents = user?.events || [];
+  const photos = rawPhotos.filter((photo: any) => {
+    const photoEventId = photo.eventId?._id || photo.eventId;
+    return photoEventId && userJoinedEvents.includes(photoEventId);
+  });
 
   if (photos.length === 0) {
     return (

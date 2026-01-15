@@ -25,7 +25,15 @@ export default function MyPhotosPage() {
     }
   );
 
-  const allPhotos = queryData?.data?.photos || [];
+  // Get all photos and filter to only show photos from events user has joined
+  const rawPhotos = queryData?.data?.photos || [];
+  const userJoinedEvents = user?.events || [];
+  
+  // Filter photos to only include those from events the user has joined
+  const allPhotos = rawPhotos.filter((photo: any) => {
+    const photoEventId = photo.eventId?._id || photo.eventId;
+    return photoEventId && userJoinedEvents.includes(photoEventId);
+  });
 
   // Pagination calculations
   const totalPhotos = allPhotos.length;
