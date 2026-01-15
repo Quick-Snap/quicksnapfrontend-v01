@@ -71,7 +71,6 @@ export default function Navbar() {
       // Organizers only see My Events (no Events, My Photos, or Photographer Upload)
       nav.push({ name: 'My Events', href: '/organizer/events', icon: Calendar });
     } else if (isPhotographer) {
-      nav.push({ name: 'Events', href: '/events', icon: Calendar });
       nav.push({ name: 'Upload Photos', href: '/photographer/upload', icon: Upload });
     } else {
       // Regular users (guests)
