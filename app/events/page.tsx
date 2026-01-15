@@ -146,81 +146,91 @@ export default function EventsPage() {
       </div>
 
       {/* Header Section */}
-      <div className="relative bg-[#0d0d0d]/80 backdrop-blur-xl border-b border-white/5 sticky top-16 z-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-            <div>
-              <h1 className="text-4xl font-bold text-gradient mb-2">
-                {showOnlyJoinedEvents ? 'My Events' : 'Discover Events'}
-              </h1>
-              <p className="text-gray-400 flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-violet-400" />
-                {isPhotographer
-                  ? 'Events you are assigned to photograph'
-                  : isUser
-                    ? 'Events you have joined'
-                    : 'Find and join amazing campus activities'}
-              </p>
-            </div>
-
-            <div className="flex w-full md:w-auto gap-3">
-              {/* Join by Code only for guests - not for photographers or organizers */}
-              {!isPhotographer && !isOrganizer && !isAdmin && (
-                <Button
-                  variant="outline"
-                  onClick={() => setIsJoinModalOpen(true)}
-                  className="w-full md:w-auto border-indigo-200 text-indigo-700 hover:bg-indigo-50"
-                >
-                  <Users className="w-4 h-4 mr-2" />
-                  Join by Code
-                </Button>
-              )}
-              {(isOrganizer || isAdmin) && (
-                <Link href="/organizer/events/create">
-                  <Button className="w-full md:w-auto shadow-lg shadow-violet-500/20 hover:shadow-violet-500/40 transition-all">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create Event
-                  </Button>
-                </Link>
-              )}
-            </div>
-          </div>
-
-          {/* Search and Filter Bar */}
-          <div className="mt-8 flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Search events, venues, or keywords..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all text-white placeholder-gray-500"
-              />
-            </div>
-            {/* Hide filter buttons for photographers and guests - they only see joined events */}
-            {!showOnlyJoinedEvents && (
-              <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 no-scrollbar">
-                {[
-                  ...(user ? [{ id: 'my', label: 'My Events' }] : []),
-                  { id: 'all', label: 'All Events' },
-                  { id: 'upcoming', label: 'Upcoming' },
-                  { id: 'today', label: 'Today' },
-                  { id: 'week', label: 'This Week' },
-                ].map((filter) => (
-                  <button
-                    key={filter.id}
-                    onClick={() => setFilterType(filter.id as FilterType)}
-                    className={`px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all border ${filterType === filter.id
-                      ? 'bg-violet-500/20 text-violet-400 border-violet-500/30 shadow-lg shadow-violet-500/10'
-                      : 'bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:text-white hover:border-white/20'
-                      }`}
-                  >
-                    {filter.label}
-                  </button>
-                ))}
+      <div className="relative overflow-hidden border-b border-white/5 bg-gradient-to-br from-[#181025] via-[#0f0b1d] to-[#0a0d1e] shadow-[0_18px_70px_rgba(0,0,0,0.45)]">
+        <div className="absolute inset-0 bg-gradient-mesh opacity-60" />
+        <div className="absolute -left-20 top-0 w-72 h-72 bg-violet-500/20 blur-3xl" />
+        <div className="absolute right-0 bottom-0 w-80 h-80 bg-indigo-500/15 blur-3xl" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 relative">
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+              <div className="space-y-3">
+                <div className="inline-flex items-center gap-2 rounded-full bg-white/5 px-4 py-1 border border-white/10">
+                  <Sparkles className="w-4 h-4 text-violet-200" />
+                  <span className="text-xs uppercase tracking-[0.25em] text-gray-200">
+                    {showOnlyJoinedEvents ? 'Your events' : 'Discover events'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <h1 className="text-3xl md:text-4xl font-semibold text-white tracking-tight">
+                    {showOnlyJoinedEvents ? 'Events you are in' : 'Experience every moment'}
+                  </h1>
+                  <span className="px-3 py-1 text-xs rounded-full bg-white/5 border border-white/10 text-gray-200">
+                    {events.length} events
+                  </span>
+                </div>
+                <p className="text-gray-300 max-w-2xl">
+                  Curated list of campus happenings styled to match the landing page aesthetic. Search, filter, and join effortlessly.
+                </p>
               </div>
-            )}
+
+              <div className="flex w-full md:w-auto gap-3">
+                {!isPhotographer && !isOrganizer && !isAdmin && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsJoinModalOpen(true)}
+                    className="w-full md:w-auto border-white/15 text-white bg-white/5 hover:bg-white/10"
+                  >
+                    <Users className="w-4 h-4 mr-2" />
+                    Join by Code
+                  </Button>
+                )}
+                {(isOrganizer || isAdmin) && (
+                  <Link href="/organizer/events/create">
+                    <Button className="w-full md:w-auto shadow-lg shadow-violet-500/20 hover:shadow-violet-500/40 transition-all">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create Event
+                    </Button>
+                  </Link>
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5" />
+                <input
+                  type="text"
+                  placeholder="Search events, venues, or keywords..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all text-white placeholder-gray-500"
+                />
+              </div>
+
+              {!showOnlyJoinedEvents && (
+                <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 no-scrollbar">
+                  {[
+                    ...(user ? [{ id: 'my', label: 'My Events' }] : []),
+                    { id: 'all', label: 'All Events' },
+                    { id: 'upcoming', label: 'Upcoming' },
+                    { id: 'today', label: 'Today' },
+                    { id: 'week', label: 'This Week' },
+                  ].map((filter) => (
+                    <button
+                      key={filter.id}
+                      onClick={() => setFilterType(filter.id as FilterType)}
+                      className={`px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all border ${
+                        filterType === filter.id
+                          ? 'bg-violet-500/20 text-violet-200 border-violet-500/40 shadow-lg shadow-violet-500/15'
+                          : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10 hover:text-white hover:border-white/20'
+                      }`}
+                    >
+                      {filter.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -235,7 +245,7 @@ export default function EventsPage() {
                 href={`/events/${event._id}`}
                 className="group block"
               >
-                <div className="bg-[#111111] rounded-2xl overflow-hidden border border-white/5 hover:border-violet-500/30 transition-all duration-300 transform hover:-translate-y-1 h-full flex flex-col hover:shadow-xl hover:shadow-violet-500/10">
+                <div className="bg-[#0f0c18] rounded-2xl overflow-hidden border border-white/5 hover:border-violet-500/30 transition-all duration-300 transform hover:-translate-y-1 h-full flex flex-col hover:shadow-xl hover:shadow-violet-500/10 shadow-[0_12px_40px_rgba(0,0,0,0.35)]">
                   {/* Image Section */}
                   <div className="h-48 relative overflow-hidden">
                     {event.coverImage ? (
@@ -288,39 +298,44 @@ export default function EventsPage() {
                   {/* Content Section */}
                   <div className="p-6 flex-1 flex flex-col">
                     <div className="mb-4">
-                      <h3 className="text-xl font-bold text-white mb-2 group-hover:text-violet-400 transition-colors line-clamp-1">
-                        {event.name}
-                      </h3>
-                      <p className="text-gray-500 text-sm line-clamp-2 leading-relaxed">
+                      <div className="flex items-start justify-between gap-3">
+                        <h3 className="text-xl font-semibold text-white mb-1 group-hover:text-violet-300 transition-colors line-clamp-1">
+                          {event.name}
+                        </h3>
+                        <span className="px-3 py-1 rounded-full text-[11px] bg-white/5 border border-white/10 text-gray-300">
+                          {event.attendees?.length || 0} going
+                        </span>
+                      </div>
+                      <p className="text-gray-400 text-sm line-clamp-2 leading-relaxed">
                         {event.description || 'No description available for this event.'}
                       </p>
                     </div>
 
                     <div className="space-y-3 mb-6 flex-1">
-                      <div className="flex items-center text-sm text-gray-400">
-                        <Clock className="w-4 h-4 mr-3 text-violet-400 flex-shrink-0" />
+                      <div className="flex items-center text-sm text-gray-300">
+                        <Clock className="w-4 h-4 mr-3 text-violet-300 flex-shrink-0" />
                         <span>
-                          {format(new Date(event.startDate), 'h:mm a')} - {format(new Date(event.endDate), 'h:mm a')}
+                          {format(new Date(event.startDate), 'EEE, MMM d • h:mm a')} – {format(new Date(event.endDate), 'h:mm a')}
                         </span>
                       </div>
-                      <div className="flex items-center text-sm text-gray-400">
-                        <MapPin className="w-4 h-4 mr-3 text-pink-400 flex-shrink-0" />
+                      <div className="flex items-center text-sm text-gray-300">
+                        <MapPin className="w-4 h-4 mr-3 text-pink-300 flex-shrink-0" />
                         <span className="truncate">{event.venue}</span>
                       </div>
-                      <div className="flex items-center text-sm text-gray-400">
-                        <Users className="w-4 h-4 mr-3 text-emerald-400 flex-shrink-0" />
-                        <span>{event.attendees?.length || 0} attending</span>
+                      <div className="flex items-center text-sm text-emerald-300">
+                        <Users className="w-4 h-4 mr-3 flex-shrink-0" />
+                        <span>Managed by {event.organizer?.name || 'Organizer'}</span>
                       </div>
                       {(user?.role === 'admin' || event.organizer?._id === user?.id || event.organizer === user?.id) && event.accessCode && (
-                        <div className="flex items-center text-sm font-medium text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100">
-                          <ShieldAlert className="w-4 h-4 mr-2 text-indigo-500 flex-shrink-0" />
+                        <div className="flex items-center text-sm font-medium text-indigo-100 bg-indigo-500/10 px-3 py-1.5 rounded-lg border border-indigo-400/20">
+                          <ShieldAlert className="w-4 h-4 mr-2 text-indigo-200 flex-shrink-0" />
                           <span>Code: <span className="font-mono tracking-wider">{event.accessCode}</span></span>
                         </div>
                       )}
                     </div>
 
                     <div className="pt-4 border-t border-white/5 flex items-center justify-between">
-                      <span className="text-sm font-medium text-violet-400 flex items-center group/link">
+                      <span className="text-sm font-medium text-violet-300 flex items-center group/link">
                         View Details
                         <ArrowRight className="w-4 h-4 ml-1 transform group-hover/link:translate-x-1 transition-transform" />
                       </span>
@@ -331,7 +346,7 @@ export default function EventsPage() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-24 bg-[#111111] rounded-3xl border border-dashed border-white/10">
+          <div className="text-center py-24 bg-[#0f0c18] rounded-3xl border border-dashed border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.35)]">
             <div className="w-20 h-20 bg-violet-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
               <Search className="h-8 w-8 text-violet-400" />
             </div>
@@ -358,10 +373,10 @@ export default function EventsPage() {
 
       {/* Join Code Modal */}
       {isJoinModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl animate-in fade-in zoom-in duration-200">
-            <h2 className="text-2xl font-bold mb-2">Join Private Event</h2>
-            <p className="text-gray-500 mb-6">Enter the access code shared with you by the organizer.</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="bg-[#0f0c18] border border-white/10 rounded-3xl p-8 max-w-md w-full shadow-[0_20px_80px_rgba(0,0,0,0.6)] animate-in fade-in zoom-in duration-200">
+            <h2 className="text-2xl font-semibold text-white mb-2">Join Private Event</h2>
+            <p className="text-gray-400 mb-6">Enter the access code shared with you by the organizer.</p>
 
             <form onSubmit={handleJoinByCode} className="space-y-4">
               <input
@@ -369,7 +384,7 @@ export default function EventsPage() {
                 placeholder="Access Code (e.g. SNAPP01)"
                 value={joinCode}
                 onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                className="w-full px-4 py-3 rounded-xl border-2 border-gray-100 focus:border-indigo-500 focus:outline-none transition-all text-center text-lg font-bold tracking-widest uppercase text-gray-900 bg-white placeholder-gray-400"
+                className="w-full px-4 py-3 rounded-xl border border-white/10 focus:border-violet-500/60 focus:outline-none transition-all text-center text-lg font-semibold tracking-widest uppercase text-white bg-white/5 placeholder-gray-500"
                 autoFocus
               />
               <div className="flex gap-3">
@@ -377,14 +392,14 @@ export default function EventsPage() {
                   type="button"
                   variant="outline"
                   onClick={() => setIsJoinModalOpen(false)}
-                  className="flex-1"
+                  className="flex-1 border-white/20 text-white hover:bg-white/10"
                   disabled={isJoining}
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
-                  className="flex-1"
+                  className="flex-1 shadow-lg shadow-violet-500/20 hover:shadow-violet-500/40"
                   disabled={isJoining || !joinCode.trim()}
                 >
                   {isJoining ? 'Joining...' : 'Join Event'}
