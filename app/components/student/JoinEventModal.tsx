@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { eventApi } from '@/lib/api';
 import { X, Hash, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useQueryClient } from 'react-query';
+import { useAuthStore } from '@/stores/authStore';
 
 interface JoinEventModalProps {
     isOpen: boolean;
@@ -16,6 +17,7 @@ export default function JoinEventModal({ isOpen, onClose }: JoinEventModalProps)
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
     const queryClient = useQueryClient();
+    const loadUser = useAuthStore((state) => state.loadUser);
 
     if (!isOpen) return null;
 
@@ -30,9 +32,14 @@ export default function JoinEventModal({ isOpen, onClose }: JoinEventModalProps)
             const response = await eventApi.joinByCode(accessCode.trim().toUpperCase());
             if (response.success) {
                 setSuccess(true);
-                // Refresh stats and events
+                
+                // Reload user data to get updated events list
+                await loadUser();
+                
+                // Refresh all relevant queries
                 queryClient.invalidateQueries('userStats');
                 queryClient.invalidateQueries('upcomingEvents');
+                queryClient.invalidateQueries('myPhotos');
 
                 setTimeout(() => {
                     onClose();
