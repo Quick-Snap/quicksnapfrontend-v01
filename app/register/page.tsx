@@ -5,11 +5,10 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthStore } from '@/stores';
-import { Camera, Loader2, Mail, Lock as LockIcon, User, Sparkles, CheckCircle, ShieldCheck } from 'lucide-react';
+import { Camera, Loader2, Mail, Lock as LockIcon, User, CheckCircle, ShieldCheck, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Script from 'next/script';
 
-// Declare global type for phoneEmailReceiver
 declare global {
   interface Window {
     phoneEmailReceiver?: (userObj: { user_json_url: string }) => void;
@@ -27,10 +26,12 @@ export default function RegisterPage() {
   const [emailVerified, setEmailVerified] = useState(false);
   const [verifiedEmail, setVerifiedEmail] = useState('');
   const [verifying, setVerifying] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [agreeTerms, setAgreeTerms] = useState(false);
   const { register } = useAuth();
   const router = useRouter();
 
-  // Redirect if already logged in
   const user = useAuthStore((state) => state.user);
   const initialized = useAuthStore((state) => state.initialized);
 
@@ -40,11 +41,9 @@ export default function RegisterPage() {
     }
   }, [user, initialized, router]);
 
-  // Set up the phone email receiver callback
   const handlePhoneEmailCallback = useCallback(async (userObj: { user_json_url: string }) => {
     setVerifying(true);
     try {
-      // Fetch the verified email from the JSON URL
       const response = await fetch(userObj.user_json_url);
       const data = await response.json();
       
@@ -64,7 +63,6 @@ export default function RegisterPage() {
     }
   }, []);
 
-  // Register the callback globally when component mounts
   useEffect(() => {
     window.phoneEmailReceiver = handlePhoneEmailCallback;
     return () => {
@@ -74,39 +72,26 @@ export default function RegisterPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
-    
-    // If email is changed after verification, reset verification
+    setFormData({ ...formData, [name]: value });
     if (name === 'email' && value !== verifiedEmail) {
       setEmailVerified(false);
     }
   };
 
-  const getPasswordStrength = (password: string) => {
-    if (password.length === 0) return { strength: 0, label: '', color: '' };
-    if (password.length < 6) return { strength: 33, label: 'Weak', color: 'bg-red-500' };
-    if (password.length < 10) return { strength: 66, label: 'Medium', color: 'bg-amber-500' };
-    return { strength: 100, label: 'Strong', color: 'bg-emerald-500' };
-  };
-
-  const passwordStrength = getPasswordStrength(formData.password);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!emailVerified) {
       toast.error('Please verify your email first');
       return;
     }
-
+    if (!agreeTerms) {
+      toast.error('Please agree to the Terms & Conditions');
+      return;
+    }
     if (formData.password !== formData.confirmPassword) {
       toast.error('Passwords do not match');
       return;
     }
-
     if (formData.password.length < 6) {
       toast.error('Password must be at least 6 characters');
       return;
@@ -119,20 +104,17 @@ export default function RegisterPage() {
         email: formData.email,
         password: formData.password,
       });
-      // Redirect to face registration after successful registration
       router.push('/register-face');
     } catch (error: any) {
-      // Error already handled by auth context with toast
       console.error('Registration error:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  // Show loading while checking auth
   if (!initialized || user) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+      <div className="min-h-screen bg-[#1a1625] flex items-center justify-center">
         <div className="w-12 h-12 border-4 border-violet-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -140,133 +122,144 @@ export default function RegisterPage() {
 
   return (
     <>
-      {/* Load Phone Email Verification Script */}
-      <Script
-        src="https://www.phone.email/verify_email_v1.js"
-        strategy="lazyOnload"
-      />
+      <Script src="https://www.phone.email/verify_email_v1.js" strategy="afterInteractive" />
 
-      <div className="min-h-screen relative overflow-hidden flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        {/* Animated Background */}
-        <div className="absolute inset-0 bg-[#0a0a0a]">
-          <div className="absolute inset-0 bg-gradient-mesh opacity-50"></div>
-        </div>
+      <div className="min-h-screen bg-[#1a1625] flex items-center justify-center p-4">
+        {/* Main Card Container */}
+        <div className="w-full max-w-[950px] bg-[#252136] rounded-3xl overflow-hidden shadow-2xl shadow-black/50 flex flex-col lg:flex-row">
+          
+          {/* Left Side - Image Section */}
+          <div className="lg:w-[45%] relative min-h-[200px] lg:min-h-[580px]">
+            {/* Background Image */}
+            <div 
+              className="absolute inset-0 bg-cover bg-center"
+              style={{
+                backgroundImage: `url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=2070')`,
+              }}
+            />
+            {/* Purple Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-b from-violet-900/40 via-violet-900/60 to-[#252136]" />
+            
+            {/* Content */}
+            <div className="relative h-full flex flex-col justify-between p-6 lg:p-8">
+              {/* Logo & Back Link */}
+              <div className="flex items-center justify-between">
+                <Link href="/" className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-white/10 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                    <Camera className="h-4 w-4 text-white" />
+                  </div>
+                  <span className="text-white font-bold text-lg">QuickSnap</span>
+                </Link>
+                <Link 
+                  href="/" 
+                  className="hidden lg:flex items-center gap-1 text-white/70 hover:text-white text-sm transition-colors"
+                >
+                  Back to website <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
 
-        {/* Animated Blobs */}
-        <div className="absolute top-10 right-10 w-96 h-96 bg-purple-500/10 rounded-full blur-[100px] animate-float"></div>
-        <div className="absolute bottom-10 left-10 w-80 h-80 bg-violet-500/10 rounded-full blur-[100px] animate-float delay-200"></div>
-        <div className="absolute top-1/3 left-1/3 w-72 h-72 bg-indigo-500/5 rounded-full blur-[100px] animate-float delay-400"></div>
-
-        {/* Register Card */}
-        <div className="max-w-md w-full relative z-10 animate-slide-up">
-          {/* Glass Card */}
-          <div className="card-glass rounded-2xl p-8 shadow-2xl">
-            {/* Logo and Header */}
-            <div className="text-center mb-8">
-              <div className="flex justify-center mb-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-violet-500/30 hover:shadow-violet-500/50 transform hover:scale-110 transition-all duration-300">
-                  <Camera className="h-8 w-8 text-white" />
+              {/* Bottom Text */}
+              <div className="mt-auto lg:mt-0">
+                <h2 className="text-2xl lg:text-3xl font-bold text-white leading-tight">
+                  Capturing Moments,
+                </h2>
+                <h2 className="text-2xl lg:text-3xl font-bold text-white leading-tight">
+                  Creating Memories
+                </h2>
+                
+                {/* Dots Indicator */}
+                <div className="flex gap-2 mt-6">
+                  <div className="w-8 h-1.5 rounded-full bg-white/30" />
+                  <div className="w-8 h-1.5 rounded-full bg-white/30" />
+                  <div className="w-8 h-1.5 rounded-full bg-white" />
                 </div>
               </div>
-              <h2 className="text-3xl font-bold text-gradient-purple mb-2">
-                Join QuickSnap
-              </h2>
-              <p className="text-gray-400 flex items-center justify-center gap-2">
-                <Sparkles className="w-4 h-4 text-violet-400" />
-                Create your account and start finding your photos
+            </div>
+          </div>
+
+          {/* Right Side - Form Section */}
+          <div className="lg:w-[55%] p-6 lg:p-10 flex flex-col justify-center">
+            {/* Header */}
+            <div className="mb-6">
+              <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2">Create an account</h1>
+              <p className="text-gray-400 text-sm">
+                Already have an account?{' '}
+                <Link href="/login" className="text-violet-400 hover:text-violet-300 underline underline-offset-2 transition-colors">
+                  Log in
+                </Link>
               </p>
             </div>
 
-            {/* Register Form */}
-            <form className="space-y-4" onSubmit={handleSubmit}>
-              {/* Name Input */}
-              <div className="animate-slide-up delay-100">
-                <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
-                  Full Name
-                </label>
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Name Field */}
+              <div>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <User className="h-5 w-5 text-gray-500" />
-                  </div>
                   <input
-                    id="name"
                     name="name"
                     type="text"
                     required
-                    className="input pl-12"
-                    placeholder="John Doe"
+                    className="w-full bg-[#1a1625] border border-white/10 rounded-xl py-3.5 px-4 text-white placeholder-gray-500 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all outline-none"
+                    placeholder="Full name"
                     value={formData.name}
                     onChange={handleChange}
                   />
                 </div>
               </div>
 
-              {/* Email Input with Verification */}
-              <div className="animate-slide-up delay-200">
-                <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
-                  Email address
-                </label>
+              {/* Email Field with Verification */}
+              <div>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Mail className="h-5 w-5 text-gray-500" />
-                  </div>
                   <input
-                    id="email"
                     name="email"
                     type="email"
-                    autoComplete="email"
                     required
                     disabled={emailVerified}
-                    className={`input pl-12 ${emailVerified ? 'pr-12 bg-emerald-500/10 border-emerald-500/30 text-emerald-300' : ''}`}
-                    placeholder="you@example.com"
+                    className={`w-full bg-[#1a1625] border rounded-xl py-3.5 px-4 text-white placeholder-gray-500 focus:ring-1 transition-all outline-none ${
+                      emailVerified 
+                        ? 'border-emerald-500/50 bg-emerald-500/5 pr-10' 
+                        : 'border-white/10 focus:border-violet-500 focus:ring-violet-500'
+                    }`}
+                    placeholder="Email"
                     value={formData.email}
                     onChange={handleChange}
                   />
                   {emailVerified && (
-                    <div className="absolute inset-y-0 right-0 pr-4 flex items-center">
-                      <CheckCircle className="h-5 w-5 text-emerald-400" />
-                    </div>
+                    <CheckCircle className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-emerald-400" />
                   )}
                 </div>
 
-                {/* Email Verification Section */}
+                {/* Email Verification Widget */}
                 {!emailVerified ? (
                   <div className="mt-3">
                     {verifying ? (
-                      <div className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-violet-500/10 border border-violet-500/20">
+                      <div className="flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-violet-500/10 border border-violet-500/20">
                         <Loader2 className="w-5 h-5 text-violet-400 animate-spin" />
                         <span className="text-sm text-violet-300">Verifying email...</span>
                       </div>
                     ) : (
-                      <div className="space-y-2">
-                        <p className="text-xs text-gray-500 flex items-center gap-1">
-                          <ShieldCheck className="w-3 h-3" />
-                          Verify your email to continue
-                        </p>
-                        {/* Phone Email Verification Widget */}
-                        <div 
-                          className="pe_verify_email" 
-                          data-client-id="12610092153433741136"
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'center',
-                          }}
-                        />
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                          <ShieldCheck className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                          <p className="text-xs text-amber-200">Email verification required to continue</p>
+                        </div>
+                        <div className="pe_verify_email" data-client-id="12610092153433741136" />
                       </div>
                     )}
                   </div>
                 ) : (
-                  <div className="mt-2 flex items-center gap-2 text-sm text-emerald-400">
-                    <CheckCircle className="w-4 h-4" />
-                    <span>Email verified successfully</span>
+                  <div className="mt-2 flex items-center justify-between p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                    <span className="text-sm text-emerald-400 flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4" /> Email verified successfully
+                    </span>
                     <button
                       type="button"
-                      onClick={() => {
-                        setEmailVerified(false);
-                        setVerifiedEmail('');
-                        setFormData(prev => ({ ...prev, email: '' }));
+                      onClick={() => { 
+                        setEmailVerified(false); 
+                        setVerifiedEmail(''); 
+                        setFormData(prev => ({ ...prev, email: '' })); 
                       }}
-                      className="ml-auto text-xs text-gray-400 hover:text-white transition-colors"
+                      className="text-xs text-gray-400 hover:text-white transition-colors"
                     >
                       Change
                     </button>
@@ -274,161 +267,161 @@ export default function RegisterPage() {
                 )}
               </div>
 
-              {/* Password Input */}
-              <div className="animate-slide-up delay-400">
-                <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
-                  Password
-                </label>
+              {/* Password Field */}
+              <div>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <LockIcon className="h-5 w-5 text-gray-500" />
-                  </div>
                   <input
-                    id="password"
                     name="password"
-                    type="password"
-                    autoComplete="new-password"
+                    type={showPassword ? 'text' : 'password'}
                     required
-                    className="input pl-12"
-                    placeholder="At least 6 characters"
+                    className="w-full bg-[#1a1625] border border-white/10 rounded-xl py-3.5 px-4 pr-12 text-white placeholder-gray-500 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all outline-none"
+                    placeholder="Enter your password"
                     value={formData.password}
                     onChange={handleChange}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
                 </div>
-                {/* Password Strength Indicator */}
-                {formData.password && (
-                  <div className="mt-2">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-gray-500">Password strength</span>
-                      <span className={`text-xs font-medium ${passwordStrength.strength === 100 ? 'text-emerald-400' :
-                        passwordStrength.strength === 66 ? 'text-amber-400' : 'text-red-400'
-                        }`}>
-                        {passwordStrength.label}
-                      </span>
-                    </div>
-                    <div className="w-full bg-white/10 rounded-full h-1.5">
-                      <div
-                        className={`h-1.5 rounded-full transition-all duration-300 ${passwordStrength.color}`}
-                        style={{ width: `${passwordStrength.strength}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                )}
               </div>
 
-              {/* Confirm Password Input */}
-              <div className="animate-slide-up delay-500">
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-2">
-                  Confirm Password
-                </label>
+              {/* Confirm Password Field */}
+              <div>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <LockIcon className="h-5 w-5 text-gray-500" />
-                  </div>
                   <input
-                    id="confirmPassword"
                     name="confirmPassword"
-                    type="password"
-                    autoComplete="new-password"
+                    type={showConfirmPassword ? 'text' : 'password'}
                     required
-                    className="input pl-12"
-                    placeholder="Confirm your password"
+                    className="w-full bg-[#1a1625] border border-white/10 rounded-xl py-3.5 px-4 pr-12 text-white placeholder-gray-500 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all outline-none"
+                    placeholder="Confirm password"
                     value={formData.confirmPassword}
                     onChange={handleChange}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
                 </div>
               </div>
 
-              {/* Submit Button */}
-              <div className="pt-2 animate-slide-up delay-600">
+              {/* Terms Checkbox */}
+              <div className="flex items-center gap-3">
                 <button
-                  type="submit"
-                  disabled={loading || !emailVerified}
-                  className="btn-gradient w-full py-3.5 text-base font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  type="button"
+                  onClick={() => setAgreeTerms(!agreeTerms)}
+                  className={`w-5 h-5 rounded flex items-center justify-center transition-all ${
+                    agreeTerms 
+                      ? 'bg-violet-600 border-violet-600' 
+                      : 'bg-transparent border-2 border-white/20 hover:border-white/40'
+                  }`}
                 >
-                  {loading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Creating account...
-                    </>
-                  ) : !emailVerified ? (
-                    <>
-                      <ShieldCheck className="w-5 h-5" />
-                      Verify email to continue
-                    </>
-                  ) : (
-                    'Create account'
-                  )}
+                  {agreeTerms && <CheckCircle className="w-3.5 h-3.5 text-white" />}
                 </button>
+                <label className="text-sm text-gray-400">
+                  I agree to the{' '}
+                  <Link href="/terms" className="text-violet-400 hover:text-violet-300 underline underline-offset-2">
+                    Terms & Conditions
+                  </Link>
+                </label>
               </div>
-            </form>
 
-            {/* Divider */}
-            <div className="mt-6 animate-fade-in delay-500">
-              <div className="relative">
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={loading || !emailVerified || !agreeTerms}
+                className="w-full py-3.5 px-4 rounded-xl font-semibold text-white bg-violet-600 hover:bg-violet-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-violet-600 flex items-center justify-center gap-2 mt-2"
+              >
+                {loading ? (
+                  <><Loader2 className="w-5 h-5 animate-spin" /> Creating account...</>
+                ) : (
+                  'Create account'
+                )}
+              </button>
+
+              {/* Divider */}
+              <div className="relative my-6">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-white/10"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-4 bg-[#111111]/80 text-gray-500 rounded-full">
-                    Already have an account?
-                  </span>
+                  <span className="px-4 bg-[#252136] text-gray-500">Or register with</span>
                 </div>
               </div>
-            </div>
 
-            {/* Sign In Link */}
-            <div className="mt-6 text-center animate-fade-in delay-600">
-              <Link
-                href="/login"
-                className="text-sm font-medium text-violet-400 hover:text-violet-300 transition-colors"
-              >
-                Sign in instead →
-              </Link>
-            </div>
+              {/* Social Buttons */}
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#1a1625] border border-white/10 text-white hover:bg-white/5 transition-all"
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                  </svg>
+                  Google
+                </button>
+                <button
+                  type="button"
+                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#1a1625] border border-white/10 text-white hover:bg-white/5 transition-all"
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                  </svg>
+                  Apple
+                </button>
+              </div>
+            </form>
           </div>
-
-          {/* Footer Text */}
-          <p className="mt-6 text-center text-sm text-gray-500 animate-fade-in delay-500">
-            By creating an account, you agree to our{' '}
-            <Link href="/terms" className="text-violet-400 hover:text-violet-300 transition-colors">
-              Terms of Service
-            </Link>
-            {' '}and{' '}
-            <Link href="/privacy" className="text-violet-400 hover:text-violet-300 transition-colors">
-              Privacy Policy
-            </Link>
-          </p>
         </div>
       </div>
 
-      {/* Custom Styles for Phone Email Widget */}
       <style jsx global>{`
-        .pe_verify_email {
-          width: 100%;
+        .pe_verify_email { 
+          width: 100%; 
+          min-height: 50px;
         }
         .pe_verify_email button,
-        .pe_verify_email .pe_button {
+        .pe_verify_email .pe_button,
+        .pe_verify_email a,
+        .pe_verify_email > div > button,
+        .pe_verify_email > div > a {
           width: 100% !important;
           background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%) !important;
           border: none !important;
           border-radius: 12px !important;
-          padding: 12px 20px !important;
+          padding: 14px 24px !important;
           font-size: 14px !important;
           font-weight: 600 !important;
           color: white !important;
           cursor: pointer !important;
-          transition: all 0.3s ease !important;
-          box-shadow: 0 10px 25px rgba(124, 58, 237, 0.25) !important;
+          transition: all 0.2s ease !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          gap: 8px !important;
+          text-decoration: none !important;
+          box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3) !important;
         }
         .pe_verify_email button:hover,
-        .pe_verify_email .pe_button:hover {
+        .pe_verify_email .pe_button:hover,
+        .pe_verify_email a:hover,
+        .pe_verify_email > div > button:hover,
+        .pe_verify_email > div > a:hover {
           background: linear-gradient(135deg, #8b5cf6 0%, #818cf8 100%) !important;
-          box-shadow: 0 10px 30px rgba(124, 58, 237, 0.4) !important;
+          box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4) !important;
           transform: translateY(-1px) !important;
         }
-        .pe_verify_email iframe {
-          border-radius: 12px !important;
+        .pe_verify_email iframe { 
+          border-radius: 12px !important; 
         }
       `}</style>
     </>
