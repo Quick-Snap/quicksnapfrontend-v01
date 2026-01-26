@@ -35,6 +35,10 @@ export default function PublicEventPage() {
     const [downloading, setDownloading] = useState<string | null>(null);
     const [selectedPhoto, setSelectedPhoto] = useState<any>(null);
     const [currentPage, setCurrentPage] = useState(1);
+    const [photoViewMode, setPhotoViewMode] = useState<'all' | 'my'>('all');
+
+    // Check if user is a guest (not organizer or admin)
+    const isGuest = currentUser && currentUser.role !== 'organizer' && currentUser.role !== 'admin';
 
     // Fetch Event details
     const { data: eventResult, isLoading: loading } = useQuery(
@@ -44,7 +48,7 @@ export default function PublicEventPage() {
     );
     const event = eventResult?.data;
 
-    // Fetch Photos with caching
+    // Fetch All Photos with caching
     const { data: photosResult, isLoading: photosLoading } = useQuery(
         ['eventPhotos', eventId],
         () => photoApi.getPublicPhotos(eventId, { limit: 500 }),
@@ -55,12 +59,27 @@ export default function PublicEventPage() {
     );
     const allPhotos = photosResult?.data?.photos || [];
 
+    // Fetch My Photos (filtered by eventId) - only for guest users
+    const { data: myPhotosResult, isLoading: myPhotosLoading } = useQuery(
+        ['myEventPhotos', eventId],
+        () => photoApi.getMyPhotos({ eventId, limit: 500 }),
+        {
+            enabled: !!eventId && !!currentUser && isGuest,
+            staleTime: 5 * 60 * 1000, // 5 mins cache
+        }
+    );
+    const myPhotos = myPhotosResult?.data?.photos || [];
+
+    // Determine which photos to display based on view mode
+    const displayPhotos = photoViewMode === 'my' && isGuest ? myPhotos : allPhotos;
+    const isLoadingPhotos = photoViewMode === 'my' && isGuest ? myPhotosLoading : photosLoading;
+
     // Pagination calculations
-    const totalPhotos = allPhotos.length;
+    const totalPhotos = displayPhotos.length;
     const totalPages = Math.ceil(totalPhotos / PHOTOS_PER_PAGE);
     const startIndex = (currentPage - 1) * PHOTOS_PER_PAGE;
     const endIndex = startIndex + PHOTOS_PER_PAGE;
-    const photos = allPhotos.slice(startIndex, endIndex);
+    const photos = displayPhotos.slice(startIndex, endIndex);
 
     // Reset to page 1 if current page exceeds total pages (e.g., after data changes)
     useEffect(() => {
@@ -68,6 +87,11 @@ export default function PublicEventPage() {
             setCurrentPage(1);
         }
     }, [currentPage, totalPages]);
+
+    // Reset to page 1 when switching view modes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [photoViewMode]);
 
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
@@ -189,7 +213,9 @@ export default function PublicEventPage() {
                                     </span>
                                 )}
                                 <span className="px-3 py-1 rounded-full text-xs bg-white/5 border border-white/10 text-gray-300">
-                                    {totalPhotos} photos
+                                    {photoViewMode === 'my' && isGuest 
+                                        ? `${totalPhotos} my photos` 
+                                        : `${allPhotos.length} photos`}
                                 </span>
                             </div>
 
@@ -220,7 +246,7 @@ export default function PublicEventPage() {
                                         </div>
                                         <div>
                                             <p className="text-gray-400 text-sm">Photos</p>
-                                            <p className="text-2xl font-semibold text-white">{totalPhotos}</p>
+                                            <p className="text-2xl font-semibold text-white">{allPhotos.length}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -328,7 +354,35 @@ export default function PublicEventPage() {
                     </p>
                 </div>
 
-                {photosLoading ? (
+                {/* Toggle for Guest Users Only */}
+                {isGuest && currentUser && (
+                    <div className="flex justify-center mb-8">
+                        <div className="inline-flex items-center gap-2 bg-[#0f0c18] border border-white/10 rounded-xl p-1.5 shadow-[0_8px_30px_rgba(0,0,0,0.35)]">
+                            <button
+                                onClick={() => setPhotoViewMode('all')}
+                                className={`px-6 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200 ${
+                                    photoViewMode === 'all'
+                                        ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-500/30'
+                                        : 'text-gray-400 hover:text-white'
+                                }`}
+                            >
+                                All Photos
+                            </button>
+                            <button
+                                onClick={() => setPhotoViewMode('my')}
+                                className={`px-6 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200 ${
+                                    photoViewMode === 'my'
+                                        ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-500/30'
+                                        : 'text-gray-400 hover:text-white'
+                                }`}
+                            >
+                                My Photos
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {isLoadingPhotos ? (
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         {[...Array(8)].map((_, i) => (
                             <div key={i} className="aspect-square bg-white/5 rounded-2xl animate-pulse border border-white/5" />
@@ -382,8 +436,16 @@ export default function PublicEventPage() {
                         <div className="w-24 h-24 bg-violet-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
                             <ImageIcon className="text-violet-400" size={48} />
                         </div>
-                        <h3 className="text-xl font-semibold text-white mb-2">No photos yet</h3>
-                        <p className="text-gray-400">Photos from this event will appear here</p>
+                        <h3 className="text-xl font-semibold text-white mb-2">
+                            {photoViewMode === 'my' && isGuest 
+                                ? 'No photos of you yet' 
+                                : 'No photos yet'}
+                        </h3>
+                        <p className="text-gray-400">
+                            {photoViewMode === 'my' && isGuest
+                                ? 'Photos where you appear in this event will show here'
+                                : 'Photos from this event will appear here'}
+                        </p>
                     </div>
                 )}
             </div>
