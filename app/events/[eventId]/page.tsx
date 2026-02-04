@@ -64,7 +64,7 @@ export default function PublicEventPage() {
         ['myEventPhotos', eventId],
         () => photoApi.getMyPhotos({ eventId, limit: 500 }),
         {
-            enabled: !!eventId && !!currentUser && isGuest,
+            enabled: !!eventId && !!currentUser && !!isGuest,
             staleTime: 5 * 60 * 1000, // 5 mins cache
         }
     );
