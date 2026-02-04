@@ -19,24 +19,28 @@ export default function MyPhotosPage() {
 
   const { data: queryData, isLoading: loading } = useQuery(
     ['myPhotos'],
-    () => photoApi.getMyPhotos(),
+    () => photoApi.getMyPhotos({ limit: 100 }),
     {
       enabled: !!user,
       staleTime: 5 * 60 * 1000,
     }
   );
 
-  // Get all photos and filter to only show photos from events user has joined
-  const rawPhotos = queryData?.data?.photos || [];
-  const userJoinedEvents = user?.events || [];
+  // // Get all photos and filter to only show photos from events user has joined
+  // const rawPhotos = queryData?.data?.photos || [];
+  // const userJoinedEvents = user?.events || [];
   
-  // Filter photos to only include those from events the user has joined
-  const allPhotos = rawPhotos.filter((photo: any) => {
-    const photoEventId = photo.eventId?._id || photo.eventId;
-    return photoEventId && userJoinedEvents.includes(photoEventId);
-  });
+  // // Filter photos to only include those from events the user has joined
+  // const allPhotos = rawPhotos.filter((photo: any) => {
+  //   const photoEventId = photo.eventId?._id || photo.eventId;
+  //   return photoEventId && userJoinedEvents.includes(photoEventId);
+  // });
 
   // Search + pagination calculations
+    // Get photos already filtered by the backend (only from joined events)
+  const allPhotos = queryData?.data?.photos || [];
+
+  // Search calculations (on the pre-filtered list)
   const filteredPhotos = useMemo(() => {
     if (!searchTerm.trim()) return allPhotos;
     const term = searchTerm.trim().toLowerCase();
@@ -47,7 +51,9 @@ export default function MyPhotosPage() {
     });
   }, [allPhotos, searchTerm]);
 
-  const totalPhotos = filteredPhotos.length;
+  // const totalPhotos = filteredPhotos.length;
+  // Use the accurate total from the backend pagination
+  const totalPhotos = queryData?.data?.pagination?.total ?? filteredPhotos.length;
   const totalPages = Math.ceil(totalPhotos / PHOTOS_PER_PAGE);
   const startIndex = (currentPage - 1) * PHOTOS_PER_PAGE;
   const endIndex = startIndex + PHOTOS_PER_PAGE;
