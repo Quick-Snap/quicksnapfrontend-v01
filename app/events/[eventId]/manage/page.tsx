@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQueryClient } from 'react-query';
 import Link from 'next/link';
@@ -30,6 +30,20 @@ import { Button } from '@/app/components/ui/Button';
 import { useAuth } from '@/contexts/AuthContext';
 import RoleGuard from '@/app/components/RoleGuard';
 
+/** Normalize GET /events/:id/photos body — supports { data: { photos } }, { data: Photo[] }, or { photos }. */
+function normalizePhotosFromGet(res: any): any[] {
+    if (!res) return [];
+    const d = res.data;
+    if (Array.isArray(d)) return d;
+    if (d && Array.isArray(d.photos)) return d.photos;
+    if (Array.isArray(res.photos)) return res.photos;
+    return [];
+}
+
+function isPhotoOfficial(photo: any) {
+    return !!(photo?.isOfficial ?? photo?.is_official);
+}
+
 export default function ManageEventPage() {
     const { user } = useAuth();
     const params = useParams();
@@ -46,6 +60,11 @@ export default function ManageEventPage() {
     const [codeCopied, setCodeCopied] = useState(false);
     const [photographerEmail, setPhotographerEmail] = useState('');
     const [assigningPhotographer, setAssigningPhotographer] = useState(false);
+    // Select photos for dashboard (official)
+    const [allEventPhotos, setAllEventPhotos] = useState<any[]>([]);
+    const [photosLoading, setPhotosLoading] = useState(false);
+    const [selectedOfficialIds, setSelectedOfficialIds] = useState<Set<string>>(new Set());
+    const [savingOfficial, setSavingOfficial] = useState(false);
 
     useEffect(() => {
         const fetchEvent = async () => {
@@ -85,6 +104,130 @@ export default function ManageEventPage() {
             setCanDelete(false);
         }
     }, [showDeleteModal]);
+
+    const applyPhotosAndOfficialState = useCallback((photos: any[]) => {
+        setAllEventPhotos(photos);
+        const official = new Set<string>();
+        photos.forEach((p: any) => {
+            const id = p._id || p.imageId;
+            if (id && isPhotoOfficial(p)) official.add(id);
+        });
+        setSelectedOfficialIds(official);
+    }, []);
+
+    // Load all event photos for "select official" (organizer only)
+    useEffect(() => {
+        if (!eventId) return;
+        let cancelled = false;
+        const fetchAllPhotos = async () => {
+            setPhotosLoading(true);
+            try {
+                const res = await eventApi.getPhotos(eventId, { all: true, limit: 500 });
+                const photos = normalizePhotosFromGet(res);
+                if (!cancelled) applyPhotosAndOfficialState(photos);
+            } catch (err) {
+                console.error('Error fetching event photos:', err);
+                if (!cancelled) toast.error('Failed to load photos for selection');
+            } finally {
+                if (!cancelled) setPhotosLoading(false);
+            }
+        };
+        fetchAllPhotos();
+        return () => {
+            cancelled = true;
+        };
+    }, [eventId, applyPhotosAndOfficialState]);
+
+    // If list endpoint returns empty but event embed includes photos, use those for the picker
+    useEffect(() => {
+        if (photosLoading || allEventPhotos.length > 0) return;
+        const embedded = event?.photos;
+        if (Array.isArray(embedded) && embedded.length > 0) {
+            applyPhotosAndOfficialState(embedded);
+        }
+    }, [event, photosLoading, allEventPhotos.length, applyPhotosAndOfficialState]);
+
+    const getPhotoId = (photo: any) => photo._id || photo.imageId || '';
+
+    /** Include both _id and imageId so the API can match whichever the backend stores. */
+    const expandIdsForPatch = (ids: string[]) => {
+        const out = new Set<string>();
+        ids.forEach((id) => {
+            if (!id) return;
+            out.add(String(id));
+            const photo = allEventPhotos.find((p) => getPhotoId(p) === id);
+            if (photo?._id) out.add(String(photo._id));
+            if (photo?.imageId) out.add(String(photo.imageId));
+        });
+        return Array.from(out);
+    };
+
+    const photosOnDashboard = useMemo(
+        () => allEventPhotos.filter((p) => isPhotoOfficial(p)),
+        [allEventPhotos]
+    );
+    const photosNotOnDashboard = useMemo(
+        () => allEventPhotos.filter((p) => !isPhotoOfficial(p)),
+        [allEventPhotos]
+    );
+
+    const togglePhotoOfficial = (photo: any) => {
+        const id = getPhotoId(photo);
+        if (!id) return;
+        setSelectedOfficialIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
+    };
+
+    const handleSaveOfficialSelection = async () => {
+        setSavingOfficial(true);
+        try {
+            const currentOfficial = new Set(
+                allEventPhotos.filter((p: any) => isPhotoOfficial(p)).map((p: any) => getPhotoId(p)).filter(Boolean)
+            );
+            const toPromote = Array.from(selectedOfficialIds).filter((id) => !currentOfficial.has(id));
+            const toDemote = Array.from(currentOfficial).filter((id) => !selectedOfficialIds.has(id));
+            if (toPromote.length > 0) {
+                await eventApi.setPhotosOfficial(eventId, {
+                    imageIds: expandIdsForPatch(toPromote),
+                    isOfficial: true,
+                });
+            }
+            if (toDemote.length > 0) {
+                await eventApi.setPhotosOfficial(eventId, {
+                    imageIds: expandIdsForPatch(toDemote),
+                    isOfficial: false,
+                });
+            }
+            if (toPromote.length > 0 || toDemote.length > 0) {
+                toast.success(
+                    `Gallery updated: ${toPromote.length} added${toDemote.length ? `, ${toDemote.length} removed` : ''}`
+                );
+                const res = await eventApi.getPhotos(eventId, { all: true, limit: 500 });
+                let photos = normalizePhotosFromGet(res);
+                if (photos.length === 0 && event?.photos?.length) {
+                    photos = [...event.photos];
+                }
+                applyPhotosAndOfficialState(photos);
+                try {
+                    const refreshed = await eventApi.getById(eventId);
+                    setEvent(refreshed.data);
+                } catch {
+                    /* header stats may lag one navigation */
+                }
+            } else {
+                toast('No changes to save', { icon: 'ℹ️' });
+            }
+        } catch (err: any) {
+            console.error('Error saving official selection:', err);
+            toast.error(err.response?.data?.message || 'Failed to update dashboard photos');
+        } finally {
+            setSavingOfficial(false);
+        }
+    };
 
     const handleCopyCode = () => {
         if (event?.accessCode) {
@@ -468,6 +611,181 @@ export default function ManageEventPage() {
                             </div>
                         </Link>
                     </div>
+                </div>
+
+                {/* Select photos for dashboard (official gallery) */}
+                <div className="card bg-[#0f0c18] border-white/5 shadow-[0_14px_50px_rgba(0,0,0,0.35)]">
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500/20 to-indigo-500/20 flex items-center justify-center">
+                            <ImageIcon className="h-6 w-6 text-violet-400" />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-bold text-white">Public event gallery</h2>
+                            <p className="text-sm text-gray-400">
+                                Add photos from the pool below, then save. They move to “On public gallery” once the server confirms. Click a live photo to remove it from the public page.
+                            </p>
+                        </div>
+                    </div>
+                    {photosLoading ? (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 py-8">
+                            {[...Array(10)].map((_, i) => (
+                                <div key={i} className="aspect-square bg-white/5 rounded-xl animate-pulse border border-white/5" />
+                            ))}
+                        </div>
+                    ) : allEventPhotos.length === 0 ? (
+                        <div className="text-center py-12 text-gray-500 border border-white/5 rounded-xl border-dashed">
+                            <ImageIcon className="h-12 w-12 mx-auto mb-3 text-gray-600" />
+                            <p className="font-medium text-gray-400">No photos yet</p>
+                            <p className="text-sm">Upload photos first, then choose which ones appear on the public event gallery.</p>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+                                <span className="text-sm text-gray-400">
+                                    <span className="text-emerald-300/90 font-medium">{photosOnDashboard.length}</span> on public gallery
+                                    <span className="mx-2 text-white/20">·</span>
+                                    <span className="text-gray-300">{photosNotOnDashboard.length}</span> in pool
+                                    <span className="mx-2 text-white/20">·</span>
+                                    {selectedOfficialIds.size} marked for gallery after save
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={handleSaveOfficialSelection}
+                                    disabled={savingOfficial}
+                                    className="flex items-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white px-5 py-2.5 rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-violet-500/20"
+                                >
+                                    {savingOfficial ? (
+                                        <>
+                                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            Saving...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Check className="h-5 w-5" />
+                                            Update dashboard
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+
+                            {photosOnDashboard.length > 0 && (
+                                <div className="mb-8">
+                                    <h3 className="text-sm font-semibold text-emerald-300/90 mb-3 flex items-center gap-2">
+                                        <span className="inline-block w-2 h-2 rounded-full bg-emerald-400" />
+                                        On public gallery
+                                    </h3>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                                        {photosOnDashboard.map((photo: any) => {
+                                            const id = getPhotoId(photo);
+                                            const isSelected = !!(id && selectedOfficialIds.has(id));
+                                            const pendingRemove = isPhotoOfficial(photo) && !isSelected;
+                                            return (
+                                                <div
+                                                    key={id || photo.url}
+                                                    className="group relative aspect-square rounded-xl overflow-hidden border-2 transition-all cursor-pointer"
+                                                    style={{
+                                                        borderColor: isSelected
+                                                            ? 'rgba(16, 185, 129, 0.45)'
+                                                            : 'rgba(251, 191, 36, 0.45)',
+                                                        backgroundColor: 'rgba(15,12,24,0.8)',
+                                                    }}
+                                                    onClick={() => togglePhotoOfficial(photo)}
+                                                >
+                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                    <img
+                                                        src={photo.thumbnailUrl || photo.url || photo.s3Url}
+                                                        alt=""
+                                                        className="w-full h-full object-cover opacity-90 group-hover:opacity-100"
+                                                    />
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                                                    <div className="absolute top-2 left-2 right-2 flex flex-wrap items-start justify-end gap-1.5">
+                                                        <span
+                                                            className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+                                                                pendingRemove
+                                                                    ? 'bg-amber-500/25 text-amber-200 border-amber-500/50'
+                                                                    : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                                                            }`}
+                                                        >
+                                                            {pendingRemove ? 'Removing after save' : 'Live on gallery'}
+                                                        </span>
+                                                        <div
+                                                            className={`w-5 h-5 shrink-0 rounded border-2 flex items-center justify-center ${
+                                                                isSelected
+                                                                    ? 'bg-emerald-500 border-emerald-400'
+                                                                    : 'bg-black/40 border-white/30'
+                                                            }`}
+                                                        >
+                                                            {isSelected && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
+                            <div>
+                                <h3 className="text-sm font-semibold text-violet-300/90 mb-3 flex items-center gap-2">
+                                    <span className="inline-block w-2 h-2 rounded-full bg-violet-400" />
+                                    Pool — not on public gallery yet
+                                </h3>
+                                {photosNotOnDashboard.length === 0 ? (
+                                    <p className="text-sm text-gray-500 py-6 border border-white/5 rounded-xl border-dashed text-center">
+                                        All uploaded photos are on the public gallery. Remove some from the section above if you want them back in the pool.
+                                    </p>
+                                ) : (
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                                        {photosNotOnDashboard.map((photo: any) => {
+                                            const id = getPhotoId(photo);
+                                            const isSelected = !!(id && selectedOfficialIds.has(id));
+                                            return (
+                                                <div
+                                                    key={id || photo.url}
+                                                    className="group relative aspect-square rounded-xl overflow-hidden border-2 transition-all cursor-pointer"
+                                                    style={{
+                                                        borderColor: isSelected
+                                                            ? 'rgba(139, 92, 246, 0.5)'
+                                                            : 'rgba(255,255,255,0.1)',
+                                                        backgroundColor: 'rgba(15,12,24,0.8)',
+                                                    }}
+                                                    onClick={() => togglePhotoOfficial(photo)}
+                                                >
+                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                    <img
+                                                        src={photo.thumbnailUrl || photo.url || photo.s3Url}
+                                                        alt=""
+                                                        className="w-full h-full object-cover opacity-90 group-hover:opacity-100"
+                                                    />
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                                                    <div className="absolute top-2 left-2 right-2 flex flex-wrap items-start justify-end gap-1.5">
+                                                        <span
+                                                            className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+                                                                isSelected
+                                                                    ? 'bg-violet-500/25 text-violet-200 border-violet-500/50'
+                                                                    : 'bg-white/10 text-gray-400 border-white/20'
+                                                            }`}
+                                                        >
+                                                            {isSelected ? 'Will add after save' : 'Not on gallery'}
+                                                        </span>
+                                                        <div
+                                                            className={`w-5 h-5 shrink-0 rounded border-2 flex items-center justify-center ${
+                                                                isSelected
+                                                                    ? 'bg-violet-500 border-violet-400'
+                                                                    : 'bg-black/40 border-white/30'
+                                                            }`}
+                                                        >
+                                                            {isSelected && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 {/* Danger Zone */}
