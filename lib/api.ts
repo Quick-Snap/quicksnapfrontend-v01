@@ -318,8 +318,29 @@ export const eventApi = {
     return response.data;
   },
 
-  getPhotos: async (eventId: string, params?: { page?: number; limit?: number }) => {
-    const response = await api.get<ApiResponse<any>>(`/events/${eventId}/photos`, { params });
+  getPhotos: async (
+    eventId: string,
+    params?: { page?: number; limit?: number; lastKey?: string; all?: boolean }
+  ) => {
+    const query: Record<string, string | number | undefined> = {};
+    if (params?.limit != null) query.limit = params.limit;
+    if (params?.page != null) query.page = params.page;
+    if (params?.lastKey != null) query.lastKey = params.lastKey;
+    if (params?.all === true) query.all = 'true';
+    const response = await api.get<ApiResponse<any>>(`/events/${eventId}/photos`, {
+      params: query,
+    });
+    return response.data;
+  },
+
+  setPhotosOfficial: async (
+    eventId: string,
+    body: { imageIds: string[]; isOfficial: boolean }
+  ) => {
+    const response = await api.patch<ApiResponse<{ count?: number; message?: string }>>(
+      `/events/${eventId}/photos/official`,
+      body
+    );
     return response.data;
   },
 
