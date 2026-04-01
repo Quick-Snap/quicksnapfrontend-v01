@@ -48,10 +48,10 @@ export default function PublicEventPage() {
     );
     const event = eventResult?.data;
 
-    // Fetch All Photos with caching
+    // Fetch official event gallery photos (dashboard shows only official)
     const { data: photosResult, isLoading: photosLoading } = useQuery(
         ['eventPhotos', eventId],
-        () => photoApi.getPublicPhotos(eventId, { limit: 500 }),
+        () => eventApi.getPhotos(eventId, { limit: 500 }),
         {
             enabled: !!eventId,
             staleTime: 5 * 60 * 1000, // 5 mins cache
