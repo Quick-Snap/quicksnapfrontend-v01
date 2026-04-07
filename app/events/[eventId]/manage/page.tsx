@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { eventApi } from '@/lib/api';
+import { enrichPhotosWithDisplayUrls, getPhotoDisplayUrl } from '@/lib/photoUrl';
 import { Button } from '@/app/components/ui/Button';
 import { useAuth } from '@/contexts/AuthContext';
 import RoleGuard from '@/app/components/RoleGuard';
@@ -36,8 +37,36 @@ function normalizePhotosFromGet(res: any): any[] {
     const d = res.data;
     if (Array.isArray(d)) return d;
     if (d && Array.isArray(d.photos)) return d.photos;
+    if (d?.data && Array.isArray(d.data.photos)) return d.data.photos;
     if (Array.isArray(res.photos)) return res.photos;
     return [];
+}
+
+function photoRowId(photo: any) {
+    return photo?._id || photo?.imageId || '';
+}
+
+/** Reconcile GET /events/:id/photos with embedded `event.photos` (count / IDs can update before the list endpoint). */
+function mergeMissingPhotosFromEvent(existing: any[], eventPhotos: any[] | undefined): any[] {
+    if (!Array.isArray(eventPhotos) || eventPhotos.length === 0) return existing;
+    const seen = new Set(existing.map((p) => String(photoRowId(p))).filter(Boolean));
+    const additions: any[] = [];
+    for (const raw of eventPhotos) {
+        const id =
+            typeof raw === 'string'
+                ? raw.trim()
+                : raw && typeof raw === 'object'
+                  ? String(raw._id || raw.imageId || '').trim()
+                  : '';
+        if (!id || seen.has(id)) continue;
+        seen.add(id);
+        if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+            additions.push(raw);
+        } else {
+            additions.push({ _id: id });
+        }
+    }
+    return additions.length > 0 ? [...existing, ...additions] : existing;
 }
 
 function isPhotoOfficial(photo: any) {
@@ -65,24 +94,6 @@ export default function ManageEventPage() {
     const [photosLoading, setPhotosLoading] = useState(false);
     const [selectedOfficialIds, setSelectedOfficialIds] = useState<Set<string>>(new Set());
     const [savingOfficial, setSavingOfficial] = useState(false);
-
-    useEffect(() => {
-        const fetchEvent = async () => {
-            try {
-                const data = await eventApi.getById(eventId);
-                setEvent(data.data);
-            } catch (error) {
-                console.error('Error fetching event:', error);
-                toast.error('Failed to load event details');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        if (eventId) {
-            fetchEvent();
-        }
-    }, [eventId]);
 
     // Countdown timer for delete confirmation
     useEffect(() => {
@@ -115,39 +126,81 @@ export default function ManageEventPage() {
         setSelectedOfficialIds(official);
     }, []);
 
-    // Load all event photos for "select official" (organizer only)
+    const refreshEventPhotos = useCallback(
+        async (options?: { quiet?: boolean }) => {
+            if (!eventId) return;
+            const quiet = options?.quiet === true;
+            if (quiet) {
+                setPhotosLoading(true);
+            } else {
+                setLoading(true);
+                setPhotosLoading(true);
+            }
+            try {
+                const [eventOutcome, photosOutcome] = await Promise.allSettled([
+                    eventApi.getById(eventId),
+                    eventApi.getPhotos(eventId, { all: true, limit: 500 }),
+                ]);
+
+                const latestEvent =
+                    eventOutcome.status === 'fulfilled' ? (eventOutcome.value as any)?.data : undefined;
+
+                if (latestEvent) {
+                    setEvent(latestEvent);
+                } else if (!quiet && eventOutcome.status === 'rejected') {
+                    console.error('Error fetching event:', eventOutcome.reason);
+                    toast.error('Failed to load event details');
+                    setEvent(null);
+                }
+
+                let photos =
+                    photosOutcome.status === 'fulfilled'
+                        ? normalizePhotosFromGet(photosOutcome.value)
+                        : [];
+                if (photosOutcome.status === 'rejected') {
+                    console.error('Error fetching event photos:', photosOutcome.reason);
+                    if (!quiet) toast.error('Failed to load photos for selection');
+                }
+
+                if (latestEvent?.photos?.length) {
+                    photos = mergeMissingPhotosFromEvent(photos, latestEvent.photos);
+                }
+
+                photos = await enrichPhotosWithDisplayUrls(photos, photoRowId);
+                applyPhotosAndOfficialState(photos);
+            } catch (err) {
+                console.error('Error loading event / photos:', err);
+                toast.error(quiet ? 'Failed to refresh photos' : 'Failed to load event');
+            } finally {
+                if (!quiet) setLoading(false);
+                setPhotosLoading(false);
+            }
+        },
+        [eventId, applyPhotosAndOfficialState]
+    );
+
     useEffect(() => {
         if (!eventId) return;
         let cancelled = false;
-        const fetchAllPhotos = async () => {
-            setPhotosLoading(true);
-            try {
-                const res = await eventApi.getPhotos(eventId, { all: true, limit: 500 });
-                const photos = normalizePhotosFromGet(res);
-                if (!cancelled) applyPhotosAndOfficialState(photos);
-            } catch (err) {
-                console.error('Error fetching event photos:', err);
-                if (!cancelled) toast.error('Failed to load photos for selection');
-            } finally {
-                if (!cancelled) setPhotosLoading(false);
+
+        const run = async () => {
+            await refreshEventPhotos({ quiet: false });
+            if (cancelled) return;
+            const key = `qs_event_photos_dirty_${eventId}`;
+            if (sessionStorage.getItem(key)) {
+                sessionStorage.removeItem(key);
+                await new Promise((r) => setTimeout(r, 650));
+                if (!cancelled) await refreshEventPhotos({ quiet: true });
             }
         };
-        fetchAllPhotos();
+
+        void run();
         return () => {
             cancelled = true;
         };
-    }, [eventId, applyPhotosAndOfficialState]);
+    }, [eventId, refreshEventPhotos]);
 
-    // If list endpoint returns empty but event embed includes photos, use those for the picker
-    useEffect(() => {
-        if (photosLoading || allEventPhotos.length > 0) return;
-        const embedded = event?.photos;
-        if (Array.isArray(embedded) && embedded.length > 0) {
-            applyPhotosAndOfficialState(embedded);
-        }
-    }, [event, photosLoading, allEventPhotos.length, applyPhotosAndOfficialState]);
-
-    const getPhotoId = (photo: any) => photo._id || photo.imageId || '';
+    const getPhotoId = (photo: any) => photoRowId(photo);
 
     /** Include both _id and imageId so the API can match whichever the backend stores. */
     const expandIdsForPatch = (ids: string[]) => {
@@ -170,6 +223,15 @@ export default function ManageEventPage() {
         () => allEventPhotos.filter((p) => !isPhotoOfficial(p)),
         [allEventPhotos]
     );
+
+    const displayedPhotoCount = useMemo(() => {
+        const fromArr = Array.isArray(event?.photos) ? event.photos.length : 0;
+        const fromField =
+            typeof event?.photoCount === 'number' && !Number.isNaN(event.photoCount)
+                ? event.photoCount
+                : 0;
+        return Math.max(fromArr, fromField, allEventPhotos.length);
+    }, [event?.photos, event?.photoCount, allEventPhotos.length]);
 
     const togglePhotoOfficial = (photo: any) => {
         const id = getPhotoId(photo);
@@ -206,18 +268,20 @@ export default function ManageEventPage() {
                 toast.success(
                     `Gallery updated: ${toPromote.length} added${toDemote.length ? `, ${toDemote.length} removed` : ''}`
                 );
-                const res = await eventApi.getPhotos(eventId, { all: true, limit: 500 });
-                let photos = normalizePhotosFromGet(res);
-                if (photos.length === 0 && event?.photos?.length) {
-                    photos = [...event.photos];
+                const [eventRes, photosRes] = await Promise.allSettled([
+                    eventApi.getById(eventId),
+                    eventApi.getPhotos(eventId, { all: true, limit: 500 }),
+                ]);
+                const latestEvent =
+                    eventRes.status === 'fulfilled' ? (eventRes.value as any)?.data : undefined;
+                if (latestEvent) setEvent(latestEvent);
+                let photos =
+                    photosRes.status === 'fulfilled' ? normalizePhotosFromGet(photosRes.value) : [];
+                if (latestEvent?.photos?.length) {
+                    photos = mergeMissingPhotosFromEvent(photos, latestEvent.photos);
                 }
+                photos = await enrichPhotosWithDisplayUrls(photos, photoRowId);
                 applyPhotosAndOfficialState(photos);
-                try {
-                    const refreshed = await eventApi.getById(eventId);
-                    setEvent(refreshed.data);
-                } catch {
-                    /* header stats may lag one navigation */
-                }
             } else {
                 toast('No changes to save', { icon: 'ℹ️' });
             }
@@ -347,7 +411,7 @@ export default function ManageEventPage() {
                             <div className="flex items-center gap-3 flex-wrap">
                                 <h1 className="text-3xl md:text-4xl font-semibold text-white leading-tight">{event.name}</h1>
                                 <span className="px-3 py-1 text-xs rounded-full bg-white/5 border border-white/10 text-gray-200">
-                                    {event.photos?.length || 0} photos
+                                    {displayedPhotoCount} photos
                                 </span>
                             </div>
                             <p className="text-gray-300 text-lg">{event.description || 'No description provided'}</p>
@@ -374,7 +438,7 @@ export default function ManageEventPage() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-gray-400 text-sm mb-1">Photos</p>
-                                <p className="text-2xl font-semibold text-white">{event.photos?.length || 0}</p>
+                                <p className="text-2xl font-semibold text-white">{displayedPhotoCount}</p>
                             </div>
                             <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center group-hover:bg-violet-500/20 transition-colors">
                                 <ImageIcon className="h-5 w-5 text-violet-300" />
@@ -675,13 +739,14 @@ export default function ManageEventPage() {
                                         On public gallery
                                     </h3>
                                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                                        {photosOnDashboard.map((photo: any) => {
+                                        {photosOnDashboard.map((photo: any, index: number) => {
                                             const id = getPhotoId(photo);
+                                            const displayUrl = getPhotoDisplayUrl(photo);
                                             const isSelected = !!(id && selectedOfficialIds.has(id));
                                             const pendingRemove = isPhotoOfficial(photo) && !isSelected;
                                             return (
                                                 <div
-                                                    key={id || photo.url}
+                                                    key={id || `on-gallery-${index}`}
                                                     className="group relative aspect-square rounded-xl overflow-hidden border-2 transition-all cursor-pointer"
                                                     style={{
                                                         borderColor: isSelected
@@ -691,12 +756,18 @@ export default function ManageEventPage() {
                                                     }}
                                                     onClick={() => togglePhotoOfficial(photo)}
                                                 >
-                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                    <img
-                                                        src={photo.thumbnailUrl || photo.url || photo.s3Url}
-                                                        alt=""
-                                                        className="w-full h-full object-cover opacity-90 group-hover:opacity-100"
-                                                    />
+                                                    {displayUrl ? (
+                                                        /* eslint-disable-next-line @next/next/no-img-element */
+                                                        <img
+                                                            src={displayUrl}
+                                                            alt=""
+                                                            className="w-full h-full object-cover opacity-90 group-hover:opacity-100"
+                                                        />
+                                                    ) : (
+                                                        <div className="absolute inset-0 flex items-center justify-center bg-white/5">
+                                                            <ImageIcon className="h-10 w-10 text-gray-600" />
+                                                        </div>
+                                                    )}
                                                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
                                                     <div className="absolute top-2 left-2 right-2 flex flex-wrap items-start justify-end gap-1.5">
                                                         <span
@@ -736,12 +807,13 @@ export default function ManageEventPage() {
                                     </p>
                                 ) : (
                                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                                        {photosNotOnDashboard.map((photo: any) => {
+                                        {photosNotOnDashboard.map((photo: any, index: number) => {
                                             const id = getPhotoId(photo);
+                                            const displayUrl = getPhotoDisplayUrl(photo);
                                             const isSelected = !!(id && selectedOfficialIds.has(id));
                                             return (
                                                 <div
-                                                    key={id || photo.url}
+                                                    key={id || `pool-${index}`}
                                                     className="group relative aspect-square rounded-xl overflow-hidden border-2 transition-all cursor-pointer"
                                                     style={{
                                                         borderColor: isSelected
@@ -751,12 +823,18 @@ export default function ManageEventPage() {
                                                     }}
                                                     onClick={() => togglePhotoOfficial(photo)}
                                                 >
-                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                    <img
-                                                        src={photo.thumbnailUrl || photo.url || photo.s3Url}
-                                                        alt=""
-                                                        className="w-full h-full object-cover opacity-90 group-hover:opacity-100"
-                                                    />
+                                                    {displayUrl ? (
+                                                        /* eslint-disable-next-line @next/next/no-img-element */
+                                                        <img
+                                                            src={displayUrl}
+                                                            alt=""
+                                                            className="w-full h-full object-cover opacity-90 group-hover:opacity-100"
+                                                        />
+                                                    ) : (
+                                                        <div className="absolute inset-0 flex items-center justify-center bg-white/5">
+                                                            <ImageIcon className="h-10 w-10 text-gray-600" />
+                                                        </div>
+                                                    )}
                                                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
                                                     <div className="absolute top-2 left-2 right-2 flex flex-wrap items-start justify-end gap-1.5">
                                                         <span

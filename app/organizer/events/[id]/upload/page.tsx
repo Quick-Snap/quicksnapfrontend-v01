@@ -124,6 +124,10 @@ export default function EventUploadPage() {
                 toast.error(`${result.errorCount} photos failed to upload`);
             }
 
+            if (typeof window !== 'undefined' && result.successCount > 0) {
+                sessionStorage.setItem(`qs_event_photos_dirty_${eventId}`, '1');
+            }
+
             // Redirect to event details or organizer dashboard
             setTimeout(() => {
                 router.push('/organizer/events');
