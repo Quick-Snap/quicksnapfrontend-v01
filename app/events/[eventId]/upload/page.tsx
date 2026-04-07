@@ -32,6 +32,10 @@ export default function EventUploadPage() {
         setUploadedCount(photos.length);
         setUploadComplete(true);
 
+        // Ensure manage page refetches the full photo list (list API can lag behind event embed after upload)
+        if (typeof window !== 'undefined') {
+            sessionStorage.setItem(`qs_event_photos_dirty_${eventId}`, '1');
+        }
         // Auto-redirect after 3 seconds
         setTimeout(() => {
             router.push(`/events/${eventId}/manage`);
