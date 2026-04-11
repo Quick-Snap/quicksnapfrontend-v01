@@ -24,7 +24,7 @@ interface UploadFile {
 export default function ImageUploader({
     eventId,
     onUploadComplete,
-    maxFiles = 100
+    maxFiles = 50
 }: ImageUploaderProps) {
     const [files, setFiles] = useState<UploadFile[]>([]);
     const [isUploading, setIsUploading] = useState(false);

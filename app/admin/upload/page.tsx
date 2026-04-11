@@ -141,7 +141,7 @@ export default function AdminBulkUploadPage() {
 
                     <div className="bg-white rounded-xl p-6 shadow-sm border border-neutral-200">
                         <h2 className="text-xl font-semibold mb-4">Upload Photos</h2>
-                        <UploadZone onFilesSelected={setFiles} maxFiles={100} />
+                        <UploadZone onFilesSelected={setFiles} maxFiles={50} />
 
                         {/* Upload Progress */}
                         {uploadProgress && (

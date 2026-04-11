@@ -153,7 +153,7 @@ export default function RoleApplicationsPage() {
             <ul className="text-sm text-gray-400 space-y-2 mb-6">
               <li className="flex items-start gap-2">
                 <Sparkles className="h-4 w-4 text-violet-400 mt-0.5 shrink-0" />
-                <span>Upload up to 100 photos per batch</span>
+                <span>Upload up to 50 photos per batch</span>
               </li>
               <li className="flex items-start gap-2">
                 <Sparkles className="h-4 w-4 text-violet-400 mt-0.5 shrink-0" />

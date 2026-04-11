@@ -22,13 +22,15 @@ export default function PhotoUpload({ eventId, onUploadComplete }: PhotoUploadPr
   const [uploading, setUploading] = useState(false);
   const [fileStates, setFileStates] = useState<FileUploadState[]>([]);
 
+  const maxFiles = 50;
+
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const newStates: FileUploadState[] = acceptedFiles.map(file => ({
       file,
       status: 'pending',
       progress: 0,
     }));
-    setFileStates((prev) => [...prev, ...newStates]);
+    setFileStates((prev) => [...prev, ...newStates].slice(0, maxFiles));
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -37,6 +39,7 @@ export default function PhotoUpload({ eventId, onUploadComplete }: PhotoUploadPr
       'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp'],
     },
     maxSize: 10 * 1024 * 1024, // 10MB
+    maxFiles,
     disabled: uploading,
   });
 

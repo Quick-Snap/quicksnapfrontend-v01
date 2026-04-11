@@ -232,7 +232,7 @@ export default function PhotographerUploadPage() {
                 <ImageUploader
                   eventId={selectedEvent}
                   onUploadComplete={handleUploadComplete}
-                  maxFiles={100}
+                  maxFiles={50}
                 />
               ) : (
                 <div className="rounded-xl border-2 border-dashed border-white/10 p-10 text-center bg-white/5 hover:border-violet-500/30 transition-all">
@@ -258,7 +258,7 @@ export default function PhotographerUploadPage() {
           {[
             {
               title: '1) Upload',
-              desc: 'Photographer drops up to 100 images; multer validates type and size before streaming.',
+              desc: 'Photographer drops up to 50 images; multer validates type and size before streaming.',
               icon: CloudUpload,
               color: 'blue'
             },
