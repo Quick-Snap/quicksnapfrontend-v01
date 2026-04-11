@@ -202,7 +202,7 @@ export default function LoginPage() {
               )}
             </button>
 
-            {/* Divider */}
+            {/* Google / Apple sign-in — re-enable when OAuth is wired up
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-white/10"></div>
@@ -212,7 +212,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Social Buttons */}
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
@@ -236,6 +235,7 @@ export default function LoginPage() {
                 Apple
               </button>
             </div>
+            */}
           </form>
         </div>
         </div>
