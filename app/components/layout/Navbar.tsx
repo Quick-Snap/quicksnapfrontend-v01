@@ -368,11 +368,22 @@ export default function Navbar() {
               {user ? (
                 <>
                   <Link
+                    href="/profile"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${isActive('/profile')
+                      ? 'bg-violet-500/20 text-violet-400 border border-violet-500/30'
+                      : 'text-gray-300 hover:text-white hover:bg-white/5'
+                      }`}
+                  >
+                    <User className="h-5 w-5" />
+                    <span className="font-medium">My Profile</span>
+                  </Link>
+                  <Link
                     href="/dashboard"
                     onClick={() => setMobileMenuOpen(false)}
                     className="flex items-center space-x-3 px-4 py-3 text-gray-300 hover:text-white hover:bg-white/5 rounded-lg"
                   >
-                    <User className="h-5 w-5" />
+                    <Home className="h-5 w-5" />
                     <span className="font-medium">Dashboard</span>
                   </Link>
                   <button

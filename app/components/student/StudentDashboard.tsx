@@ -47,7 +47,10 @@ export default function StudentDashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="stat-card group bg-gradient-to-br from-[#121022] via-[#0d0c19] to-[#0b0a14] border-white/10">
+        <Link
+          href="/photos"
+          className="stat-card group bg-gradient-to-br from-[#121022] via-[#0d0c19] to-[#0b0a14] border-white/10 block text-inherit no-underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-violet-500/50 focus-visible:outline-offset-2"
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-400 text-sm mb-1">My Photos</p>
@@ -58,9 +61,12 @@ export default function StudentDashboard() {
             </div>
           </div>
           <div className="h-1 mt-5 bg-gradient-to-r from-violet-500 to-indigo-500 rounded-full" />
-        </div>
+        </Link>
 
-        <div className="stat-card group bg-gradient-to-br from-[#121022] via-[#0d0c19] to-[#0b0a14] border-white/10">
+        <Link
+          href="/events"
+          className="stat-card group bg-gradient-to-br from-[#121022] via-[#0d0c19] to-[#0b0a14] border-white/10 block text-inherit no-underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-500/50 focus-visible:outline-offset-2"
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-400 text-sm mb-1">Events Joined</p>
@@ -71,22 +77,42 @@ export default function StudentDashboard() {
             </div>
           </div>
           <div className="h-1 mt-5 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-full" />
-        </div>
+        </Link>
 
-        <div className="stat-card group bg-gradient-to-br from-[#121022] via-[#0d0c19] to-[#0b0a14] border-white/10 relative overflow-hidden">
-          <div className="absolute right-0 top-0 w-24 h-24 bg-green-400/10 blur-3xl" />
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-400 text-sm mb-1">Face ID Status</p>
-              <p className="text-3xl font-semibold text-white">{isFaceReady ? 'Ready' : 'Set up'}</p>
-              <p className="text-xs text-gray-500 mt-1">{isFaceReady ? 'Recognition enabled' : 'Register to unlock matching'}</p>
+        {isFaceReady ? (
+          <div className="stat-card group bg-gradient-to-br from-[#121022] via-[#0d0c19] to-[#0b0a14] border-white/10 relative overflow-hidden">
+            <div className="absolute right-0 top-0 w-24 h-24 bg-green-400/10 blur-3xl" />
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-400 text-sm mb-1">Face ID Status</p>
+                <p className="text-3xl font-semibold text-white">Ready</p>
+                <p className="text-xs text-gray-500 mt-1">Recognition enabled</p>
+              </div>
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-emerald-500/10 group-hover:bg-white/10 transition-colors">
+                <ShieldCheck className="h-6 w-6 text-emerald-300" />
+              </div>
             </div>
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${isFaceReady ? 'bg-emerald-500/10' : 'bg-amber-500/10'} group-hover:bg-white/10 transition-colors`}>
-              <ShieldCheck className={`h-6 w-6 ${isFaceReady ? 'text-emerald-300' : 'text-amber-300'}`} />
-            </div>
+            <div className="h-1 mt-5 rounded-full bg-gradient-to-r from-emerald-500 to-green-400" />
           </div>
-          <div className={`h-1 mt-5 rounded-full ${isFaceReady ? 'bg-gradient-to-r from-emerald-500 to-green-400' : 'bg-gradient-to-r from-amber-500 to-yellow-400'}`} />
-        </div>
+        ) : (
+          <Link
+            href="/register-face"
+            className="stat-card group bg-gradient-to-br from-[#121022] via-[#0d0c19] to-[#0b0a14] border-white/10 relative overflow-hidden block text-inherit no-underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-500/50 focus-visible:outline-offset-2"
+          >
+            <div className="absolute right-0 top-0 w-24 h-24 bg-green-400/10 blur-3xl" />
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-400 text-sm mb-1">Face ID Status</p>
+                <p className="text-3xl font-semibold text-white">Set up</p>
+                <p className="text-xs text-gray-500 mt-1">Register to unlock matching</p>
+              </div>
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-amber-500/10 group-hover:bg-white/10 transition-colors">
+                <ShieldCheck className="h-6 w-6 text-amber-300" />
+              </div>
+            </div>
+            <div className="h-1 mt-5 rounded-full bg-gradient-to-r from-amber-500 to-yellow-400" />
+          </Link>
+        )}
       </div>
 
       {/* Quick Actions */}

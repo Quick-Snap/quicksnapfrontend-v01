@@ -8,6 +8,9 @@ import { authApi } from '@/lib/api';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 
+/** Set to true when live camera capture is supported end-to-end */
+const CAMERA_CAPTURE_ENABLED = false;
+
 export default function RegisterFacePage() {
   const { user, updateUser } = useAuth();
   const router = useRouter();
@@ -75,7 +78,7 @@ export default function RegisterFacePage() {
   // Upload to S3 and register face
   const handleUpload = async () => {
     if (!capturedImage) {
-      toast.error('Please capture a photo first');
+      toast.error('Please add a photo first');
       return;
     }
 
@@ -184,7 +187,7 @@ export default function RegisterFacePage() {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen relative overflow-hidden flex items-center justify-center py-6 sm:py-12 px-3 sm:px-6 lg:px-8">
       {/* Animated Background */}
       <div className="absolute inset-0 bg-[#0a0a0a]">
         <div className="absolute inset-0 bg-gradient-mesh opacity-50"></div>
@@ -197,26 +200,26 @@ export default function RegisterFacePage() {
 
       <div className="max-w-2xl w-full relative z-10 animate-slide-up">
         {/* Glass Card */}
-        <div className="card-glass rounded-2xl p-8 shadow-2xl">
+        <div className="card-glass rounded-xl sm:rounded-2xl p-4 sm:p-8 shadow-2xl">
           {/* Header */}
-          <div className="text-center mb-8">
-            <div className="flex justify-center mb-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 transform hover:scale-110 transition-all duration-300">
-                <Camera className="h-8 w-8 text-white" />
+          <div className="text-center mb-5 sm:mb-8">
+            <div className="flex justify-center mb-3 sm:mb-4">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/30 sm:hover:shadow-emerald-500/50 sm:transform sm:hover:scale-105 transition-all duration-300">
+                <Camera className="h-7 w-7 sm:h-8 sm:w-8 text-white" />
               </div>
             </div>
-            <h1 className="text-3xl font-bold text-gradient mb-2">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gradient mb-1.5 sm:mb-2 px-1">
               {user?.faceRegistered ? 'Update Face Data' : 'Register Your Face'}
             </h1>
-            <p className="text-gray-400 flex items-center justify-center gap-2">
-              <Sparkles className="w-4 h-4 text-emerald-400" />
-              {user?.faceRegistered ? 'Update your recognition data' : 'Enable automatic photo recognition at events'}
+            <p className="text-gray-400 flex items-center justify-center gap-2 text-sm sm:text-base px-2">
+              <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span className="leading-snug">{user?.faceRegistered ? 'Update your recognition data' : 'Enable automatic photo recognition at events'}</span>
             </p>
           </div>
 
           {/* Warning for Re-registration */}
           {user?.faceRegistered && (
-            <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 mb-6 animate-slide-up">
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 animate-slide-up">
               <div className="flex gap-3">
                 <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center shrink-0">
                   <AlertCircle className="h-4 w-4 text-amber-400" />
@@ -232,12 +235,12 @@ export default function RegisterFacePage() {
           )}
 
           {/* Instructions */}
-          <div className="card bg-violet-500/10 border-violet-500/20 rounded-xl p-4 mb-6 animate-slide-up delay-100">
-            <h3 className="font-semibold text-white mb-2 flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-violet-400" />
+          <div className="card bg-violet-500/10 border-violet-500/20 rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 animate-slide-up delay-100">
+            <h3 className="font-semibold text-white text-sm sm:text-base mb-1.5 sm:mb-2 flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-violet-400 shrink-0" />
               Photo Guidelines
             </h3>
-            <ul className="text-sm text-gray-400 space-y-1 list-disc list-inside">
+            <ul className="text-xs sm:text-sm text-gray-400 space-y-0.5 sm:space-y-1 list-disc list-inside leading-relaxed">
               <li>Face the camera directly with good lighting</li>
               <li>Remove glasses or hat if possible</li>
               <li>Keep a neutral expression</li>
@@ -246,11 +249,15 @@ export default function RegisterFacePage() {
           </div>
 
           {/* Camera/Preview Section */}
-          <div className="mb-6 animate-slide-up delay-200">
+          <div className="mb-4 sm:mb-6 animate-slide-up delay-200">
             {!capturedImage ? (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {/* Video Preview */}
-                <div className="relative bg-[#0a0a0a] rounded-2xl overflow-hidden aspect-video border border-white/10 shadow-xl">
+                <div
+                  className={`relative bg-[#0a0a0a] rounded-xl sm:rounded-2xl overflow-hidden border border-white/10 shadow-xl ${
+                    isCameraActive ? 'aspect-video' : !CAMERA_CAPTURE_ENABLED ? 'h-36 sm:h-auto sm:aspect-video' : 'aspect-video'
+                  }`}
+                >
                   {isCameraActive ? (
                     <>
                       <video
@@ -265,58 +272,99 @@ export default function RegisterFacePage() {
                       </div>
                     </>
                   ) : (
-                    <div className="flex flex-col items-center justify-center h-full text-gray-500">
-                      <Camera className="h-16 w-16 mb-4 opacity-50" />
-                      <p className="text-sm">Camera not active</p>
+                    <div className="flex flex-col items-center justify-center h-full min-h-[9rem] text-gray-500 px-3 sm:px-4 text-center">
+                      <Camera className="h-10 w-10 sm:h-16 sm:w-16 mb-2 sm:mb-4 opacity-40" />
+                      <p className="text-xs sm:text-sm text-gray-400 leading-snug">
+                        {CAMERA_CAPTURE_ENABLED ? (
+                          'Camera not active'
+                        ) : (
+                          <>
+                            Live camera — <span className="text-gray-300">coming soon</span>
+                          </>
+                        )}
+                      </p>
+                      {!CAMERA_CAPTURE_ENABLED && (
+                        <p className="text-[11px] sm:text-xs text-gray-500 mt-1.5 max-w-[17rem] leading-snug">
+                          Use <span className="text-gray-400 font-medium">Upload File</span> below for now.
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
 
                 {/* Camera Controls */}
-                <div className="flex flex-wrap gap-3 justify-center">
-                  {!isCameraActive ? (
+                {!isCameraActive && !CAMERA_CAPTURE_ENABLED ? (
+                  <div className="flex flex-col gap-2 sm:gap-3 sm:flex-row sm:flex-wrap sm:justify-center">
+                    <label className="btn-gradient px-5 py-3 rounded-xl flex items-center justify-center gap-2 font-semibold cursor-pointer w-full sm:w-auto order-1 shadow-lg shadow-violet-500/15">
+                      <Upload className="h-5 w-5 shrink-0" />
+                      Upload File
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileUpload}
+                        className="hidden"
+                      />
+                    </label>
                     <button
-                      onClick={startCamera}
-                      className="btn-gradient px-6 py-3 rounded-xl flex items-center gap-2 font-semibold"
+                      type="button"
+                      disabled
+                      aria-disabled="true"
+                      className="w-full sm:w-auto px-5 py-2.5 sm:py-3 rounded-xl flex items-center justify-center gap-2 text-sm font-medium text-gray-500 bg-white/[0.04] border border-white/10 cursor-not-allowed order-2"
                     >
-                      <Camera className="h-5 w-5" />
+                      <Camera className="h-5 w-5 shrink-0 opacity-60" />
                       Start Camera
+                      <span className="sr-only">(unavailable)</span>
                     </button>
-                  ) : (
-                    <>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-2.5 sm:gap-3 justify-center">
+                    {!isCameraActive ? (
                       <button
-                        onClick={capturePhoto}
-                        className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-6 py-3 rounded-xl flex items-center gap-2 font-semibold shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-all"
+                        type="button"
+                        onClick={startCamera}
+                        className="btn-gradient px-6 py-3 rounded-xl flex items-center gap-2 font-semibold"
                       >
                         <Camera className="h-5 w-5" />
-                        Capture Photo
+                        Start Camera
                       </button>
-                      <button
-                        onClick={stopCamera}
-                        className="btn-secondary px-6 py-3 rounded-xl flex items-center gap-2 font-semibold"
-                      >
-                        <X className="h-5 w-5" />
-                        Stop Camera
-                      </button>
-                    </>
-                  )}
+                    ) : (
+                      <>
+                        <button
+                          onClick={capturePhoto}
+                          className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-6 py-3 rounded-xl flex items-center gap-2 font-semibold shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-all"
+                        >
+                          <Camera className="h-5 w-5" />
+                          Capture Photo
+                        </button>
+                        <button
+                          onClick={stopCamera}
+                          className="btn-secondary px-6 py-3 rounded-xl flex items-center gap-2 font-semibold"
+                        >
+                          <X className="h-5 w-5" />
+                          Stop Camera
+                        </button>
+                      </>
+                    )}
 
-                  <label className="btn-secondary px-6 py-3 rounded-xl flex items-center gap-2 font-semibold cursor-pointer">
-                    <Upload className="h-5 w-5" />
-                    Upload File
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileUpload}
-                      className="hidden"
-                    />
-                  </label>
-                </div>
+                    {CAMERA_CAPTURE_ENABLED && (
+                      <label className="btn-secondary px-6 py-3 rounded-xl flex items-center gap-2 font-semibold cursor-pointer">
+                        <Upload className="h-5 w-5" />
+                        Upload File
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFileUpload}
+                          className="hidden"
+                        />
+                      </label>
+                    )}
+                  </div>
+                )}
               </div>
             ) : (
               <div className="space-y-4">
                 {/* Captured Image Preview */}
-                <div className="relative bg-[#0a0a0a] rounded-2xl overflow-hidden aspect-video border border-white/10 shadow-xl">
+                <div className="relative bg-[#0a0a0a] rounded-xl sm:rounded-2xl overflow-hidden aspect-video border border-white/10 shadow-xl">
                   <img
                     src={capturedImage}
                     alt="Captured"
@@ -340,15 +388,15 @@ export default function RegisterFacePage() {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex gap-3 justify-center">
+                <div className="flex flex-col-reverse sm:flex-row gap-2.5 sm:gap-3 justify-stretch sm:justify-center">
                   <button
                     onClick={() => {
                       setCapturedImage(null);
                       setUploadProgress(0);
-                      startCamera();
+                      if (CAMERA_CAPTURE_ENABLED) startCamera();
                     }}
                     disabled={uploading}
-                    className="btn-secondary px-6 py-3 rounded-xl flex items-center gap-2 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="btn-secondary px-6 py-3 rounded-xl flex items-center justify-center gap-2 font-semibold w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <RefreshCw className="h-5 w-5" />
                     Retake
@@ -356,7 +404,7 @@ export default function RegisterFacePage() {
                   <button
                     onClick={handleUpload}
                     disabled={uploading}
-                    className="btn-gradient px-8 py-3 rounded-xl flex items-center gap-2 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="btn-gradient px-8 py-3 rounded-xl flex items-center justify-center gap-2 font-semibold w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {uploading ? (
                       <>
@@ -379,10 +427,10 @@ export default function RegisterFacePage() {
           <canvas ref={canvasRef} className="hidden" />
 
           {/* Skip Option */}
-          <div className="text-center pt-4 border-t border-white/10 animate-fade-in delay-300">
+          <div className="text-center pt-3 sm:pt-4 border-t border-white/10 animate-fade-in delay-300">
             <Link
               href="/dashboard"
-              className="text-gray-500 hover:text-violet-400 text-sm transition-colors"
+              className="text-gray-500 hover:text-violet-400 text-xs sm:text-sm transition-colors"
             >
               Skip for now →
             </Link>
@@ -390,7 +438,7 @@ export default function RegisterFacePage() {
         </div>
 
         {/* Info Footer */}
-        <p className="mt-6 text-center text-sm text-gray-500 animate-fade-in delay-400">
+        <p className="mt-4 sm:mt-6 text-center text-xs sm:text-sm text-gray-500 px-2 animate-fade-in delay-400 leading-relaxed">
           Your face data is securely stored and used only for photo recognition at events
         </p>
       </div>

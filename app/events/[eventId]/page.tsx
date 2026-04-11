@@ -197,9 +197,9 @@ export default function PublicEventPage() {
                         <span className="font-medium">Back to Events</span>
                     </Link>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start min-w-0">
                         {/* Event Info */}
-                        <div className="space-y-6">
+                        <div className="space-y-6 min-w-0">
                             <div className="flex items-center gap-3 flex-wrap">
                                 <span className={`px-4 py-1.5 rounded-full text-sm font-semibold border ${isActive
                                     ? 'bg-emerald-500/15 text-emerald-200 border-emerald-400/30'
@@ -265,18 +265,18 @@ export default function PublicEventPage() {
                         </div>
 
                         {/* Event Details Card */}
-                        <div className="bg-[#0f0c18] rounded-2xl shadow-[0_16px_60px_rgba(0,0,0,0.45)] p-8 border border-white/10">
+                        <div className="bg-[#0f0c18] rounded-2xl shadow-[0_16px_60px_rgba(0,0,0,0.45)] p-4 sm:p-8 border border-white/10 min-w-0">
                             <h3 className="text-2xl font-semibold text-white mb-6 flex items-center gap-2">
                                 <Sparkles className="text-violet-300" size={24} />
                                 Event Details
                             </h3>
 
                             <div className="space-y-4">
-                                <div className="flex items-start gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
+                                <div className="flex items-start gap-4 p-4 bg-white/5 rounded-xl border border-white/10 min-w-0">
                                     <div className="w-12 h-12 bg-violet-500/15 border border-violet-400/20 rounded-xl flex items-center justify-center flex-shrink-0">
                                         <Calendar className="text-violet-300" size={22} />
                                     </div>
-                                    <div>
+                                    <div className="min-w-0 flex-1">
                                         <p className="font-semibold text-white mb-1">Date & Time</p>
                                         <p className="text-gray-300 text-sm">
                                             {startDate.toLocaleDateString('en-US', {
@@ -299,37 +299,37 @@ export default function PublicEventPage() {
                                     </div>
                                 </div>
 
-                                <div className="flex items-start gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
+                                <div className="flex items-start gap-4 p-4 bg-white/5 rounded-xl border border-white/10 min-w-0">
                                     <div className="w-12 h-12 bg-pink-500/15 border border-pink-400/20 rounded-xl flex items-center justify-center flex-shrink-0">
                                         <MapPin className="text-pink-300" size={22} />
                                     </div>
-                                    <div>
+                                    <div className="min-w-0 flex-1">
                                         <p className="font-semibold text-white mb-1">Location</p>
-                                        <p className="text-gray-300 text-sm">{event.venue || event.location || 'To be announced'}</p>
+                                        <p className="text-gray-300 text-sm break-words">{event.venue || event.location || 'To be announced'}</p>
                                     </div>
                                 </div>
 
                                 {event.organizer && (
-                                    <div className="flex items-start gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
+                                    <div className="flex items-start gap-4 p-4 bg-white/5 rounded-xl border border-white/10 min-w-0">
                                         <div className="w-12 h-12 bg-emerald-500/15 border border-emerald-400/20 rounded-xl flex items-center justify-center flex-shrink-0">
                                             <User className="text-emerald-300" size={22} />
                                         </div>
-                                        <div>
+                                        <div className="min-w-0 flex-1">
                                             <p className="font-semibold text-white mb-1">Organized by</p>
-                                            <p className="text-gray-300 text-sm">{event.organizer.name}</p>
-                                            <p className="text-gray-500 text-xs">{event.organizer.email}</p>
+                                            <p className="text-gray-300 text-sm break-words">{event.organizer.name}</p>
+                                            <p className="text-gray-500 text-xs break-all">{event.organizer.email}</p>
                                         </div>
                                     </div>
                                 )}
 
                                 {(currentUser?.role === 'admin' || event.organizer?._id === currentUser?.id || event.organizer === currentUser?.id) && event.accessCode && (
-                                    <div className="flex items-start gap-4 p-4 bg-gradient-to-r from-[#181025] to-[#121022] rounded-xl border border-violet-500/30">
+                                    <div className="flex items-start gap-4 p-4 bg-gradient-to-r from-[#181025] to-[#121022] rounded-xl border border-violet-500/30 min-w-0">
                                         <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
                                             <Sparkles className="text-violet-300" size={22} />
                                         </div>
-                                        <div>
+                                        <div className="min-w-0 flex-1">
                                             <p className="font-semibold text-white mb-1">Access Code</p>
-                                            <p className="text-violet-200 text-lg font-mono tracking-widest font-semibold">{event.accessCode}</p>
+                                            <p className="text-violet-200 text-lg font-mono tracking-widest font-semibold break-all">{event.accessCode}</p>
                                             <p className="text-gray-500 text-xs mt-1">Share this code with guests to let them join.</p>
                                         </div>
                                     </div>
