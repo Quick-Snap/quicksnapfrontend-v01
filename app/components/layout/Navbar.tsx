@@ -250,6 +250,7 @@ export default function Navbar() {
                             </div>
                           </Link>
 
+                          {/* Apply for Role — hidden until roles flow is ready
                           <Link
                             href="/roles"
                             onClick={() => setProfileDropdownOpen(false)}
@@ -263,6 +264,7 @@ export default function Navbar() {
                               <p className="text-xs text-gray-500">Become organizer or photographer</p>
                             </div>
                           </Link>
+                          */}
                         </div>
 
                         {/* Divider */}
