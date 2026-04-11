@@ -67,7 +67,7 @@ export default function PhotographerDashboard() {
       <div className="grid md:grid-cols-3 gap-4">
         {[
           {
-            title: 'Upload (≤100)',
+            title: 'Upload (≤50)',
             desc: 'Drop JPG/PNG/WEBP; multer streams to S3 RAW with event + uploader metadata.',
             icon: CloudUpload,
             gradient: 'from-blue-500 to-blue-400',

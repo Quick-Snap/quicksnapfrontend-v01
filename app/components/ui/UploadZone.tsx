@@ -11,7 +11,7 @@ interface UploadZoneProps {
     maxFiles?: number;
 }
 
-export default function UploadZone({ onFilesSelected, maxFiles = 100 }: UploadZoneProps) {
+export default function UploadZone({ onFilesSelected, maxFiles = 50 }: UploadZoneProps) {
     const { isPhotographerOrOrganizer } = useRole();
     const [previews, setPreviews] = useState<{ file: File; url: string }[]>([]);
     const [error, setError] = useState<string | null>(null);
