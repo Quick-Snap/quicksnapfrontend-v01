@@ -23,6 +23,7 @@ import UploadZone from '@/app/components/ui/UploadZone';
 import api from '@/app/api/axios';
 import { photoApi } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import RefreshAttendeeMatchesCard from '@/app/components/events/RefreshAttendeeMatchesCard';
 
 interface UploadProgress {
     total: number;
@@ -347,6 +348,8 @@ export default function EventUploadPage() {
                                     <span>Face recognition enabled</span>
                                 </div>
                             </div>
+
+                            <RefreshAttendeeMatchesCard eventId={eventId} event={eventData} variant="dark" />
 
                             {/* Tips Card */}
                             <div className="card bg-[#0d0b14] border-white/5 shadow-[0_16px_60px_rgba(0,0,0,0.45)]">

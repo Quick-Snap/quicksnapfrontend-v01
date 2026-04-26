@@ -19,6 +19,7 @@ import { Button } from '../../components/ui/Button';
 import ImageUploader from '../../components/upload/ImageUploader';
 import { eventApi } from '../../../lib/api';
 import { useAuth } from '../../../contexts/AuthContext';
+import RefreshAttendeeMatchesCard from '@/app/components/events/RefreshAttendeeMatchesCard';
 
 export default function PhotographerUploadPage() {
   const { user } = useAuth();
@@ -65,6 +66,11 @@ export default function PhotographerUploadPage() {
     setUploadedCount(photos.length);
     setUploadComplete(true);
   };
+
+  const selectedEventData =
+    selectedEvent && events.length > 0
+      ? events.find((ev: { _id?: string }) => ev._id === selectedEvent) ?? null
+      : null;
 
   if (!user) {
     return (
@@ -218,6 +224,10 @@ export default function PhotographerUploadPage() {
                 </div>
               </div>
             </div>
+          )}
+
+          {selectedEvent && selectedEventData && (
+            <RefreshAttendeeMatchesCard eventId={selectedEvent} event={selectedEventData} variant="dark" />
           )}
 
           {!uploadComplete && (
