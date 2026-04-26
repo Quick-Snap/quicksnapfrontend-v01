@@ -22,6 +22,7 @@ import toast from 'react-hot-toast';
 import RoleGuard from '@/app/components/RoleGuard';
 import { eventApi } from '@/lib/api';
 import { Button } from '@/app/components/ui/Button';
+import RefreshAttendeeMatchesCard from '@/app/components/events/RefreshAttendeeMatchesCard';
 
 export default function EventDetailsPage() {
     const params = useParams();
@@ -259,6 +260,8 @@ export default function EventDetailsPage() {
                                 </div>
                             )}
                         </div>
+
+                        <RefreshAttendeeMatchesCard eventId={eventId} event={event} variant="light" className="mb-6" />
 
                         <div className="card">
                             <h3 className="font-bold text-lg mb-4">Quick Links</h3>

@@ -358,6 +358,21 @@ export const eventApi = {
     const response = await api.post<ApiResponse<{ eventId: string; name: string }>>('/events/join', { accessCode });
     return response.data;
   },
+
+  refreshAttendeePhotoMatches: async (eventId: string) => {
+    const response = await api.post<
+      ApiResponse<{
+        eventId: string;
+        attendeesTotal: number;
+        processedWithFace: number;
+        skippedNoFace: number;
+        skippedDownloadFailed: number;
+        errors: { userId: string; message: string }[];
+        totalMappingsWritten: number;
+      }>
+    >(`/events/${eventId}/refresh-attendee-photo-matches`, undefined);
+    return response.data;
+  },
 };
 
 // User API

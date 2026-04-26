@@ -26,7 +26,9 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { eventApi } from '@/lib/api';
+import { canAccessEventManagePage, canFullManageEvent } from '@/lib/eventPermissions';
 import { enrichPhotosWithDisplayUrls, getPhotoDisplayUrl } from '@/lib/photoUrl';
+import RefreshAttendeeMatchesCard from '@/app/components/events/RefreshAttendeeMatchesCard';
 import { Button } from '@/app/components/ui/Button';
 import { useAuth } from '@/contexts/AuthContext';
 import RoleGuard from '@/app/components/RoleGuard';
@@ -377,8 +379,30 @@ export default function ManageEventPage() {
     const startDate = new Date(event.startDate);
     const endDate = new Date(event.endDate);
 
+    const canAccessManage = canAccessEventManagePage(user, event);
+    const canFullManage = canFullManageEvent(user, event);
+
+    if (!canAccessManage) {
+        return (
+            <RoleGuard allowedRoles={['organizer', 'admin', 'photographer']}>
+                <div className="min-h-[70vh] flex flex-col items-center justify-center px-4 text-center">
+                    <Shield className="h-14 w-14 text-amber-400/90 mb-4" />
+                    <h2 className="text-2xl font-bold text-white mb-2">Access denied</h2>
+                    <p className="text-gray-400 mb-6 max-w-md">
+                        Only the event organizer, an assigned photographer, or an admin can open this page.
+                    </p>
+                    <Link href={`/events/${eventId}`}>
+                        <Button variant="outline" className="border-white/20 text-white hover:bg-white/10">
+                            Back to event
+                        </Button>
+                    </Link>
+                </div>
+            </RoleGuard>
+        );
+    }
+
     return (
-        <RoleGuard allowedRoles={['organizer', 'admin']}>
+        <RoleGuard allowedRoles={['organizer', 'admin', 'photographer']}>
             <div className="max-w-5xl mx-auto space-y-8">
                 {/* Header */}
                 <div className="relative overflow-hidden rounded-2xl p-6 border border-white/5 bg-gradient-to-br from-[#181025] via-[#0f0b1d] to-[#0a0d1e] shadow-[0_20px_80px_rgba(0,0,0,0.45)]">
@@ -556,6 +580,7 @@ export default function ManageEventPage() {
                 </div>
 
                 {/* Assign Photographer Section */}
+                {canFullManage && (
                 <div className="card bg-[#0f0c18] border-white/5 shadow-[0_14px_50px_rgba(0,0,0,0.35)]">
                     <div className="flex items-center gap-3 mb-6">
                         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center">
@@ -650,6 +675,7 @@ export default function ManageEventPage() {
                         </div>
                     )}
                 </div>
+                )}
 
                 {/* Quick Actions */}
                 <div className="card bg-[#0f0c18] border-white/5 shadow-[0_14px_50px_rgba(0,0,0,0.35)]">
@@ -677,7 +703,10 @@ export default function ManageEventPage() {
                     </div>
                 </div>
 
+                <RefreshAttendeeMatchesCard eventId={eventId} event={event} variant="dark" />
+
                 {/* Select photos for dashboard (official gallery) */}
+                {canFullManage && (
                 <div className="card bg-[#0f0c18] border-white/5 shadow-[0_14px_50px_rgba(0,0,0,0.35)]">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500/20 to-indigo-500/20 flex items-center justify-center">
@@ -865,8 +894,10 @@ export default function ManageEventPage() {
                         </>
                     )}
                 </div>
+                )}
 
                 {/* Danger Zone */}
+                {canFullManage && (
                 <div className="card border-red-500/25 bg-red-500/5 shadow-[0_14px_50px_rgba(0,0,0,0.35)]">
                     <h2 className="text-xl font-semibold text-red-300 mb-4 flex items-center gap-2">
                         <AlertTriangle size={24} />
@@ -883,6 +914,7 @@ export default function ManageEventPage() {
                         Delete Event
                     </Button>
                 </div>
+                )}
 
                 {/* Delete Confirmation Modal */}
                 {showDeleteModal && (
