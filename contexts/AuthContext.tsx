@@ -11,7 +11,7 @@ interface AuthContextType {
   activeRole: UserRole | null;
   login: (email: string, password: string) => Promise<void>;
   register: (data: { email: string; password: string; name: string }) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   updateUser: (user: User) => void;
   switchRole: (role: UserRole) => void;
 }

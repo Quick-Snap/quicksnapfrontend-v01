@@ -6,6 +6,7 @@ import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "../contexts/AuthContext";
 import Navbar from "./components/layout/Navbar";
+import { AuthSessionProvider } from "./components/providers/AuthSessionProvider";
 import QueryProvider from "../providers/QueryProvider";
 
 const spaceGrotesk = Space_Grotesk({ 
@@ -31,6 +32,7 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <body className={`${spaceGrotesk.variable} ${inter.variable} font-sans bg-[#0a0a0a] text-white antialiased`}>
         <QueryProvider>
+          <AuthSessionProvider>
           <AuthProvider>
             {/* Background gradient mesh */}
             <div className="fixed inset-0 bg-gradient-mesh pointer-events-none opacity-50" />
@@ -64,6 +66,7 @@ export default function RootLayout({
               }}
             />
           </AuthProvider>
+          </AuthSessionProvider>
         </QueryProvider>
       </body>
     </html>
