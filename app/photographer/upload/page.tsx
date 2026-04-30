@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useQuery } from 'react-query';
@@ -22,6 +22,20 @@ import { useAuth } from '../../../contexts/AuthContext';
 import RefreshAttendeeMatchesCard from '@/app/components/events/RefreshAttendeeMatchesCard';
 
 export default function PhotographerUploadPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="w-10 h-10 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <PhotographerUploadContent />
+    </Suspense>
+  );
+}
+
+function PhotographerUploadContent() {
   const { user } = useAuth();
   const searchParams = useSearchParams();
   const eventIdFromUrl = searchParams.get('eventId');

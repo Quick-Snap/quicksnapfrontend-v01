@@ -21,7 +21,7 @@ interface AuthState {
 interface AuthActions {
   login: (email: string, password: string) => Promise<void>;
   register: (data: { email: string; password: string; name: string }) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   updateUser: (user: User) => void;
   switchRole: (role: UserRole) => void;
   loadUser: () => Promise<void>;
@@ -147,7 +147,15 @@ export const useAuthStore = create<AuthStore>()(
         }
       },
 
-      logout: () => {
+      logout: async () => {
+        // Must await NextAuth sign-out so session cookies clear before we navigate.
+        // Otherwise Google users stay "logged in" and GoogleSessionSync restores the API token.
+        try {
+          const { signOut } = await import('next-auth/react');
+          await signOut({ redirect: false });
+        } catch {
+          /* ignore */
+        }
         localStorage.removeItem('token');
         localStorage.removeItem('activeRole');
         set({ user: null, activeRole: null });
