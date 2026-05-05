@@ -33,6 +33,12 @@ import RefreshAttendeeMatchesCard from '@/app/components/events/RefreshAttendeeM
 import { Button } from '@/app/components/ui/Button';
 import { useAuth } from '@/contexts/AuthContext';
 import RoleGuard from '@/app/components/RoleGuard';
+import { useAppStore } from '@/stores/appStore';
+
+const MANAGE_CARD =
+    'card border-zinc-200/90 shadow-lg shadow-zinc-900/5 dark:border-white/5 dark:bg-[#0f0c18] dark:shadow-[0_14px_50px_rgba(0,0,0,0.35)]';
+const MANAGE_STAT =
+    'stat-card group border-zinc-200/80 bg-gradient-to-br from-white via-zinc-50/90 to-white shadow-sm shadow-zinc-900/5 dark:border-white/10 dark:from-[#121022] dark:via-[#0d0c19] dark:to-[#0b0a14] dark:shadow-none';
 
 /** Normalize GET /events/:id/photos body — supports { data: { photos } }, { data: Photo[] }, or { photos }. */
 function normalizePhotosFromGet(res: any): any[] {
@@ -92,6 +98,7 @@ function getPhotoPreviewUrl(photo: any): string | undefined {
 
 export default function ManageEventPage() {
     const { user } = useAuth();
+    const uiTheme = useAppStore((s) => s.ui.theme);
     const params = useParams();
     const router = useRouter();
     const queryClient = useQueryClient();
@@ -370,8 +377,8 @@ export default function ManageEventPage() {
         return (
             <div className="min-h-[70vh] flex items-center justify-center">
                 <div className="text-center">
-                    <div className="w-16 h-16 border-4 border-violet-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                    <p className="text-gray-400 font-medium">Loading event...</p>
+                    <div className="mx-auto mb-4 h-16 w-16 animate-spin rounded-full border-4 border-zinc-200 border-t-violet-600 dark:border-white/20 dark:border-t-violet-500" />
+                    <p className="font-medium text-zinc-500 dark:text-gray-400">Loading event...</p>
                 </div>
             </div>
         );
@@ -381,8 +388,8 @@ export default function ManageEventPage() {
         return (
             <div className="min-h-[70vh] flex items-center justify-center">
                 <div className="text-center">
-                    <h2 className="text-2xl font-bold text-white mb-2">Event not found</h2>
-                    <p className="text-gray-400 mb-6">The event you're looking for doesn't exist.</p>
+                    <h2 className="mb-2 text-2xl font-bold text-zinc-900 dark:text-white">Event not found</h2>
+                    <p className="mb-6 text-zinc-600 dark:text-gray-400">The event you&apos;re looking for doesn&apos;t exist.</p>
                     <Link href="/dashboard">
                         <Button>Back to Dashboard</Button>
                     </Link>
@@ -403,12 +410,12 @@ export default function ManageEventPage() {
             <RoleGuard allowedRoles={['organizer', 'admin', 'photographer']}>
                 <div className="min-h-[70vh] flex flex-col items-center justify-center px-4 text-center">
                     <Shield className="h-14 w-14 text-amber-400/90 mb-4" />
-                    <h2 className="text-2xl font-bold text-white mb-2">Access denied</h2>
-                    <p className="text-gray-400 mb-6 max-w-md">
+                    <h2 className="mb-2 text-2xl font-bold text-zinc-900 dark:text-white">Access denied</h2>
+                    <p className="mb-6 max-w-md text-zinc-600 dark:text-gray-400">
                         Only the event organizer, an assigned photographer, or an admin can open this page.
                     </p>
                     <Link href={`/events/${eventId}`}>
-                        <Button variant="outline" className="border-white/20 text-white hover:bg-white/10">
+                        <Button variant="outline">
                             Back to event
                         </Button>
                     </Link>
@@ -421,117 +428,117 @@ export default function ManageEventPage() {
         <RoleGuard allowedRoles={['organizer', 'admin', 'photographer']}>
             <div className="max-w-5xl mx-auto space-y-8">
                 {/* Header */}
-                <div className="relative overflow-hidden rounded-2xl p-6 border border-white/5 bg-gradient-to-br from-[#181025] via-[#0f0b1d] to-[#0a0d1e] shadow-[0_20px_80px_rgba(0,0,0,0.45)]">
-                    <div className="absolute inset-0 bg-gradient-mesh opacity-60" />
-                    <div className="absolute -left-14 -bottom-10 w-60 h-60 bg-violet-500/20 blur-3xl" />
-                    <div className="absolute right-0 top-0 w-64 h-64 bg-indigo-500/15 blur-3xl" />
+                <div className="relative overflow-hidden rounded-2xl border border-zinc-200/90 bg-gradient-to-br from-violet-50/95 via-white to-zinc-50 p-6 shadow-[0_20px_60px_-15px_rgba(15,23,42,0.08)] dark:border-white/5 dark:bg-gradient-to-br dark:from-[#181025] dark:via-[#0f0b1d] dark:to-[#0a0d1e] dark:shadow-[0_20px_80px_rgba(0,0,0,0.45)]">
+                    <div className="absolute inset-0 bg-gradient-mesh opacity-30 dark:opacity-60" />
+                    <div className="absolute -bottom-10 -left-14 h-60 w-60 bg-violet-300/35 blur-3xl dark:bg-violet-500/20" />
+                    <div className="absolute right-0 top-0 h-64 w-64 bg-indigo-300/25 blur-3xl dark:bg-indigo-500/15" />
                     <div className="relative flex flex-col gap-4">
                         <div className="flex items-center justify-between">
                             <Link 
                                 href="/dashboard" 
-                                className="inline-flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
+                                className="inline-flex items-center gap-2 text-zinc-600 transition-colors hover:text-zinc-900 dark:text-gray-300 dark:hover:text-white"
                             >
                                 <ChevronLeft size={20} />
                                 <span className="font-medium">Back to Dashboard</span>
                             </Link>
-                            <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${
+                            <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${
                                 isActive 
-                                    ? 'bg-emerald-500/15 text-emerald-200 border-emerald-500/30' 
-                                    : 'bg-white/10 text-gray-200 border-white/20'
+                                    ? 'border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-200' 
+                                    : 'border-zinc-200 bg-zinc-100 text-zinc-700 dark:border-white/20 dark:bg-white/10 dark:text-gray-200'
                             }`}>
                                 {isActive ? 'Active' : 'Past'}
                             </span>
                         </div>
 
                         <div className="space-y-3">
-                            <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 text-white px-3 py-1.5 rounded-full text-sm">
-                                <Shield className="h-4 w-4 text-violet-200" />
-                                <span className="text-xs uppercase tracking-[0.25em] text-gray-200">Event management</span>
+                            <div className="inline-flex items-center gap-2 rounded-full border border-violet-200/80 bg-violet-50/90 px-3 py-1.5 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white">
+                                <Shield className="h-4 w-4 text-violet-600 dark:text-violet-200" />
+                                <span className="text-xs uppercase tracking-[0.25em] text-violet-800/90 dark:text-gray-200">Event management</span>
                             </div>
-                            <div className="flex items-center gap-3 flex-wrap">
-                                <h1 className="text-3xl md:text-4xl font-semibold text-white leading-tight">{event.name}</h1>
-                                <span className="px-3 py-1 text-xs rounded-full bg-white/5 border border-white/10 text-gray-200">
+                            <div className="flex flex-wrap items-center gap-3">
+                                <h1 className="text-3xl font-semibold leading-tight text-zinc-900 dark:text-white md:text-4xl">{event.name}</h1>
+                                <span className="rounded-full border border-zinc-200/90 bg-white px-3 py-1 text-xs text-zinc-700 dark:border-white/10 dark:bg-white/5 dark:text-gray-200">
                                     {displayedPhotoCount} photos
                                 </span>
                             </div>
-                            <p className="text-gray-300 text-lg">{event.description || 'No description provided'}</p>
+                            <p className="text-lg text-zinc-600 dark:text-gray-300">{event.description || 'No description provided'}</p>
                         </div>
                     </div>
                 </div>
 
                 {/* Stats Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="stat-card group bg-gradient-to-br from-[#121022] via-[#0d0c19] to-[#0b0a14] border-white/10">
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                    <div className={`${MANAGE_STAT}`}>
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-gray-400 text-sm mb-1">Attendees</p>
-                                <p className="text-2xl font-semibold text-white">{event.attendees?.length || 0}</p>
+                                <p className="mb-1 text-sm text-zinc-500 dark:text-gray-400">Attendees</p>
+                                <p className="text-2xl font-semibold text-zinc-900 dark:text-white">{event.attendees?.length || 0}</p>
                             </div>
-                            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
-                                <Users className="h-5 w-5 text-emerald-300" />
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 transition-colors group-hover:bg-emerald-200/80 dark:bg-emerald-500/10 dark:group-hover:bg-emerald-500/20">
+                                <Users className="h-5 w-5 text-emerald-700 dark:text-emerald-300" />
                             </div>
                         </div>
-                        <div className="h-1 mt-4 bg-gradient-to-r from-emerald-500 to-green-400 rounded-full"></div>
+                        <div className="mt-4 h-1 rounded-full bg-gradient-to-r from-emerald-500 to-green-400"></div>
                     </div>
 
-                    <div className="stat-card group bg-gradient-to-br from-[#121022] via-[#0d0c19] to-[#0b0a14] border-white/10">
+                    <div className={`${MANAGE_STAT}`}>
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-gray-400 text-sm mb-1">Photos</p>
-                                <p className="text-2xl font-semibold text-white">{displayedPhotoCount}</p>
+                                <p className="mb-1 text-sm text-zinc-500 dark:text-gray-400">Photos</p>
+                                <p className="text-2xl font-semibold text-zinc-900 dark:text-white">{displayedPhotoCount}</p>
                             </div>
-                            <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center group-hover:bg-violet-500/20 transition-colors">
-                                <ImageIcon className="h-5 w-5 text-violet-300" />
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 transition-colors group-hover:bg-violet-200/80 dark:bg-violet-500/10 dark:group-hover:bg-violet-500/20">
+                                <ImageIcon className="h-5 w-5 text-violet-700 dark:text-violet-300" />
                             </div>
                         </div>
-                        <div className="h-1 mt-4 bg-gradient-to-r from-violet-500 to-indigo-500 rounded-full"></div>
+                        <div className="mt-4 h-1 rounded-full bg-gradient-to-r from-violet-500 to-indigo-500"></div>
                     </div>
 
-                    <div className="stat-card group bg-gradient-to-br from-[#121022] via-[#0d0c19] to-[#0b0a14] border-white/10">
+                    <div className={`${MANAGE_STAT}`}>
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-gray-400 text-sm mb-1">Photographers</p>
-                                <p className="text-2xl font-semibold text-white">{event.photographers?.length || 0}</p>
+                                <p className="mb-1 text-sm text-zinc-500 dark:text-gray-400">Photographers</p>
+                                <p className="text-2xl font-semibold text-zinc-900 dark:text-white">{event.photographers?.length || 0}</p>
                             </div>
-                            <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
-                                <Sparkles className="h-5 w-5 text-blue-300" />
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 transition-colors group-hover:bg-blue-200/80 dark:bg-blue-500/10 dark:group-hover:bg-blue-500/20">
+                                <Sparkles className="h-5 w-5 text-blue-700 dark:text-blue-300" />
                             </div>
                         </div>
-                        <div className="h-1 mt-4 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full"></div>
+                        <div className="mt-4 h-1 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500"></div>
                     </div>
 
-                    <div className="stat-card group bg-gradient-to-br from-[#121022] via-[#0d0c19] to-[#0b0a14] border-white/10">
+                    <div className={`${MANAGE_STAT}`}>
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-gray-400 text-sm mb-1">Status</p>
-                                <p className={`text-2xl font-semibold ${isActive ? 'text-emerald-300' : 'text-gray-300'}`}>
+                                <p className="mb-1 text-sm text-zinc-500 dark:text-gray-400">Status</p>
+                                <p className={`text-2xl font-semibold ${isActive ? 'text-emerald-700 dark:text-emerald-300' : 'text-zinc-500 dark:text-gray-300'}`}>
                                     {isActive ? 'Live' : 'Ended'}
                                 </p>
                             </div>
-                            <div className={`w-10 h-10 rounded-xl ${isActive ? 'bg-emerald-500/10' : 'bg-white/5'} flex items-center justify-center`}>
-                                <Clock className={`h-5 w-5 ${isActive ? 'text-emerald-300' : 'text-gray-400'}`} />
+                            <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${isActive ? 'bg-emerald-100 dark:bg-emerald-500/10' : 'bg-zinc-200 dark:bg-white/5'}`}>
+                                <Clock className={`h-5 w-5 ${isActive ? 'text-emerald-700 dark:text-emerald-300' : 'text-zinc-500 dark:text-gray-400'}`} />
                             </div>
                         </div>
-                        <div className={`h-1 mt-4 rounded-full ${isActive ? 'bg-gradient-to-r from-emerald-500 to-green-400' : 'bg-gradient-to-r from-slate-500 to-gray-500'}`}></div>
+                        <div className={`mt-4 h-1 rounded-full ${isActive ? 'bg-gradient-to-r from-emerald-500 to-green-400' : 'bg-gradient-to-r from-slate-400 to-zinc-400 dark:from-slate-500 dark:to-gray-500'}`}></div>
                     </div>
                 </div>
 
                 {/* Event Details */}
-                <div className="card bg-[#0f0c18] border-white/5 shadow-[0_14px_50px_rgba(0,0,0,0.35)]">
-                    <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
-                        <Calendar className="text-violet-300" size={22} />
+                <div className={MANAGE_CARD}>
+                    <h2 className="mb-6 flex items-center gap-2 text-xl font-semibold text-zinc-900 dark:text-white">
+                        <Calendar className="text-violet-600 dark:text-violet-300" size={22} />
                         Event Details
                     </h2>
 
-                    <div className="grid md:grid-cols-2 gap-6">
+                    <div className="grid gap-6 md:grid-cols-2">
                         <div className="space-y-4">
-                            <div className="flex items-start gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
-                                <div className="w-10 h-10 bg-violet-500/15 border border-violet-400/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                                    <Calendar className="text-violet-300" size={20} />
+                            <div className="flex items-start gap-4 rounded-xl border border-zinc-200/90 bg-zinc-50/80 p-4 dark:border-white/10 dark:bg-white/5">
+                                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-violet-200 bg-violet-100 dark:border-violet-400/20 dark:bg-violet-500/15">
+                                    <Calendar className="text-violet-700 dark:text-violet-300" size={20} />
                                 </div>
                                 <div>
-                                    <p className="font-medium text-white mb-1">Date</p>
-                                    <p className="text-gray-300 text-sm">
+                                    <p className="mb-1 font-medium text-zinc-900 dark:text-white">Date</p>
+                                    <p className="text-sm text-zinc-600 dark:text-gray-300">
                                         {startDate.toLocaleDateString('en-US', {
                                             weekday: 'long',
                                             year: 'numeric',
@@ -542,25 +549,25 @@ export default function ManageEventPage() {
                                 </div>
                             </div>
 
-                            <div className="flex items-start gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
-                                <div className="w-10 h-10 bg-blue-500/15 border border-blue-400/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                                    <Clock className="text-blue-300" size={20} />
+                            <div className="flex items-start gap-4 rounded-xl border border-zinc-200/90 bg-zinc-50/80 p-4 dark:border-white/10 dark:bg-white/5">
+                                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-blue-200 bg-blue-100 dark:border-blue-400/20 dark:bg-blue-500/15">
+                                    <Clock className="text-blue-700 dark:text-blue-300" size={20} />
                                 </div>
                                 <div>
-                                    <p className="font-medium text-white mb-1">Time</p>
-                                    <p className="text-gray-300 text-sm">
+                                    <p className="mb-1 font-medium text-zinc-900 dark:text-white">Time</p>
+                                    <p className="text-sm text-zinc-600 dark:text-gray-300">
                                         {startDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} - {endDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                                     </p>
                                 </div>
                             </div>
 
-                            <div className="flex items-start gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
-                                <div className="w-10 h-10 bg-pink-500/15 border border-pink-400/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                                    <MapPin className="text-pink-300" size={20} />
+                            <div className="flex items-start gap-4 rounded-xl border border-zinc-200/90 bg-zinc-50/80 p-4 dark:border-white/10 dark:bg-white/5">
+                                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-pink-200 bg-pink-100 dark:border-pink-400/20 dark:bg-pink-500/15">
+                                    <MapPin className="text-pink-700 dark:text-pink-300" size={20} />
                                 </div>
                                 <div>
-                                    <p className="font-medium text-white mb-1">Venue</p>
-                                    <p className="text-gray-300 text-sm">{event.venue || 'Not specified'}</p>
+                                    <p className="mb-1 font-medium text-zinc-900 dark:text-white">Venue</p>
+                                    <p className="text-sm text-zinc-600 dark:text-gray-300">{event.venue || 'Not specified'}</p>
                                 </div>
                             </div>
                         </div>
@@ -568,26 +575,27 @@ export default function ManageEventPage() {
                         <div className="space-y-4">
                             {/* Access Code */}
                             {event.accessCode && (
-                                <div className="p-4 bg-gradient-to-r from-[#181025] to-[#121022] rounded-xl border border-violet-500/30">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <p className="font-medium text-white">Access Code</p>
+                                <div className="rounded-xl border border-violet-200/90 bg-gradient-to-r from-violet-50 to-indigo-50 p-4 dark:border-violet-500/30 dark:from-[#181025] dark:to-[#121022]">
+                                    <div className="mb-2 flex items-center justify-between">
+                                        <p className="font-medium text-zinc-900 dark:text-white">Access Code</p>
                                         <button
+                                            type="button"
                                             onClick={handleCopyCode}
-                                            className="flex items-center gap-1 text-xs text-violet-200 hover:text-violet-100 transition-colors"
+                                            className="flex items-center gap-1 text-xs text-violet-700 transition-colors hover:text-violet-900 dark:text-violet-200 dark:hover:text-violet-100"
                                         >
                                             {codeCopied ? <Check size={14} /> : <Copy size={14} />}
                                             {codeCopied ? 'Copied!' : 'Copy'}
                                         </button>
                                     </div>
-                                    <p className="text-2xl font-mono font-semibold text-violet-200 tracking-widest">{event.accessCode}</p>
-                                    <p className="text-xs text-gray-500 mt-2">Share this code with guests to let them join</p>
+                                    <p className="font-mono text-2xl font-semibold tracking-widest text-violet-800 dark:text-violet-200">{event.accessCode}</p>
+                                    <p className="mt-2 text-xs text-zinc-500 dark:text-gray-500">Share this code with guests to let them join</p>
                                 </div>
                             )}
 
                             {/* Visibility */}
-                            <div className="p-4 bg-white/5 rounded-xl border border-white/10">
-                                <p className="font-medium text-white mb-1">Visibility</p>
-                                <p className={`text-sm ${event.isPublic ? 'text-emerald-300' : 'text-amber-300'}`}>
+                            <div className="rounded-xl border border-zinc-200/90 bg-zinc-50/80 p-4 dark:border-white/10 dark:bg-white/5">
+                                <p className="mb-1 font-medium text-zinc-900 dark:text-white">Visibility</p>
+                                <p className={`text-sm ${event.isPublic ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300'}`}>
                                     {event.isPublic ? '🌐 Public Event' : '🔒 Private Event'}
                                 </p>
                             </div>
@@ -597,23 +605,23 @@ export default function ManageEventPage() {
 
                 {/* Assign Photographer Section */}
                 {canFullManage && (
-                <div className="card bg-[#0f0c18] border-white/5 shadow-[0_14px_50px_rgba(0,0,0,0.35)]">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center">
-                            <Camera className="h-6 w-6 text-emerald-400" />
+                <div className={MANAGE_CARD}>
+                    <div className="mb-6 flex items-center gap-3">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-emerald-500/20 dark:to-teal-500/20">
+                            <Camera className="h-6 w-6 text-emerald-700 dark:text-emerald-400" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-white">Assign Photographer</h2>
-                            <p className="text-sm text-gray-400">Invite photographers to capture this event</p>
+                            <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Assign Photographer</h2>
+                            <p className="text-sm text-zinc-500 dark:text-gray-400">Invite photographers to capture this event</p>
                         </div>
                     </div>
 
                     {/* Assignment Form */}
-                    <div className="bg-gradient-to-r from-emerald-500/5 to-teal-500/5 rounded-xl p-6 border border-emerald-500/15 mb-6">
-                        <div className="flex flex-col md:flex-row gap-4">
-                            <div className="flex-1 relative">
+                    <div className="mb-6 rounded-xl border border-emerald-200/80 bg-gradient-to-r from-emerald-50/90 to-teal-50/90 p-6 dark:border-emerald-500/15 dark:from-emerald-500/5 dark:to-teal-500/5">
+                        <div className="flex flex-col gap-4 md:flex-row">
+                            <div className="relative flex-1">
                                 <div className="absolute left-4 top-1/2 -translate-y-1/2">
-                                    <Mail className="h-5 w-5 text-gray-500" />
+                                    <Mail className="h-5 w-5 text-zinc-400 dark:text-gray-500" />
                                 </div>
                                 <input
                                     type="email"
@@ -621,7 +629,7 @@ export default function ManageEventPage() {
                                     value={photographerEmail}
                                     onChange={(e) => setPhotographerEmail(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && handleAssignPhotographer()}
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3.5 pl-12 pr-4 text-white placeholder-gray-500 focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none"
+                                    className="input w-full rounded-xl py-3.5 pl-12 pr-4 transition-all"
                                 />
                             </div>
                             <button
@@ -642,8 +650,8 @@ export default function ManageEventPage() {
                                 )}
                             </button>
                         </div>
-                        <p className="text-xs text-gray-500 mt-3 flex items-center gap-1">
-                            <Sparkles className="h-3 w-3 text-emerald-400" />
+                        <p className="mt-3 flex items-center gap-1 text-xs text-zinc-500 dark:text-gray-500">
+                            <Sparkles className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
                             The photographer will receive access to upload photos for this event
                         </p>
                     </div>
@@ -651,28 +659,28 @@ export default function ManageEventPage() {
                     {/* Current Photographers */}
                     {event.photographers && event.photographers.length > 0 && (
                         <div>
-                            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-4">
+                            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-gray-400">
                                 Assigned Photographers ({event.photographers.length})
                             </h3>
                             <div className="grid gap-3">
                                 {event.photographers.map((photographer: any, index: number) => (
                                     <div
                                         key={photographer._id || photographer.id || index}
-                                        className="flex items-center gap-4 p-4 bg-white/5 rounded-xl border border-white/5 hover:border-emerald-500/20 transition-colors"
+                                        className="flex items-center gap-4 rounded-xl border border-zinc-200/90 bg-white p-4 transition-colors hover:border-emerald-300/70 dark:border-white/5 dark:bg-white/5 dark:hover:border-emerald-500/20"
                                     >
-                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-semibold shadow-lg shadow-emerald-500/20">
+                                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 font-semibold text-white shadow-lg shadow-emerald-500/20">
                                             {(photographer.name || photographer.email || 'P').charAt(0).toUpperCase()}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="font-medium text-white truncate">
+                                            <p className="truncate font-medium text-zinc-900 dark:text-white">
                                                 {photographer.name || 'Photographer'}
                                             </p>
-                                            <p className="text-sm text-gray-500 truncate">
+                                            <p className="truncate text-sm text-zinc-500 dark:text-gray-500">
                                                 {photographer.email || 'No email provided'}
                                             </p>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 text-xs font-medium rounded-full border border-emerald-500/20">
+                                            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400">
                                                 Active
                                             </span>
                                         </div>
@@ -684,53 +692,53 @@ export default function ManageEventPage() {
 
                     {/* Empty State */}
                     {(!event.photographers || event.photographers.length === 0) && (
-                        <div className="text-center py-8 text-gray-500">
-                            <Camera className="h-12 w-12 mx-auto mb-3 text-gray-600" />
-                            <p className="font-medium text-gray-400">No photographers assigned yet</p>
-                            <p className="text-sm">Add photographers using the form above</p>
+                        <div className="py-8 text-center text-zinc-500 dark:text-gray-500">
+                            <Camera className="mx-auto mb-3 h-12 w-12 text-zinc-400 dark:text-gray-600" />
+                            <p className="font-medium text-zinc-600 dark:text-gray-400">No photographers assigned yet</p>
+                            <p className="text-sm text-zinc-500 dark:text-gray-500">Add photographers using the form above</p>
                         </div>
                     )}
                 </div>
                 )}
 
                 {/* Quick Actions */}
-                <div className="card bg-[#0f0c18] border-white/5 shadow-[0_14px_50px_rgba(0,0,0,0.35)]">
-                    <h2 className="text-xl font-semibold text-white mb-6">Quick Actions</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Link href={`/organizer/events/${eventId}/upload`} className="action-card group bg-white/5 border-white/10 hover:bg-violet-500/10 hover:border-violet-500/30">
-                            <div className="w-10 h-10 rounded-lg bg-violet-500/10 flex items-center justify-center group-hover:bg-violet-500/20 transition-colors">
-                                <Upload className="h-5 w-5 text-violet-300" />
+                <div className={MANAGE_CARD}>
+                    <h2 className="mb-6 text-xl font-semibold text-zinc-900 dark:text-white">Quick Actions</h2>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <Link href={`/organizer/events/${eventId}/upload`} className="action-card group border-zinc-200/90 bg-white hover:border-violet-300/70 dark:border-white/10 dark:bg-white/5 dark:hover:border-violet-500/30 dark:hover:bg-violet-500/10">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-100 transition-colors group-hover:bg-violet-200/80 dark:bg-violet-500/10 dark:group-hover:bg-violet-500/20">
+                                <Upload className="h-5 w-5 text-violet-700 dark:text-violet-300" />
                             </div>
                             <div>
-                                <p className="font-semibold text-white">Upload Photos</p>
-                                <p className="text-sm text-gray-400">Add photos to this event</p>
+                                <p className="font-semibold text-zinc-900 dark:text-white">Upload Photos</p>
+                                <p className="text-sm text-zinc-500 dark:text-gray-400">Add photos to this event</p>
                             </div>
                         </Link>
 
-                        <Link href={`/events/${eventId}`} className="action-card group bg-white/5 border-white/10 hover:bg-blue-500/10 hover:border-blue-500/30">
-                            <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
-                                <ImageIcon className="h-5 w-5 text-blue-300" />
+                        <Link href={`/events/${eventId}`} className="action-card group border-zinc-200/90 bg-white hover:border-blue-300/70 dark:border-white/10 dark:bg-white/5 dark:hover:border-blue-500/30 dark:hover:bg-blue-500/10">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 transition-colors group-hover:bg-blue-200/80 dark:bg-blue-500/10 dark:group-hover:bg-blue-500/20">
+                                <ImageIcon className="h-5 w-5 text-blue-700 dark:text-blue-300" />
                             </div>
                             <div>
-                                <p className="font-semibold text-white">View Event Page</p>
-                                <p className="text-sm text-gray-400">See public event view</p>
+                                <p className="font-semibold text-zinc-900 dark:text-white">View Event Page</p>
+                                <p className="text-sm text-zinc-500 dark:text-gray-400">See public event view</p>
                             </div>
                         </Link>
                     </div>
                 </div>
 
-                <RefreshAttendeeMatchesCard eventId={eventId} event={event} variant="dark" />
+                <RefreshAttendeeMatchesCard eventId={eventId} event={event} variant={uiTheme === 'dark' ? 'dark' : 'light'} />
 
                 {/* Select photos for dashboard (official gallery) */}
                 {canFullManage && (
-                <div className="card bg-[#0f0c18] border-white/5 shadow-[0_14px_50px_rgba(0,0,0,0.35)]">
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500/20 to-indigo-500/20 flex items-center justify-center">
-                            <ImageIcon className="h-6 w-6 text-violet-400" />
+                <div className={MANAGE_CARD}>
+                    <div className="mb-2 flex items-center gap-3">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-violet-100 to-indigo-100 dark:from-violet-500/20 dark:to-indigo-500/20">
+                            <ImageIcon className="h-6 w-6 text-violet-700 dark:text-violet-400" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-white">Public event gallery</h2>
-                            <p className="text-sm text-gray-400">
+                            <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Public event gallery</h2>
+                            <p className="text-sm text-zinc-500 dark:text-gray-400">
                                 Add photos from the pool below, then save. They move to “On public gallery” once the server confirms. Click a live photo to remove it from the public page.
                             </p>
                         </div>
@@ -738,23 +746,23 @@ export default function ManageEventPage() {
                     {photosLoading ? (
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 py-8">
                             {[...Array(10)].map((_, i) => (
-                                <div key={i} className="aspect-square bg-white/5 rounded-xl animate-pulse border border-white/5" />
+                                <div key={i} className="aspect-square animate-pulse rounded-xl border border-zinc-200/90 bg-zinc-100 dark:border-white/5 dark:bg-white/5" />
                             ))}
                         </div>
                     ) : allEventPhotos.length === 0 ? (
-                        <div className="text-center py-12 text-gray-500 border border-white/5 rounded-xl border-dashed">
-                            <ImageIcon className="h-12 w-12 mx-auto mb-3 text-gray-600" />
-                            <p className="font-medium text-gray-400">No photos yet</p>
-                            <p className="text-sm">Upload photos first, then choose which ones appear on the public event gallery.</p>
+                        <div className="rounded-xl border border-dashed border-zinc-200/90 py-12 text-center text-zinc-500 dark:border-white/5 dark:text-gray-500">
+                            <ImageIcon className="mx-auto mb-3 h-12 w-12 text-zinc-400 dark:text-gray-600" />
+                            <p className="font-medium text-zinc-600 dark:text-gray-400">No photos yet</p>
+                            <p className="text-sm text-zinc-500 dark:text-gray-500">Upload photos first, then choose which ones appear on the public event gallery.</p>
                         </div>
                     ) : (
                         <>
                             <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-                                <span className="text-sm text-gray-400">
-                                    <span className="text-emerald-300/90 font-medium">{photosOnDashboard.length}</span> on public gallery
-                                    <span className="mx-2 text-white/20">·</span>
-                                    <span className="text-gray-300">{photosNotOnDashboard.length}</span> in pool
-                                    <span className="mx-2 text-white/20">·</span>
+                                <span className="text-sm text-zinc-600 dark:text-gray-400">
+                                    <span className="font-medium text-emerald-700 dark:text-emerald-300/90">{photosOnDashboard.length}</span> on public gallery
+                                    <span className="mx-2 text-zinc-300 dark:text-white/20">·</span>
+                                    <span className="text-zinc-700 dark:text-gray-300">{photosNotOnDashboard.length}</span> in pool
+                                    <span className="mx-2 text-zinc-300 dark:text-white/20">·</span>
                                     {selectedOfficialIds.size} marked for gallery after save
                                 </span>
                                 <button
@@ -779,8 +787,8 @@ export default function ManageEventPage() {
 
                             {photosOnDashboard.length > 0 && (
                                 <div className="mb-8">
-                                    <h3 className="text-sm font-semibold text-emerald-300/90 mb-3 flex items-center gap-2">
-                                        <span className="inline-block w-2 h-2 rounded-full bg-emerald-400" />
+                                    <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-emerald-800 dark:text-emerald-300/90">
+                                        <span className="inline-block h-2 w-2 rounded-full bg-emerald-500 dark:bg-emerald-400" />
                                         On public gallery
                                     </h3>
                                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -792,12 +800,11 @@ export default function ManageEventPage() {
                                             return (
                                                 <div
                                                     key={id || `on-gallery-${index}`}
-                                                    className="group relative aspect-square rounded-xl overflow-hidden border-2 transition-all cursor-pointer"
+                                                    className="group relative aspect-square cursor-pointer overflow-hidden rounded-xl border-2 bg-zinc-100/95 transition-all dark:bg-[rgba(15,12,24,0.92)]"
                                                     style={{
                                                         borderColor: isSelected
                                                             ? 'rgba(16, 185, 129, 0.45)'
                                                             : 'rgba(251, 191, 36, 0.45)',
-                                                        backgroundColor: 'rgba(15,12,24,0.8)',
                                                     }}
                                                     onClick={() => togglePhotoOfficial(photo)}
                                                 >
@@ -854,12 +861,12 @@ export default function ManageEventPage() {
                             )}
 
                             <div>
-                                <h3 className="text-sm font-semibold text-violet-300/90 mb-3 flex items-center gap-2">
-                                    <span className="inline-block w-2 h-2 rounded-full bg-violet-400" />
+                                <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-violet-800 dark:text-violet-300/90">
+                                    <span className="inline-block h-2 w-2 rounded-full bg-violet-600 dark:bg-violet-400" />
                                     Pool — not on public gallery yet
                                 </h3>
                                 {photosNotOnDashboard.length === 0 ? (
-                                    <p className="text-sm text-gray-500 py-6 border border-white/5 rounded-xl border-dashed text-center">
+                                    <p className="rounded-xl border border-dashed border-zinc-200/90 py-6 text-center text-sm text-zinc-500 dark:border-white/5 dark:text-gray-500">
                                         All uploaded photos are on the public gallery. Remove some from the section above if you want them back in the pool.
                                     </p>
                                 ) : (
@@ -871,13 +878,12 @@ export default function ManageEventPage() {
                                             return (
                                                 <div
                                                     key={id || `pool-${index}`}
-                                                    className="group relative aspect-square rounded-xl overflow-hidden border-2 transition-all cursor-pointer"
-                                                    style={{
-                                                        borderColor: isSelected
-                                                            ? 'rgba(139, 92, 246, 0.5)'
-                                                            : 'rgba(255,255,255,0.1)',
-                                                        backgroundColor: 'rgba(15,12,24,0.8)',
-                                                    }}
+                                                    className={`group relative aspect-square cursor-pointer overflow-hidden rounded-xl border-2 bg-zinc-100/95 transition-all dark:bg-[rgba(15,12,24,0.92)] ${
+                                                        isSelected ? '' : 'border-zinc-300 dark:border-white/10'
+                                                    }`}
+                                                    style={
+                                                        isSelected ? { borderColor: 'rgba(139, 92, 246, 0.5)' } : undefined
+                                                    }
                                                     onClick={() => togglePhotoOfficial(photo)}
                                                 >
                                                     {displayUrl ? (
@@ -938,17 +944,17 @@ export default function ManageEventPage() {
 
                 {/* Danger Zone */}
                 {canFullManage && (
-                <div className="card border-red-500/25 bg-red-500/5 shadow-[0_14px_50px_rgba(0,0,0,0.35)]">
-                    <h2 className="text-xl font-semibold text-red-300 mb-4 flex items-center gap-2">
+                <div className="card border-red-200 bg-red-50/80 shadow-sm shadow-zinc-900/5 dark:border-red-500/25 dark:bg-red-500/5 dark:shadow-[0_14px_50px_rgba(0,0,0,0.35)]">
+                    <h2 className="mb-4 flex items-center gap-2 text-xl font-semibold text-red-800 dark:text-red-300">
                         <AlertTriangle size={24} />
                         Danger Zone
                     </h2>
-                    <p className="text-gray-400 mb-6">
+                    <p className="mb-6 text-zinc-600 dark:text-gray-400">
                         Once you delete an event, there is no going back. All photos and data associated with this event will be permanently removed.
                     </p>
                     <Button
                         onClick={() => setShowDeleteModal(true)}
-                        className="bg-red-500/15 text-red-200 border border-red-500/40 hover:bg-red-500/25 hover:border-red-500/60"
+                        className="border border-red-300 bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-500/15 dark:text-red-200 dark:border-red-500/40 dark:hover:border-red-500/60 dark:hover:bg-red-500/25"
                     >
                         <Trash2 size={18} className="mr-2" />
                         Delete Event
@@ -985,13 +991,13 @@ export default function ManageEventPage() {
                                     className="max-h-[85vh] w-auto max-w-full object-contain rounded-xl shadow-2xl border border-white/10"
                                 />
                             ) : (
-                                <div className="rounded-xl border border-white/10 bg-[#0f0c18] px-8 py-12 text-center text-gray-400">
+                                <div className="rounded-xl border border-zinc-200/90 bg-zinc-50 px-8 py-12 text-center text-zinc-500 dark:border-white/10 dark:bg-[#0f0c18] dark:text-gray-400">
                                     <ImageIcon className="h-12 w-12 mx-auto mb-3 text-gray-600" />
                                     <p>No preview URL available for this photo.</p>
                                 </div>
                             )}
                             {previewPhoto.fileName && (
-                                <p className="mt-4 text-sm text-gray-400 truncate max-w-full px-2">
+                                <p className="mt-4 max-w-full truncate px-2 text-sm text-zinc-500 dark:text-gray-400">
                                     {previewPhoto.fileName}
                                 </p>
                             )}
@@ -1002,24 +1008,25 @@ export default function ManageEventPage() {
                 {/* Delete Confirmation Modal */}
                 {showDeleteModal && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-                        <div className="bg-[#0f0c18] rounded-2xl p-6 max-w-md w-full border border-white/10 shadow-[0_20px_80px_rgba(0,0,0,0.6)] animate-in fade-in zoom-in duration-200">
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center">
-                                    <AlertTriangle className="text-red-400" size={24} />
+                        <div className="w-full max-w-md animate-in rounded-2xl border border-zinc-200/90 bg-white p-6 shadow-xl shadow-zinc-900/15 fade-in zoom-in duration-200 dark:border-white/10 dark:bg-[#0f0c18] dark:shadow-[0_20px_80px_rgba(0,0,0,0.6)]">
+                            <div className="mb-4 flex items-center justify-between">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-500/20">
+                                    <AlertTriangle className="text-red-600 dark:text-red-400" size={24} />
                                 </div>
                                 <button
+                                    type="button"
                                     onClick={() => setShowDeleteModal(false)}
-                                    className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                                    className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-100 text-zinc-500 transition-colors hover:bg-zinc-200 hover:text-zinc-900 dark:bg-white/5 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-white"
                                 >
                                     <X size={18} />
                                 </button>
                             </div>
                             
-                            <h3 className="text-xl font-bold text-white mb-2">Delete Event?</h3>
-                            <p className="text-gray-400 mb-2">
-                                You are about to delete <span className="text-white font-semibold">"{event.name}"</span>
+                            <h3 className="mb-2 text-xl font-bold text-zinc-900 dark:text-white">Delete Event?</h3>
+                            <p className="mb-2 text-zinc-600 dark:text-gray-400">
+                                You are about to delete <span className="font-semibold text-zinc-900 dark:text-white">&quot;{event.name}&quot;</span>
                             </p>
-                            <p className="text-gray-500 text-sm mb-6">
+                            <p className="mb-6 text-sm text-zinc-500 dark:text-gray-500">
                                 This action cannot be undone. All photos, attendee data, and event information will be permanently deleted.
                             </p>
 
@@ -1027,7 +1034,7 @@ export default function ManageEventPage() {
                                 <Button
                                     onClick={() => setShowDeleteModal(false)}
                                     variant="outline"
-                                    className="flex-1 border-white/10 text-gray-300 hover:bg-white/5"
+                                    className="flex-1 border-zinc-300 text-zinc-700 hover:bg-zinc-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
                                     disabled={deleting}
                                 >
                                     Cancel

@@ -52,27 +52,27 @@ export default function LoginPage() {
 
   if (!initialized || user) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
         <div className="w-12 h-12 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#030303] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[var(--background)] flex items-center justify-center p-4">
       <Suspense fallback={null}>
         <LoginAuthError />
       </Suspense>
       {/* Background Effects */}
-      <div className="fixed inset-0 bg-gradient-mesh opacity-20 pointer-events-none" />
-      <div className="fixed top-1/4 left-1/4 w-[500px] h-[500px] bg-violet-600/8 rounded-full blur-[200px] pointer-events-none" />
-      <div className="fixed bottom-1/4 right-1/4 w-[400px] h-[400px] bg-indigo-600/8 rounded-full blur-[200px] pointer-events-none" />
+      <div className="fixed inset-0 bg-gradient-mesh opacity-[0.28] dark:opacity-20 pointer-events-none" />
+      <div className="fixed top-1/4 left-1/4 w-[500px] h-[500px] bg-violet-500/12 dark:bg-violet-600/8 rounded-full blur-[200px] pointer-events-none" />
+      <div className="fixed bottom-1/4 right-1/4 w-[400px] h-[400px] bg-indigo-500/10 dark:bg-indigo-600/8 rounded-full blur-[200px] pointer-events-none" />
 
       {/* Main Card Container */}
       <div className="w-full max-w-[1000px] relative z-10">
         {/* Animated Border Beam */}
         <div className="absolute -inset-[1px] rounded-2xl overflow-hidden">
-          <div className="absolute inset-0 rounded-2xl border border-white/10" />
+          <div className="absolute inset-0 rounded-2xl border border-zinc-200/90 dark:border-white/10" />
           <div 
             className="absolute w-[200px] h-[200px] animate-border-beam"
             style={{
@@ -83,7 +83,7 @@ export default function LoginPage() {
         </div>
         
         {/* Card Content */}
-        <div className="bg-[#0f0f0f] rounded-2xl overflow-hidden flex flex-col lg:flex-row border border-white/10 relative shadow-[0_0_80px_rgba(0,0,0,0.8)]">
+        <div className="bg-white rounded-2xl overflow-hidden flex flex-col lg:flex-row border border-zinc-200/90 relative shadow-xl shadow-zinc-900/10 dark:bg-[#0f0f0f] dark:border-white/10 dark:shadow-[0_0_80px_rgba(0,0,0,0.8)]">
         
         {/* Left Side - Image Section */}
         <div className="lg:w-[45%] relative min-h-[200px] lg:min-h-[560px]">
@@ -131,13 +131,13 @@ export default function LoginPage() {
         </div>
 
         {/* Right Side - Form Section */}
-        <div className="lg:w-[55%] p-8 lg:p-12 flex flex-col justify-center">
+        <div className="lg:w-[55%] p-8 lg:p-12 flex flex-col justify-center bg-zinc-50/50 dark:bg-transparent">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-light text-white mb-2 tracking-wide">Sign in to your account</h1>
-            <p className="text-white/50 text-sm font-light tracking-wide">
+            <h1 className="text-3xl font-light text-zinc-900 dark:text-white mb-2 tracking-wide">Sign in to your account</h1>
+            <p className="text-zinc-600 dark:text-white/50 text-sm font-light tracking-wide">
               Don&apos;t have an account?{' '}
-              <Link href="/register" className="text-violet-400 hover:text-violet-300 transition-colors">
+              <Link href="/register" className="text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300 transition-colors">
                 Create one
               </Link>
             </p>
@@ -150,7 +150,7 @@ export default function LoginPage() {
               <input
                 type="email"
                 required
-                className="w-full bg-white/5 border border-white/10 rounded-lg py-3.5 px-4 text-white placeholder-white/30 focus:border-violet-500/50 focus:outline-none focus:ring-1 focus:ring-violet-500/50 transition-all font-light tracking-wide"
+                className="input py-3.5 font-light tracking-wide"
                 placeholder="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -163,7 +163,7 @@ export default function LoginPage() {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
-                  className="w-full bg-white/5 border border-white/10 rounded-lg py-3.5 px-4 pr-12 text-white placeholder-white/30 focus:border-violet-500/50 focus:outline-none focus:ring-1 focus:ring-violet-500/50 transition-all font-light tracking-wide"
+                  className="input py-3.5 pr-12 font-light tracking-wide"
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -171,7 +171,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:text-white/30 dark:hover:text-white/60 transition-colors"
                 >
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
@@ -187,16 +187,16 @@ export default function LoginPage() {
                   className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${
                     rememberMe 
                       ? 'bg-violet-600 border-violet-600' 
-                      : 'bg-transparent border-white/20 hover:border-white/40'
+                      : 'bg-white border-zinc-300 hover:border-zinc-400 dark:bg-transparent dark:border-white/20 dark:hover:border-white/40'
                   }`}
                 >
                   {rememberMe && <CheckCircle className="w-3.5 h-3.5 text-white" />}
                 </button>
-                <label className="text-sm text-white/50 font-light">Remember me</label>
+                <label className="text-sm text-zinc-600 dark:text-white/50 font-light">Remember me</label>
               </div>
               <Link 
                 href="/forgot-password" 
-                className="text-sm text-violet-400 hover:text-violet-300 transition-colors font-light"
+                className="text-sm text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300 transition-colors font-light"
               >
                 Forgot password?
               </Link>
@@ -217,10 +217,10 @@ export default function LoginPage() {
 
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-white/10"></div>
+                <div className="w-full border-t border-zinc-200 dark:border-white/10"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-[#0f0f0f] text-white/30 font-light">Or continue with</span>
+                <span className="px-4 bg-zinc-50/95 dark:bg-[#0f0f0f] text-zinc-500 dark:text-white/30 font-light">Or continue with</span>
               </div>
             </div>
 
@@ -228,7 +228,7 @@ export default function LoginPage() {
               type="button"
               onClick={handleGoogleSignIn}
               disabled={loading || googleLoading}
-              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-white/5 border border-white/10 text-white/80 hover:bg-white/10 hover:text-white transition-all font-light tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-white border border-zinc-200 text-zinc-800 shadow-sm hover:bg-zinc-50 hover:border-zinc-300 transition-all font-light tracking-wide disabled:opacity-50 disabled:cursor-not-allowed dark:bg-white/5 dark:border-white/10 dark:text-white/80 dark:hover:bg-white/10 dark:hover:text-white dark:shadow-none"
             >
               {googleLoading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />

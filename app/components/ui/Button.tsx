@@ -22,10 +22,13 @@ export function Button({
 
   const variants = {
     primary: 'bg-violet-600 text-white hover:bg-violet-500 shadow-lg shadow-violet-500/20 hover:shadow-violet-500/40',
-    secondary: 'bg-white/10 text-white hover:bg-white/20 border border-white/10',
-    ghost: 'text-gray-400 hover:text-white hover:bg-white/10',
+    secondary:
+      'border border-zinc-200 bg-zinc-100 text-zinc-900 hover:bg-zinc-200 dark:border-white/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/20',
+    ghost:
+      'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-white',
     destructive: 'bg-red-600 text-white hover:bg-red-500 shadow-lg shadow-red-500/20',
-    outline: 'border border-white/20 text-gray-300 hover:bg-white/5 hover:text-white hover:border-white/30'
+    outline:
+      'border border-zinc-300 text-zinc-700 hover:border-zinc-400 hover:bg-zinc-50 dark:border-white/20 dark:text-gray-300 dark:hover:border-white/30 dark:hover:bg-white/5 dark:hover:text-white',
   };
 
   const sizes = {

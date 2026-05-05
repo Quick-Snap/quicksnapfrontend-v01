@@ -10,6 +10,9 @@ import { useQuery } from 'react-query';
 
 const PHOTOS_PER_PAGE = 12;
 
+const PHOTOS_CARD =
+  'card border-zinc-200/90 shadow-lg shadow-zinc-900/5 dark:border-white/5 dark:bg-[#0f0c18] dark:shadow-[0_14px_50px_rgba(0,0,0,0.35)]';
+
 export default function MyPhotosPage() {
   const { user } = useAuth();
   const [downloading, setDownloading] = useState(false);
@@ -123,68 +126,69 @@ export default function MyPhotosPage() {
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
       {/* Header */}
-      <div className="relative overflow-hidden rounded-3xl p-8 md:p-10 border border-white/5 bg-gradient-to-br from-[#181025] via-[#0f0b1d] to-[#0a0d1e] shadow-[0_25px_90px_rgba(0,0,0,0.5)]">
-        <div className="absolute inset-0 bg-gradient-mesh opacity-70" />
-        <div className="absolute -left-12 -bottom-12 w-56 h-56 bg-violet-500/20 blur-3xl" />
-        <div className="absolute right-0 top-0 w-40 h-40 bg-indigo-500/20 blur-3xl" />
+      <div className="relative overflow-hidden rounded-3xl border border-zinc-200/90 bg-gradient-to-br from-violet-50/95 via-white to-zinc-50 p-8 shadow-[0_25px_80px_-20px_rgba(15,23,42,0.12)] md:p-10 dark:border-white/5 dark:bg-gradient-to-br dark:from-[#181025] dark:via-[#0f0b1d] dark:to-[#0a0d1e] dark:shadow-[0_25px_90px_rgba(0,0,0,0.5)]">
+        <div className="absolute inset-0 bg-gradient-mesh opacity-25 dark:opacity-70" />
+        <div className="absolute -bottom-12 -left-12 h-56 w-56 bg-violet-300/35 blur-3xl dark:bg-violet-500/20" />
+        <div className="absolute right-0 top-0 h-40 w-40 bg-indigo-300/30 blur-3xl dark:bg-indigo-500/20" />
 
         <div className="relative flex flex-col gap-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
             <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/5 px-4 py-1 border border-white/10">
-                <Sparkles className="h-4 w-4 text-violet-200" />
-                <span className="text-xs uppercase tracking-[0.25em] text-gray-200">My Photos</span>
+              <div className="inline-flex items-center gap-2 rounded-full border border-violet-200/80 bg-violet-50/90 px-4 py-1 dark:border-white/10 dark:bg-white/5">
+                <Sparkles className="h-4 w-4 text-violet-600 dark:text-violet-200" />
+                <span className="text-xs uppercase tracking-[0.25em] text-violet-800/90 dark:text-gray-200">My Photos</span>
               </div>
               <div className="flex items-center gap-3">
-                <h1 className="text-3xl md:text-4xl font-semibold text-white tracking-tight">Curated For You</h1>
-                <span className="px-3 py-1 text-xs rounded-full bg-white/5 border border-white/10 text-gray-200">
+                <h1 className="text-3xl font-semibold tracking-tight text-zinc-900 dark:text-white md:text-4xl">Curated For You</h1>
+                <span className="rounded-full border border-zinc-200/90 bg-white px-3 py-1 text-xs text-zinc-700 dark:border-white/10 dark:bg-white/5 dark:text-gray-200">
                   {totalPhotos} photos
                 </span>
               </div>
-              <p className="text-gray-300 max-w-2xl">
+              <p className="max-w-2xl text-zinc-600 dark:text-gray-300">
                 Calm, focused gallery that mirrors the landing page aesthetic. Search, browse, and download the moments where you were captured.
               </p>
             </div>
 
             {totalPhotos > 0 && (
               <button
+                type="button"
                 onClick={handleDownloadAll}
                 disabled={downloading}
-                className="group relative px-8 py-4 bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl text-white font-semibold transition-all hover:-translate-y-1 active:translate-y-0 disabled:opacity-50 flex items-center gap-3 overflow-hidden"
+                className="group relative flex items-center gap-3 overflow-hidden rounded-2xl border border-zinc-200/90 bg-white px-8 py-4 font-semibold text-zinc-900 shadow-md shadow-zinc-900/5 transition-all hover:-translate-y-1 hover:bg-zinc-50 active:translate-y-0 disabled:opacity-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:shadow-none dark:hover:bg-white/10"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-violet-400/20 via-transparent to-indigo-400/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute inset-0 bg-gradient-to-r from-violet-400/10 via-transparent to-indigo-400/10 opacity-0 transition-opacity group-hover:opacity-100 dark:from-violet-400/20 dark:to-indigo-400/20" />
                 {downloading ? (
-                  <Loader2 className="h-6 w-6 animate-spin" />
+                  <Loader2 className="relative h-6 w-6 animate-spin text-violet-600 dark:text-white" />
                 ) : (
-                  <Download className="h-6 w-6 group-hover:translate-y-1 transition-transform" />
+                  <Download className="relative h-6 w-6 text-violet-600 transition-transform group-hover:translate-y-1 dark:text-white" />
                 )}
-                <div className="flex flex-col items-start leading-tight">
+                <div className="relative flex flex-col items-start leading-tight">
                   <span className="text-base">{downloading ? 'Preparing...' : 'Download All'}</span>
-                  <span className="text-[11px] text-violet-200 font-medium uppercase tracking-widest">Archive</span>
+                  <span className="text-[11px] font-medium uppercase tracking-widest text-violet-700 dark:text-violet-200">Archive</span>
                 </div>
               </button>
             )}
           </div>
 
-          <div className="flex flex-col lg:flex-row gap-4">
+          <div className="flex flex-col gap-4 lg:flex-row">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+                <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-400 dark:text-gray-500" />
                 <input
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search by event name or file name"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+                  className="input w-full rounded-xl py-3 pl-12 pr-4 text-sm"
                 />
               </div>
             </div>
-            <div className="flex items-center gap-3 text-sm text-gray-400">
-              <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
-                <ImageIcon className="h-5 w-5 text-violet-300" />
+            <div className="flex items-center gap-3 text-sm text-zinc-600 dark:text-gray-400">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-zinc-200/90 bg-white dark:border-white/10 dark:bg-white/5">
+                <ImageIcon className="h-5 w-5 text-violet-600 dark:text-violet-300" />
               </div>
               <div className="leading-tight">
-                <p className="text-white font-medium">Face recognition active</p>
-                <p className="text-xs text-gray-500">Matching across your joined events</p>
+                <p className="font-medium text-zinc-900 dark:text-white">Face recognition active</p>
+                <p className="text-xs text-zinc-500 dark:text-gray-500">Matching across your joined events</p>
               </div>
             </div>
           </div>
@@ -192,29 +196,36 @@ export default function MyPhotosPage() {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-            <div key={i} className="aspect-square bg-white/5 rounded-xl animate-pulse border border-white/5"></div>
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+            <div
+              key={i}
+              className="aspect-square animate-pulse rounded-xl border border-zinc-200/90 bg-zinc-100 dark:border-white/5 dark:bg-white/5"
+            />
           ))}
         </div>
       ) : photos.length > 0 ? (
         <>
-          <div className="card bg-[#0f0c18] border-white/5 shadow-[0_14px_50px_rgba(0,0,0,0.35)]">
-            <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className={PHOTOS_CARD}>
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-violet-500/15 flex items-center justify-center">
-                  <ImageIcon size={20} className="text-violet-300" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-500/15">
+                  <ImageIcon size={20} className="text-violet-700 dark:text-violet-300" />
                 </div>
                 <div>
-                  <p className="font-semibold text-white">Face recognition active</p>
-                  <p className="text-sm text-gray-400">
+                  <p className="font-semibold text-zinc-900 dark:text-white">Face recognition active</p>
+                  <p className="text-sm text-zinc-500 dark:text-gray-400">
                     Found {totalPhotos} photo{totalPhotos !== 1 ? 's' : ''} matched to you. Higher confidence = stronger match.
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-xs text-gray-400">
-                <span className="px-2 py-1 rounded-full bg-white/5 border border-white/10">{totalPhotos} results</span>
-                <span className="px-2 py-1 rounded-full bg-white/5 border border-white/10">{totalPages} page{totalPages !== 1 ? 's' : ''}</span>
+              <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-gray-400">
+                <span className="rounded-full border border-zinc-200/90 bg-zinc-50 px-2 py-1 dark:border-white/10 dark:bg-white/5">
+                  {totalPhotos} results
+                </span>
+                <span className="rounded-full border border-zinc-200/90 bg-zinc-50 px-2 py-1 dark:border-white/10 dark:bg-white/5">
+                  {totalPages} page{totalPages !== 1 ? 's' : ''}
+                </span>
               </div>
             </div>
           </div>
@@ -223,7 +234,7 @@ export default function MyPhotosPage() {
             {photos.map((photo: any, index: number) => (
               <div
                 key={photo._id}
-                className="group relative aspect-square rounded-2xl overflow-hidden bg-[#0f0c18] border border-white/5 cursor-pointer hover:border-violet-500/30 transition-all hover:shadow-xl hover:shadow-violet-500/10"
+                className="group relative aspect-square cursor-pointer overflow-hidden rounded-2xl border border-zinc-200/90 bg-zinc-50 shadow-sm transition-all hover:border-violet-400/60 hover:shadow-xl hover:shadow-violet-500/10 dark:border-white/5 dark:bg-[#0f0c18] dark:hover:border-violet-500/30"
                 onClick={() => setSelectedPhoto(photo)}
               >
                 <img
@@ -249,7 +260,7 @@ export default function MyPhotosPage() {
                     {Math.round(photo.userConfidence)}%
                   </div>
                 )}
-                <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[11px] bg-white/10 border border-white/15 text-gray-100 backdrop-blur-sm">
+                <div className="absolute left-3 top-3 rounded-full border border-white/20 bg-black/45 px-2.5 py-1 text-[11px] text-white backdrop-blur-sm dark:border-white/15 dark:bg-white/10 dark:text-gray-100">
                   #{(startIndex + index + 1).toString().padStart(2, '0')}
                 </div>
               </div>
@@ -258,7 +269,7 @@ export default function MyPhotosPage() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="mt-10 card bg-[#0f0c18] border-white/5 shadow-[0_14px_50px_rgba(0,0,0,0.35)]">
+            <div className={`mt-10 ${PHOTOS_CARD}`}>
               <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}
@@ -271,14 +282,14 @@ export default function MyPhotosPage() {
           )}
         </>
       ) : (
-        <div className="card text-center py-16">
-          <div className="w-20 h-20 bg-violet-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-            <ImageIcon size={32} className="text-violet-400" />
+        <div className="card py-16 text-center">
+          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-500/10">
+            <ImageIcon size={32} className="text-violet-600 dark:text-violet-400" />
           </div>
-          <h3 className="text-xl font-bold text-white mb-2">No Photos Yet</h3>
-          <p className="text-gray-400 max-w-md mx-auto mb-6">
+          <h3 className="mb-2 text-xl font-bold text-zinc-900 dark:text-white">No Photos Yet</h3>
+          <p className="mx-auto mb-6 max-w-md text-zinc-600 dark:text-gray-400">
             Photos where you appear will show up here automatically once event organizers upload them.
-            Make sure you've registered your face!
+            Make sure you&apos;ve registered your face!
           </p>
           {!user?.faceRegistered && (
             <a href="/register-face" className="btn-gradient px-6 py-3 rounded-xl font-semibold inline-flex items-center gap-2">
@@ -295,50 +306,52 @@ export default function MyPhotosPage() {
           onClick={() => setSelectedPhoto(null)}
         >
           <div
-            className="bg-[#111111] rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-auto border border-white/10"
+            className="max-h-[90vh] w-full max-w-4xl overflow-auto rounded-2xl border border-zinc-200/90 bg-white dark:border-white/10 dark:bg-[#111111]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="relative">
               <img
                 src={selectedPhoto.url}
                 alt={selectedPhoto.fileName}
-                className="w-full h-auto rounded-t-2xl"
+                className="h-auto w-full rounded-t-2xl"
               />
               <button
+                type="button"
                 onClick={() => setSelectedPhoto(null)}
-                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/20 transition-colors border border-white/10"
+                className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-black/60 text-white backdrop-blur-sm transition-colors hover:bg-black/75 dark:border-white/10"
               >
                 <X size={20} />
               </button>
             </div>
-            <div className="p-6 space-y-4">
+            <div className="space-y-4 p-6">
               <div className="flex items-start justify-between">
                 <div>
-                  <h3 className="text-xl font-bold text-white">{selectedPhoto.eventId?.name || 'Event Photo'}</h3>
-                  <p className="text-gray-500 text-sm mt-1">{selectedPhoto.fileName}</p>
+                  <h3 className="text-xl font-bold text-zinc-900 dark:text-white">{selectedPhoto.eventId?.name || 'Event Photo'}</h3>
+                  <p className="mt-1 text-sm text-zinc-500 dark:text-gray-500">{selectedPhoto.fileName}</p>
                 </div>
                 <button
+                  type="button"
                   onClick={() => handleDownload(selectedPhoto)}
-                  className="btn-gradient px-5 py-2.5 rounded-xl flex items-center gap-2 font-medium"
+                  className="btn-gradient flex items-center gap-2 rounded-xl px-5 py-2.5 font-medium"
                 >
                   <Download size={18} />
                   Download
                 </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
-                <div className="flex items-center gap-3 text-gray-400">
-                  <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
-                    <Calendar size={16} className="text-violet-400" />
+              <div className="grid grid-cols-2 gap-4 border-t border-zinc-200/90 pt-4 dark:border-white/10">
+                <div className="flex items-center gap-3 text-zinc-600 dark:text-gray-400">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-100 dark:bg-white/5">
+                    <Calendar size={16} className="text-violet-600 dark:text-violet-400" />
                   </div>
                   <span className="text-sm">
                     {selectedPhoto.uploadedAt ? new Date(selectedPhoto.uploadedAt).toLocaleDateString() : 'Unknown date'}
                   </span>
                 </div>
                 {selectedPhoto.userConfidence && (
-                  <div className="flex items-center gap-3 text-gray-400">
-                    <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
-                      <Users size={16} className="text-emerald-400" />
+                  <div className="flex items-center gap-3 text-zinc-600 dark:text-gray-400">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-100 dark:bg-white/5">
+                      <Users size={16} className="text-emerald-600 dark:text-emerald-400" />
                     </div>
                     <span className="text-sm">{Math.round(selectedPhoto.userConfidence)}% match confidence</span>
                   </div>

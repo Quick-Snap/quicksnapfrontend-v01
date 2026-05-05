@@ -4,12 +4,12 @@
 
 @layer base {
   :root {
-    /* Dark Theme Color System - Matching Landing Page */
-    --background: #0a0a0a;
-    --background-secondary: #111111;
-    --background-tertiary: #1a1a1a;
-    --foreground: #ededed;
-    --foreground-muted: #a1a1aa;
+    /* Light theme */
+    --background: #fafafa;
+    --background-secondary: #ffffff;
+    --background-tertiary: #f4f4f5;
+    --foreground: #18181b;
+    --foreground-muted: #71717a;
     
     /* Purple Accent System */
     --primary: 263 70% 50%;
@@ -44,11 +44,20 @@
     --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
     --shadow-glow-purple: 0 0 40px rgba(139, 92, 246, 0.3);
     --shadow-glow-violet: 0 0 40px rgba(124, 58, 237, 0.4);
+    --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.06);
+  }
+
+  .dark {
+    --background: #0a0a0a;
+    --background-secondary: #111111;
+    --background-tertiary: #1a1a1a;
+    --foreground: #ededed;
+    --foreground-muted: #a1a1aa;
     --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.5);
   }
   
   * {
-    border-color: rgba(255, 255, 255, 0.1);
+    @apply border-zinc-200/80 dark:border-white/10;
   }
   
   html {
@@ -64,15 +73,18 @@
 
   /* Selection color */
   ::selection {
-    background: rgba(139, 92, 246, 0.4);
-    color: #fff;
+    @apply bg-violet-300/50 text-zinc-900;
+  }
+
+  .dark ::selection {
+    @apply bg-violet-500/40 text-white;
   }
 }
 
 @layer components {
   /* Button Components - Dark Theme */
   .btn {
-    @apply px-4 py-2 rounded-lg font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#0a0a0a];
+    @apply px-4 py-2 rounded-lg font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-[#0a0a0a];
     @apply transform hover:scale-[1.02] active:scale-[0.98];
   }
   
@@ -82,8 +94,8 @@
   }
   
   .btn-secondary {
-    @apply bg-white/10 text-white hover:bg-white/20 focus:ring-white/30;
-    @apply border border-white/10;
+    @apply bg-zinc-100 text-zinc-900 hover:bg-zinc-200 focus:ring-zinc-400 border border-zinc-200;
+    @apply dark:bg-white/10 dark:text-white dark:hover:bg-white/20 dark:focus:ring-white/30 dark:border-white/10;
   }
   
   .btn-danger {
@@ -97,15 +109,17 @@
   }
   
   .btn-ghost {
-    @apply text-gray-300 hover:text-white hover:bg-white/10;
+    @apply text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100;
+    @apply dark:text-gray-300 dark:hover:text-white dark:hover:bg-white/10;
   }
   
   /* Input Components - Dark Theme */
   .input {
-    @apply w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500;
-    @apply focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50;
-    @apply transition-all duration-200;
-    @apply hover:border-white/20;
+    @apply w-full px-4 py-2.5 rounded-lg transition-all duration-200;
+    @apply bg-white border border-zinc-200 text-zinc-900 placeholder-zinc-400;
+    @apply focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-500/50;
+    @apply hover:border-zinc-300;
+    @apply dark:bg-white/5 dark:border-white/10 dark:text-white dark:placeholder-gray-500 dark:hover:border-white/20;
   }
   
   .input-glass {
@@ -116,8 +130,9 @@
   
   /* Card Components - Dark Theme */
   .card {
-    @apply bg-[#111111] rounded-xl shadow-lg p-6 border border-white/5;
-    @apply transition-all duration-300;
+    @apply rounded-xl shadow-lg p-6 border transition-all duration-300;
+    @apply bg-white border-zinc-200/80 shadow-zinc-900/5;
+    @apply dark:bg-[#111111] dark:border-white/5 dark:shadow-none;
   }
   
   .card-hover {
@@ -157,24 +172,38 @@
   
   /* Loading States - Dark Theme */
   .skeleton {
-    @apply animate-pulse bg-white/10 rounded;
+    @apply animate-pulse rounded bg-zinc-200 dark:bg-white/10;
   }
   
   .spinner {
-    @apply animate-spin rounded-full border-2 border-white/20 border-t-violet-500;
+    @apply animate-spin rounded-full border-2 border-zinc-200 border-t-violet-600 dark:border-white/20 dark:border-t-violet-500;
   }
 
   /* Stats Card - Dark Theme */
   .stat-card {
-    @apply bg-[#111111] rounded-xl p-6 border border-white/5;
-    @apply hover:border-violet-500/30 transition-all duration-300;
+    @apply rounded-xl p-6 border transition-all duration-300;
+    @apply bg-white border-zinc-200/80 hover:border-violet-400/40;
+    @apply dark:bg-[#111111] dark:border-white/5 dark:hover:border-violet-500/30;
   }
   
   /* Action Card - Dark Theme */
   .action-card {
     @apply flex items-center space-x-3 p-4 rounded-xl transition-all duration-300;
-    @apply bg-white/5 border border-white/10;
-    @apply hover:bg-violet-500/10 hover:border-violet-500/30;
+    @apply bg-zinc-50 border border-zinc-200/90;
+    @apply hover:bg-violet-50 hover:border-violet-300/60;
+    @apply dark:bg-white/5 dark:border-white/10;
+    @apply dark:hover:bg-violet-500/10 dark:hover:border-violet-500/30;
+  }
+
+  /* Toggle switch track — use inside a label with sr-only checkbox peer */
+  .toggle-track {
+    @apply relative w-11 h-6 rounded-full peer-focus-visible:ring-2 peer-focus-visible:ring-violet-500 peer-focus-visible:ring-offset-2;
+    @apply ring-offset-white dark:ring-offset-[#111111];
+    @apply bg-zinc-200 transition-colors;
+    @apply peer-checked:bg-violet-600 dark:bg-white/10 dark:peer-checked:bg-violet-500;
+    @apply after:content-[''] after:absolute after:top-[2px] after:left-[2px];
+    @apply after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all after:shadow-sm after:ring-1 after:ring-black/[0.04];
+    @apply peer-checked:after:translate-x-full dark:after:ring-white/10;
   }
 }
 
@@ -342,13 +371,13 @@
   animation: dropdown-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Custom Scrollbar - Dark Theme */
+/* Scrollbar */
 ::-webkit-scrollbar {
   width: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0a0a0a;
+  @apply bg-zinc-100 dark:bg-[#0a0a0a];
 }
 
 ::-webkit-scrollbar-thumb {

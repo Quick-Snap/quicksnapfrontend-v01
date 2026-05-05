@@ -69,10 +69,10 @@ export default function Pagination({
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4">
       {/* Info */}
       {showInfo && totalItems && (
-        <p className="text-sm text-gray-400">
-          Showing <span className="font-medium text-white">{startItem}</span> to{' '}
-          <span className="font-medium text-white">{endItem}</span> of{' '}
-          <span className="font-medium text-white">{totalItems}</span> photos
+        <p className="text-sm text-zinc-500 dark:text-gray-400">
+          Showing <span className="font-medium text-zinc-900 dark:text-white">{startItem}</span> to{' '}
+          <span className="font-medium text-zinc-900 dark:text-white">{endItem}</span> of{' '}
+          <span className="font-medium text-zinc-900 dark:text-white">{totalItems}</span> photos
         </p>
       )}
 
@@ -82,7 +82,7 @@ export default function Pagination({
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-400 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white/5 disabled:hover:text-gray-400 transition-all"
+          className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-600 transition-all hover:bg-zinc-50 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-zinc-600 dark:border-white/10 dark:bg-white/5 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-white dark:disabled:hover:bg-white/5 dark:disabled:hover:text-gray-400"
         >
           <ChevronLeft className="w-4 h-4" />
           <span className="hidden sm:inline">Previous</span>
@@ -94,7 +94,7 @@ export default function Pagination({
             page === 'ellipsis' ? (
               <span
                 key={`ellipsis-${index}`}
-                className="w-10 h-10 flex items-center justify-center text-gray-500"
+                className="flex h-10 w-10 items-center justify-center text-zinc-400 dark:text-gray-500"
               >
                 <MoreHorizontal className="w-4 h-4" />
               </span>
@@ -102,10 +102,10 @@ export default function Pagination({
               <button
                 key={page}
                 onClick={() => onPageChange(page)}
-                className={`w-10 h-10 flex items-center justify-center text-sm font-medium rounded-lg transition-all ${
+                className={`flex h-10 w-10 items-center justify-center rounded-lg text-sm font-medium transition-all ${
                   currentPage === page
                     ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/30'
-                    : 'text-gray-400 bg-white/5 border border-white/10 hover:bg-white/10 hover:text-white'
+                    : 'border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 dark:border-white/10 dark:bg-white/5 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-white'
                 }`}
               >
                 {page}
@@ -118,7 +118,7 @@ export default function Pagination({
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-400 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white/5 disabled:hover:text-gray-400 transition-all"
+          className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-600 transition-all hover:bg-zinc-50 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-zinc-600 dark:border-white/10 dark:bg-white/5 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-white dark:disabled:hover:bg-white/5 dark:disabled:hover:text-gray-400"
         >
           <span className="hidden sm:inline">Next</span>
           <ChevronRight className="w-4 h-4" />
