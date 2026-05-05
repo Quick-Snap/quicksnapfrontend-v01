@@ -15,7 +15,8 @@ import {
     User,
     Sparkles,
     Camera,
-    X
+    X,
+    Lock
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { eventApi, photoApi } from '@/lib/api';
@@ -27,7 +28,7 @@ import { useQuery } from 'react-query';
 const PHOTOS_PER_PAGE = 12;
 
 export default function PublicEventPage() {
-    const { user: currentUser } = useAuth();
+    const { user: currentUser, loading: authLoading } = useAuth();
     const params = useParams();
     const router = useRouter();
     const eventId = params?.eventId as string;
@@ -53,7 +54,7 @@ export default function PublicEventPage() {
         ['eventPhotos', eventId],
         () => eventApi.getPhotos(eventId, { limit: 500 }),
         {
-            enabled: !!eventId,
+            enabled: !!eventId && !!currentUser,
             staleTime: 5 * 60 * 1000, // 5 mins cache
         }
     );
@@ -72,7 +73,12 @@ export default function PublicEventPage() {
 
     // Determine which photos to display based on view mode
     const displayPhotos = photoViewMode === 'my' && isGuest ? myPhotos : allPhotos;
-    const isLoadingPhotos = photoViewMode === 'my' && isGuest ? myPhotosLoading : photosLoading;
+    const isLoadingPhotos =
+        !currentUser
+            ? authLoading
+            : photoViewMode === 'my' && isGuest
+              ? myPhotosLoading
+              : photosLoading;
 
     // Pagination calculations
     const totalPhotos = displayPhotos.length;
@@ -213,9 +219,11 @@ export default function PublicEventPage() {
                                     </span>
                                 )}
                                 <span className="px-3 py-1 rounded-full text-xs bg-white/5 border border-white/10 text-gray-300">
-                                    {photoViewMode === 'my' && isGuest 
-                                        ? `${totalPhotos} my photos` 
-                                        : `${allPhotos.length} photos`}
+                                    {!currentUser
+                                        ? 'Sign in to view gallery'
+                                        : photoViewMode === 'my' && isGuest
+                                          ? `${totalPhotos} my photos`
+                                          : `${allPhotos.length} photos`}
                                 </span>
                             </div>
 
@@ -246,7 +254,9 @@ export default function PublicEventPage() {
                                         </div>
                                         <div>
                                             <p className="text-gray-400 text-sm">Photos</p>
-                                            <p className="text-2xl font-semibold text-white">{allPhotos.length}</p>
+                                            <p className="text-2xl font-semibold text-white">
+                                                {currentUser ? allPhotos.length : '—'}
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
@@ -348,9 +358,11 @@ export default function PublicEventPage() {
                         Event Gallery
                     </h2>
                     <p className="text-gray-400 text-lg">
-                        {totalPhotos > 0
-                            ? `Browse through ${totalPhotos} captured moments`
-                            : 'Photos will appear here once they are uploaded'}
+                        {!currentUser
+                            ? 'Log in or create an account to browse this gallery.'
+                            : totalPhotos > 0
+                              ? `Browse through ${totalPhotos} captured moments`
+                              : 'Photos will appear here once they are uploaded'}
                     </p>
                 </div>
 
@@ -387,6 +399,12 @@ export default function PublicEventPage() {
                         {[...Array(8)].map((_, i) => (
                             <div key={i} className="aspect-square bg-white/5 rounded-2xl animate-pulse border border-white/5" />
                         ))}
+                    </div>
+                ) : !currentUser ? (
+                    <div className="relative min-h-[220px] rounded-3xl border border-dashed border-white/15 bg-[#0f0c18]/50 flex items-center justify-center px-6">
+                        <p className="text-gray-500 text-center text-sm">
+                            Photo thumbnails are hidden until you sign in.
+                        </p>
                     </div>
                 ) : photos.length > 0 ? (
                     <>
@@ -451,6 +469,48 @@ export default function PublicEventPage() {
             </div>
 
             {/* Photo Modal */}
+            {/* Login gate for shared event links — photos are not fetched until authenticated */}
+            {!authLoading && !currentUser && (
+                <div
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/65 backdrop-blur-md"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="event-gallery-login-title"
+                >
+                    <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0f0c18] p-8 shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
+                        <div className="flex justify-center mb-6">
+                            <div className="w-16 h-16 rounded-2xl bg-violet-500/15 border border-violet-400/25 flex items-center justify-center">
+                                <Lock className="text-violet-300" size={32} />
+                            </div>
+                        </div>
+                        <h2
+                            id="event-gallery-login-title"
+                            className="text-2xl font-semibold text-white text-center mb-3"
+                        >
+                            Sign in to view photos
+                        </h2>
+                        <p className="text-gray-400 text-center text-sm leading-relaxed mb-8">
+                            This shared event link opens the event page, but the gallery is only available after you log in or sign up.
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-3">
+                            <Button
+                                onClick={() => router.push('/login')}
+                                className="flex-1 bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-500 hover:to-indigo-500 font-semibold py-3 rounded-xl justify-center"
+                            >
+                                Go to login
+                            </Button>
+                            <Button
+                                variant="outline"
+                                onClick={() => router.push('/register')}
+                                className="flex-1 border-white/20 text-white hover:bg-white/10 font-semibold py-3 rounded-xl justify-center"
+                            >
+                                Create account
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {selectedPhoto && (
                 <div
                     className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4"
