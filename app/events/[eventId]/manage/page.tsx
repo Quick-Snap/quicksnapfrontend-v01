@@ -22,7 +22,8 @@ import {
     Upload,
     Camera,
     UserPlus,
-    Mail
+    Mail,
+    Eye
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { eventApi } from '@/lib/api';
@@ -75,6 +76,20 @@ function isPhotoOfficial(photo: any) {
     return !!(photo?.isOfficial ?? photo?.is_official);
 }
 
+/** Prefer full-size URL for organizer preview; falls back to display/thumbnail. */
+function getPhotoPreviewUrl(photo: any): string | undefined {
+    if (!photo || typeof photo !== 'object') return undefined;
+    const p = photo as Record<string, unknown>;
+    const str = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : undefined);
+    return (
+        str(p.url) ||
+        str(p.s3Url) ||
+        str(p.imageUrl) ||
+        str(p.publicUrl) ||
+        getPhotoDisplayUrl(photo)
+    );
+}
+
 export default function ManageEventPage() {
     const { user } = useAuth();
     const params = useParams();
@@ -96,6 +111,7 @@ export default function ManageEventPage() {
     const [photosLoading, setPhotosLoading] = useState(false);
     const [selectedOfficialIds, setSelectedOfficialIds] = useState<Set<string>>(new Set());
     const [savingOfficial, setSavingOfficial] = useState(false);
+    const [previewPhoto, setPreviewPhoto] = useState<any>(null);
 
     // Countdown timer for delete confirmation
     useEffect(() => {
@@ -818,6 +834,18 @@ export default function ManageEventPage() {
                                                             {isSelected && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
                                                         </div>
                                                     </div>
+                                                    <button
+                                                        type="button"
+                                                        title="Preview"
+                                                        aria-label="Preview photo"
+                                                        className="absolute bottom-2 left-2 z-10 flex h-8 w-8 items-center justify-center rounded-lg bg-black/60 border border-white/20 text-white hover:bg-black/80 hover:border-white/35 transition-colors shadow-lg"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setPreviewPhoto(photo);
+                                                        }}
+                                                    >
+                                                        <Eye className="h-4 w-4" strokeWidth={2} />
+                                                    </button>
                                                 </div>
                                             );
                                         })}
@@ -885,6 +913,18 @@ export default function ManageEventPage() {
                                                             {isSelected && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
                                                         </div>
                                                     </div>
+                                                    <button
+                                                        type="button"
+                                                        title="Preview"
+                                                        aria-label="Preview photo"
+                                                        className="absolute bottom-2 left-2 z-10 flex h-8 w-8 items-center justify-center rounded-lg bg-black/60 border border-white/20 text-white hover:bg-black/80 hover:border-white/35 transition-colors shadow-lg"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setPreviewPhoto(photo);
+                                                        }}
+                                                    >
+                                                        <Eye className="h-4 w-4" strokeWidth={2} />
+                                                    </button>
                                                 </div>
                                             );
                                         })}
@@ -914,6 +954,49 @@ export default function ManageEventPage() {
                         Delete Event
                     </Button>
                 </div>
+                )}
+
+                {/* Organizer photo preview (does not change selection) */}
+                {previewPhoto && (
+                    <div
+                        className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-label="Photo preview"
+                        onClick={() => setPreviewPhoto(null)}
+                    >
+                        <button
+                            type="button"
+                            className="absolute top-4 right-4 z-[71] w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/20 transition-colors border border-white/10"
+                            onClick={() => setPreviewPhoto(null)}
+                            aria-label="Close preview"
+                        >
+                            <X size={20} />
+                        </button>
+                        <div
+                            className="max-w-5xl w-full max-h-[90vh] flex flex-col items-center"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {getPhotoPreviewUrl(previewPhoto) ? (
+                                /* eslint-disable-next-line @next/next/no-img-element */
+                                <img
+                                    src={getPhotoPreviewUrl(previewPhoto)}
+                                    alt={previewPhoto.fileName || 'Photo preview'}
+                                    className="max-h-[85vh] w-auto max-w-full object-contain rounded-xl shadow-2xl border border-white/10"
+                                />
+                            ) : (
+                                <div className="rounded-xl border border-white/10 bg-[#0f0c18] px-8 py-12 text-center text-gray-400">
+                                    <ImageIcon className="h-12 w-12 mx-auto mb-3 text-gray-600" />
+                                    <p>No preview URL available for this photo.</p>
+                                </div>
+                            )}
+                            {previewPhoto.fileName && (
+                                <p className="mt-4 text-sm text-gray-400 truncate max-w-full px-2">
+                                    {previewPhoto.fileName}
+                                </p>
+                            )}
+                        </div>
+                    </div>
                 )}
 
                 {/* Delete Confirmation Modal */}
