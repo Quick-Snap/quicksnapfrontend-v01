@@ -7,6 +7,7 @@ import { useRole } from '@/hooks/useRole';
 import { Camera, Menu, X, User, LogOut, Home, Image as ImageIcon, Calendar, Shield, Settings, Upload, ChevronDown } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { UserRole } from '@/types';
+import { ThemeToggle } from '@/app/components/ui/ThemeToggle';
 
 export default function Navbar() {
   const { user, logout, switchRole, activeRole } = useAuth();
@@ -17,13 +18,6 @@ export default function Navbar() {
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
-
-  // Debug logging
-  console.log('[Navbar] user:', user);
-  console.log('[Navbar] roles:', roles);
-  console.log('[Navbar] activeRole:', activeRole);
-  console.log('[Navbar] current role:', role);
-  console.log('[Navbar] roles.length > 1:', roles.length > 1);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -86,21 +80,21 @@ export default function Navbar() {
   const isActive = (path: string) => pathname === path;
 
   return (
-    <nav className="bg-[#0d0d0d]/80 backdrop-blur-xl border-b border-white/5 sticky top-0 z-50">
+    <nav className="sticky top-0 z-50 border-b border-zinc-200/90 bg-white/85 backdrop-blur-xl dark:border-white/5 dark:bg-[#0d0d0d]/80">
       <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex h-16 items-center justify-between gap-2 md:grid md:grid-cols-[1fr_auto_1fr] md:items-center md:justify-normal md:gap-4">
           {/* Logo */}
-          <Link href="/dashboard" className="flex items-center space-x-3 group">
+          <Link href="/dashboard" className="flex min-w-0 shrink-0 items-center space-x-3 group md:justify-self-start">
             <div className="w-9 h-9 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-violet-500/20 group-hover:shadow-violet-500/40 transition-all">
               <Camera className="h-5 w-5 text-white" />
             </div>
-            <span className="text-lg font-semibold tracking-wide text-white">
+            <span className="text-lg font-semibold tracking-wide text-zinc-900 dark:text-white">
               QUICKSNAP
             </span>
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-1">
+          {/* Desktop Navigation — centered in navbar via middle grid column */}
+          <div className="hidden md:flex md:items-center md:justify-center md:justify-self-center md:space-x-1">
             {navigation.map((item) => {
               const Icon = item.icon;
               return (
@@ -108,8 +102,8 @@ export default function Navbar() {
                   key={item.name}
                   href={item.href}
                   className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 ${isActive(item.href)
-                    ? 'bg-violet-500/20 text-violet-400 border border-violet-500/30'
-                    : 'text-gray-400 hover:text-white hover:bg-white/5'
+                    ? 'bg-violet-500/15 text-violet-700 border border-violet-400/40 dark:bg-violet-500/20 dark:text-violet-400 dark:border-violet-500/30'
+                    : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-white/5'
                     }`}
                 >
                   <Icon className="h-4 w-4" />
@@ -119,8 +113,19 @@ export default function Navbar() {
             })}
           </div>
 
-          {/* User Menu */}
-          <div className="hidden md:flex items-center space-x-3">
+          {/* Mobile: theme then menu (hamburger far right). Desktop: theme + user — right grid column */}
+          <div className="flex shrink-0 items-center gap-1 md:col-start-3 md:justify-self-end md:gap-3">
+            <ThemeToggle size="navbar" className="shrink-0" />
+            <button
+              type="button"
+              className="-mr-0.5 rounded-lg p-2 text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 md:hidden dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-expanded={mobileMenuOpen}
+              aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+            >
+              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
+            <div className="hidden md:flex md:items-center md:space-x-3">
             {user ? (
               <>
                 {/* Role Switcher Dropdown */}
@@ -128,7 +133,7 @@ export default function Navbar() {
                   <div className="relative" ref={dropdownRef}>
                     <button
                       onClick={() => setRoleDropdownOpen(!roleDropdownOpen)}
-                      className="flex items-center space-x-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg transition-all border border-white/10"
+                      className="flex items-center space-x-2 rounded-lg border border-zinc-200/90 bg-zinc-50 px-3 py-1.5 transition-all hover:bg-zinc-100 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
                     >
                       <span className={`text-sm font-medium ${roleColors[role] || 'text-gray-400'}`}>
                         {roleLabels[role] || role}
@@ -137,9 +142,9 @@ export default function Navbar() {
                     </button>
 
                     {roleDropdownOpen && (
-                      <div className="absolute right-0 mt-2 w-48 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-xl shadow-black/50 py-2 z-50">
-                        <div className="px-3 py-2 border-b border-white/10">
-                          <p className="text-xs text-gray-500 uppercase tracking-wide">Switch Role</p>
+                      <div className="absolute right-0 mt-2 w-48 rounded-xl border border-zinc-200/90 bg-white py-2 shadow-xl shadow-zinc-900/10 dark:border-white/10 dark:bg-[#1a1a1a] dark:shadow-black/50 z-50">
+                        <div className="border-b border-zinc-100 px-3 py-2 dark:border-white/10">
+                          <p className="text-xs uppercase tracking-wide text-zinc-500 dark:text-gray-500">Switch Role</p>
                         </div>
                         {roles.map((r) => (
                           <button
@@ -148,7 +153,7 @@ export default function Navbar() {
                               switchRole(r as UserRole);
                               setRoleDropdownOpen(false);
                             }}
-                            className={`w-full text-left px-3 py-2 hover:bg-white/5 transition-colors flex items-center justify-between ${r === role ? 'bg-violet-500/10' : ''
+                            className={`w-full text-left px-3 py-2 transition-colors flex items-center justify-between hover:bg-zinc-50 dark:hover:bg-white/5 ${r === role ? 'bg-violet-500/10' : ''
                               }`}
                           >
                             <span className={`text-sm font-medium ${roleColors[r] || 'text-gray-400'}`}>
@@ -168,7 +173,7 @@ export default function Navbar() {
                 <div className="relative" ref={profileDropdownRef}>
                   <button
                     onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-                    className="flex items-center space-x-2 px-2 py-1.5 rounded-xl hover:bg-white/5 transition-all duration-200 group"
+                    className="group flex items-center space-x-2 rounded-xl px-2 py-1.5 transition-all duration-200 hover:bg-zinc-100 dark:hover:bg-white/5"
                   >
                     {user.avatar ? (
                       <img
@@ -187,10 +192,10 @@ export default function Navbar() {
 
                   {/* Profile Dropdown Menu */}
                   {profileDropdownOpen && (
-                    <div className="absolute right-0 mt-3 w-72 origin-top-right animate-dropdown-in">
-                      <div className="bg-[#1a1a1a]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl shadow-black/50 overflow-hidden">
+                      <div className="absolute right-0 mt-3 w-72 origin-top-right animate-dropdown-in">
+                      <div className="overflow-hidden rounded-2xl border border-zinc-200/90 bg-white/95 shadow-2xl shadow-zinc-900/15 backdrop-blur-xl dark:border-white/10 dark:bg-[#1a1a1a]/95 dark:shadow-black/50">
                         {/* User Info Header */}
-                        <div className="p-4 bg-gradient-to-br from-violet-600/10 to-indigo-600/10 border-b border-white/5">
+                        <div className="border-b border-zinc-100 bg-gradient-to-br from-violet-600/[0.08] to-indigo-600/[0.08] p-4 dark:border-white/5 dark:from-violet-600/10 dark:to-indigo-600/10">
                           <div className="flex items-center space-x-3">
                             {user.avatar ? (
                               <img
@@ -205,8 +210,8 @@ export default function Navbar() {
                               </div>
                             )}
                             <div className="flex-1 min-w-0">
-                              <p className="font-semibold text-white truncate">{user.name}</p>
-                              <p className="text-sm text-gray-400 truncate">{user.email}</p>
+                              <p className="truncate font-semibold text-zinc-900 dark:text-white">{user.name}</p>
+                              <p className="truncate text-sm text-zinc-500 dark:text-gray-400">{user.email}</p>
                               {role && (
                                 <span className={`inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full ${
                                   isAdmin ? 'bg-purple-500/20 text-purple-400' : 
@@ -225,28 +230,28 @@ export default function Navbar() {
                           <Link
                             href="/profile"
                             onClick={() => setProfileDropdownOpen(false)}
-                            className="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all group"
+                            className="group flex items-center space-x-3 rounded-xl px-3 py-2.5 text-zinc-700 transition-all hover:bg-zinc-50 hover:text-zinc-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-white"
                           >
-                            <div className="w-9 h-9 rounded-lg bg-violet-500/10 flex items-center justify-center group-hover:bg-violet-500/20 transition-colors">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-500/10 transition-colors group-hover:bg-violet-500/20">
                               <User className="h-4 w-4 text-violet-400" />
                             </div>
                             <div>
-                              <p className="font-medium text-sm">My Profile</p>
-                              <p className="text-xs text-gray-500">View and edit your profile</p>
+                              <p className="text-sm font-medium">My Profile</p>
+                              <p className="text-xs text-zinc-500 dark:text-gray-500">View and edit your profile</p>
                             </div>
                           </Link>
 
                           <Link
                             href="/settings"
                             onClick={() => setProfileDropdownOpen(false)}
-                            className="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all group"
+                            className="group flex items-center space-x-3 rounded-xl px-3 py-2.5 text-zinc-700 transition-all hover:bg-zinc-50 hover:text-zinc-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-white"
                           >
-                            <div className="w-9 h-9 rounded-lg bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500/10 transition-colors group-hover:bg-blue-500/20">
                               <Settings className="h-4 w-4 text-blue-400" />
                             </div>
                             <div>
-                              <p className="font-medium text-sm">Settings</p>
-                              <p className="text-xs text-gray-500">Preferences & account</p>
+                              <p className="text-sm font-medium">Settings</p>
+                              <p className="text-xs text-zinc-500 dark:text-gray-500">Preferences & account</p>
                             </div>
                           </Link>
 
@@ -268,7 +273,7 @@ export default function Navbar() {
                         </div>
 
                         {/* Divider */}
-                        <div className="mx-3 border-t border-white/5"></div>
+                        <div className="mx-3 border-t border-zinc-100 dark:border-white/5"></div>
 
                         {/* Logout */}
                         <div className="p-2">
@@ -277,14 +282,14 @@ export default function Navbar() {
                               logout();
                               setProfileDropdownOpen(false);
                             }}
-                            className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all group"
+                            className="group flex w-full items-center space-x-3 rounded-xl px-3 py-2.5 text-red-600 transition-all hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-500/10 dark:hover:text-red-300"
                           >
                             <div className="w-9 h-9 rounded-lg bg-red-500/10 flex items-center justify-center group-hover:bg-red-500/20 transition-colors">
                               <LogOut className="h-4 w-4 text-red-400" />
                             </div>
                             <div className="text-left">
                               <p className="font-medium text-sm">Sign Out</p>
-                              <p className="text-xs text-red-400/60">See you next time!</p>
+                              <p className="text-xs text-red-500/80 dark:text-red-400/60">See you next time!</p>
                             </div>
                           </button>
                         </div>
@@ -297,7 +302,7 @@ export default function Navbar() {
               <div className="flex items-center space-x-3">
                 <Link
                   href="/login"
-                  className="px-4 py-2 text-gray-300 hover:text-white transition-colors text-sm font-medium"
+                  className="px-4 py-2 text-sm font-medium text-zinc-600 transition-colors hover:text-zinc-900 dark:text-gray-300 dark:hover:text-white"
                 >
                   Sign In
                 </Link>
@@ -310,24 +315,17 @@ export default function Navbar() {
               </div>
             )}
           </div>
-
-          {/* Mobile menu button */}
-          <button
-            className="md:hidden p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
+          </div>
         </div>
 
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-white/5 animate-slide-down">
+          <div className="animate-slide-down border-t border-zinc-200/90 py-4 dark:border-white/5 md:hidden">
             <div className="flex flex-col space-y-1">
               {/* Mobile Role Switcher */}
               {user && roles.length > 1 && (
-                <div className="px-4 py-3 border-b border-white/5 mb-2">
-                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">Active Role</p>
+                <div className="mb-2 border-b border-zinc-100 px-4 py-3 dark:border-white/5">
+                  <p className="mb-2 text-xs uppercase tracking-wide text-zinc-500 dark:text-gray-500">Active Role</p>
                   <div className="flex flex-wrap gap-2">
                     {roles.map((r) => (
                       <button
@@ -336,9 +334,9 @@ export default function Navbar() {
                           switchRole(r as UserRole);
                           setMobileMenuOpen(false);
                         }}
-                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${r === role
-                          ? 'bg-violet-500/20 text-violet-400 border border-violet-500/30'
-                          : 'bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10'
+                        className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-all ${r === role
+                          ? 'border border-violet-400/50 bg-violet-500/15 text-violet-700 dark:border-violet-500/30 dark:bg-violet-500/20 dark:text-violet-400'
+                          : 'border border-zinc-200 bg-zinc-50 text-zinc-600 hover:bg-zinc-100 dark:border-white/10 dark:bg-white/5 dark:text-gray-400 dark:hover:bg-white/10'
                           }`}
                       >
                         {roleLabels[r] || r}
@@ -355,9 +353,9 @@ export default function Navbar() {
                     key={item.name}
                     href={item.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${isActive(item.href)
-                      ? 'bg-violet-500/20 text-violet-400 border border-violet-500/30'
-                      : 'text-gray-400 hover:text-white hover:bg-white/5'
+                    className={`flex items-center space-x-3 rounded-lg px-4 py-3 transition-all ${isActive(item.href)
+                      ? 'border border-violet-400/50 bg-violet-500/15 text-violet-700 dark:border-violet-500/30 dark:bg-violet-500/20 dark:text-violet-400'
+                      : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white'
                       }`}
                   >
                     <Icon className="h-5 w-5" />
@@ -370,9 +368,9 @@ export default function Navbar() {
                   <Link
                     href="/profile"
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${isActive('/profile')
-                      ? 'bg-violet-500/20 text-violet-400 border border-violet-500/30'
-                      : 'text-gray-300 hover:text-white hover:bg-white/5'
+                    className={`flex items-center space-x-3 rounded-lg px-4 py-3 transition-all ${isActive('/profile')
+                      ? 'border border-violet-400/50 bg-violet-500/15 text-violet-700 dark:border-violet-500/30 dark:bg-violet-500/20 dark:text-violet-400'
+                      : 'text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-white'
                       }`}
                   >
                     <User className="h-5 w-5" />
@@ -381,7 +379,7 @@ export default function Navbar() {
                   <Link
                     href="/dashboard"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center space-x-3 px-4 py-3 text-gray-300 hover:text-white hover:bg-white/5 rounded-lg"
+                    className="flex items-center space-x-3 rounded-lg px-4 py-3 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-white"
                   >
                     <Home className="h-5 w-5" />
                     <span className="font-medium">Dashboard</span>
@@ -391,18 +389,18 @@ export default function Navbar() {
                       logout();
                       setMobileMenuOpen(false);
                     }}
-                    className="flex items-center space-x-3 px-4 py-3 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg text-left"
+                    className="flex items-center space-x-3 rounded-lg px-4 py-3 text-left text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-500/10 dark:hover:text-red-300"
                   >
                     <LogOut className="h-5 w-5" />
                     <span className="font-medium">Logout</span>
                   </button>
                 </>
               ) : (
-                <div className="flex flex-col space-y-2 pt-4 border-t border-white/5">
+                <div className="flex flex-col space-y-2 border-t border-zinc-200/90 pt-4 dark:border-white/5">
                   <Link
                     href="/login"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="px-4 py-3 text-gray-300 hover:text-white hover:bg-white/5 rounded-lg text-center font-medium"
+                    className="rounded-lg px-4 py-3 text-center font-medium text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-white"
                   >
                     Sign In
                   </Link>

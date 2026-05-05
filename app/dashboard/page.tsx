@@ -25,7 +25,7 @@ export default function DashboardPage() {
       <div className="flex items-center justify-center min-h-[70vh]">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-violet-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-400 animate-pulse font-medium">Loading your dashboard...</p>
+          <p className="animate-pulse font-medium text-zinc-500 dark:text-gray-400">Loading your dashboard...</p>
         </div>
       </div>
     );

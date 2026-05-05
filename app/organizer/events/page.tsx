@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, Filter, Calendar, MapPin, Users, Plus, Upload, MoreVertical, Sparkles, Eye } from 'lucide-react';
+import { Search, Calendar, MapPin, Users, Plus, Upload, Sparkles, Eye } from 'lucide-react';
 import RoleGuard from '@/app/components/RoleGuard';
 import api from '@/app/api/axios';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,7 +17,6 @@ export default function OrganizerEventsPage() {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        // Fetch only events organized by this user
         const res = await api.get('/events/managed/all');
         setEvents(res.data.data || []);
         setLoading(false);
@@ -32,8 +31,9 @@ export default function OrganizerEventsPage() {
     }
   }, [user]);
 
-  const filteredEvents = events.filter(event => {
-    const matchesSearch = event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const filteredEvents = events.filter((event) => {
+    const matchesSearch =
+      event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       event.description?.toLowerCase().includes(searchTerm.toLowerCase());
 
     if (filterActive === 'all') return matchesSearch;
@@ -47,24 +47,31 @@ export default function OrganizerEventsPage() {
     <RoleGuard allowedRoles={['organizer', 'admin']}>
       <div className="space-y-6">
         {/* Header */}
-        <div className="relative overflow-hidden rounded-2xl p-8 border border-white/5 bg-gradient-to-br from-[#181025] via-[#0f0b1d] to-[#0a0d1e] shadow-[0_20px_80px_rgba(0,0,0,0.45)]">
-          <div className="absolute inset-0 bg-gradient-mesh opacity-60" />
-          <div className="absolute -left-14 -bottom-10 w-60 h-60 bg-violet-500/20 blur-3xl" />
-          <div className="absolute right-0 top-0 w-64 h-64 bg-indigo-500/15 blur-3xl" />
-          <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="relative overflow-hidden rounded-2xl border border-zinc-200/90 bg-gradient-to-br from-violet-50/95 via-white to-zinc-50 p-8 shadow-[0_20px_60px_-15px_rgba(15,23,42,0.08)] dark:border-white/5 dark:bg-gradient-to-br dark:from-[#181025] dark:via-[#0f0b1d] dark:to-[#0a0d1e] dark:shadow-[0_20px_80px_rgba(0,0,0,0.45)]">
+          <div className="absolute inset-0 bg-gradient-mesh opacity-25 dark:opacity-60" />
+          <div className="absolute -bottom-10 -left-14 h-60 w-60 bg-violet-400/25 blur-3xl dark:bg-violet-500/20" />
+          <div className="absolute right-0 top-0 h-64 w-64 bg-indigo-400/20 blur-3xl dark:bg-indigo-500/15" />
+          <div className="relative flex flex-col justify-between gap-4 md:flex-row md:items-center">
             <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 text-white px-3 py-1.5 rounded-full text-sm">
-                <Sparkles className="h-4 w-4 text-violet-200" />
-                <span className="text-xs uppercase tracking-[0.25em] text-gray-200">Organizer</span>
+              <div className="inline-flex items-center gap-2 rounded-full border border-violet-200/80 bg-violet-50/90 px-3 py-1.5 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white">
+                <Sparkles className="h-4 w-4 text-violet-600 dark:text-violet-200" />
+                <span className="text-xs uppercase tracking-[0.25em] text-violet-800/90 dark:text-gray-200">Organizer</span>
               </div>
-              <div className="flex items-center gap-3 flex-wrap">
-                <h1 className="text-3xl md:text-4xl font-semibold text-white">My Events</h1>
-                <span className="px-3 py-1 text-xs rounded-full bg-white/5 border border-white/10 text-gray-200">{events.length} total</span>
+              <div className="flex flex-wrap items-center gap-3">
+                <h1 className="text-3xl font-semibold text-zinc-900 dark:text-white md:text-4xl">My Events</h1>
+                <span className="rounded-full border border-zinc-200/90 bg-white px-3 py-1 text-xs text-zinc-700 dark:border-white/10 dark:bg-white/5 dark:text-gray-200">
+                  {events.length} total
+                </span>
               </div>
-              <p className="text-gray-300 max-w-2xl">Manage, search, and upload to your events with the same calm theme as the landing page.</p>
+              <p className="max-w-2xl text-zinc-600 dark:text-gray-300">
+                Manage, search, and upload to your events with the same calm theme as the landing page.
+              </p>
             </div>
             <Link href="/organizer/events/create">
-              <button className="inline-flex items-center gap-2 bg-white/5 border border-white/10 text-white hover:bg-white/10 px-6 py-3 rounded-xl font-semibold transition-all shadow-[0_10px_35px_rgba(0,0,0,0.3)]">
+              <button
+                type="button"
+                className="inline-flex items-center gap-2 rounded-xl border border-violet-600 bg-violet-600 px-6 py-3 font-semibold text-white shadow-lg shadow-violet-500/25 transition-all hover:bg-violet-500 dark:border-white/10 dark:bg-white/5 dark:shadow-[0_10px_35px_rgba(0,0,0,0.3)] dark:hover:bg-white/10"
+              >
                 <Plus size={18} />
                 Create Event
               </button>
@@ -73,35 +80,36 @@ export default function OrganizerEventsPage() {
         </div>
 
         {/* Filters and Search */}
-        <div className="card bg-[#0f0c18] border-white/5 shadow-[0_14px_50px_rgba(0,0,0,0.35)] flex flex-col md:flex-row gap-4 justify-between items-center">
+        <div className="card flex flex-col items-center justify-between gap-4 border-zinc-200/90 shadow-lg shadow-zinc-900/5 md:flex-row dark:border-white/5 dark:bg-[#0f0c18] dark:shadow-[0_14px_50px_rgba(0,0,0,0.35)]">
           <div className="relative w-full md:w-72">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <Search size={18} className="text-gray-500" />
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+              <Search size={18} className="text-zinc-400 dark:text-gray-500" />
             </div>
             <input
               type="text"
               placeholder="Search events..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+              className="input w-full rounded-xl py-3 pl-12 pr-4 text-sm"
             />
           </div>
 
-          <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto no-scrollbar">
+          <div className="no-scrollbar flex w-full items-center gap-2 overflow-x-auto md:w-auto">
             {[
-              { id: 'all', label: 'All Events', active: 'violet' },
-              { id: 'active', label: 'Active', active: 'emerald' },
-              { id: 'past', label: 'Past', active: 'slate' },
+              { id: 'all', label: 'All Events' },
+              { id: 'active', label: 'Active' },
+              { id: 'past', label: 'Past' },
             ].map((f) => (
               <button
                 key={f.id}
+                type="button"
                 onClick={() => setFilterActive(f.id as 'all' | 'active' | 'past')}
-                className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all border ${
+                className={`whitespace-nowrap rounded-xl border px-4 py-2 text-sm font-medium transition-all ${
                   filterActive === f.id
                     ? f.id === 'active'
-                      ? 'bg-emerald-500/20 text-emerald-200 border-emerald-500/40 shadow-lg shadow-emerald-500/10'
-                      : 'bg-violet-500/20 text-violet-200 border-violet-500/40 shadow-lg shadow-violet-500/10'
-                    : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10 hover:text-white hover:border-white/20'
+                      ? 'border-emerald-300 bg-emerald-50 text-emerald-900 shadow-sm dark:border-emerald-500/40 dark:bg-emerald-500/20 dark:text-emerald-200 dark:shadow-lg dark:shadow-emerald-500/10'
+                      : 'border-violet-300 bg-violet-50 text-violet-900 shadow-sm dark:border-violet-500/40 dark:bg-violet-500/20 dark:text-violet-200 dark:shadow-lg dark:shadow-violet-500/10'
+                    : 'border-zinc-200 bg-zinc-50 text-zinc-600 hover:border-zinc-300 hover:bg-white dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:border-white/20 dark:hover:bg-white/10 dark:hover:text-white'
                 }`}
               >
                 {f.label}
@@ -112,53 +120,73 @@ export default function OrganizerEventsPage() {
 
         {/* Events Grid */}
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="card h-64 animate-pulse bg-[#0f0c18] border-white/5">
-                <div className="h-4 bg-white/10 rounded w-3/4 mb-4"></div>
-                <div className="h-4 bg-white/10 rounded w-1/2 mb-8"></div>
-                <div className="h-24 bg-white/5 rounded"></div>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="card h-64 animate-pulse border-zinc-200/90 dark:border-white/5 dark:bg-[#0f0c18]"
+              >
+                <div className="mb-4 h-4 w-3/4 rounded bg-zinc-200 dark:bg-white/10" />
+                <div className="mb-8 h-4 w-1/2 rounded bg-zinc-200 dark:bg-white/10" />
+                <div className="h-24 rounded bg-zinc-100 dark:bg-white/5" />
               </div>
             ))}
           </div>
         ) : filteredEvents.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredEvents.map(event => (
-              <div key={event._id} className="group bg-[#0f0c18] border border-white/5 rounded-2xl p-6 hover:-translate-y-1 transition-all shadow-[0_14px_50px_rgba(0,0,0,0.35)] hover:border-violet-500/30 flex flex-col h-full">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="bg-white/5 text-gray-300 text-xs px-3 py-1.5 rounded-lg font-medium flex items-center gap-2 border border-white/10">
-                    <Calendar size={12} className="text-violet-300" />
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {filteredEvents.map((event) => (
+              <div
+                key={event._id}
+                className="group flex h-full flex-col rounded-2xl border border-zinc-200/90 bg-zinc-50/50 p-6 shadow-sm transition-all hover:-translate-y-1 hover:border-violet-300/70 hover:shadow-md dark:border-white/5 dark:bg-[#0f0c18] dark:shadow-[0_14px_50px_rgba(0,0,0,0.35)] dark:hover:border-violet-500/30"
+              >
+                <div className="mb-4 flex items-start justify-between">
+                  <div className="flex items-center gap-2 rounded-lg border border-zinc-200/90 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 dark:border-white/10 dark:bg-white/5 dark:text-gray-300">
+                    <Calendar size={12} className="text-violet-600 dark:text-violet-300" />
                     {new Date(event.startDate).toLocaleDateString()}
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium border ${event.isActive ? 'bg-emerald-500/15 text-emerald-200 border-emerald-500/30' : 'bg-white/5 text-gray-300 border-white/15'}`}>
+                  <span
+                    className={`rounded-full border px-3 py-1 text-xs font-medium ${
+                      event.isActive
+                        ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-200'
+                        : 'border-zinc-200 bg-zinc-100 text-zinc-600 dark:border-white/15 dark:bg-white/5 dark:text-gray-300'
+                    }`}
+                  >
                     {event.isActive ? 'Active' : 'Archived'}
                   </span>
                 </div>
 
-                <h3 className="font-semibold text-lg text-white mb-2 group-hover:text-violet-300 transition-colors">{event.name}</h3>
-                <div className="flex items-center text-gray-400 text-sm mb-3">
-                  <MapPin size={14} className="mr-2 text-pink-300" />
+                <h3 className="mb-2 text-lg font-semibold text-zinc-900 transition-colors group-hover:text-violet-700 dark:text-white dark:group-hover:text-violet-300">
+                  {event.name}
+                </h3>
+                <div className="mb-3 flex items-center text-sm text-zinc-600 dark:text-gray-400">
+                  <MapPin size={14} className="mr-2 text-pink-600 dark:text-pink-300" />
                   <span className="truncate">{event.venue || 'TBA'}</span>
                 </div>
 
-                <p className="text-gray-400 text-sm line-clamp-3 flex-grow mb-4">
+                <p className="mb-4 flex-grow line-clamp-3 text-sm text-zinc-600 dark:text-gray-400">
                   {event.description || 'No description provided.'}
                 </p>
 
-                <div className="flex items-center gap-3 text-xs text-gray-500 mb-4">
+                <div className="mb-4 flex items-center gap-3 text-xs text-zinc-500 dark:text-gray-500">
                   <div className="flex items-center gap-1">
-                    <Users size={14} className="text-emerald-300" />
+                    <Users size={14} className="text-emerald-600 dark:text-emerald-300" />
                     <span>{event.attendees?.length || 0} attending</span>
                   </div>
                 </div>
 
-                <div className="border-t border-white/10 pt-4 flex gap-2">
+                <div className="flex gap-2 border-t border-zinc-200/90 pt-4 dark:border-white/10">
                   <Link href={`/organizer/events/${event._id}/upload`} className="flex-1">
-                    <button className="w-full text-sm py-2.5 flex justify-center items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold shadow-violet-500/20">
+                    <button
+                      type="button"
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 py-2.5 text-sm font-semibold text-white shadow-violet-500/20 hover:from-violet-500 hover:to-indigo-500"
+                    >
                       <Upload size={16} /> Upload Photos
                     </button>
                   </Link>
-                  <Link href={`/events/${event._id}/manage`} className="p-2.5 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 text-gray-200 transition-colors">
+                  <Link
+                    href={`/events/${event._id}/manage`}
+                    className="rounded-xl border border-zinc-200 bg-white p-2.5 text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-white/10 dark:bg-white/5 dark:text-gray-200 dark:hover:bg-white/10"
+                  >
                     <Eye size={18} />
                   </Link>
                 </div>
@@ -166,17 +194,19 @@ export default function OrganizerEventsPage() {
             ))}
           </div>
         ) : (
-          <div className="card text-center py-16 bg-[#0f0c18] border-white/5 shadow-[0_14px_50px_rgba(0,0,0,0.35)]">
-            <div className="w-20 h-20 bg-violet-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Calendar size={32} className="text-violet-400" />
+          <div className="card border-zinc-200/90 py-16 text-center shadow-lg shadow-zinc-900/5 dark:border-white/5 dark:bg-[#0f0c18] dark:shadow-[0_14px_50px_rgba(0,0,0,0.35)]">
+            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-500/10">
+              <Calendar size={32} className="text-violet-600 dark:text-violet-400" />
             </div>
-            <h3 className="text-xl font-semibold text-white mb-2">No events found</h3>
-            <p className="text-gray-400 mb-6">
+            <h3 className="mb-2 text-xl font-semibold text-zinc-900 dark:text-white">No events found</h3>
+            <p className="mb-6 text-zinc-600 dark:text-gray-400">
               {searchTerm ? 'Try adjusting your search filters' : 'Create an event to get started'}
             </p>
             {!searchTerm && (
               <Link href="/organizer/events/create">
-                <button className="btn-gradient px-6 py-3 rounded-xl font-semibold">Create Event</button>
+                <button type="button" className="btn-gradient rounded-xl px-6 py-3 font-semibold">
+                  Create Event
+                </button>
               </Link>
             )}
           </div>

@@ -230,7 +230,7 @@ export default function EventUploadPage() {
                         {/* Main Upload Area */}
                         <div className="lg:col-span-2 space-y-6">
                             {/* Upload Zone Card */}
-                            <div className="card bg-[#0d0b14] border-white/5 shadow-[0_16px_60px_rgba(0,0,0,0.45)]">
+                            <div className="card border-zinc-200/90 shadow-lg shadow-zinc-900/5 dark:bg-[#0d0b14] dark:border-white/5 dark:shadow-[0_16px_60px_rgba(0,0,0,0.45)]">
                                 <div className="flex items-center gap-3 mb-6">
                                     <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center">
                                         <Cloud className="h-5 w-5 text-violet-400" />
@@ -300,7 +300,7 @@ export default function EventUploadPage() {
                         {/* Sidebar */}
                         <div className="lg:col-span-1 space-y-6">
                             {/* Guidelines Card */}
-                            <div className="card bg-[#0d0b14] border-white/5 shadow-[0_16px_60px_rgba(0,0,0,0.45)]">
+                            <div className="card border-zinc-200/90 shadow-lg shadow-zinc-900/5 dark:bg-[#0d0b14] dark:border-white/5 dark:shadow-[0_16px_60px_rgba(0,0,0,0.45)]">
                                 <div className="flex items-center gap-3 mb-4">
                                     <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center">
                                         <Info className="h-5 w-5 text-indigo-400" />
@@ -352,7 +352,7 @@ export default function EventUploadPage() {
                             <RefreshAttendeeMatchesCard eventId={eventId} event={eventData} variant="dark" />
 
                             {/* Tips Card */}
-                            <div className="card bg-[#0d0b14] border-white/5 shadow-[0_16px_60px_rgba(0,0,0,0.45)]">
+                            <div className="card border-zinc-200/90 shadow-lg shadow-zinc-900/5 dark:bg-[#0d0b14] dark:border-white/5 dark:shadow-[0_16px_60px_rgba(0,0,0,0.45)]">
                                 <h3 className="text-lg font-semibold text-white mb-4">Pro Tips</h3>
                                 <ul className="space-y-3">
                                     <li className="flex items-start gap-3 text-sm">
@@ -373,7 +373,7 @@ export default function EventUploadPage() {
                     </div>
                 ) : (
                     /* Upload Progress State */
-                    <div className="card bg-[#0d0b14] border-white/5 shadow-[0_16px_60px_rgba(0,0,0,0.45)]">
+                    <div className="card border-zinc-200/90 shadow-lg shadow-zinc-900/5 dark:bg-[#0d0b14] dark:border-white/5 dark:shadow-[0_16px_60px_rgba(0,0,0,0.45)]">
                         <div className="py-16 flex flex-col items-center justify-center text-center">
                             {uploadProgress && uploadProgress.uploaded + uploadProgress.failed < uploadProgress.total ? (
                                 <>
