@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -20,12 +20,64 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { eventApi, photoApi } from '@/lib/api';
+import { getPhotoDisplayUrl } from '@/lib/photoUrl';
 import { Button } from '@/app/components/ui/Button';
 import Pagination from '@/app/components/ui/Pagination';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from 'react-query';
 
 const PHOTOS_PER_PAGE = 12;
+const PREVIEW_PHOTO_COUNT = 4;
+
+/** Align with manage page — supports several API envelope shapes. */
+function normalizePhotosFromGet(res: any): any[] {
+    if (!res) return [];
+    const d = res.data;
+    if (Array.isArray(d)) return d;
+    if (d && Array.isArray(d.photos)) return d.photos;
+    if (d?.data && Array.isArray(d.data.photos)) return d.data.photos;
+    if (Array.isArray(res.photos)) return res.photos;
+    return [];
+}
+
+function flattenGroupedPhotos(photos: any[]): any[] {
+    if (!photos.length) return photos;
+    const first = photos[0];
+    if (first && typeof first === 'object' && Array.isArray(first.photos)) {
+        return photos.flatMap((g: any) => g.photos || []);
+    }
+    return photos;
+}
+
+function normalizeEventPhotosPayload(res: unknown): any[] {
+    return flattenGroupedPhotos(normalizePhotosFromGet(res as any));
+}
+
+/** Total gallery size from GET /events/:id/photos envelope (if API sends it). */
+function extractTotalFromPhotosApi(res: any): number | undefined {
+    if (!res || typeof res !== 'object') return undefined;
+    const tryNum = (v: unknown) =>
+        typeof v === 'number' && !Number.isNaN(v) && v >= 0 ? v : undefined;
+
+    const d = res.data;
+    const candidates: unknown[] = [
+        res.total,
+        res.totalCount,
+        res.count,
+        d?.total,
+        d?.totalCount,
+        d?.count,
+        typeof d === 'object' && d && 'pagination' in d
+            ? (d as { pagination?: { total?: number } }).pagination?.total
+            : undefined,
+        res.pagination?.total,
+    ];
+    for (const c of candidates) {
+        const n = tryNum(c);
+        if (n !== undefined) return n;
+    }
+    return undefined;
+}
 
 const GALLERY_SURFACE =
     'border-zinc-200/90 bg-white shadow-lg shadow-zinc-900/5 dark:border-white/5 dark:bg-[#0f0c18] dark:shadow-[0_14px_50px_rgba(0,0,0,0.35)]';
@@ -34,7 +86,7 @@ const STAT_TILE =
     'stat-card border-zinc-200/80 bg-gradient-to-br from-white via-zinc-50/90 to-white shadow-sm shadow-zinc-900/5 dark:border-white/10 dark:from-[#121022] dark:via-[#0d0c19] dark:to-[#0b0a14] dark:shadow-none';
 
 export default function PublicEventPage() {
-    const { user: currentUser, loading: authLoading } = useAuth();
+    const { user: currentUser } = useAuth();
     const params = useParams();
     const router = useRouter();
     const eventId = params?.eventId as string;
@@ -55,16 +107,51 @@ export default function PublicEventPage() {
     );
     const event = eventResult?.data;
 
-    // Fetch official event gallery photos (dashboard shows only official)
+    // Full gallery — authenticated users only (limit aligned with prior behavior)
     const { data: photosResult, isLoading: photosLoading } = useQuery(
         ['eventPhotos', eventId],
         () => eventApi.getPhotos(eventId, { limit: 500 }),
         {
             enabled: !!eventId && !!currentUser,
-            staleTime: 5 * 60 * 1000, // 5 mins cache
+            staleTime: 5 * 60 * 1000,
         }
     );
-    const allPhotos = photosResult?.data?.photos || [];
+    const allPhotos = normalizeEventPhotosPayload(photosResult);
+
+    // Teaser for shared links — uses existing GET photos with limit (no backend deploy needed)
+    const { data: previewResult, isLoading: previewLoading } = useQuery(
+        ['eventPhotosPreview', eventId],
+        () => eventApi.getPhotos(eventId, { limit: PREVIEW_PHOTO_COUNT }),
+        {
+            enabled: !!eventId && !currentUser,
+            staleTime: 5 * 60 * 1000,
+            retry: false,
+        }
+    );
+    const previewPhotos = normalizeEventPhotosPayload(previewResult).slice(0, PREVIEW_PHOTO_COUNT);
+
+    /** Real gallery count for logged-out visitors: API total, then event fields from getById. */
+    const anonymousPhotoTotal = useMemo(() => {
+        const fromApi = extractTotalFromPhotosApi(previewResult);
+        if (fromApi !== undefined) return fromApi;
+
+        const e = event as Record<string, unknown> | undefined;
+        if (!e) return undefined;
+
+        const fromField =
+            typeof e.photoCount === 'number' && !Number.isNaN(e.photoCount)
+                ? e.photoCount
+                : 0;
+        const stats = e.stats as Record<string, unknown> | undefined;
+        const fromStats =
+            stats && typeof stats.totalPhotos === 'number' && !Number.isNaN(stats.totalPhotos)
+                ? stats.totalPhotos
+                : 0;
+        const fromArr = Array.isArray(e.photos) ? e.photos.length : 0;
+
+        const n = Math.max(fromField, fromStats, fromArr);
+        return n > 0 ? n : undefined;
+    }, [event, previewResult]);
 
     // Fetch My Photos (filtered by eventId) - only for guest users
     const { data: myPhotosResult, isLoading: myPhotosLoading } = useQuery(
@@ -81,7 +168,7 @@ export default function PublicEventPage() {
     const displayPhotos = photoViewMode === 'my' && isGuest ? myPhotos : allPhotos;
     const isLoadingPhotos =
         !currentUser
-            ? authLoading
+            ? previewLoading
             : photoViewMode === 'my' && isGuest
               ? myPhotosLoading
               : photosLoading;
@@ -226,7 +313,11 @@ export default function PublicEventPage() {
                                 )}
                                 <span className="px-3 py-1 rounded-full text-xs bg-zinc-100 border border-zinc-200/90 text-zinc-600 dark:bg-white/5 dark:border-white/10 dark:text-gray-300">
                                     {!currentUser
-                                        ? 'Sign in to view gallery'
+                                        ? anonymousPhotoTotal != null
+                                            ? `${anonymousPhotoTotal} photos`
+                                            : previewPhotos.length > 0
+                                              ? `${previewPhotos.length} photos`
+                                              : 'Gallery preview'
                                         : photoViewMode === 'my' && isGuest
                                           ? `${totalPhotos} my photos`
                                           : `${allPhotos.length} photos`}
@@ -261,7 +352,13 @@ export default function PublicEventPage() {
                                         <div>
                                             <p className="text-zinc-500 dark:text-gray-400 text-sm">Photos</p>
                                             <p className="text-2xl font-semibold text-zinc-900 dark:text-white">
-                                                {currentUser ? allPhotos.length : '—'}
+                                                {currentUser
+                                                    ? allPhotos.length
+                                                    : anonymousPhotoTotal != null
+                                                      ? anonymousPhotoTotal
+                                                      : previewPhotos.length > 0
+                                                        ? previewPhotos.length
+                                                        : '—'}
                                             </p>
                                         </div>
                                     </div>
@@ -365,7 +462,7 @@ export default function PublicEventPage() {
                     </h2>
                     <p className="text-zinc-600 dark:text-gray-400 text-lg">
                         {!currentUser
-                            ? 'Log in or create an account to browse this gallery.'
+                            ? 'A few highlights below — sign in to open the full gallery.'
                             : totalPhotos > 0
                               ? `Browse through ${totalPhotos} captured moments`
                               : 'Photos will appear here once they are uploaded'}
@@ -401,16 +498,87 @@ export default function PublicEventPage() {
                 )}
 
                 {isLoadingPhotos ? (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {[...Array(8)].map((_, i) => (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {[...Array(!currentUser ? 4 : 8)].map((_, i) => (
                             <div key={i} className="aspect-square bg-zinc-100 rounded-2xl animate-pulse border border-zinc-200/80 dark:bg-white/5 dark:border-white/5" />
                         ))}
                     </div>
                 ) : !currentUser ? (
-                    <div className="relative min-h-[220px] rounded-3xl border border-dashed border-zinc-300 bg-zinc-50/90 dark:border-white/15 dark:bg-[#0f0c18]/50 flex items-center justify-center px-6">
-                        <p className="text-zinc-600 dark:text-gray-500 text-center text-sm">
-                            Photo thumbnails are hidden until you sign in.
-                        </p>
+                    <div className="space-y-8">
+                        {previewPhotos.length > 0 && (
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                {previewPhotos.map((photo: any, index: number) => {
+                                    const src =
+                                        getPhotoDisplayUrl(photo) ||
+                                        photo.thumbnailUrl ||
+                                        photo.url ||
+                                        photo.s3Url;
+                                    return (
+                                        <button
+                                            key={photo._id || photo.imageId || index}
+                                            type="button"
+                                            className="group relative aspect-square bg-zinc-100 rounded-2xl overflow-hidden border border-zinc-200/90 text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-violet-500/10 hover:border-violet-400/50 dark:bg-[#0f0c18] dark:border-white/5 dark:hover:border-violet-500/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+                                            onClick={() => setSelectedPhoto(photo)}
+                                        >
+                                            {src ? (
+                                                /* eslint-disable-next-line @next/next/no-img-element */
+                                                <img
+                                                    src={src}
+                                                    alt=""
+                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                />
+                                            ) : (
+                                                <div className="absolute inset-0 flex items-center justify-center bg-zinc-100 dark:bg-white/5">
+                                                    <ImageIcon className="text-zinc-400" size={40} />
+                                                </div>
+                                            )}
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                                            <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded-md text-[11px] font-medium bg-black/50 text-white backdrop-blur-sm pointer-events-none">
+                                                Preview
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
+
+                        <div
+                            className={`relative overflow-hidden rounded-3xl border border-zinc-200/90 bg-gradient-to-br from-violet-50/90 via-white to-zinc-50 p-8 md:p-10 dark:border-white/10 dark:from-[#181025] dark:via-[#0f0c18] dark:to-[#0a0d1e] ${GALLERY_SURFACE}`}
+                        >
+                            <div className="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-violet-400/10 blur-3xl dark:bg-violet-500/10" />
+                            <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                                <div className="flex gap-4 items-start">
+                                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-violet-100 border border-violet-200/90 dark:bg-violet-500/15 dark:border-violet-400/25">
+                                        <Lock className="text-violet-600 dark:text-violet-300" size={28} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-semibold text-zinc-900 dark:text-white mb-1">
+                                            Unlock the full gallery
+                                        </h3>
+                                        <p className="text-zinc-600 dark:text-gray-400 text-sm max-w-xl leading-relaxed">
+                                            {previewPhotos.length > 0
+                                                ? 'Sign in or create an account to browse every photo, use My Photos, and download originals.'
+                                                : 'Sign in or create an account to view photos from this event.'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex flex-col sm:flex-row gap-3 shrink-0">
+                                    <Button
+                                        onClick={() => router.push('/login')}
+                                        className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-500 hover:to-indigo-500 font-semibold px-8 py-3 rounded-xl justify-center"
+                                    >
+                                        Log in
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => router.push('/register')}
+                                        className="border-zinc-300 text-zinc-900 hover:bg-zinc-50 dark:border-white/20 dark:text-white dark:hover:bg-white/10 font-semibold px-8 py-3 rounded-xl justify-center"
+                                    >
+                                        Create account
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 ) : photos.length > 0 ? (
                     <>
@@ -423,7 +591,12 @@ export default function PublicEventPage() {
                                 >
                                     {/* eslint-disable-next-line @next/next/no-img-element */}
                                     <img
-                                        src={photo.thumbnailUrl || photo.url || photo.s3Url}
+                                        src={
+                                            getPhotoDisplayUrl(photo) ||
+                                            photo.thumbnailUrl ||
+                                            photo.url ||
+                                            photo.s3Url
+                                        }
                                         alt={`Event photo ${startIndex + index + 1}`}
                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                     />
@@ -474,86 +647,59 @@ export default function PublicEventPage() {
                 )}
             </div>
 
-            {/* Photo Modal */}
-            {/* Login gate for shared event links — photos are not fetched until authenticated */}
-            {!authLoading && !currentUser && (
-                <div
-                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 dark:bg-black/65 backdrop-blur-md"
-                    role="dialog"
-                    aria-modal="true"
-                    aria-labelledby="event-gallery-login-title"
-                >
-                    <div className="w-full max-w-md rounded-2xl border border-zinc-200/90 bg-white p-8 shadow-[0_24px_80px_rgba(0,0,0,0.12)] dark:border-white/10 dark:bg-[#0f0c18] dark:shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
-                        <div className="flex justify-center mb-6">
-                            <div className="w-16 h-16 rounded-2xl bg-violet-100 border border-violet-200/90 dark:bg-violet-500/15 dark:border-violet-400/25 flex items-center justify-center">
-                                <Lock className="text-violet-600 dark:text-violet-300" size={32} />
-                            </div>
-                        </div>
-                        <h2
-                            id="event-gallery-login-title"
-                            className="text-2xl font-semibold text-zinc-900 dark:text-white text-center mb-3"
-                        >
-                            Sign in to view photos
-                        </h2>
-                        <p className="text-zinc-600 dark:text-gray-400 text-center text-sm leading-relaxed mb-8">
-                            This shared event link opens the event page, but the gallery is only available after you log in or sign up.
-                        </p>
-                        <div className="flex flex-col sm:flex-row gap-3">
-                            <Button
-                                onClick={() => router.push('/login')}
-                                className="flex-1 bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-500 hover:to-indigo-500 font-semibold py-3 rounded-xl justify-center"
-                            >
-                                Go to login
-                            </Button>
-                            <Button
-                                variant="outline"
-                                onClick={() => router.push('/register')}
-                                className="flex-1 border-zinc-300 text-zinc-900 hover:bg-zinc-50 dark:border-white/20 dark:text-white dark:hover:bg-white/10 font-semibold py-3 rounded-xl justify-center"
-                            >
-                                Create account
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
             {selectedPhoto && (
                 <div
-                    className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                    className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6"
                     onClick={() => setSelectedPhoto(null)}
                 >
                     <button
-                        className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/20 transition-colors border border-white/10"
+                        className="absolute top-4 right-4 z-[51] w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/20 transition-colors border border-white/10"
                         onClick={() => setSelectedPhoto(null)}
                     >
                         <X size={20} />
                     </button>
-                    <div className="max-w-5xl w-full" onClick={(e) => e.stopPropagation()}>
+                    <div
+                        className="relative flex w-[80vw] max-w-4xl max-h-[80vh] flex-col items-stretch justify-center gap-3 overflow-y-auto"
+                        onClick={(e) => e.stopPropagation()}
+                    >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
-                            src={selectedPhoto.url || selectedPhoto.s3Url}
+                            src={
+                                getPhotoDisplayUrl(selectedPhoto) ||
+                                selectedPhoto.url ||
+                                selectedPhoto.s3Url
+                            }
                             alt="Selected photo"
-                            className="w-full h-auto rounded-2xl shadow-2xl"
+                            className="mx-auto max-h-[min(72vh,calc(80vh-7rem))] w-auto max-w-full object-contain rounded-2xl shadow-2xl"
                         />
-                        <div className="mt-4 flex items-center justify-between bg-white/95 dark:bg-[#0f0c18]/95 backdrop-blur-lg rounded-xl p-4 border border-zinc-200/90 dark:border-white/10 shadow-sm">
+                        <div className="flex shrink-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-white/95 dark:bg-[#0f0c18]/95 backdrop-blur-lg rounded-xl p-4 border border-zinc-200/90 dark:border-white/10 shadow-sm">
                             <div className="text-zinc-900 dark:text-white">
                                 <p className="font-medium">{selectedPhoto.fileName}</p>
                                 <p className="text-sm text-zinc-500 dark:text-gray-400">
                                     {new Date(selectedPhoto.uploadedAt || selectedPhoto.createdAt).toLocaleDateString()}
                                 </p>
                             </div>
-                            <Button
-                                onClick={() => handleDownload(selectedPhoto)}
-                                disabled={!!downloading}
-                                className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-500 hover:to-indigo-500 disabled:opacity-50"
-                            >
-                                {downloading === selectedPhoto._id ? (
-                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                                ) : (
-                                    <Download size={18} className="mr-2" />
-                                )}
-                                {downloading === selectedPhoto._id ? 'Downloading...' : 'Download Original'}
-                            </Button>
+                            {currentUser ? (
+                                <Button
+                                    onClick={() => handleDownload(selectedPhoto)}
+                                    disabled={!!downloading}
+                                    className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-500 hover:to-indigo-500 disabled:opacity-50 shrink-0"
+                                >
+                                    {downloading === selectedPhoto._id ? (
+                                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                                    ) : (
+                                        <Download size={18} className="mr-2" />
+                                    )}
+                                    {downloading === selectedPhoto._id ? 'Downloading...' : 'Download Original'}
+                                </Button>
+                            ) : (
+                                <Button
+                                    onClick={() => router.push('/login')}
+                                    className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-500 hover:to-indigo-500 shrink-0"
+                                >
+                                    Log in for full gallery & downloads
+                                </Button>
+                            )}
                         </div>
                     </div>
                 </div>
