@@ -965,7 +965,7 @@ export default function ManageEventPage() {
                 {/* Organizer photo preview (does not change selection) */}
                 {previewPhoto && (
                     <div
-                        className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm"
+                        className="fixed inset-0 z-[70] flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-sm"
                         role="dialog"
                         aria-modal="true"
                         aria-label="Photo preview"
@@ -980,7 +980,7 @@ export default function ManageEventPage() {
                             <X size={20} />
                         </button>
                         <div
-                            className="max-w-5xl w-full max-h-[90vh] flex flex-col items-center"
+                            className="relative flex w-[80vw] max-w-4xl max-h-[80vh] flex-col items-stretch justify-center gap-3 overflow-y-auto"
                             onClick={(e) => e.stopPropagation()}
                         >
                             {getPhotoPreviewUrl(previewPhoto) ? (
@@ -988,7 +988,7 @@ export default function ManageEventPage() {
                                 <img
                                     src={getPhotoPreviewUrl(previewPhoto)}
                                     alt={previewPhoto.fileName || 'Photo preview'}
-                                    className="max-h-[85vh] w-auto max-w-full object-contain rounded-xl shadow-2xl border border-white/10"
+                                    className="mx-auto max-h-[min(72vh,calc(80vh-7rem))] w-auto max-w-full object-contain rounded-xl shadow-2xl border border-white/10"
                                 />
                             ) : (
                                 <div className="rounded-xl border border-zinc-200/90 bg-zinc-50 px-8 py-12 text-center text-zinc-500 dark:border-white/10 dark:bg-[#0f0c18] dark:text-gray-400">
