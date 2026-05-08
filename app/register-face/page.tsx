@@ -12,6 +12,7 @@ import {
   Loader2,
   Sparkles,
   Shield,
+  ChevronDown,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
@@ -32,7 +33,7 @@ function CaptureProgressRing({ percentage }: { percentage: number }) {
   const offset = c - (Math.min(100, percentage) / 100) * c;
   return (
     <svg
-      className="pointer-events-none absolute left-1/2 top-1/2 h-36 w-36 -translate-x-1/2 -translate-y-1/2"
+      className="pointer-events-none absolute left-1/2 top-1/2 h-[clamp(7.5rem,28vw,9rem)] w-[clamp(7.5rem,28vw,9rem)] -translate-x-1/2 -translate-y-1/2 sm:h-36 sm:w-36"
       viewBox="0 0 128 128"
       aria-hidden
     >
@@ -130,6 +131,7 @@ export default function RegisterFacePage() {
     video.muted = true;
     video.playsInline = true;
     video.setAttribute('playsinline', '');
+    video.setAttribute('webkit-playsinline', 'true');
     video.srcObject = stream;
 
     const tryPlay = () => {
@@ -156,10 +158,12 @@ export default function RegisterFacePage() {
       stopDetectionRef.current = false;
 
       const mediaStream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
         video: {
           facingMode: 'user',
           width: { ideal: 1280 },
           height: { ideal: 720 },
+          frameRate: { ideal: 30, max: 30 },
         },
       });
 
@@ -363,38 +367,57 @@ export default function RegisterFacePage() {
   };
 
   const showLiveChrome = isCameraActive && landmarkerState === 'ready' && !capturedImage;
+  /** Mobile: focus almost full screen on camera / review (~80% viewport) */
+  const immersiveMobile = isCameraActive || !!capturedImage;
+
+  const primaryButtonClass =
+    'touch-manipulation min-h-[48px] w-full items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-base font-semibold active:scale-[0.98] sm:min-h-0 sm:w-auto sm:py-3';
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-3 py-6 sm:px-6 sm:py-12 lg:px-8">
+    <div
+      className={`relative flex min-h-dvh min-h-screen flex-col overflow-x-hidden overflow-y-auto pb-safe-plus pt-safe sm:items-center sm:justify-center sm:px-6 sm:py-12 lg:px-8 ${
+        immersiveMobile ? 'max-sm:pb-0 max-sm:pt-2' : ''
+      }`}
+    >
       <div className="absolute inset-0 bg-[#0a0a0a]">
         <div className="absolute inset-0 bg-gradient-mesh opacity-50"></div>
       </div>
 
-      <div className="absolute left-10 top-20 h-96 w-96 animate-float rounded-full bg-emerald-500/10 blur-[100px]"></div>
-      <div className="absolute bottom-20 right-10 h-80 w-80 animate-float rounded-full bg-violet-500/10 blur-[100px] delay-200"></div>
-      <div className="absolute left-1/2 top-1/2 h-72 w-72 animate-float rounded-full bg-blue-500/5 blur-[100px] delay-400"></div>
+      <div className="pointer-events-none absolute left-10 top-20 hidden h-96 w-96 animate-float rounded-full bg-emerald-500/10 blur-[100px] sm:block"></div>
+      <div className="pointer-events-none absolute bottom-20 right-10 hidden h-80 w-80 animate-float rounded-full bg-violet-500/10 blur-[100px] delay-200 sm:block"></div>
+      <div className="pointer-events-none absolute left-1/2 top-1/2 hidden h-72 w-72 -translate-x-1/2 -translate-y-1/2 animate-float rounded-full bg-blue-500/5 blur-[100px] delay-400 sm:block"></div>
 
-      <div className="animate-slide-up relative z-10 w-full max-w-2xl">
-        <div className="card-glass rounded-xl p-4 shadow-2xl sm:rounded-2xl sm:p-8">
-          <div className="mb-5 text-center sm:mb-8">
-            <div className="mb-3 flex justify-center sm:mb-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/30 transition-all duration-300 sm:h-16 sm:w-16 sm:rounded-2xl sm:hover:scale-105 sm:hover:shadow-emerald-500/50">
-                <Camera className="h-7 w-7 text-white sm:h-8 sm:w-8" />
+      <div
+        className={`animate-slide-up relative z-10 w-full max-w-2xl flex-1 px-3 pb-4 sm:mx-auto sm:flex-none sm:px-0 sm:pb-0 ${
+          immersiveMobile ? 'max-sm:flex max-sm:min-h-0 max-sm:flex-1 max-sm:flex-col max-sm:px-2 max-sm:pb-safe-plus' : ''
+        }`}
+      >
+        <div
+          className={`card-glass rounded-none border-0 p-3 shadow-none sm:rounded-2xl sm:border sm:border-white/10 sm:bg-[var(--background-secondary)]/80 sm:p-8 sm:shadow-2xl dark:sm:bg-white/[0.06] ${
+            immersiveMobile ? 'max-sm:flex max-sm:min-h-0 max-sm:flex-1 max-sm:flex-col max-sm:bg-transparent max-sm:p-2' : ''
+          }`}
+        >
+          <div className={`mb-4 text-center sm:mb-8 ${immersiveMobile ? 'max-sm:hidden' : ''}`}>
+            <div className="mb-2 flex justify-center sm:mb-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/30 transition-all duration-300 sm:h-16 sm:w-16 sm:rounded-2xl sm:hover:scale-105 sm:hover:shadow-emerald-500/50">
+                <Camera className="h-6 w-6 text-white sm:h-8 sm:w-8" />
               </div>
             </div>
-            <h1 className="text-gradient mb-1.5 px-1 text-2xl font-bold sm:mb-2 sm:text-3xl">
+            <h1 className="text-gradient mb-1 px-2 text-xl font-bold leading-tight sm:mb-2 sm:text-3xl">
               {user?.faceRegistered ? 'Update Face Data' : 'Register Your Face'}
             </h1>
-            <p className="flex items-center justify-center gap-2 px-2 text-sm text-gray-400 sm:text-base">
-              <Sparkles className="h-4 w-4 shrink-0 text-emerald-400" />
-              <span className="leading-snug">
+            <p className="flex items-center justify-center gap-2 px-1 text-xs leading-snug text-gray-400 sm:text-base">
+              <Sparkles className="h-3.5 w-3.5 shrink-0 text-emerald-400 sm:h-4 sm:w-4" />
+              <span className="max-w-md">
                 {user?.faceRegistered ? 'Update your recognition data' : 'Enable automatic photo recognition at events'}
               </span>
             </p>
           </div>
 
           {user?.faceRegistered && (
-            <div className="animate-slide-up mb-4 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 sm:mb-6 sm:p-4">
+            <div
+              className={`animate-slide-up mb-4 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 sm:mb-6 sm:p-4 ${immersiveMobile ? 'max-sm:hidden' : ''}`}
+            >
               <div className="flex gap-3">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/20">
                   <AlertCircle className="h-4 w-4 text-amber-400" />
@@ -411,7 +434,31 @@ export default function RegisterFacePage() {
             </div>
           )}
 
-          <div className="animate-slide-up delay-100 mb-4 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 sm:mb-6 sm:p-4">
+          {/* Mobile: compact expandable tips — hidden during live camera */}
+          <details
+            className={`group mb-4 rounded-xl border border-white/10 bg-white/[0.04] sm:hidden ${immersiveMobile ? 'hidden' : ''}`}
+          >
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3.5 text-sm font-semibold text-white [&::-webkit-details-marker]:hidden">
+              <span className="flex items-center gap-2">
+                <Shield className="h-4 w-4 shrink-0 text-emerald-400" />
+                Tips before you start
+              </span>
+              <ChevronDown className="h-4 w-4 shrink-0 text-gray-400 transition-transform group-open:rotate-180" />
+            </summary>
+            <div className="space-y-3 border-t border-white/10 px-4 pb-4 pt-2 text-xs leading-relaxed text-gray-400">
+              <p>
+                Live enrollment only — camera required; uploads are disabled so you register with a real-time selfie.
+              </p>
+              <ul className="list-inside list-disc space-y-1">
+                <li>Good lighting, face the camera</li>
+                <li>Follow prompts (blink, turn head, smile)</li>
+                <li>Hold still ~2s when the ring fills</li>
+                <li>Remove glasses or hat if you can</li>
+              </ul>
+            </div>
+          </details>
+
+          <div className="animate-slide-up delay-100 mb-4 hidden rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 sm:mb-6 sm:block sm:p-4">
             <h3 className="mb-1.5 flex items-center gap-2 text-sm font-semibold text-white sm:text-base">
               <Shield className="h-4 w-4 shrink-0 text-emerald-400 sm:h-5 sm:w-5" />
               Live enrollment only
@@ -422,7 +469,7 @@ export default function RegisterFacePage() {
             </p>
           </div>
 
-          <div className="card animate-slide-up delay-100 mb-4 rounded-xl border border-violet-500/20 bg-violet-500/10 p-3 sm:mb-6 sm:p-4">
+          <div className="card animate-slide-up delay-100 mb-4 hidden rounded-xl border border-violet-500/20 bg-violet-500/10 p-3 sm:mb-6 sm:block sm:p-4">
             <h3 className="mb-1.5 flex items-center gap-2 text-sm font-semibold text-white sm:text-base">
               <AlertCircle className="h-4 w-4 shrink-0 text-violet-400 sm:h-5 sm:w-5" />
               Photo guidelines
@@ -435,18 +482,39 @@ export default function RegisterFacePage() {
             </ul>
           </div>
 
-          <div className="animate-slide-up delay-200 mb-4 sm:mb-6">
+          {capturedImage && (
+            <div className="mb-2 text-center sm:hidden">
+              <p className="text-lg font-bold text-white">Review your selfie</p>
+              <p className="text-xs text-gray-400">Happy with it? Register or retake below.</p>
+            </div>
+          )}
+
+          <div
+            className={`animate-slide-up delay-200 mb-4 sm:mb-6 ${immersiveMobile ? 'max-sm:mb-2 max-sm:flex max-sm:min-h-0 max-sm:flex-1 max-sm:flex-col' : ''}`}
+          >
             {!capturedImage ? (
-              <div className="space-y-3 sm:space-y-4">
-                <div className="relative aspect-video overflow-hidden rounded-xl border border-white/10 bg-[#0a0a0a] shadow-xl sm:rounded-2xl">
+              <div className={`space-y-3 sm:space-y-4 ${immersiveMobile ? 'max-sm:flex max-sm:min-h-0 max-sm:flex-1 max-sm:flex-col max-sm:space-y-2' : ''}`}>
+                <div
+                  className={`relative mx-auto w-full overflow-hidden rounded-xl border border-white/10 bg-[#0a0a0a] shadow-xl sm:rounded-2xl ${
+                    isCameraActive
+                      ? 'max-sm:h-[80dvh] max-sm:max-h-[82dvh] max-sm:min-h-[78dvh] max-sm:flex-shrink-0 sm:aspect-video'
+                      : 'aspect-video max-sm:min-h-[11rem]'
+                  }`}
+                >
                   {isCameraActive ? (
                     <>
-                      <video ref={videoRef} autoPlay playsInline muted className="h-full w-full object-cover" />
+                      <video
+                        ref={videoRef}
+                        autoPlay
+                        playsInline
+                        muted
+                        className="absolute inset-0 h-full w-full object-cover object-[center_top] sm:static sm:object-center"
+                      />
                       {showLiveChrome && (
                         <>
-                          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                          <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-2">
                             <div
-                              className={`h-[min(78%,22rem)] w-[min(62%,17rem)] rounded-full border-4 ${
+                              className={`aspect-[3/4] w-[min(72vw,17rem)] max-w-[92%] rounded-full border-[3px] sm:h-[min(78%,22rem)] sm:w-[min(62%,17rem)] sm:border-4 ${
                                 phase === 'liveness'
                                   ? 'border-amber-400/65'
                                   : isFaceValid
@@ -456,15 +524,19 @@ export default function RegisterFacePage() {
                             />
                           </div>
                           {phase === 'stabilizing' && <CaptureProgressRing percentage={progressPercentage} />}
-                          <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent px-3 pb-3 pt-10 text-center sm:px-4">
-                            <p className="text-sm font-medium text-white drop-shadow md:text-base">{statusMessage}</p>
+                          <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/45 to-transparent px-3 pb-safe-plus pt-12 text-center sm:px-4 sm:pb-3 sm:pt-10">
+                            <p className="text-base font-semibold leading-snug text-white drop-shadow-md sm:text-sm sm:font-medium md:text-base">
+                              {statusMessage}
+                            </p>
                             {phase === 'liveness' && challengeTotal > 0 && (
-                              <p className="mt-1 text-xs font-medium text-amber-200/95">
+                              <p className="mt-1.5 text-sm font-semibold text-amber-200 sm:text-xs sm:font-medium">
                                 Step {challengeStep} of {challengeTotal}
                               </p>
                             )}
                             {phase === 'framing' && (
-                              <p className="mt-1 text-[11px] text-gray-400">Get in frame, then you’ll get random prompts</p>
+                              <p className="mt-1.5 max-sm:text-sm max-sm:text-gray-300 sm:mt-1 sm:text-[11px] sm:text-gray-400">
+                                Get in frame, then you’ll get random prompts
+                              </p>
                             )}
                           </div>
                         </>
@@ -487,13 +559,17 @@ export default function RegisterFacePage() {
                   )}
                 </div>
 
-                <div className="flex flex-wrap justify-center gap-2.5 sm:gap-3">
+                <div
+                  className={`flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-3 ${
+                    isCameraActive ? 'max-sm:sticky max-sm:bottom-0 max-sm:z-30 max-sm:rounded-t-2xl max-sm:border-t max-sm:border-white/10 max-sm:bg-[var(--background)]/95 max-sm:px-1 max-sm:pb-safe-plus max-sm:pt-3 max-sm:backdrop-blur-lg dark:max-sm:bg-[#0a0a0a]/92' : ''
+                  }`}
+                >
                   {!isCameraActive ? (
                     <button
                       type="button"
                       onClick={startCamera}
                       disabled={landmarkerState === 'loading'}
-                      className="btn-gradient flex items-center gap-2 rounded-xl px-6 py-3 font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+                      className={`btn-gradient flex ${primaryButtonClass} disabled:cursor-not-allowed disabled:opacity-60`}
                     >
                       {landmarkerState === 'loading' ? (
                         <>
@@ -513,7 +589,7 @@ export default function RegisterFacePage() {
                         type="button"
                         onClick={stopCamera}
                         disabled={!!capturedImage}
-                        className="btn-secondary flex items-center gap-2 rounded-xl px-6 py-3 font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+                        className={`btn-secondary flex ${primaryButtonClass} disabled:cursor-not-allowed disabled:opacity-50`}
                       >
                         <X className="h-5 w-5" />
                         Stop Camera
@@ -527,9 +603,15 @@ export default function RegisterFacePage() {
                 )}
               </div>
             ) : (
-              <div className="space-y-4">
-                <div className="relative aspect-video overflow-hidden rounded-xl border border-white/10 bg-[#0a0a0a] shadow-xl sm:rounded-2xl">
-                  <img src={capturedImage} alt="Captured live selfie" className="h-full w-full object-cover" />
+              <div className={`space-y-4 ${immersiveMobile ? 'max-sm:flex max-sm:min-h-0 max-sm:flex-1 max-sm:flex-col max-sm:space-y-3' : ''}`}>
+                <div
+                  className={`relative overflow-hidden rounded-xl border border-white/10 bg-[#0a0a0a] shadow-xl sm:aspect-video sm:rounded-2xl ${
+                    immersiveMobile
+                      ? 'max-sm:h-[78dvh] max-sm:max-h-[80dvh] max-sm:min-h-[72dvh] max-sm:flex-shrink-0'
+                      : 'aspect-video max-sm:min-h-[min(44vh,360px)]'
+                  }`}
+                >
+                  <img src={capturedImage} alt="Captured live selfie" className="h-full min-h-full w-full object-cover object-center" />
                   {uploading && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm">
                       <div className="text-center text-white">
@@ -547,12 +629,12 @@ export default function RegisterFacePage() {
                   )}
                 </div>
 
-                <div className="flex flex-col-reverse justify-stretch gap-2.5 sm:flex-row sm:justify-center sm:gap-3">
+                <div className="flex flex-col-reverse justify-stretch gap-3 max-sm:sticky max-sm:bottom-0 max-sm:z-30 max-sm:rounded-t-2xl max-sm:border-t max-sm:border-white/10 max-sm:bg-[var(--background)]/95 max-sm:px-1 max-sm:pb-safe-plus max-sm:pt-3 max-sm:backdrop-blur-lg dark:max-sm:bg-[#0a0a0a]/92 sm:flex-row sm:justify-center sm:gap-3">
                   <button
                     type="button"
                     onClick={handleRetake}
                     disabled={uploading}
-                    className="btn-secondary flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3 font-semibold disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                    className={`btn-secondary flex ${primaryButtonClass} disabled:cursor-not-allowed disabled:opacity-50`}
                   >
                     <RefreshCw className="h-5 w-5" />
                     Retake
@@ -561,7 +643,7 @@ export default function RegisterFacePage() {
                     type="button"
                     onClick={handleUpload}
                     disabled={uploading}
-                    className="btn-gradient flex w-full items-center justify-center gap-2 rounded-xl px-8 py-3 font-semibold disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                    className={`btn-gradient flex ${primaryButtonClass} disabled:cursor-not-allowed disabled:opacity-50`}
                   >
                     {uploading ? (
                       <>
@@ -580,14 +662,21 @@ export default function RegisterFacePage() {
             )}
           </div>
 
-          <div className="animate-fade-in delay-300 border-t border-white/10 pt-3 text-center sm:pt-4">
-            <Link href="/dashboard" className="text-xs text-gray-500 transition-colors hover:text-violet-400 sm:text-sm">
+          <div
+            className={`animate-fade-in delay-300 border-t border-white/10 pb-safe pt-4 text-center sm:pb-0 sm:pt-4 ${immersiveMobile ? 'max-sm:hidden' : ''}`}
+          >
+            <Link
+              href="/dashboard"
+              className="inline-flex min-h-[44px] items-center justify-center px-4 text-sm text-gray-500 transition-colors hover:text-violet-400 active:text-violet-400"
+            >
               Skip for now →
             </Link>
           </div>
         </div>
 
-        <p className="animate-fade-in delay-400 mt-4 px-2 text-center text-xs leading-relaxed text-gray-500 sm:mt-6 sm:text-sm">
+        <p
+          className={`animate-fade-in delay-400 mt-3 px-2 pb-safe text-center text-[11px] leading-relaxed text-gray-500 sm:mt-6 sm:pb-0 sm:text-sm ${immersiveMobile ? 'max-sm:hidden' : ''}`}
+        >
           Your face data is securely stored and used only for photo recognition at events
         </p>
       </div>
