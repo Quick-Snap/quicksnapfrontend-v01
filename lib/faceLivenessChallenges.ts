@@ -1,10 +1,16 @@
 import { estimateFacePose, type NormalizedLandmark } from '@/hooks/useSmartSelfieCapture';
 
-const CENTER_TOLERANCE = 0.12;
-const MAX_ANGLE_DEG_FRAMING = 18;
-/** Looser than final capture — reduces endless “Move Closer” before liveness */
-export const FRAMING_MIN_AREA = 0.13;
-export const FRAMING_MAX_AREA = 0.52;
+/** Wider than strict enrollment — match “keep face in the oval”, not pixel-perfect center */
+const CENTER_TOLERANCE = 0.22;
+/** Yaw/roll — keep roughly facing the camera */
+const MAX_YAW_ROLL_DEG_FRAMING = 32;
+/**
+ * Pitch estimate often reads high for neutral gaze; a dedicated looser cap avoids forcing chin-up.
+ */
+const MAX_PITCH_DEG_FRAMING = 44;
+/** Only reject tiny partial faces — distance (too close/far) is intentionally not enforced */
+export const FRAMING_MIN_AREA = 0.04;
+export const FRAMING_MAX_AREA = 0.95;
 
 function computeFaceBoundingBox(landmarks: NormalizedLandmark[]) {
   let minX = 1;
@@ -34,7 +40,10 @@ export function evaluateRelaxedFraming(landmarks: NormalizedLandmark[]): boolean
     Math.abs(bbox.centerX - 0.5) <= CENTER_TOLERANCE && Math.abs(bbox.centerY - 0.5) <= CENTER_TOLERANCE;
   const sizeOk = bbox.area >= FRAMING_MIN_AREA && bbox.area <= FRAMING_MAX_AREA;
   const anglesOk =
-    pose !== null && pose.yawDeg < MAX_ANGLE_DEG_FRAMING && pose.pitchDeg < MAX_ANGLE_DEG_FRAMING && pose.rollDeg < MAX_ANGLE_DEG_FRAMING;
+    pose !== null &&
+    pose.yawDeg < MAX_YAW_ROLL_DEG_FRAMING &&
+    pose.pitchDeg < MAX_PITCH_DEG_FRAMING &&
+    pose.rollDeg < MAX_YAW_ROLL_DEG_FRAMING;
   return centered && sizeOk && anglesOk;
 }
 
@@ -47,16 +56,18 @@ export function evaluateMinimalPresence(landmarks: NormalizedLandmark[]): boolea
 export function getRelaxedFramingHint(landmarks: NormalizedLandmark[]): string {
   const bbox = computeFaceBoundingBox(landmarks);
   const pose = estimateFacePose(landmarks);
-  if (bbox.area < FRAMING_MIN_AREA) return 'Move Closer';
-  if (bbox.area > FRAMING_MAX_AREA) return 'Move Back';
+  if (bbox.area < FRAMING_MIN_AREA) return 'Move a bit closer';
+  if (bbox.area > FRAMING_MAX_AREA) return 'Step back slightly';
   if (Math.abs(bbox.centerX - 0.5) > CENTER_TOLERANCE || Math.abs(bbox.centerY - 0.5) > CENTER_TOLERANCE) {
-    return 'Center your face';
+    return 'Align your face with the circle';
   }
   if (
     pose !== null &&
-    (pose.yawDeg >= MAX_ANGLE_DEG_FRAMING || pose.pitchDeg >= MAX_ANGLE_DEG_FRAMING || pose.rollDeg >= MAX_ANGLE_DEG_FRAMING)
+    (pose.yawDeg >= MAX_YAW_ROLL_DEG_FRAMING ||
+      pose.pitchDeg >= MAX_PITCH_DEG_FRAMING ||
+      pose.rollDeg >= MAX_YAW_ROLL_DEG_FRAMING)
   ) {
-    return 'Look at the camera';
+    return 'Face the camera straight on';
   }
   return 'Hold steady';
 }
