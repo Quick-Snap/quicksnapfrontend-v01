@@ -23,7 +23,8 @@ import {
 
 export type RegistrationPhase = 'framing' | 'liveness' | 'stabilizing';
 
-const STABLE_CAPTURE_MS = 2000;
+/** Shorter hold feels less tedious once framing is relaxed */
+const STABLE_CAPTURE_MS = 1600;
 
 /** Prefer WebP; some browsers return an empty payload — fall back to JPEG base64 for the parent handler */
 function captureFrameWebpOrJpeg(video: HTMLVideoElement, webpQuality: number): string | null {
@@ -62,7 +63,7 @@ export function useRegisterFaceLivenessCapture({
   challengeCount = 3,
 }: Options) {
   const [phase, setPhase] = useState<RegistrationPhase>('framing');
-  const [statusMessage, setStatusMessage] = useState('Center your face');
+  const [statusMessage, setStatusMessage] = useState('Fit your face in the circle');
   const [progressPercentage, setProgressPercentage] = useState(0);
   const [isFaceValid, setIsFaceValid] = useState(false);
   const [isCaptureComplete, setIsCaptureComplete] = useState(false);
@@ -104,7 +105,7 @@ export function useRegisterFaceLivenessCapture({
     setIsCaptureComplete(false);
     setProgressPercentage(0);
     setStableElapsedMs(0);
-    setStatusMessage('Center your face');
+    setStatusMessage('Fit your face in the circle');
     setIsFaceValid(false);
     setChallengeStep(0);
     setChallengeTotal(0);
@@ -150,7 +151,7 @@ export function useRegisterFaceLivenessCapture({
         setStableElapsedMs(0);
         setProgressPercentage(0);
         setIsFaceValid(false);
-        setStatusMessage('Center your face');
+        setStatusMessage('Fit your face in the circle');
         phaseRef.current = 'framing';
         setPhase('framing');
         challengesRef.current = null;
