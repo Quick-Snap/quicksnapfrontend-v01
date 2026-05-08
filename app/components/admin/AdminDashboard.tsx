@@ -15,6 +15,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import Link from 'next/link';
+import { softSurface } from '@/lib/dashboardUi';
 
 export default function AdminDashboard() {
   const { data: eventsData } = useQuery('allEvents', () => eventApi.getAll({}));
@@ -28,32 +29,32 @@ export default function AdminDashboard() {
   ).length || 0;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 sm:space-y-10">
       {/* Header */}
-      <div className="relative overflow-hidden rounded-2xl border border-violet-300/40 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 p-8 shadow-2xl shadow-violet-500/25 dark:border-transparent dark:shadow-violet-500/20">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yIDItNCAyLTZzLTItNC0yLTYgMi00IDItNi0yLTQtMi02bDIgMmMwIDItMiA0LTIgNnMyIDQgMiA2LTIgNC0yIDYgMiA0IDIgNmwtMi0yeiIvPjwvZz48L2c+PC9zdmc+')] opacity-20"></div>
-        <div className="relative flex items-center justify-between">
+      <header className="relative overflow-hidden rounded-[1.65rem] border border-violet-400/30 bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 p-6 shadow-[0_24px_70px_-20px_rgba(91,33,182,0.55)] sm:rounded-3xl sm:p-9 md:p-10">
+        <div className="pointer-events-none absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yIDItNCAyLTZzLTItNC0yLTYgMi00IDItNi0yLTQtMi02bDIgMmMwIDItMiA0LTIgNnMyIDQgMiA2LTIgNC0yIDYgMiA0IDIgNmwtMi0yeiIvPjwvZz48L2c+PC9zdmc+')] opacity-20" />
+        <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div>
             <div className="mb-2 flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-violet-100" />
-              <span className="text-sm font-medium text-violet-100">Full System Access</span>
+              <span className="text-sm font-medium text-violet-100">Full system access</span>
             </div>
-            <h1 className="mb-2 flex items-center gap-3 text-3xl font-bold text-white">
-              <Shield className="h-8 w-8" />
-              Admin Dashboard
+            <h1 className="mb-2 flex flex-wrap items-center gap-3 text-2xl font-bold tracking-tight text-white sm:text-3xl md:text-4xl">
+              <Shield className="h-7 w-7 shrink-0 sm:h-8 sm:w-8" />
+              Admin dashboard
             </h1>
-            <p className="text-violet-50">Manage the entire QuickSnap platform</p>
+            <p className="max-w-xl text-sm leading-relaxed text-violet-100/95 sm:text-base">Manage events, moderation, and users across QuickSnap.</p>
           </div>
-          <div className="hidden rounded-xl border border-white/20 bg-white/15 px-4 py-2 backdrop-blur-sm md:block">
-            <p className="text-sm text-white/90">System Status</p>
-            <p className="text-lg font-semibold text-emerald-200">All Systems Operational</p>
+          <div className="w-full rounded-2xl border border-white/20 bg-white/15 px-4 py-3 backdrop-blur-md md:max-w-xs md:text-right">
+            <p className="text-xs font-medium uppercase tracking-wide text-white/80">System status</p>
+            <p className="mt-1 text-lg font-semibold text-emerald-200">All operational</p>
           </div>
         </div>
-      </div>
+      </header>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="stat-card group">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
+        <div className={`group p-5 ${softSurface}`}>
           <div className="flex items-center justify-between">
             <div>
               <p className="mb-1 text-sm text-zinc-500 dark:text-gray-400">Total Events</p>
@@ -63,10 +64,10 @@ export default function AdminDashboard() {
               <Calendar className="h-6 w-6 text-blue-700 dark:text-blue-400" />
             </div>
           </div>
-          <div className="h-1 mt-4 bg-gradient-to-r from-blue-500 to-blue-400 rounded-full"></div>
+          <div className="mt-4 h-0.5 rounded-full bg-gradient-to-r from-blue-500 to-blue-400" />
         </div>
 
-        <div className="stat-card group">
+        <div className={`group p-5 ${softSurface}`}>
           <div className="flex items-center justify-between">
             <div>
               <p className="mb-1 text-sm text-zinc-500 dark:text-gray-400">Pending Moderation</p>
@@ -76,10 +77,10 @@ export default function AdminDashboard() {
               <AlertCircle className="h-6 w-6 text-amber-700 dark:text-amber-400" />
             </div>
           </div>
-          <div className="h-1 mt-4 bg-gradient-to-r from-amber-500 to-amber-400 rounded-full"></div>
+          <div className="mt-4 h-0.5 rounded-full bg-gradient-to-r from-amber-500 to-amber-400" />
         </div>
 
-        <div className="stat-card group">
+        <div className={`group p-5 ${softSurface}`}>
           <div className="flex items-center justify-between">
             <div>
               <p className="mb-1 text-sm text-zinc-500 dark:text-gray-400">Total Photos</p>
@@ -89,10 +90,10 @@ export default function AdminDashboard() {
               <ImageIcon className="h-6 w-6 text-emerald-700 dark:text-emerald-400" />
             </div>
           </div>
-          <div className="h-1 mt-4 bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full"></div>
+          <div className="mt-4 h-0.5 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400" />
         </div>
 
-        <div className="stat-card group">
+        <div className={`group p-5 ${softSurface}`}>
           <div className="flex items-center justify-between">
             <div>
               <p className="mb-1 text-sm text-zinc-500 dark:text-gray-400">System Health</p>
@@ -102,14 +103,14 @@ export default function AdminDashboard() {
               <TrendingUp className="h-6 w-6 text-violet-700 dark:text-violet-400" />
             </div>
           </div>
-          <div className="h-1 mt-4 bg-gradient-to-r from-violet-500 to-violet-400 rounded-full"></div>
+          <div className="mt-4 h-0.5 rounded-full bg-gradient-to-r from-violet-500 to-violet-400" />
         </div>
       </div>
 
       {/* Quick Actions */}
-      <div className="card">
-        <h2 className="mb-4 text-xl font-bold text-zinc-900 dark:text-white">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <section className={`p-5 sm:p-8 ${softSurface}`}>
+        <h2 className="mb-5 text-lg font-semibold text-zinc-900 dark:text-white sm:text-xl">Quick actions</h2>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-4">
           <Link href="/admin/events" className="action-card group">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-100 transition-colors group-hover:bg-violet-200/80 dark:bg-violet-500/10 dark:group-hover:bg-violet-500/20">
               <Calendar className="h-5 w-5 text-violet-700 dark:text-violet-400" />
@@ -140,12 +141,12 @@ export default function AdminDashboard() {
             </div>
           </Link>
         </div>
-      </div>
+      </section>
 
       {/* Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="card">
-          <h2 className="mb-4 text-xl font-bold text-zinc-900 dark:text-white">Recent Events</h2>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <section className={`p-5 sm:p-8 ${softSurface}`}>
+          <h2 className="mb-5 text-lg font-semibold text-zinc-900 dark:text-white sm:text-xl">Recent events</h2>
           <div className="space-y-3">
             {eventsData?.data?.events?.slice(0, 5).map((event: any) => (
               <div
@@ -168,10 +169,10 @@ export default function AdminDashboard() {
               <div className="py-8 text-center text-zinc-500 dark:text-gray-500">No events found</div>
             )}
           </div>
-        </div>
+        </section>
 
-        <div className="card">
-          <h2 className="mb-4 text-xl font-bold text-zinc-900 dark:text-white">Pending Moderation</h2>
+        <section className={`p-5 sm:p-8 ${softSurface}`}>
+          <h2 className="mb-5 text-lg font-semibold text-zinc-900 dark:text-white sm:text-xl">Pending moderation</h2>
           <div className="space-y-3">
             {pendingPhotos?.data?.photos
               ?.filter((p: any) => p.moderationStatus === 'pending')
@@ -205,7 +206,7 @@ export default function AdminDashboard() {
               </div>
             )}
           </div>
-        </div>
+        </section>
       </div>
     </div>
   );

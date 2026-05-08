@@ -16,9 +16,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { format } from 'date-fns';
-
-const statShell =
-  'border-zinc-200/80 bg-gradient-to-br from-white via-zinc-50/90 to-white shadow-sm shadow-zinc-900/5 dark:border-white/10 dark:from-[#121022] dark:via-[#0d0c19] dark:to-[#0b0a14] dark:shadow-none';
+import { softSurface, softSurfaceHover } from '@/lib/dashboardUi';
 
 export default function PhotographerDashboard() {
   const { data: eventsData, isLoading } = useQuery('photographerEvents', () => eventApi.getMyAssignedEvents());
@@ -26,47 +24,44 @@ export default function PhotographerDashboard() {
   const events = eventsData?.data || [];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 sm:space-y-10">
       {/* Header */}
-      <div className="relative overflow-hidden rounded-2xl border border-zinc-200/90 bg-gradient-to-br from-violet-50/95 via-white to-zinc-50 p-8 shadow-[0_20px_60px_-15px_rgba(15,23,42,0.08)] dark:border-white/5 dark:bg-gradient-to-br dark:from-[#181025] dark:via-[#0f0b1d] dark:to-[#0a0d1e] dark:shadow-[0_20px_80px_rgba(0,0,0,0.45)]">
-        <div className="absolute inset-0 bg-gradient-mesh opacity-25 dark:opacity-60" />
-        <div className="absolute -bottom-10 -left-12 h-64 w-64 bg-violet-300/35 blur-3xl dark:bg-violet-500/20" />
-        <div className="absolute right-0 top-0 h-72 w-72 bg-indigo-300/25 blur-3xl dark:bg-indigo-500/15" />
-        <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 rounded-full border border-violet-200/80 bg-violet-50/90 px-3 py-1.5 text-sm text-zinc-800 dark:border-white/10 dark:bg-white/5 dark:text-white">
-              <Camera className="h-4 w-4 text-violet-600 dark:text-violet-200" />
-              Photographer Workspace
+      <header className="relative overflow-hidden rounded-[1.65rem] bg-gradient-to-br from-violet-50/98 via-white to-indigo-50/90 p-6 shadow-[0_20px_60px_-28px_rgba(91,33,182,0.28)] ring-1 ring-violet-200/60 dark:from-[#1a1428] dark:via-[#120f1c] dark:to-[#0c1222] dark:shadow-[0_28px_80px_-20px_rgba(0,0,0,0.65)] dark:ring-white/[0.08] sm:rounded-3xl sm:p-9">
+        <div className="pointer-events-none absolute inset-0 bg-gradient-mesh opacity-[0.35] dark:opacity-50" />
+        <div className="pointer-events-none absolute -bottom-12 -left-12 h-56 w-56 rounded-full bg-violet-400/25 blur-3xl dark:bg-violet-500/15" />
+        <div className="pointer-events-none absolute right-0 top-0 h-52 w-52 rounded-full bg-indigo-400/20 blur-3xl dark:bg-indigo-500/12" />
+        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-4">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3.5 py-1.5 text-sm shadow-sm ring-1 ring-zinc-900/[0.06] dark:bg-white/[0.07] dark:ring-white/10">
+              <Camera className="h-4 w-4 shrink-0 text-violet-600 dark:text-violet-300" />
+              <span className="text-zinc-800 dark:text-white">Photographer</span>
             </div>
-            <h1 className="flex items-center gap-2 text-3xl font-semibold tracking-tight text-zinc-900 dark:text-white md:text-4xl">
-              Bulk upload · Auto-recognition
+            <h1 className="text-[1.65rem] font-semibold leading-tight tracking-tight text-zinc-900 dark:text-white sm:text-3xl md:text-4xl">
+              Upload &amp; deliver
             </h1>
-            <p className="max-w-2xl text-zinc-600 dark:text-gray-300">
-              Calm, focused UI matching the landing theme. Upload, moderate, and deliver AI-matched photos effortlessly.
+            <p className="max-w-2xl text-pretty text-sm leading-relaxed text-zinc-600 sm:text-base dark:text-gray-400">
+              RAW uploads, moderation, and AI-matched delivery — built for fast workflows on laptop or phone.
             </p>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <Link href="/photographer/upload">
-              <Button className="border border-violet-600 bg-violet-600 text-white shadow-lg shadow-violet-500/20 hover:bg-violet-500 dark:border-white/10 dark:bg-white/5 dark:shadow-[0_10px_35px_rgba(0,0,0,0.3)] dark:hover:bg-white/10">
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+            <Link href="/photographer/upload" className="w-full sm:w-auto">
+              <Button className="w-full border-violet-600 bg-violet-600 text-white shadow-lg shadow-violet-500/20 hover:bg-violet-500 sm:w-auto">
                 <Upload className="mr-2 h-4 w-4" />
-                Bulk Upload (RAW)
+                Bulk upload
               </Button>
             </Link>
-            <Link href="/admin/moderate">
-              <Button
-                variant="outline"
-                className="border-zinc-300 text-zinc-800 hover:bg-zinc-50 dark:border-white/20 dark:text-white dark:hover:bg-white/10"
-              >
+            <Link href="/admin/moderate" className="w-full sm:w-auto">
+              <Button variant="outline" className="w-full border-zinc-300 text-zinc-800 hover:bg-zinc-50 dark:border-white/20 dark:text-white dark:hover:bg-white/10 sm:w-auto">
                 <Eye className="mr-2 h-4 w-4" />
-                Review Queue
+                Review queue
               </Button>
             </Link>
           </div>
         </div>
-      </div>
+      </header>
 
       {/* Quick pipeline explainer */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-3 sm:gap-4">
         {[
           {
             title: 'Upload (≤50)',
@@ -95,7 +90,7 @@ export default function PhotographerDashboard() {
         ].map((item, idx) => {
           const Icon = item.icon;
           return (
-            <div key={idx} className={`stat-card group ${statShell}`}>
+            <div key={idx} className={`group p-5 ${softSurface}`}>
               <div
                 className={`mb-4 flex h-12 w-12 items-center justify-center rounded-xl ${item.iconBg} transition-transform group-hover:scale-110`}
               >
@@ -103,20 +98,23 @@ export default function PhotographerDashboard() {
               </div>
               <p className="mb-2 font-semibold text-zinc-900 dark:text-white">{item.title}</p>
               <p className="text-sm text-zinc-600 dark:text-gray-400">{item.desc}</p>
-              <div className={`mt-4 h-1 rounded-full bg-gradient-to-r ${item.gradient}`} />
+              <div className={`mt-4 h-0.5 rounded-full bg-gradient-to-r ${item.gradient}`} />
             </div>
           );
         })}
       </div>
 
       {/* Events to target */}
-      <div className="card border-zinc-200/90 shadow-lg shadow-zinc-900/5 dark:border-white/5 dark:bg-[#0f0c18] dark:shadow-[0_14px_50px_rgba(0,0,0,0.35)]">
-        <div className="mb-6 flex items-center justify-between">
+      <section className={`p-5 sm:p-8 ${softSurface}`}>
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-500/10">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-100 dark:bg-violet-500/10">
               <FolderOpen className="h-5 w-5 text-violet-700 dark:text-violet-400" />
             </div>
-            <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Active events to upload to</h2>
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-gray-500">Assignments</p>
+              <h2 className="text-lg font-semibold text-zinc-900 sm:text-xl dark:text-white">Events you can upload to</h2>
+            </div>
           </div>
           <Link
             href="/events"
@@ -136,9 +134,10 @@ export default function PhotographerDashboard() {
             {events.map((event: any) => (
               <div
                 key={event._id}
-                className="group rounded-xl border border-zinc-200/90 bg-zinc-50/50 p-5 shadow-sm transition-all hover:-translate-y-1 hover:border-violet-300/70 hover:shadow-md dark:border-white/5 dark:bg-[#14101f] dark:shadow-[0_12px_40px_rgba(0,0,0,0.35)] dark:hover:border-violet-500/30"
+                className={`group relative overflow-hidden p-5 ${softSurface} ${softSurfaceHover}`}
               >
-                <div className="mb-3 flex items-start justify-between">
+                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-violet-500 to-indigo-500 opacity-90" />
+                <div className="mb-3 flex items-start justify-between pt-1">
                   <p className="line-clamp-2 font-semibold text-zinc-900 transition-colors group-hover:text-violet-700 dark:text-white dark:group-hover:text-violet-400">
                     {event.name}
                   </p>
@@ -168,12 +167,12 @@ export default function PhotographerDashboard() {
             ))}
           </div>
         ) : (
-          <div className="rounded-xl border border-zinc-200/90 bg-zinc-50/80 py-12 text-center text-zinc-500 dark:border-white/5 dark:bg-[#14101f] dark:text-gray-400">
+          <div className="rounded-2xl bg-zinc-50/90 py-12 text-center text-zinc-600 ring-1 ring-zinc-900/[0.05] dark:bg-white/[0.04] dark:text-gray-400 dark:ring-white/10">
             <FolderOpen className="mx-auto mb-4 h-12 w-12 text-zinc-400 dark:text-gray-600" />
             <p>No active events right now. Check back soon or ask an organizer to create one.</p>
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }

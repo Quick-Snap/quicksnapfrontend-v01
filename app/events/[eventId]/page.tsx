@@ -26,6 +26,7 @@ import { Button } from '@/app/components/ui/Button';
 import Pagination from '@/app/components/ui/Pagination';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from 'react-query';
+import { softSurface, softSurfaceHover } from '@/lib/dashboardUi';
 
 const PHOTOS_PER_PAGE = 12;
 const PREVIEW_PHOTO_COUNT = 4;
@@ -79,12 +80,6 @@ function extractTotalFromPhotosApi(res: any): number | undefined {
     }
     return undefined;
 }
-
-const GALLERY_SURFACE =
-    'border-zinc-200/90 bg-white shadow-lg shadow-zinc-900/5 dark:border-white/5 dark:bg-[#0f0c18] dark:shadow-[0_14px_50px_rgba(0,0,0,0.35)]';
-
-const STAT_TILE =
-    'stat-card border-zinc-200/80 bg-gradient-to-br from-white via-zinc-50/90 to-white shadow-sm shadow-zinc-900/5 dark:border-white/10 dark:from-[#121022] dark:via-[#0d0c19] dark:to-[#0b0a14] dark:shadow-none';
 
 export default function PublicEventPage() {
     const { user: currentUser } = useAuth();
@@ -195,8 +190,7 @@ export default function PublicEventPage() {
 
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
-        // Scroll to gallery section
-        window.scrollTo({ top: 400, behavior: 'smooth' });
+        document.getElementById('event-gallery')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
 
     const handleDownload = async (photo: any) => {
@@ -265,11 +259,9 @@ export default function PublicEventPage() {
 
     if (loading) {
         return (
-            <div className="min-h-[70vh] flex items-center justify-center">
-                <div className="text-center">
-                    <div className="w-16 h-16 border-4 border-violet-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                    <p className="text-zinc-600 dark:text-gray-400 font-medium">Loading event...</p>
-                </div>
+            <div className="flex min-h-[60vh] flex-col items-center justify-center px-4">
+                <div className="h-14 w-14 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600 dark:border-white/15 dark:border-t-violet-500" />
+                <p className="mt-6 text-sm font-medium text-zinc-500 dark:text-gray-400">Loading event…</p>
             </div>
         );
     }
@@ -293,230 +285,242 @@ export default function PublicEventPage() {
     const endDate = new Date(event.endDate);
 
     return (
-        <div className="min-h-screen">
-            {/* Hero Section */}
-            <div className="relative overflow-hidden rounded-3xl mb-10 border border-zinc-200/80 dark:border-white/5 bg-gradient-to-br from-violet-50/95 via-white to-zinc-50 dark:from-[#181025] dark:via-[#0f0b1d] dark:to-[#0a0d1e] shadow-[0_25px_90px_rgba(0,0,0,0.08)] dark:shadow-[0_25px_90px_rgba(0,0,0,0.5)]">
-                <div className="absolute inset-0 bg-gradient-mesh opacity-35 dark:opacity-60" />
-                <div className="absolute -left-16 -bottom-10 w-72 h-72 bg-violet-400/15 dark:bg-violet-500/20 blur-3xl" />
-                <div className="absolute right-0 top-0 w-80 h-80 bg-indigo-400/10 dark:bg-indigo-500/15 blur-3xl" />
-
-                <div className="relative px-6 py-10 md:px-10 md:py-12">
-                    <Link href="/events" className="inline-flex items-center gap-2 text-zinc-600 hover:text-zinc-900 dark:text-gray-300 dark:hover:text-white mb-6 transition-colors">
-                        <ChevronLeft size={20} />
-                        <span className="font-medium">Back to Events</span>
-                    </Link>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start min-w-0">
-                        {/* Event Info */}
-                        <div className="space-y-6 min-w-0">
-                            <div className="flex items-center gap-3 flex-wrap">
-                                <span className={`px-4 py-1.5 rounded-full text-sm font-semibold border ${isActive
-                                    ? 'bg-emerald-100 text-emerald-800 border-emerald-300/90 dark:bg-emerald-500/15 dark:text-emerald-200 dark:border-emerald-400/30'
-                                    : 'bg-zinc-100 text-zinc-700 border-zinc-200/90 dark:bg-white/10 dark:text-gray-200 dark:border-white/20'
-                                    }`}>
-                                    {isActive ? 'Active Event' : 'Past Event'}
-                                </span>
-                                {event.isPublic && (
-                                    <span className="px-4 py-1.5 rounded-full text-sm font-semibold bg-zinc-100 text-zinc-700 border border-zinc-200/90 dark:bg-white/10 dark:text-gray-200 dark:border-white/20">
-                                        Public
-                                    </span>
-                                )}
-                                <span className="px-3 py-1 rounded-full text-xs bg-zinc-100 border border-zinc-200/90 text-zinc-600 dark:bg-white/5 dark:border-white/10 dark:text-gray-300">
-                                    {!currentUser
-                                        ? anonymousPhotoTotal != null
-                                            ? `${anonymousPhotoTotal} photos`
-                                            : previewPhotos.length > 0
-                                              ? `${previewPhotos.length} photos`
-                                              : 'Gallery preview'
-                                        : photoViewMode === 'my' && isGuest
-                                          ? `${totalPhotos} my photos`
-                                          : `${allPhotos.length} photos`}
-                                </span>
-                            </div>
-
-                            <div className="space-y-3">
-                                <h1 className="text-4xl md:text-5xl font-semibold text-zinc-900 dark:text-white leading-tight">{event.name}</h1>
-                                <p className="text-lg text-zinc-600 dark:text-gray-300 leading-relaxed max-w-2xl">
-                                    {event.description || 'Join us for an amazing event!'}
-                                </p>
-                            </div>
-
-                            {/* Quick Stats */}
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className={`${STAT_TILE} rounded-2xl p-4`}>
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-12 h-12 bg-violet-100 border border-violet-200/90 dark:bg-white/5 dark:border-white/10 rounded-xl flex items-center justify-center">
-                                            <Users className="text-violet-600 dark:text-violet-300" size={22} />
-                                        </div>
-                                        <div>
-                                            <p className="text-zinc-500 dark:text-gray-400 text-sm">Attendees</p>
-                                            <p className="text-2xl font-semibold text-zinc-900 dark:text-white">{event.attendees?.length || 0}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className={`${STAT_TILE} rounded-2xl p-4`}>
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-12 h-12 bg-indigo-100 border border-indigo-200/90 dark:bg-white/5 dark:border-white/10 rounded-xl flex items-center justify-center">
-                                            <Camera className="text-indigo-600 dark:text-indigo-300" size={22} />
-                                        </div>
-                                        <div>
-                                            <p className="text-zinc-500 dark:text-gray-400 text-sm">Photos</p>
-                                            <p className="text-2xl font-semibold text-zinc-900 dark:text-white">
-                                                {currentUser
-                                                    ? allPhotos.length
-                                                    : anonymousPhotoTotal != null
-                                                      ? anonymousPhotoTotal
-                                                      : previewPhotos.length > 0
-                                                        ? previewPhotos.length
-                                                        : '—'}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Action Buttons */}
-                            <div className="flex flex-wrap gap-4">
-                                <Button
-                                    onClick={handleShare}
-                                    className="border border-zinc-200/90 bg-white text-zinc-900 hover:bg-zinc-50 dark:bg-white/5 dark:border-white/10 dark:text-white dark:hover:bg-white/10 font-semibold px-6 py-3 rounded-xl shadow-md shadow-zinc-900/5 dark:shadow-[0_10px_35px_rgba(0,0,0,0.3)]"
-                                >
-                                    <Share2 size={20} className="mr-2" />
-                                    Share Event
-                                </Button>
-                            </div>
-                        </div>
-
-                        {/* Event Details Card */}
-                        <div className="rounded-2xl bg-white shadow-xl shadow-zinc-900/10 p-4 sm:p-8 border border-zinc-200/90 min-w-0 dark:bg-[#0f0c18] dark:border-white/10 dark:shadow-[0_16px_60px_rgba(0,0,0,0.45)]">
-                            <h3 className="text-2xl font-semibold text-zinc-900 dark:text-white mb-6 flex items-center gap-2">
-                                <Sparkles className="text-violet-600 dark:text-violet-300" size={24} />
-                                Event Details
-                            </h3>
-
-                            <div className="space-y-4">
-                                <div className="flex items-start gap-4 p-4 bg-zinc-50 rounded-xl border border-zinc-200/90 dark:bg-white/5 dark:border-white/10 min-w-0">
-                                    <div className="w-12 h-12 bg-violet-100 border border-violet-200/90 dark:bg-violet-500/15 dark:border-violet-400/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                                        <Calendar className="text-violet-600 dark:text-violet-300" size={22} />
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                        <p className="font-semibold text-zinc-900 dark:text-white mb-1">Date & Time</p>
-                                        <p className="text-zinc-600 dark:text-gray-300 text-sm">
-                                            {startDate.toLocaleDateString('en-US', {
-                                                weekday: 'long',
-                                                year: 'numeric',
-                                                month: 'long',
-                                                day: 'numeric'
-                                            })}
-                                        </p>
-                                        <p className="text-zinc-500 dark:text-gray-400 text-sm flex items-center gap-2 mt-1">
-                                            <Clock size={14} className="text-violet-600 dark:text-violet-300" />
-                                            {startDate.toLocaleTimeString('en-US', {
-                                                hour: '2-digit',
-                                                minute: '2-digit'
-                                            })} - {endDate.toLocaleTimeString('en-US', {
-                                                hour: '2-digit',
-                                                minute: '2-digit'
-                                            })}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-start gap-4 p-4 bg-zinc-50 rounded-xl border border-zinc-200/90 dark:bg-white/5 dark:border-white/10 min-w-0">
-                                    <div className="w-12 h-12 bg-pink-100 border border-pink-200/90 dark:bg-pink-500/15 dark:border-pink-400/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                                        <MapPin className="text-pink-600 dark:text-pink-300" size={22} />
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                        <p className="font-semibold text-zinc-900 dark:text-white mb-1">Location</p>
-                                        <p className="text-zinc-600 dark:text-gray-300 text-sm break-words">{event.venue || event.location || 'To be announced'}</p>
-                                    </div>
-                                </div>
-
-                                {event.organizer && (
-                                    <div className="flex items-start gap-4 p-4 bg-zinc-50 rounded-xl border border-zinc-200/90 dark:bg-white/5 dark:border-white/10 min-w-0">
-                                        <div className="w-12 h-12 bg-emerald-100 border border-emerald-200/90 dark:bg-emerald-500/15 dark:border-emerald-400/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                                            <User className="text-emerald-700 dark:text-emerald-300" size={22} />
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <p className="font-semibold text-zinc-900 dark:text-white mb-1">Organized by</p>
-                                            <p className="text-zinc-600 dark:text-gray-300 text-sm break-words">{event.organizer.name}</p>
-                                            <p className="text-zinc-500 dark:text-gray-500 text-xs break-all">{event.organizer.email}</p>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {(currentUser?.role === 'admin' || event.organizer?._id === currentUser?.id || event.organizer === currentUser?.id) && event.accessCode && (
-                                    <div className="flex items-start gap-4 p-4 bg-gradient-to-r from-violet-50 to-indigo-50 rounded-xl border border-violet-200/90 dark:from-[#181025] dark:to-[#121022] dark:border-violet-500/30 min-w-0">
-                                        <div className="w-12 h-12 bg-white border border-zinc-200/90 dark:bg-white/5 dark:border-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                                            <Sparkles className="text-violet-600 dark:text-violet-300" size={22} />
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <p className="font-semibold text-zinc-900 dark:text-white mb-1">Access Code</p>
-                                            <p className="text-violet-800 dark:text-violet-200 text-lg font-mono tracking-widest font-semibold break-all">{event.accessCode}</p>
-                                            <p className="text-zinc-500 dark:text-gray-500 text-xs mt-1">Share this code with guests to let them join.</p>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        <div className="relative pb-10 sm:pb-14">
+            <div className="pointer-events-none fixed inset-0 overflow-hidden">
+                <div className="absolute right-0 top-0 h-[min(380px,85vw)] w-[min(380px,85vw)] rounded-full bg-violet-400/14 blur-[100px] dark:bg-violet-500/10" />
+                <div className="absolute bottom-24 left-0 h-[280px] w-[280px] rounded-full bg-indigo-400/12 blur-[100px] dark:bg-indigo-500/10" />
             </div>
 
-            {/* Photos Gallery Section */}
-            <div className="py-8">
-                <div className="text-center mb-12">
-                    <h2 className="text-4xl font-bold text-zinc-900 dark:text-white mb-4 flex items-center justify-center gap-3">
-                        <ImageIcon className="text-violet-600 dark:text-violet-400" size={36} />
-                        Event Gallery
+            <div className="relative z-10 mx-auto max-w-6xl space-y-8 px-0 sm:space-y-10 sm:px-0">
+                <header className="relative overflow-hidden rounded-[1.65rem] bg-gradient-to-br from-violet-50/98 via-white to-indigo-50/90 p-5 shadow-[0_20px_60px_-28px_rgba(91,33,182,0.22)] ring-1 ring-violet-200/55 dark:from-[#1a1428] dark:via-[#120f1c] dark:to-[#0c1222] dark:shadow-[0_28px_80px_-20px_rgba(0,0,0,0.55)] dark:ring-white/[0.08] sm:rounded-3xl sm:p-8 md:p-10">
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-mesh opacity-[0.38] dark:opacity-50" />
+                    <div className="pointer-events-none absolute -left-20 bottom-0 h-48 w-48 rounded-full bg-violet-400/20 blur-3xl dark:bg-violet-500/12" />
+                    <div className="pointer-events-none absolute -right-10 -top-16 h-56 w-56 rounded-full bg-indigo-400/15 blur-3xl dark:bg-indigo-500/10" />
+
+                    <div className="relative min-w-0">
+                        <Link
+                            href="/events"
+                            className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/85 px-3.5 py-2 text-sm font-medium text-zinc-700 shadow-sm ring-1 ring-zinc-900/[0.06] transition-colors hover:bg-white hover:text-zinc-900 dark:bg-white/[0.07] dark:text-gray-200 dark:ring-white/10 dark:hover:bg-white/10"
+                        >
+                            <ChevronLeft size={18} />
+                            Events
+                        </Link>
+
+                        <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-2 lg:gap-10 xl:gap-12">
+                            <div className="min-w-0 space-y-5 sm:space-y-6">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span
+                                        className={`rounded-full px-3 py-1 text-xs font-semibold sm:text-sm ${
+                                            isActive
+                                                ? 'border border-emerald-200/90 bg-emerald-50 text-emerald-900 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-200'
+                                                : 'border border-zinc-200/90 bg-zinc-100 text-zinc-700 dark:border-white/15 dark:bg-white/10 dark:text-gray-200'
+                                        }`}
+                                    >
+                                        {isActive ? 'Active' : 'Past'}
+                                    </span>
+                                    {event.isPublic && (
+                                        <span className="rounded-full border border-zinc-200/90 bg-white/90 px-3 py-1 text-xs font-semibold text-zinc-700 dark:border-white/15 dark:bg-white/10 dark:text-gray-200 sm:text-sm">
+                                            Public
+                                        </span>
+                                    )}
+                                    <span className="rounded-full bg-zinc-900/[0.06] px-2.5 py-1 text-[11px] font-medium uppercase tracking-wide text-zinc-600 dark:bg-white/10 dark:text-gray-400">
+                                        {!currentUser
+                                            ? anonymousPhotoTotal != null
+                                                ? `${anonymousPhotoTotal} photos`
+                                                : previewPhotos.length > 0
+                                                  ? `${previewPhotos.length}+ preview`
+                                                  : 'Gallery'
+                                            : photoViewMode === 'my' && isGuest
+                                              ? `${totalPhotos} yours`
+                                              : `${allPhotos.length} photos`}
+                                    </span>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <h1 className="text-balance text-2xl font-semibold leading-[1.15] tracking-tight text-zinc-900 dark:text-white sm:text-3xl md:text-4xl lg:text-[2.75rem]">
+                                        {event.name}
+                                    </h1>
+                                    <p className="max-w-2xl text-pretty text-base leading-relaxed text-zinc-600 sm:text-lg dark:text-gray-400">
+                                        {event.description || 'Join us for this event.'}
+                                    </p>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                                    <div className={`rounded-2xl p-4 ${softSurface}`}>
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-500/15">
+                                                <Users className="text-violet-600 dark:text-violet-300" size={20} />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-xs font-medium text-zinc-500 dark:text-gray-500">Attendees</p>
+                                                <p className="text-xl font-semibold tabular-nums text-zinc-900 dark:text-white sm:text-2xl">
+                                                    {event.attendees?.length || 0}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className={`rounded-2xl p-4 ${softSurface}`}>
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-100 dark:bg-indigo-500/15">
+                                                <Camera className="text-indigo-600 dark:text-indigo-300" size={20} />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-xs font-medium text-zinc-500 dark:text-gray-500">Photos</p>
+                                                <p className="text-xl font-semibold tabular-nums text-zinc-900 dark:text-white sm:text-2xl">
+                                                    {currentUser
+                                                        ? allPhotos.length
+                                                        : anonymousPhotoTotal != null
+                                                          ? anonymousPhotoTotal
+                                                          : previewPhotos.length > 0
+                                                            ? `${previewPhotos.length}+`
+                                                            : '—'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <Button
+                                    onClick={handleShare}
+                                    variant="outline"
+                                    className="h-12 w-full justify-center rounded-2xl border-zinc-300 bg-white/95 font-semibold shadow-sm dark:border-white/15 dark:bg-white/5 sm:h-[3rem] sm:w-auto sm:min-w-[11rem]"
+                                >
+                                    <Share2 size={18} className="mr-2 shrink-0" />
+                                    Share
+                                </Button>
+                            </div>
+
+                            <aside className={`min-w-0 rounded-2xl p-5 sm:p-7 ${softSurface}`}>
+                                <h3 className="mb-5 flex items-center gap-2 text-lg font-semibold text-zinc-900 dark:text-white sm:text-xl">
+                                    <Sparkles className="h-5 w-5 shrink-0 text-violet-600 dark:text-violet-300" />
+                                    Details
+                                </h3>
+
+                                <dl className="space-y-5">
+                                    <div className="flex gap-3 border-b border-zinc-100 pb-5 dark:border-white/[0.07]">
+                                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-500/15">
+                                            <Calendar className="text-violet-600 dark:text-violet-300" size={20} />
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <dt className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-gray-500">When</dt>
+                                            <dd className="mt-1 text-sm font-medium text-zinc-900 dark:text-white">
+                                                {startDate.toLocaleDateString('en-US', {
+                                                    weekday: 'long',
+                                                    month: 'long',
+                                                    day: 'numeric',
+                                                    year: 'numeric',
+                                                })}
+                                            </dd>
+                                            <dd className="mt-1 flex items-center gap-1.5 text-sm text-zinc-600 dark:text-gray-400">
+                                                <Clock size={14} className="shrink-0 text-violet-600 dark:text-violet-400" />
+                                                {startDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} –{' '}
+                                                {endDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                                            </dd>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-3 border-b border-zinc-100 pb-5 dark:border-white/[0.07]">
+                                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-pink-100 dark:bg-pink-500/15">
+                                            <MapPin className="text-pink-600 dark:text-pink-300" size={20} />
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <dt className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-gray-500">Where</dt>
+                                            <dd className="mt-1 text-sm leading-relaxed text-zinc-800 dark:text-gray-200">
+                                                {event.venue || event.location || 'To be announced'}
+                                            </dd>
+                                        </div>
+                                    </div>
+
+                                    {event.organizer && (
+                                        <div className="flex gap-3 border-b border-zinc-100 pb-5 dark:border-white/[0.07]">
+                                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-500/15">
+                                                <User className="text-emerald-700 dark:text-emerald-300" size={20} />
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <dt className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-gray-500">Organizer</dt>
+                                                <dd className="mt-1 text-sm font-medium text-zinc-900 dark:text-white">{event.organizer.name}</dd>
+                                                <dd className="mt-0.5 break-all text-xs text-zinc-500 dark:text-gray-500">{event.organizer.email}</dd>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {(currentUser?.role === 'admin' ||
+                                        event.organizer?._id === currentUser?.id ||
+                                        event.organizer === currentUser?.id) &&
+                                        event.accessCode && (
+                                        <div className="rounded-xl border border-violet-200/90 bg-gradient-to-br from-violet-50/95 to-indigo-50/80 p-4 dark:border-violet-500/25 dark:from-violet-500/10 dark:to-indigo-500/10">
+                                            <dt className="text-xs font-semibold uppercase tracking-wide text-violet-800 dark:text-violet-200">Join code</dt>
+                                            <dd className="mt-2 font-mono text-lg font-semibold tracking-widest text-violet-950 break-all dark:text-violet-100">
+                                                {event.accessCode}
+                                            </dd>
+                                            <dd className="mt-2 text-xs text-zinc-600 dark:text-gray-400">Share with guests so they can join.</dd>
+                                        </div>
+                                    )}
+                                </dl>
+                            </aside>
+                        </div>
+                    </div>
+                </header>
+
+            <section id="event-gallery" className="scroll-mt-24 py-1 sm:py-2">
+                <div className="mb-8 text-center sm:mb-10">
+                    <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-100 dark:bg-violet-500/15 sm:h-12 sm:w-12">
+                        <ImageIcon className="h-5 w-5 text-violet-600 dark:text-violet-400 sm:h-6 sm:w-6" />
+                    </div>
+                    <h2 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white sm:text-3xl">
+                        Gallery
                     </h2>
-                    <p className="text-zinc-600 dark:text-gray-400 text-lg">
+                    <p className="mx-auto mt-2 max-w-lg px-2 text-sm leading-relaxed text-zinc-600 sm:text-base dark:text-gray-400">
                         {!currentUser
-                            ? 'A few highlights below — sign in to open the full gallery.'
+                            ? 'Preview below — sign in for the full set and downloads.'
                             : totalPhotos > 0
-                              ? `Browse through ${totalPhotos} captured moments`
-                              : 'Photos will appear here once they are uploaded'}
+                              ? `${totalPhotos} moment${totalPhotos === 1 ? '' : 's'} from this event`
+                              : 'Photos will show here after upload'}
                     </p>
                 </div>
 
-                {/* Toggle for Guest Users Only */}
                 {isGuest && currentUser && (
-                    <div className="flex justify-center mb-8">
-                        <div className={`inline-flex items-center gap-2 rounded-xl p-1.5 ${GALLERY_SURFACE}`}>
+                    <div className="mb-8 flex justify-center px-0 sm:px-2">
+                        <div className={`flex w-full max-w-md rounded-2xl p-1 ${softSurface}`}>
                             <button
+                                type="button"
                                 onClick={() => setPhotoViewMode('all')}
-                                className={`px-6 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200 ${
+                                className={`min-h-[48px] flex-1 rounded-xl px-4 py-3 text-sm font-semibold transition-all ${
                                     photoViewMode === 'all'
-                                        ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-500/30'
-                                        : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-white/5'
+                                        ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/25'
+                                        : 'text-zinc-600 hover:bg-zinc-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white'
                                 }`}
                             >
-                                All Photos
+                                All
                             </button>
                             <button
+                                type="button"
                                 onClick={() => setPhotoViewMode('my')}
-                                className={`px-6 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200 ${
+                                className={`min-h-[48px] flex-1 rounded-xl px-4 py-3 text-sm font-semibold transition-all ${
                                     photoViewMode === 'my'
-                                        ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-500/30'
-                                        : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-white/5'
+                                        ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/25'
+                                        : 'text-zinc-600 hover:bg-zinc-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white'
                                 }`}
                             >
-                                My Photos
+                                My photos
                             </button>
                         </div>
                     </div>
                 )}
 
                 {isLoadingPhotos ? (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4 md:gap-4">
                         {[...Array(!currentUser ? 4 : 8)].map((_, i) => (
-                            <div key={i} className="aspect-square bg-zinc-100 rounded-2xl animate-pulse border border-zinc-200/80 dark:bg-white/5 dark:border-white/5" />
+                            <div
+                                key={i}
+                                className="aspect-square animate-pulse rounded-xl bg-zinc-100 ring-1 ring-zinc-900/[0.04] dark:bg-white/[0.06] dark:ring-white/[0.06]"
+                            />
                         ))}
                     </div>
                 ) : !currentUser ? (
-                    <div className="space-y-8">
+                    <div className="space-y-6 sm:space-y-8">
                         {previewPhotos.length > 0 && (
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4 md:gap-4">
                                 {previewPhotos.map((photo: any, index: number) => {
                                     const src =
                                         getPhotoDisplayUrl(photo) ||
@@ -527,23 +531,23 @@ export default function PublicEventPage() {
                                         <button
                                             key={photo._id || photo.imageId || index}
                                             type="button"
-                                            className="group relative aspect-square bg-zinc-100 rounded-2xl overflow-hidden border border-zinc-200/90 text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-violet-500/10 hover:border-violet-400/50 dark:bg-[#0f0c18] dark:border-white/5 dark:hover:border-violet-500/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+                                            className={`group relative aspect-square overflow-hidden rounded-xl text-left ring-1 ring-zinc-900/[0.06] transition-transform active:scale-[0.98] dark:ring-white/[0.08] sm:rounded-2xl ${softSurface} ${softSurfaceHover} focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500`}
                                             onClick={() => setSelectedPhoto(photo)}
                                         >
                                             {src ? (
                                                 /* eslint-disable-next-line @next/next/no-img-element */
                                                 <img
                                                     src={src}
-                                                    alt=""
-                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                    alt="Preview"
+                                                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                                                 />
                                             ) : (
                                                 <div className="absolute inset-0 flex items-center justify-center bg-zinc-100 dark:bg-white/5">
-                                                    <ImageIcon className="text-zinc-400" size={40} />
+                                                    <ImageIcon className="text-zinc-400" size={36} />
                                                 </div>
                                             )}
-                                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-                                            <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded-md text-[11px] font-medium bg-black/50 text-white backdrop-blur-sm pointer-events-none">
+                                            <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/55 to-transparent pt-8 opacity-100 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100" />
+                                            <span className="pointer-events-none absolute bottom-2 left-2 rounded-md bg-black/45 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm sm:text-[11px]">
                                                 Preview
                                             </span>
                                         </button>
@@ -552,39 +556,37 @@ export default function PublicEventPage() {
                             </div>
                         )}
 
-                        <div
-                            className={`relative overflow-hidden rounded-3xl border border-zinc-200/90 bg-gradient-to-br from-violet-50/90 via-white to-zinc-50 p-8 md:p-10 dark:border-white/10 dark:from-[#181025] dark:via-[#0f0c18] dark:to-[#0a0d1e] ${GALLERY_SURFACE}`}
-                        >
-                            <div className="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-violet-400/10 blur-3xl dark:bg-violet-500/10" />
-                            <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-                                <div className="flex gap-4 items-start">
-                                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-violet-100 border border-violet-200/90 dark:bg-violet-500/15 dark:border-violet-400/25">
-                                        <Lock className="text-violet-600 dark:text-violet-300" size={28} />
+                        <div className={`relative overflow-hidden rounded-[1.65rem] p-6 sm:p-8 ${softSurface}`}>
+                            <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-violet-400/15 blur-3xl dark:bg-violet-500/10" />
+                            <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+                                <div className="flex gap-4">
+                                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-violet-100 dark:bg-violet-500/15">
+                                        <Lock className="text-violet-600 dark:text-violet-300" size={24} />
                                     </div>
-                                    <div>
-                                        <h3 className="text-xl font-semibold text-zinc-900 dark:text-white mb-1">
+                                    <div className="min-w-0">
+                                        <h3 className="text-lg font-semibold text-zinc-900 dark:text-white sm:text-xl">
                                             Unlock the full gallery
                                         </h3>
-                                        <p className="text-zinc-600 dark:text-gray-400 text-sm max-w-xl leading-relaxed">
+                                        <p className="mt-1 text-sm leading-relaxed text-zinc-600 dark:text-gray-400">
                                             {previewPhotos.length > 0
-                                                ? 'Sign in or create an account to browse every photo, use My Photos, and download originals.'
+                                                ? 'Sign in to see every photo, use My Photos, and download originals.'
                                                 : 'Sign in or create an account to view photos from this event.'}
                                         </p>
                                     </div>
                                 </div>
-                                <div className="flex flex-col sm:flex-row gap-3 shrink-0">
+                                <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:shrink-0">
                                     <Button
                                         onClick={() => router.push('/login')}
-                                        className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-500 hover:to-indigo-500 font-semibold px-8 py-3 rounded-xl justify-center"
+                                        className="h-12 w-full justify-center rounded-2xl font-semibold shadow-lg shadow-violet-500/20 sm:w-auto sm:min-w-[8.5rem]"
                                     >
                                         Log in
                                     </Button>
                                     <Button
                                         variant="outline"
                                         onClick={() => router.push('/register')}
-                                        className="border-zinc-300 text-zinc-900 hover:bg-zinc-50 dark:border-white/20 dark:text-white dark:hover:bg-white/10 font-semibold px-8 py-3 rounded-xl justify-center"
+                                        className="h-12 w-full justify-center rounded-2xl border-zinc-300 font-semibold dark:border-white/20 sm:w-auto sm:min-w-[8.5rem]"
                                     >
-                                        Create account
+                                        Sign up
                                     </Button>
                                 </div>
                             </div>
@@ -592,11 +594,12 @@ export default function PublicEventPage() {
                     </div>
                 ) : photos.length > 0 ? (
                     <>
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
                             {photos.map((photo: any, index: number) => (
-                                <div
+                                <button
                                     key={photo._id}
-                                    className="group relative aspect-square bg-zinc-100 rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-violet-500/10 border border-zinc-200/90 hover:border-violet-400/50 dark:bg-[#0f0c18] dark:border-white/5 dark:hover:border-violet-500/30"
+                                    type="button"
+                                    className={`group relative aspect-square cursor-pointer overflow-hidden rounded-xl text-left ring-1 ring-zinc-900/[0.06] transition-transform active:scale-[0.98] dark:ring-white/[0.08] sm:rounded-2xl ${softSurface} ${softSurfaceHover} focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500`}
                                     onClick={() => setSelectedPhoto(photo)}
                                 >
                                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -608,25 +611,24 @@ export default function PublicEventPage() {
                                             photo.s3Url
                                         }
                                         alt={`Event photo ${startIndex + index + 1}`}
-                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                                     />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                        <div className="absolute bottom-0 left-0 right-0 p-4 space-y-2">
-                                            <div className="flex items-center justify-between text-white text-sm">
-                                                <span className="font-medium">View Photo</span>
-                                                <span className="px-2 py-0.5 rounded-full text-[11px] bg-white/10 border border-white/15 text-gray-100 backdrop-blur-sm">
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 md:opacity-0">
+                                        <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
+                                            <div className="flex items-center justify-between text-xs text-white sm:text-sm">
+                                                <span className="font-medium">Open</span>
+                                                <span className="rounded-full border border-white/20 bg-white/10 px-2 py-0.5 text-[10px] backdrop-blur-sm">
                                                     #{(startIndex + index + 1).toString().padStart(2, '0')}
                                                 </span>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                </button>
                             ))}
                         </div>
 
-                        {/* Pagination */}
                         {totalPages > 1 && (
-                            <div className={`mt-10 card ${GALLERY_SURFACE}`}>
+                            <div className={`mt-8 rounded-2xl p-4 sm:mt-10 sm:p-6 ${softSurface}`}>
                                 <Pagination
                                     currentPage={currentPage}
                                     totalPages={totalPages}
@@ -639,38 +641,42 @@ export default function PublicEventPage() {
                         )}
                     </>
                 ) : (
-                    <div className={`text-center py-20 card ${GALLERY_SURFACE}`}>
-                        <div className="w-24 h-24 bg-violet-100 dark:bg-violet-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <ImageIcon className="text-violet-600 dark:text-violet-400" size={48} />
+                    <div className={`rounded-[1.65rem] px-6 py-16 text-center ${softSurface}`}>
+                        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-100 dark:bg-violet-500/15">
+                            <ImageIcon className="h-8 w-8 text-violet-600 dark:text-violet-400" />
                         </div>
-                        <h3 className="text-xl font-semibold text-zinc-900 dark:text-white mb-2">
-                            {photoViewMode === 'my' && isGuest 
-                                ? 'No photos of you yet' 
-                                : 'No photos yet'}
+                        <h3 className="mb-2 text-lg font-semibold text-zinc-900 dark:text-white">
+                            {photoViewMode === 'my' && isGuest ? 'No photos of you yet' : 'No photos yet'}
                         </h3>
-                        <p className="text-zinc-600 dark:text-gray-400">
+                        <p className="mx-auto max-w-sm text-sm leading-relaxed text-zinc-600 dark:text-gray-400">
                             {photoViewMode === 'my' && isGuest
-                                ? 'Photos where you appear in this event will show here'
-                                : 'Photos from this event will appear here'}
+                                ? 'When you appear in shots from this event, they’ll show here.'
+                                : 'Uploaded photos from organizers and photographers will appear here.'}
                         </p>
                     </div>
                 )}
-            </div>
+            </section>
 
             {selectedPhoto && (
                 <div
-                    className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6"
+                    className="fixed inset-0 z-50 flex items-end justify-center bg-black/90 backdrop-blur-md sm:items-center sm:p-6"
                     onClick={() => setSelectedPhoto(null)}
+                    role="presentation"
                 >
                     <button
-                        className="absolute top-4 right-4 z-[51] w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/20 transition-colors border border-white/10"
+                        type="button"
+                        className="absolute right-3 top-[max(0.75rem,env(safe-area-inset-top))] z-[51] flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/12 text-white transition-colors hover:bg-white/20 sm:right-5 sm:top-5"
                         onClick={() => setSelectedPhoto(null)}
+                        aria-label="Close"
                     >
                         <X size={20} />
                     </button>
                     <div
-                        className="relative flex w-[80vw] max-w-4xl max-h-[80vh] flex-col items-stretch justify-center gap-3 overflow-y-auto"
+                        className="relative flex max-h-[min(92dvh,920px)] w-full max-w-4xl flex-col items-stretch gap-3 overflow-y-auto px-3 pb-safe-plus pt-2 sm:max-h-[85vh] sm:px-0 sm:pb-6 sm:pt-0"
                         onClick={(e) => e.stopPropagation()}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-label="Photo viewer"
                     >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
@@ -680,11 +686,11 @@ export default function PublicEventPage() {
                                 selectedPhoto.s3Url
                             }
                             alt="Selected photo"
-                            className="mx-auto max-h-[min(72vh,calc(80vh-7rem))] w-auto max-w-full object-contain rounded-2xl shadow-2xl"
+                            className="mx-auto max-h-[min(78dvh,calc(100dvh-10rem))] w-auto max-w-full rounded-t-2xl object-contain shadow-2xl sm:max-h-[min(72vh,calc(85vh-8rem))] sm:rounded-2xl"
                         />
-                        <div className="flex shrink-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-white/95 dark:bg-[#0f0c18]/95 backdrop-blur-lg rounded-xl p-4 border border-zinc-200/90 dark:border-white/10 shadow-sm">
-                            <div className="text-zinc-900 dark:text-white">
-                                <p className="font-medium">{selectedPhoto.fileName}</p>
+                        <div className="flex shrink-0 flex-col gap-3 rounded-2xl border border-zinc-200/90 bg-white/98 p-4 shadow-lg dark:border-white/10 dark:bg-[#14121f]/98 sm:flex-row sm:items-center sm:justify-between sm:rounded-xl">
+                            <div className="min-w-0 text-zinc-900 dark:text-white">
+                                <p className="truncate font-medium">{selectedPhoto.fileName}</p>
                                 <p className="text-sm text-zinc-500 dark:text-gray-400">
                                     {new Date(selectedPhoto.uploadedAt || selectedPhoto.createdAt).toLocaleDateString()}
                                 </p>
@@ -693,27 +699,28 @@ export default function PublicEventPage() {
                                 <Button
                                     onClick={() => handleDownload(selectedPhoto)}
                                     disabled={!!downloading}
-                                    className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-500 hover:to-indigo-500 disabled:opacity-50 shrink-0"
+                                    className="h-11 w-full shrink-0 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-500 hover:to-indigo-500 disabled:opacity-50 sm:h-auto sm:w-auto sm:rounded-xl"
                                 >
                                     {downloading === selectedPhoto._id ? (
-                                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                                        <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
                                     ) : (
                                         <Download size={18} className="mr-2" />
                                     )}
-                                    {downloading === selectedPhoto._id ? 'Downloading...' : 'Download Original'}
+                                    {downloading === selectedPhoto._id ? 'Downloading…' : 'Download'}
                                 </Button>
                             ) : (
                                 <Button
                                     onClick={() => router.push('/login')}
-                                    className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-500 hover:to-indigo-500 shrink-0"
+                                    className="h-11 w-full shrink-0 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-500 hover:to-indigo-500 sm:h-auto sm:w-auto sm:rounded-xl"
                                 >
-                                    Log in for full gallery & downloads
+                                    Log in to download
                                 </Button>
                             )}
                         </div>
                     </div>
                 </div>
             )}
+            </div>
         </div>
     );
 }

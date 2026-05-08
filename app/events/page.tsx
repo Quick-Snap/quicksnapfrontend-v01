@@ -10,11 +10,9 @@ import {
   Plus,
   Sparkles,
   Search,
-  Filter,
   Share2,
-  Heart,
-  ArrowRight,
-  ShieldAlert
+  ShieldAlert,
+  ChevronRight,
 } from 'lucide-react';
 import Link from 'next/link';
 import { format, isSameDay, isThisWeek, isFuture } from 'date-fns';
@@ -26,11 +24,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRole } from '@/hooks/useRole';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
+import { softSurface, softSurfaceHover } from '@/lib/dashboardUi';
 
 type FilterType = 'all' | 'today' | 'week' | 'upcoming' | 'my';
-
-const EVENT_LIST_CARD =
-  'bg-white border-zinc-200/90 shadow-lg shadow-zinc-900/5 dark:bg-[#0f0c18] dark:border-white/5 dark:shadow-[0_12px_40px_rgba(0,0,0,0.35)]';
 
 export default function EventsPage() {
   const { user } = useAuth();
@@ -106,7 +102,7 @@ export default function EventsPage() {
           return true;
       }
     });
-  }, [events, searchQuery, filterType]);
+  }, [events, searchQuery, filterType, user?.events]);
 
   const handleShare = async (e: React.MouseEvent, event: any) => {
     e.preventDefault(); // Prevent navigation
@@ -140,101 +136,101 @@ export default function EventsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-violet-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-zinc-600 dark:text-gray-400 animate-pulse font-medium">Discovering events...</p>
-        </div>
+      <div className="flex min-h-[55vh] flex-col items-center justify-center px-4">
+        <div className="h-14 w-14 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600 dark:border-white/15 dark:border-t-violet-500" />
+        <p className="mt-6 text-center text-sm font-medium text-zinc-500 dark:text-gray-400">Loading events…</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen">
-      {/* Background Decor */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-violet-500/5 rounded-full blur-[100px]" />
-        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-indigo-500/5 rounded-full blur-[100px]" />
+    <div className="relative pb-8 sm:pb-12">
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute right-0 top-0 h-[420px] w-[420px] rounded-full bg-violet-400/15 blur-[100px] dark:bg-violet-500/10" />
+        <div className="absolute bottom-0 left-0 h-[380px] w-[380px] rounded-full bg-indigo-400/12 blur-[100px] dark:bg-indigo-500/10" />
       </div>
 
-      {/* Header Section */}
-      <div className="relative overflow-hidden border-b border-zinc-200/80 dark:border-white/5 bg-gradient-to-br from-violet-50/95 via-white to-zinc-50 dark:from-[#181025] dark:via-[#0f0b1d] dark:to-[#0a0d1e] shadow-[0_18px_70px_rgba(0,0,0,0.06)] dark:shadow-[0_18px_70px_rgba(0,0,0,0.45)]">
-        <div className="absolute inset-0 bg-gradient-mesh opacity-35 dark:opacity-60" />
-        <div className="absolute -left-20 top-0 w-72 h-72 bg-violet-400/15 dark:bg-violet-500/20 blur-3xl" />
-        <div className="absolute right-0 bottom-0 w-80 h-80 bg-indigo-400/10 dark:bg-indigo-500/15 blur-3xl" />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 relative">
-          <div className="flex flex-col gap-6">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-              <div className="space-y-3">
-                <div className="inline-flex items-center gap-2 rounded-full bg-violet-100/80 dark:bg-white/5 px-4 py-1 border border-violet-200/90 dark:border-white/10">
-                  <Sparkles className="w-4 h-4 text-violet-600 dark:text-violet-200" />
-                  <span className="text-xs uppercase tracking-[0.25em] text-zinc-700 dark:text-gray-200">
-                    {showOnlyJoinedEvents ? 'Your events' : 'Discover events'}
+      <div className="relative z-10 mx-auto max-w-6xl space-y-8 sm:space-y-10">
+        {/* Hero + controls */}
+        <header className="relative overflow-hidden rounded-[1.65rem] bg-gradient-to-br from-violet-50/98 via-white to-indigo-50/90 p-6 shadow-[0_20px_60px_-28px_rgba(91,33,182,0.22)] ring-1 ring-violet-200/55 dark:from-[#1a1428] dark:via-[#120f1c] dark:to-[#0c1222] dark:shadow-[0_28px_80px_-20px_rgba(0,0,0,0.55)] dark:ring-white/[0.08] sm:rounded-3xl sm:p-8 md:p-10">
+          <div className="pointer-events-none absolute inset-0 bg-gradient-mesh opacity-[0.38] dark:opacity-50" />
+          <div className="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full bg-violet-400/25 blur-3xl dark:bg-violet-500/12" />
+          <div className="pointer-events-none absolute -bottom-20 -left-10 h-44 w-44 rounded-full bg-indigo-400/18 blur-3xl dark:bg-indigo-500/10" />
+
+          <div className="relative space-y-6">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+              <div className="space-y-4">
+                <div className="inline-flex items-center gap-2 rounded-full bg-white/85 px-3.5 py-1.5 text-sm shadow-sm ring-1 ring-zinc-900/[0.06] dark:bg-white/[0.07] dark:ring-white/10">
+                  <Sparkles className="h-4 w-4 shrink-0 text-violet-600 dark:text-violet-300" />
+                  <span className="font-medium text-zinc-700 dark:text-gray-200">
+                    {showOnlyJoinedEvents ? 'Your events' : 'Discover'}
                   </span>
                 </div>
-                <div className="flex items-center gap-3 flex-wrap">
-                  <h1 className="text-3xl md:text-4xl font-semibold text-zinc-900 dark:text-white tracking-tight">
-                    {showOnlyJoinedEvents ? 'Events you are in' : 'Experience every moment'}
+                <div className="flex flex-wrap items-center gap-3">
+                  <h1 className="text-[1.65rem] font-semibold leading-tight tracking-tight text-zinc-900 dark:text-white sm:text-3xl md:text-4xl">
+                    {showOnlyJoinedEvents ? 'Your events' : 'Browse events'}
                   </h1>
-                  <span className="px-3 py-1 text-xs rounded-full bg-zinc-100 dark:bg-white/5 border border-zinc-200/90 dark:border-white/10 text-zinc-700 dark:text-gray-200">
-                    {events.length} events
+                  <span className="rounded-full bg-zinc-900/[0.06] px-3 py-1 text-xs font-medium text-zinc-700 dark:bg-white/10 dark:text-gray-200">
+                    {events.length} live
                   </span>
                 </div>
-                <p className="text-zinc-600 dark:text-gray-300 max-w-2xl">
-                  Curated list of campus happenings styled to match the landing page aesthetic. Search, filter, and join effortlessly.
+                <p className="max-w-xl text-pretty text-sm leading-relaxed text-zinc-600 sm:text-base dark:text-gray-400">
+                  Search by name or venue, filter by date, and open any card — optimized for one-handed use on your phone.
                 </p>
               </div>
 
-              <div className="flex w-full md:w-auto gap-3">
+              <div className="flex w-full shrink-0 flex-col gap-3 sm:w-auto sm:flex-row">
                 {!isPhotographer && !isOrganizer && !isAdmin && (
                   <Button
                     variant="outline"
                     onClick={() => setIsJoinModalOpen(true)}
-                    className="w-full md:w-auto border-zinc-300 text-zinc-900 bg-white hover:bg-zinc-50 dark:border-white/15 dark:text-white dark:bg-white/5 dark:hover:bg-white/10"
+                    className="w-full justify-center rounded-2xl border-zinc-300 bg-white/90 py-3 text-zinc-900 hover:bg-zinc-50 dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 sm:w-auto"
                   >
-                    <Users className="w-4 h-4 mr-2" />
-                    Join by Code
+                    <Users className="mr-2 h-4 w-4" />
+                    Join by code
                   </Button>
                 )}
                 {(isOrganizer || isAdmin) && (
-                  <Link href="/organizer/events/create">
-                    <Button className="w-full md:w-auto shadow-lg shadow-violet-500/20 hover:shadow-violet-500/40 transition-all">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Create Event
+                  <Link href="/organizer/events/create" className="w-full sm:w-auto">
+                    <Button className="w-full justify-center rounded-2xl py-3 shadow-lg shadow-violet-500/25 sm:w-auto">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Create event
                     </Button>
                   </Link>
                 )}
               </div>
             </div>
 
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-gray-500 w-5 h-5" />
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-4">
+              <div className="relative min-h-[52px] flex-1">
+                <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-400 dark:text-gray-500" />
                 <input
                   type="text"
-                  placeholder="Search events, venues, or keywords..."
+                  placeholder="Search name, venue, keywords…"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="input pl-12 py-3 rounded-xl"
+                  className="input h-[52px] w-full rounded-2xl border-zinc-200/90 bg-white/95 py-3 pl-12 pr-4 shadow-sm dark:border-white/10 dark:bg-white/[0.06]"
+                  aria-label="Search events"
                 />
               </div>
 
               {!showOnlyJoinedEvents && (
-                <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 no-scrollbar">
+                <div className="-mx-1 flex gap-2 overflow-x-auto pb-1 no-scrollbar sm:mx-0 sm:flex-wrap sm:overflow-visible sm:pb-0">
                   {[
-                    ...(user ? [{ id: 'my', label: 'My Events' }] : []),
-                    { id: 'all', label: 'All Events' },
+                    ...(user ? [{ id: 'my', label: 'Mine' }] : []),
+                    { id: 'all', label: 'All' },
                     { id: 'upcoming', label: 'Upcoming' },
                     { id: 'today', label: 'Today' },
-                    { id: 'week', label: 'This Week' },
+                    { id: 'week', label: 'This week' },
                   ].map((filter) => (
                     <button
                       key={filter.id}
+                      type="button"
                       onClick={() => setFilterType(filter.id as FilterType)}
-                      className={`px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all border ${
+                      className={`shrink-0 rounded-full px-4 py-2.5 text-sm font-medium transition-all ${
                         filterType === filter.id
-                          ? 'bg-violet-600/12 text-violet-900 border-violet-300 shadow-md shadow-violet-500/10 dark:bg-violet-500/20 dark:text-violet-200 dark:border-violet-500/40 dark:shadow-lg dark:shadow-violet-500/15'
-                          : 'bg-white text-zinc-600 border-zinc-200 hover:bg-zinc-50 hover:text-zinc-900 dark:bg-white/5 dark:text-gray-300 dark:border-white/10 dark:hover:bg-white/10 dark:hover:text-white dark:hover:border-white/20'
+                          ? 'bg-violet-600 text-white shadow-md shadow-violet-500/25 dark:bg-violet-600 dark:text-white'
+                          : 'bg-white/90 text-zinc-600 ring-1 ring-zinc-200/90 hover:bg-zinc-50 dark:bg-white/[0.06] dark:text-gray-300 dark:ring-white/10 dark:hover:bg-white/10'
                       }`}
                     >
                       {filter.label}
@@ -244,179 +240,192 @@ export default function EventsPage() {
               )}
             </div>
           </div>
-        </div>
-      </div>
+        </header>
 
-      {/* Events Grid */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10">
-        {filteredEvents.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredEvents.map((event: any, index: number) => (
-              <Link
-                key={event._id}
-                href={`/events/${event._id}`}
-                className="group block"
-              >
-                <div
-                  className={`${EVENT_LIST_CARD} rounded-2xl overflow-hidden border hover:border-violet-400/50 dark:hover:border-violet-500/30 transition-all duration-300 transform hover:-translate-y-1 h-full flex flex-col hover:shadow-xl hover:shadow-violet-500/10`}
-                >
-                  {/* Image Section */}
-                  <div className="h-48 relative overflow-hidden">
-                    {event.coverImage ? (
-                      <img
-                        src={event.coverImage}
-                        alt={event.name}
-                        className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center">
-                        <Calendar className="w-16 h-16 text-white/30" />
-                      </div>
-                    )}
+        {/* Events grid */}
+        <section className="relative z-10" aria-label="Event list">
+          {filteredEvents.length > 0 ? (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6">
+              {filteredEvents.map((event: any) => (
+                <Link key={event._id} href={`/events/${event._id}`} className="group block h-full">
+                  <article
+                    className={`relative flex h-full flex-col overflow-hidden rounded-2xl ${softSurface} ${softSurfaceHover}`}
+                  >
+                    <div className="absolute inset-x-0 top-0 z-[1] h-1 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-indigo-500" />
 
-                    {/* Overlay Date Badge */}
-                    <div className="absolute top-4 left-4 bg-white/92 dark:bg-black/60 backdrop-blur-md rounded-xl px-3 py-2 border border-zinc-200/90 dark:border-white/10 text-center min-w-[60px] shadow-sm">
-                      <div className="text-xs font-semibold text-zinc-500 dark:text-gray-400 uppercase">
-                        {format(new Date(event.startDate), 'MMM')}
-                      </div>
-                      <div className="text-xl font-bold text-zinc-900 dark:text-white leading-none">
-                        {format(new Date(event.startDate), 'dd')}
-                      </div>
-                    </div>
-
-                    {/* Quick Action Overlay */}
-                    <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
-                      <button
-                        onClick={(e) => handleShare(e, event)}
-                        className="p-2.5 bg-white/90 dark:bg-black/60 backdrop-blur-md rounded-full border border-zinc-200/80 dark:border-white/10 hover:bg-violet-100 dark:hover:bg-violet-500/20 hover:border-violet-400/40 dark:hover:border-violet-500/30 text-zinc-700 dark:text-gray-300 hover:text-violet-700 dark:hover:text-violet-400 transition-all"
-                        title="Share Event"
-                      >
-                        <Share2 size={16} />
-                      </button>
-                    </div>
-
-                    {/* Status Badge */}
-                    <div className="absolute bottom-4 left-4">
-                      {new Date(event.startDate) > new Date() ? (
-                        <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200/90 dark:bg-emerald-500/20 dark:text-emerald-400 dark:backdrop-blur-md dark:border-emerald-500/20">
-                          Upcoming
-                        </span>
+                    <div className="relative z-0 h-44 overflow-hidden sm:h-48">
+                      {event.coverImage ? (
+                        <img
+                          src={event.coverImage}
+                          alt={event.name}
+                          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.05]"
+                        />
                       ) : (
-                        <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-zinc-100 text-zinc-600 border border-zinc-200/80 dark:bg-white/10 dark:text-gray-400 dark:backdrop-blur-md dark:border-white/10">
-                          Past
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Content Section */}
-                  <div className="p-6 flex-1 flex flex-col bg-zinc-50/50 dark:bg-transparent">
-                    <div className="mb-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <h3 className="text-xl font-semibold text-zinc-900 dark:text-white mb-1 group-hover:text-violet-700 dark:group-hover:text-violet-300 transition-colors line-clamp-1">
-                          {event.name}
-                        </h3>
-                        <span className="px-3 py-1 rounded-full text-[11px] bg-zinc-100 dark:bg-white/5 border border-zinc-200/80 dark:border-white/10 text-zinc-600 dark:text-gray-300">
-                          {event.attendees?.length || 0} going
-                        </span>
-                      </div>
-                      <p className="text-zinc-600 dark:text-gray-400 text-sm line-clamp-2 leading-relaxed">
-                        {event.description || 'No description available for this event.'}
-                      </p>
-                    </div>
-
-                    <div className="space-y-3 mb-6 flex-1">
-                      <div className="flex items-center text-sm text-zinc-700 dark:text-gray-300">
-                        <Clock className="w-4 h-4 mr-3 text-violet-600 dark:text-violet-300 flex-shrink-0" />
-                        <span>
-                          {format(new Date(event.startDate), 'EEE, MMM d • h:mm a')} – {format(new Date(event.endDate), 'h:mm a')}
-                        </span>
-                      </div>
-                      <div className="flex items-center text-sm text-zinc-700 dark:text-gray-300">
-                        <MapPin className="w-4 h-4 mr-3 text-pink-600 dark:text-pink-300 flex-shrink-0" />
-                        <span className="truncate">{event.venue}</span>
-                      </div>
-                      <div className="flex items-center text-sm text-emerald-700 dark:text-emerald-300">
-                        <Users className="w-4 h-4 mr-3 flex-shrink-0" />
-                        <span>Managed by {event.organizer?.name || 'Organizer'}</span>
-                      </div>
-                      {(user?.role === 'admin' || event.organizer?._id === user?.id || event.organizer === user?.id) && event.accessCode && (
-                        <div className="flex items-center text-sm font-medium text-indigo-900 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-200/90 dark:text-indigo-100 dark:bg-indigo-500/10 dark:border-indigo-400/20">
-                          <ShieldAlert className="w-4 h-4 mr-2 text-indigo-600 dark:text-indigo-200 flex-shrink-0" />
-                          <span>Code: <span className="font-mono tracking-wider">{event.accessCode}</span></span>
+                        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-violet-600 via-violet-700 to-indigo-800">
+                          <Calendar className="h-14 w-14 text-white/35 sm:h-16 sm:w-16" />
                         </div>
                       )}
+
+                      <div className="absolute left-3 top-3 rounded-2xl border border-white/25 bg-white/90 px-3 py-2 text-center shadow-sm backdrop-blur-md dark:border-white/10 dark:bg-black/55">
+                        <div className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-gray-400">
+                          {format(new Date(event.startDate), 'MMM')}
+                        </div>
+                        <div className="text-xl font-bold leading-none text-zinc-900 dark:text-white">
+                          {format(new Date(event.startDate), 'dd')}
+                        </div>
+                      </div>
+
+                      <div className="absolute right-3 top-3 z-[2] md:opacity-0 md:transition-all md:translate-y-1 md:group-hover:translate-y-0 md:group-hover:opacity-100">
+                        <button
+                          type="button"
+                          onClick={(e) => handleShare(e, event)}
+                          className="rounded-full border border-white/40 bg-white/95 p-2.5 text-zinc-700 shadow-md backdrop-blur-sm transition hover:bg-violet-50 hover:text-violet-700 dark:border-white/15 dark:bg-black/55 dark:text-gray-200 dark:hover:bg-violet-500/25 dark:hover:text-white"
+                          title="Share event"
+                        >
+                          <Share2 className="h-4 w-4" aria-hidden />
+                        </button>
+                      </div>
+
+                      <div className="absolute bottom-3 left-3">
+                        {new Date(event.startDate) > new Date() ? (
+                          <span className="rounded-full border border-emerald-200/90 bg-emerald-50/95 px-2.5 py-1 text-[11px] font-semibold text-emerald-800 shadow-sm backdrop-blur-sm dark:border-emerald-500/30 dark:bg-emerald-500/20 dark:text-emerald-200">
+                            Upcoming
+                          </span>
+                        ) : (
+                          <span className="rounded-full border border-zinc-200/90 bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-zinc-600 dark:border-white/10 dark:bg-white/10 dark:text-gray-400">
+                            Past
+                          </span>
+                        )}
+                      </div>
                     </div>
 
-                    <div className="pt-4 border-t border-zinc-200/80 dark:border-white/5 flex items-center justify-between">
-                      <span className="text-sm font-medium text-violet-700 dark:text-violet-300 flex items-center group/link">
-                        View Details
-                        <ArrowRight className="w-4 h-4 ml-1 transform group-hover/link:translate-x-1 transition-transform" />
-                      </span>
+                    <div className="flex flex-1 flex-col p-5 sm:p-6">
+                      <div className="mb-3 flex flex-col gap-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <h2 className="line-clamp-2 text-lg font-semibold leading-snug text-zinc-900 transition-colors group-hover:text-violet-700 dark:text-white dark:group-hover:text-violet-300">
+                            {event.name}
+                          </h2>
+                          <span className="shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-zinc-600 dark:bg-white/10 dark:text-gray-400">
+                            {event.attendees?.length ?? 0} in
+                          </span>
+                        </div>
+                        <p className="line-clamp-2 text-sm leading-relaxed text-zinc-600 dark:text-gray-400">
+                          {event.description || 'Tap to view details and photos.'}
+                        </p>
+                      </div>
+
+                      <div className="mb-4 flex flex-1 flex-col gap-2.5 text-sm text-zinc-700 dark:text-gray-300">
+                        <div className="flex items-start gap-2">
+                          <Clock className="mt-0.5 h-4 w-4 shrink-0 text-violet-600 dark:text-violet-400" />
+                          <span className="leading-snug">
+                            {format(new Date(event.startDate), 'EEE, MMM d • h:mm a')} –{' '}
+                            {format(new Date(event.endDate), 'h:mm a')}
+                          </span>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-pink-600 dark:text-pink-400" />
+                          <span className="truncate">{event.venue || 'Venue TBA'}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300/95">
+                          <Users className="h-4 w-4 shrink-0 opacity-80" />
+                          <span className="truncate text-sm">{event.organizer?.name || 'Organizer'}</span>
+                        </div>
+                        {(user?.role === 'admin' ||
+                          event.organizer?._id === user?.id ||
+                          event.organizer === user?.id) &&
+                          event.accessCode && (
+                            <div className="flex items-center gap-2 rounded-xl border border-indigo-200/90 bg-indigo-50/95 px-3 py-2 text-xs font-medium text-indigo-950 dark:border-indigo-400/25 dark:bg-indigo-500/15 dark:text-indigo-100">
+                              <ShieldAlert className="h-3.5 w-3.5 shrink-0" />
+                              <span className="font-mono tracking-wider">{event.accessCode}</span>
+                            </div>
+                          )}
+                      </div>
+
+                      <div className="mt-auto flex items-center justify-between border-t border-zinc-200/70 pt-4 dark:border-white/[0.08]">
+                        <span className="text-sm font-semibold text-violet-700 dark:text-violet-300">Open event</span>
+                        <ChevronRight className="h-5 w-5 text-violet-600 transition-transform group-hover:translate-x-0.5 dark:text-violet-400" />
+                      </div>
                     </div>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-24 rounded-3xl border border-dashed border-zinc-300/90 bg-zinc-50/80 dark:bg-[#0f0c18] dark:border-white/10 shadow-lg shadow-zinc-900/5 dark:shadow-[0_12px_40px_rgba(0,0,0,0.35)]">
-            <div className="w-20 h-20 bg-violet-100 dark:bg-violet-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Search className="h-8 w-8 text-violet-600 dark:text-violet-400" />
+                  </article>
+                </Link>
+              ))}
             </div>
-            <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">No events found</h3>
-            <p className="text-zinc-600 dark:text-gray-500 mb-6 max-w-sm mx-auto">
-              {searchQuery
-                ? `We couldn't find matches for "${searchQuery}". Try different keywords.`
-                : showOnlyJoinedEvents
-                  ? "You haven't joined any events yet. Use the code provided by an organizer to join."
-                  : "There are no events scheduled for this period."}
-            </p>
-            {searchQuery && (
-              <Button
-                variant="outline"
-                onClick={() => { setSearchQuery(''); if (!showOnlyJoinedEvents) setFilterType('all'); }}
-                className="border-zinc-300 text-zinc-700 hover:bg-zinc-100 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
-              >
-                Clear Search
-              </Button>
-            )}
-          </div>
-        )}
+          ) : (
+            <div
+              className={`rounded-[1.65rem] px-6 py-16 text-center ${softSurface}`}
+            >
+              <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-100 dark:bg-violet-500/15">
+                <Search className="h-8 w-8 text-violet-600 dark:text-violet-400" />
+              </div>
+              <h3 className="mb-2 text-lg font-semibold text-zinc-900 dark:text-white">Nothing here yet</h3>
+              <p className="mx-auto mb-8 max-w-sm text-sm leading-relaxed text-zinc-600 dark:text-gray-400">
+                {searchQuery
+                  ? `No matches for “${searchQuery}”. Try another word or clear filters.`
+                  : showOnlyJoinedEvents
+                    ? 'Join an event with a code from your organizer, or ask them to invite you.'
+                    : 'No events match this filter. Try All or Upcoming.'}
+              </p>
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
+                {searchQuery && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setSearchQuery('');
+                      if (!showOnlyJoinedEvents) setFilterType('all');
+                    }}
+                    className="rounded-2xl border-zinc-300 dark:border-white/15"
+                  >
+                    Clear search
+                  </Button>
+                )}
+                {!isPhotographer && !isOrganizer && !isAdmin && (
+                  <Button onClick={() => setIsJoinModalOpen(true)} className="rounded-2xl shadow-lg shadow-violet-500/20">
+                    <Users className="mr-2 h-4 w-4" />
+                    Join by code
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </section>
       </div>
 
       {/* Join Code Modal */}
       {isJoinModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 dark:bg-black/70 backdrop-blur-sm">
-          <div className="bg-white border border-zinc-200/90 dark:bg-[#0f0c18] dark:border-white/10 rounded-3xl p-8 max-w-md w-full shadow-[0_20px_80px_rgba(0,0,0,0.12)] dark:shadow-[0_20px_80px_rgba(0,0,0,0.6)] animate-in fade-in zoom-in duration-200">
-            <h2 className="text-2xl font-semibold text-zinc-900 dark:text-white mb-2">Join Private Event</h2>
-            <p className="text-zinc-600 dark:text-gray-400 mb-6">Enter the access code shared with you by the organizer.</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 backdrop-blur-md dark:bg-black/65">
+          <div
+            className="w-full max-w-md rounded-[1.65rem] border border-zinc-200/90 bg-white p-7 shadow-[0_24px_80px_-20px_rgba(0,0,0,0.2)] ring-1 ring-zinc-900/[0.04] dark:border-white/10 dark:bg-[#14121f] dark:shadow-[0_24px_80px_rgba(0,0,0,0.65)] dark:ring-white/[0.06]"
+            role="dialog"
+            aria-labelledby="join-modal-title"
+          >
+            <h2 id="join-modal-title" className="mb-2 text-xl font-semibold text-zinc-900 dark:text-white">
+              Join with code
+            </h2>
+            <p className="mb-6 text-sm leading-relaxed text-zinc-600 dark:text-gray-400">
+              Enter the access code your organizer shared — we&apos;ll take you to the event page.
+            </p>
 
             <form onSubmit={handleJoinByCode} className="space-y-4">
               <input
                 type="text"
-                placeholder="Access Code (e.g. SNAPP01)"
+                placeholder="e.g. SNAPP01"
                 value={joinCode}
                 onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                className="input text-center text-lg font-semibold tracking-widest uppercase"
+                className="input rounded-2xl py-3.5 text-center text-lg font-semibold uppercase tracking-widest"
                 autoFocus
               />
-              <div className="flex gap-3">
+              <div className="flex flex-col-reverse gap-3 sm:flex-row">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setIsJoinModalOpen(false)}
-                  className="flex-1 border-zinc-300 text-zinc-900 hover:bg-zinc-50 dark:border-white/20 dark:text-white dark:hover:bg-white/10"
+                  className="flex-1 rounded-2xl border-zinc-300 dark:border-white/20"
                   disabled={isJoining}
                 >
                   Cancel
                 </Button>
-                <Button
-                  type="submit"
-                  className="flex-1 shadow-lg shadow-violet-500/20 hover:shadow-violet-500/40"
-                  disabled={isJoining || !joinCode.trim()}
-                >
-                  {isJoining ? 'Joining...' : 'Join Event'}
+                <Button type="submit" className="flex-1 rounded-2xl shadow-lg shadow-violet-500/25" disabled={isJoining || !joinCode.trim()}>
+                  {isJoining ? 'Joining…' : 'Join'}
                 </Button>
               </div>
             </form>

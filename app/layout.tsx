@@ -52,6 +52,7 @@ export default function RootLayout({
   const isLandingPage = pathname === '/';
   const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/forgot-password' || pathname?.startsWith('/reset-password');
   const isRegisterFace = pathname === '/register-face';
+  const isDashboard = pathname === '/dashboard';
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -74,7 +75,9 @@ export default function RootLayout({
                     ? isRegisterFace
                       ? 'min-h-[100dvh] px-0 py-0'
                       : ''
-                    : 'container mx-auto px-4 py-8'
+                    : isDashboard
+                      ? 'mx-auto w-full max-w-6xl px-4 pb-12 pt-5 sm:px-6 sm:pb-16 sm:pt-8 lg:px-8'
+                      : 'container mx-auto px-4 py-8'
                 }
               >
                 {children}
