@@ -1,5 +1,6 @@
 'use client';
 
+import type { Viewport } from 'next';
 import { Space_Grotesk, Inter } from "next/font/google";
 import Script from "next/script";
 import { usePathname } from "next/navigation";
@@ -35,6 +36,13 @@ const inter = Inter({
   variable: '--font-inter',
 });
 
+/** Safe-area + notch friendly for camera / face flows on mobile */
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+};
+
 export default function RootLayout({
   children,
 }: {
@@ -43,6 +51,7 @@ export default function RootLayout({
   const pathname = usePathname();
   const isLandingPage = pathname === '/';
   const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/forgot-password' || pathname?.startsWith('/reset-password');
+  const isRegisterFace = pathname === '/register-face';
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -59,7 +68,15 @@ export default function RootLayout({
 
             <div className="relative min-h-screen">
               {!isLandingPage && !isAuthPage && <Navbar />}
-              <main className={(isLandingPage || isAuthPage) ? "" : "container mx-auto px-4 py-8"}>
+              <main
+                className={
+                  isLandingPage || isAuthPage || isRegisterFace
+                    ? isRegisterFace
+                      ? 'min-h-[100dvh] px-0 py-0'
+                      : ''
+                    : 'container mx-auto px-4 py-8'
+                }
+              >
                 {children}
               </main>
             </div>
