@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { eventApi, photoApi } from '@/lib/api';
+import { buildEventShareText } from '@/lib/eventShareText';
 import { getPhotoDisplayUrl } from '@/lib/photoUrl';
 import { Button } from '@/app/components/ui/Button';
 import Pagination from '@/app/components/ui/Pagination';
@@ -236,20 +237,29 @@ export default function PublicEventPage() {
     };
 
     const handleShare = async () => {
+        if (!event) return;
         const url = window.location.href;
+        const text = buildEventShareText({
+            name: event.name,
+            description: event.description,
+            accessCode: event.accessCode,
+            url,
+        });
         if (navigator.share) {
             try {
                 await navigator.share({
                     title: event.name,
-                    text: event.description,
-                    url: url,
+                    text,
+                    url,
                 });
             } catch (err) {
                 console.error('Error sharing:', err);
             }
         } else {
-            navigator.clipboard.writeText(url);
-            toast.success('Link copied to clipboard!');
+            navigator.clipboard.writeText(text);
+            toast.success(
+                event.accessCode ? 'Link and join code copied to clipboard!' : 'Link copied to clipboard!'
+            );
         }
     };
 

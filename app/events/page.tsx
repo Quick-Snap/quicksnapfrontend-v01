@@ -21,6 +21,7 @@ import { format, isSameDay, isThisWeek, isFuture } from 'date-fns';
 import { useState, useMemo } from 'react';
 import { Button } from '@/app/components/ui/Button';
 import toast from 'react-hot-toast';
+import { buildEventShareText } from '@/lib/eventShareText';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRole } from '@/hooks/useRole';
 import { useRouter } from 'next/navigation';
@@ -112,20 +113,28 @@ export default function EventsPage() {
     e.stopPropagation();
 
     const url = `${window.location.origin}/events/${event._id}`;
+    const text = buildEventShareText({
+      name: event.name,
+      description: event.description,
+      accessCode: event.accessCode,
+      url,
+    });
 
     if (navigator.share) {
       try {
         await navigator.share({
           title: event.name,
-          text: event.description,
-          url: url,
+          text,
+          url,
         });
       } catch (err) {
         console.error('Error sharing:', err);
       }
     } else {
-      navigator.clipboard.writeText(url);
-      toast.success('Link copied to clipboard!');
+      navigator.clipboard.writeText(text);
+      toast.success(
+        event.accessCode ? 'Link and join code copied to clipboard!' : 'Link copied to clipboard!'
+      );
     }
   };
 
