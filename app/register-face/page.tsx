@@ -115,7 +115,7 @@ export default function RegisterFacePage() {
     videoRef,
     onCapture: onLiveCapture,
     stopMediaStream,
-    challengeCount: 3,
+    challengeCount: 2,
   });
 
   /**
@@ -452,7 +452,7 @@ export default function RegisterFacePage() {
               <ul className="list-inside list-disc space-y-1">
                 <li>Good lighting, face the camera</li>
                 <li>Follow prompts (blink, turn head, smile)</li>
-                <li>Hold still ~2s when the ring fills</li>
+                <li>Hold still ~1.5s when the ring fills</li>
                 <li>Remove glasses or hat if you can</li>
               </ul>
             </div>
@@ -477,7 +477,7 @@ export default function RegisterFacePage() {
             <ul className="list-inside list-disc space-y-0.5 text-xs leading-relaxed text-gray-400 sm:space-y-1 sm:text-sm">
               <li>Face the camera directly with good lighting</li>
               <li>Follow the random prompts (blink, turn head, smile)</li>
-              <li>Stay still for ~2 seconds when the progress ring fills</li>
+              <li>Stay still for ~1.5 seconds when the progress ring fills</li>
               <li>Remove glasses or hat if possible</li>
             </ul>
           </div>
