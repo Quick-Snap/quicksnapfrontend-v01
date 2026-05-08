@@ -16,14 +16,7 @@ import {
 import Link from 'next/link';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
-
-const heroLight =
-  'border-zinc-200/90 bg-gradient-to-br from-violet-50/95 via-white to-zinc-50 shadow-[0_20px_60px_-15px_rgba(15,23,42,0.08)]';
-const heroDark =
-  'dark:border-white/5 dark:bg-gradient-to-br dark:from-[#181025] dark:via-[#0f0b1d] dark:to-[#0a0d1e] dark:shadow-[0_20px_80px_rgba(0,0,0,0.45)]';
-
-const statShell =
-  'border-zinc-200/80 bg-gradient-to-br from-white via-zinc-50/90 to-white shadow-sm shadow-zinc-900/5 dark:border-white/10 dark:from-[#121022] dark:via-[#0d0c19] dark:to-[#0b0a14] dark:shadow-none';
+import { softSurface, softSurfaceHover } from '@/lib/dashboardUi';
 
 export default function OrganizerDashboard() {
   const [assignEmail, setAssignEmail] = useState('');
@@ -57,49 +50,47 @@ export default function OrganizerDashboard() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 sm:space-y-10">
       {/* Header */}
-      <div
-        className={`relative overflow-hidden rounded-2xl border p-8 ${heroLight} ${heroDark}`}
-      >
-        <div className="absolute inset-0 bg-gradient-mesh opacity-25 dark:opacity-60" />
-        <div className="absolute -bottom-10 -left-14 h-60 w-60 bg-violet-400/25 blur-3xl dark:bg-violet-500/20" />
-        <div className="absolute right-0 top-0 h-64 w-64 bg-indigo-400/20 blur-3xl dark:bg-indigo-500/15" />
-        <div className="relative flex flex-col items-start justify-between gap-6 lg:flex-row lg:items-center">
-          <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 rounded-full border border-violet-200/80 bg-violet-50/90 px-4 py-1 dark:border-white/10 dark:bg-white/5">
-              <Sparkles className="h-4 w-4 text-violet-600 dark:text-violet-200" />
-              <span className="text-xs uppercase tracking-[0.25em] text-violet-800/90 dark:text-gray-200">
-                Organizer control
+      <header className="relative overflow-hidden rounded-[1.65rem] bg-gradient-to-br from-violet-50/98 via-white to-indigo-50/90 p-6 shadow-[0_20px_60px_-28px_rgba(91,33,182,0.28)] ring-1 ring-violet-200/60 dark:from-[#1a1428] dark:via-[#120f1c] dark:to-[#0c1222] dark:shadow-[0_28px_80px_-20px_rgba(0,0,0,0.65)] dark:ring-white/[0.08] sm:rounded-3xl sm:p-9">
+        <div className="pointer-events-none absolute inset-0 bg-gradient-mesh opacity-[0.35] dark:opacity-50" />
+        <div className="pointer-events-none absolute -bottom-12 -left-14 h-56 w-56 rounded-full bg-violet-400/25 blur-3xl dark:bg-violet-500/15" />
+        <div className="pointer-events-none absolute right-0 top-0 h-52 w-52 rounded-full bg-indigo-400/20 blur-3xl dark:bg-indigo-500/12" />
+        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-4">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3.5 py-1.5 shadow-sm ring-1 ring-zinc-900/[0.06] dark:bg-white/[0.07] dark:ring-white/10">
+              <Sparkles className="h-4 w-4 shrink-0 text-violet-600 dark:text-violet-300" />
+              <span className="text-xs font-medium uppercase tracking-[0.2em] text-violet-800 dark:text-gray-200">
+                Organizer
               </span>
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className="flex items-center gap-2 text-3xl font-semibold tracking-tight text-zinc-900 dark:text-white md:text-4xl">
-                <Calendar className="h-7 w-7 text-violet-600 dark:text-violet-300" />
-                Organizer Dashboard
+              <h1 className="flex items-center gap-2 text-[1.65rem] font-semibold tracking-tight text-zinc-900 dark:text-white sm:text-3xl md:text-4xl">
+                <Calendar className="h-7 w-7 shrink-0 text-violet-600 dark:text-violet-300" />
+                Dashboard
               </h1>
-              <span className="rounded-full border border-zinc-200/90 bg-white px-3 py-1 text-xs text-zinc-700 dark:border-white/10 dark:bg-white/5 dark:text-gray-200">
+              <span className="rounded-full bg-zinc-900/[0.06] px-3 py-1 text-xs font-medium text-zinc-700 dark:bg-white/10 dark:text-gray-200">
                 {myOrganizedEvents.length} events
               </span>
             </div>
-            <p className="max-w-2xl text-zinc-600 dark:text-gray-300">
-              Calm, focused workspace for managing events, assigning photographers, and monitoring uploads.
+            <p className="max-w-2xl text-pretty text-sm leading-relaxed text-zinc-600 sm:text-base dark:text-gray-400">
+              Create events, assign photographers, and keep uploads flowing — optimized for desktop and phone.
             </p>
           </div>
 
           <Link
             href="/organizer/events/create"
-            className="inline-flex items-center gap-2 rounded-xl border border-violet-600 bg-violet-600 px-5 py-3 font-semibold text-white shadow-lg shadow-violet-500/25 transition-all hover:bg-violet-500 dark:border-white/10 dark:bg-white/5 dark:shadow-[0_10px_35px_rgba(0,0,0,0.3)] dark:hover:bg-white/10"
+            className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-violet-600 px-5 py-3.5 text-center text-sm font-semibold text-white shadow-lg shadow-violet-500/25 transition hover:bg-violet-500 sm:w-auto"
           >
             <Plus className="h-5 w-5" />
-            Create Event
+            Create event
           </Link>
         </div>
-      </div>
+      </header>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-        <div className={`stat-card group ${statShell}`}>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
+        <div className={`group p-5 ${softSurface}`}>
           <div className="flex items-center justify-between">
             <div>
               <p className="mb-1 text-sm text-zinc-500 dark:text-gray-400">My Events</p>
@@ -109,10 +100,10 @@ export default function OrganizerDashboard() {
               <Calendar className="h-6 w-6 text-violet-700 dark:text-violet-300" />
             </div>
           </div>
-          <div className="mt-4 h-1 rounded-full bg-gradient-to-r from-violet-500 to-indigo-500" />
+          <div className="mt-4 h-0.5 rounded-full bg-gradient-to-r from-violet-500 to-indigo-500" />
         </div>
 
-        <div className={`stat-card group ${statShell}`}>
+        <div className={`group p-5 ${softSurface}`}>
           <div className="flex items-center justify-between">
             <div>
               <p className="mb-1 text-sm text-zinc-500 dark:text-gray-400">Upcoming</p>
@@ -122,10 +113,10 @@ export default function OrganizerDashboard() {
               <CheckCircle className="h-6 w-6 text-emerald-700 dark:text-emerald-300" />
             </div>
           </div>
-          <div className="mt-4 h-1 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400" />
+          <div className="mt-4 h-0.5 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400" />
         </div>
 
-        <div className={`stat-card group ${statShell}`}>
+        <div className={`group p-5 ${softSurface}`}>
           <div className="flex items-center justify-between">
             <div>
               <p className="mb-1 text-sm text-zinc-500 dark:text-gray-400">Pending Photos</p>
@@ -135,10 +126,10 @@ export default function OrganizerDashboard() {
               <AlertCircle className="h-6 w-6 text-amber-700 dark:text-amber-300" />
             </div>
           </div>
-          <div className="mt-4 h-1 rounded-full bg-gradient-to-r from-amber-500 to-amber-400" />
+          <div className="mt-4 h-0.5 rounded-full bg-gradient-to-r from-amber-500 to-amber-400" />
         </div>
 
-        <div className={`stat-card group ${statShell}`}>
+        <div className={`group p-5 ${softSurface}`}>
           <div className="flex items-center justify-between">
             <div>
               <p className="mb-1 text-sm text-zinc-500 dark:text-gray-400">Total Attendees</p>
@@ -150,23 +141,23 @@ export default function OrganizerDashboard() {
               <Users className="h-6 w-6 text-blue-700 dark:text-blue-300" />
             </div>
           </div>
-          <div className="mt-4 h-1 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500" />
+          <div className="mt-4 h-0.5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500" />
         </div>
       </div>
 
       {/* My Events */}
-      <div className="card border-zinc-200/80 shadow-lg shadow-zinc-900/5 dark:border-white/5 dark:bg-[#0f0c18] dark:shadow-[0_14px_50px_rgba(0,0,0,0.35)]">
-        <div className="mb-6 flex items-center justify-between">
+      <section className={`p-5 sm:p-8 ${softSurface}`}>
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm text-zinc-500 dark:text-gray-400">Your organized events</p>
-            <h2 className="text-xl font-semibold text-zinc-900 dark:text-white">My Events</h2>
+            <p className="text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-gray-500">Your events</p>
+            <h2 className="text-xl font-semibold text-zinc-900 dark:text-white">All organized events</h2>
           </div>
           <Link
             href="/organizer/events/create"
-            className="flex items-center gap-2 font-medium text-violet-600 transition-colors hover:text-violet-500 dark:text-violet-400 dark:hover:text-violet-300"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-violet-500/20 transition hover:bg-violet-500 sm:justify-start"
           >
             <Plus className="h-4 w-4" />
-            Create New Event
+            New event
           </Link>
         </div>
 
@@ -176,9 +167,10 @@ export default function OrganizerDashboard() {
               <Link
                 key={event._id}
                 href={`/events/${event._id}/manage`}
-                className="group rounded-xl border border-zinc-200/90 bg-zinc-50/50 p-6 shadow-sm transition-all hover:-translate-y-1 hover:border-violet-300/70 hover:shadow-md dark:border-white/5 dark:bg-[#14101f] dark:shadow-[0_12px_40px_rgba(0,0,0,0.35)] dark:hover:border-violet-500/30"
+                className={`group relative overflow-hidden p-6 ${softSurface} ${softSurfaceHover}`}
               >
-                <div className="mb-3 flex items-start justify-between">
+                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-indigo-500 opacity-90" />
+                <div className="mb-3 flex items-start justify-between pt-1">
                   <h3 className="line-clamp-2 text-lg font-semibold text-zinc-900 transition-colors group-hover:text-violet-700 dark:text-white dark:group-hover:text-violet-400">
                     {event.name}
                   </h3>
@@ -215,7 +207,7 @@ export default function OrganizerDashboard() {
             ))}
           </div>
         ) : (
-          <div className="rounded-xl border border-zinc-200/90 bg-zinc-50/80 py-12 text-center dark:border-white/5 dark:bg-[#14101f]">
+          <div className="rounded-2xl bg-zinc-50/90 py-12 text-center ring-1 ring-zinc-900/[0.05] dark:bg-white/[0.04] dark:ring-white/10">
             <Calendar className="mx-auto mb-4 h-12 w-12 text-zinc-400 dark:text-gray-600" />
             <p className="mb-4 text-zinc-600 dark:text-gray-300">You haven&apos;t created any events yet</p>
             <Link
@@ -227,10 +219,10 @@ export default function OrganizerDashboard() {
             </Link>
           </div>
         )}
-      </div>
+      </section>
 
-      {/* Quick Actions */}
-      <div className="card border-zinc-200/80 shadow-lg shadow-zinc-900/5 dark:border-white/5 dark:bg-[#0f0c18] dark:shadow-[0_14px_50px_rgba(0,0,0,0.35)]">
+      {/* Assign + quick links */}
+      <section className={`p-5 sm:p-8 ${softSurface}`}>
         <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-sm text-zinc-500 dark:text-gray-400">Send upload permissions</p>
@@ -295,7 +287,7 @@ export default function OrganizerDashboard() {
             </div>
           </Link>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

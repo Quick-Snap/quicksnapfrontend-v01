@@ -22,11 +22,11 @@ export default function DashboardPage() {
 
   if (authLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[70vh]">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-violet-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="animate-pulse font-medium text-zinc-500 dark:text-gray-400">Loading your dashboard...</p>
+      <div className="flex min-h-[65vh] flex-col items-center justify-center px-4">
+        <div className="relative">
+          <div className="h-14 w-14 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600 dark:border-white/15 dark:border-t-violet-500" />
         </div>
+        <p className="mt-6 text-center text-sm font-medium text-zinc-500 dark:text-gray-400">Loading your dashboard…</p>
       </div>
     );
   }
@@ -35,7 +35,6 @@ export default function DashboardPage() {
     return null;
   }
 
-  // Render role-based dashboard
   if (role === 'admin') {
     return <AdminDashboard />;
   }
@@ -48,6 +47,5 @@ export default function DashboardPage() {
     return <PhotographerDashboard />;
   }
 
-  // Default to student dashboard
   return <StudentDashboard />;
 }
