@@ -33,11 +33,11 @@ function CaptureProgressRing({ percentage }: { percentage: number }) {
   const offset = c - (Math.min(100, percentage) / 100) * c;
   return (
     <svg
-      className="pointer-events-none absolute left-1/2 top-1/2 h-[clamp(7.5rem,28vw,9rem)] w-[clamp(7.5rem,28vw,9rem)] -translate-x-1/2 -translate-y-1/2 sm:h-36 sm:w-36"
+      className="pointer-events-none absolute left-1/2 top-1/2 h-[clamp(7.5rem,28vw,9rem)] w-[clamp(7.5rem,28vw,9rem)] -translate-x-1/2 -translate-y-1/2 text-white/15 sm:h-36 sm:w-36"
       viewBox="0 0 128 128"
       aria-hidden
     >
-      <circle cx="64" cy="64" r={r} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="6" />
+      <circle cx="64" cy="64" r={r} fill="none" stroke="currentColor" strokeWidth="6" />
       <circle
         cx="64"
         cy="64"
@@ -379,13 +379,13 @@ export default function RegisterFacePage() {
         immersiveMobile ? 'max-sm:pb-0 max-sm:pt-2' : ''
       }`}
     >
-      <div className="absolute inset-0 bg-[#0a0a0a]">
-        <div className="absolute inset-0 bg-gradient-mesh opacity-50"></div>
+      <div className="absolute inset-0 bg-[var(--background)] dark:bg-[#0a0a0a]">
+        <div className="absolute inset-0 bg-gradient-mesh opacity-[0.42] dark:opacity-50"></div>
       </div>
 
-      <div className="pointer-events-none absolute left-10 top-20 hidden h-96 w-96 animate-float rounded-full bg-emerald-500/10 blur-[100px] sm:block"></div>
-      <div className="pointer-events-none absolute bottom-20 right-10 hidden h-80 w-80 animate-float rounded-full bg-violet-500/10 blur-[100px] delay-200 sm:block"></div>
-      <div className="pointer-events-none absolute left-1/2 top-1/2 hidden h-72 w-72 -translate-x-1/2 -translate-y-1/2 animate-float rounded-full bg-blue-500/5 blur-[100px] delay-400 sm:block"></div>
+      <div className="pointer-events-none absolute left-10 top-20 hidden h-96 w-96 animate-float rounded-full bg-emerald-400/25 blur-[100px] dark:bg-emerald-500/10 sm:block"></div>
+      <div className="pointer-events-none absolute bottom-20 right-10 hidden h-80 w-80 animate-float rounded-full bg-violet-400/20 blur-[100px] delay-200 dark:bg-violet-500/10 sm:block"></div>
+      <div className="pointer-events-none absolute left-1/2 top-1/2 hidden h-72 w-72 -translate-x-1/2 -translate-y-1/2 animate-float rounded-full bg-indigo-400/15 blur-[100px] delay-400 dark:bg-blue-500/5 sm:block"></div>
 
       <div
         className={`animate-slide-up relative z-10 w-full max-w-2xl flex-1 px-3 pb-4 sm:mx-auto sm:flex-none sm:px-0 sm:pb-0 ${
@@ -393,7 +393,7 @@ export default function RegisterFacePage() {
         }`}
       >
         <div
-          className={`card-glass rounded-none border-0 p-3 shadow-none sm:rounded-2xl sm:border sm:border-white/10 sm:bg-[var(--background-secondary)]/80 sm:p-8 sm:shadow-2xl dark:sm:bg-white/[0.06] ${
+          className={`rounded-none border-0 bg-transparent p-3 shadow-none backdrop-blur-none sm:rounded-2xl sm:border sm:border-zinc-200/90 sm:bg-white/85 sm:p-8 sm:shadow-xl sm:backdrop-blur-xl dark:sm:border-white/10 dark:sm:bg-white/[0.06] dark:sm:shadow-2xl ${
             immersiveMobile ? 'max-sm:flex max-sm:min-h-0 max-sm:flex-1 max-sm:flex-col max-sm:bg-transparent max-sm:p-2' : ''
           }`}
         >
@@ -406,8 +406,8 @@ export default function RegisterFacePage() {
             <h1 className="text-gradient mb-1 px-2 text-xl font-bold leading-tight sm:mb-2 sm:text-3xl">
               {user?.faceRegistered ? 'Update Face Data' : 'Register Your Face'}
             </h1>
-            <p className="flex items-center justify-center gap-2 px-1 text-xs leading-snug text-gray-400 sm:text-base">
-              <Sparkles className="h-3.5 w-3.5 shrink-0 text-emerald-400 sm:h-4 sm:w-4" />
+            <p className="flex items-center justify-center gap-2 px-1 text-xs leading-snug text-zinc-600 dark:text-gray-400 sm:text-base">
+              <Sparkles className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400 sm:h-4 sm:w-4" />
               <span className="max-w-md">
                 {user?.faceRegistered ? 'Update your recognition data' : 'Enable automatic photo recognition at events'}
               </span>
@@ -416,17 +416,17 @@ export default function RegisterFacePage() {
 
           {user?.faceRegistered && (
             <div
-              className={`animate-slide-up mb-4 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 sm:mb-6 sm:p-4 ${immersiveMobile ? 'max-sm:hidden' : ''}`}
+              className={`animate-slide-up mb-4 rounded-xl border border-amber-200/90 bg-amber-50/95 p-3 sm:mb-6 sm:p-4 dark:border-amber-500/20 dark:bg-amber-500/10 ${immersiveMobile ? 'max-sm:hidden' : ''}`}
             >
               <div className="flex gap-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/20">
-                  <AlertCircle className="h-4 w-4 text-amber-400" />
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-200/80 dark:bg-amber-500/20">
+                  <AlertCircle className="h-4 w-4 text-amber-700 dark:text-amber-400" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-amber-300">Warning: Replacing Existing Data</h3>
-                  <p className="mt-1 text-sm text-gray-400">
+                  <h3 className="font-semibold text-amber-900 dark:text-amber-300">Warning: Replacing Existing Data</h3>
+                  <p className="mt-1 text-sm text-zinc-700 dark:text-gray-400">
                     You already have a face registered. Proceeding will{' '}
-                    <span className="font-bold text-amber-300">permanently delete</span> your old face data and photos
+                    <span className="font-bold text-amber-800 dark:text-amber-300">permanently delete</span> your old face data and photos
                     associated with it might need re-indexing.
                   </p>
                 </div>
@@ -436,16 +436,16 @@ export default function RegisterFacePage() {
 
           {/* Mobile: compact expandable tips — hidden during live camera */}
           <details
-            className={`group mb-4 rounded-xl border border-white/10 bg-white/[0.04] sm:hidden ${immersiveMobile ? 'hidden' : ''}`}
+            className={`group mb-4 rounded-xl border border-zinc-200/90 bg-white/90 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none sm:hidden ${immersiveMobile ? 'hidden' : ''}`}
           >
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3.5 text-sm font-semibold text-white [&::-webkit-details-marker]:hidden">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3.5 text-sm font-semibold text-zinc-900 dark:text-white [&::-webkit-details-marker]:hidden">
               <span className="flex items-center gap-2">
-                <Shield className="h-4 w-4 shrink-0 text-emerald-400" />
+                <Shield className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
                 Tips before you start
               </span>
-              <ChevronDown className="h-4 w-4 shrink-0 text-gray-400 transition-transform group-open:rotate-180" />
+              <ChevronDown className="h-4 w-4 shrink-0 text-zinc-500 transition-transform group-open:rotate-180 dark:text-gray-400" />
             </summary>
-            <div className="space-y-3 border-t border-white/10 px-4 pb-4 pt-2 text-xs leading-relaxed text-gray-400">
+            <div className="space-y-3 border-t border-zinc-200/80 px-4 pb-4 pt-2 text-xs leading-relaxed text-zinc-600 dark:border-white/10 dark:text-gray-400">
               <p>
                 Live enrollment only — camera required; uploads are disabled so you register with a real-time selfie.
               </p>
@@ -458,23 +458,23 @@ export default function RegisterFacePage() {
             </div>
           </details>
 
-          <div className="animate-slide-up delay-100 mb-4 hidden rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 sm:mb-6 sm:block sm:p-4">
-            <h3 className="mb-1.5 flex items-center gap-2 text-sm font-semibold text-white sm:text-base">
-              <Shield className="h-4 w-4 shrink-0 text-emerald-400 sm:h-5 sm:w-5" />
+          <div className="animate-slide-up delay-100 mb-4 hidden rounded-xl border border-emerald-200/90 bg-emerald-50/90 p-3 shadow-sm sm:mb-6 sm:block sm:p-4 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:shadow-none">
+            <h3 className="mb-1.5 flex items-center gap-2 text-sm font-semibold text-zinc-900 sm:text-base dark:text-white">
+              <Shield className="h-4 w-4 shrink-0 text-emerald-600 sm:h-5 sm:w-5 dark:text-emerald-400" />
               Live enrollment only
             </h3>
-            <p className="text-xs leading-relaxed text-gray-400 sm:text-sm">
+            <p className="text-xs leading-relaxed text-zinc-600 sm:text-sm dark:text-gray-400">
               Registration uses your camera with real-time face checks. File uploads are disabled here so you cannot
               register using a saved or third-party photo.
             </p>
           </div>
 
-          <div className="card animate-slide-up delay-100 mb-4 hidden rounded-xl border border-violet-500/20 bg-violet-500/10 p-3 sm:mb-6 sm:block sm:p-4">
-            <h3 className="mb-1.5 flex items-center gap-2 text-sm font-semibold text-white sm:text-base">
-              <AlertCircle className="h-4 w-4 shrink-0 text-violet-400 sm:h-5 sm:w-5" />
+          <div className="animate-slide-up delay-100 mb-4 hidden rounded-xl border border-violet-200/90 bg-violet-50/90 p-3 shadow-sm sm:mb-6 sm:block sm:p-4 dark:border-violet-500/20 dark:bg-violet-500/10 dark:shadow-none">
+            <h3 className="mb-1.5 flex items-center gap-2 text-sm font-semibold text-zinc-900 sm:text-base dark:text-white">
+              <AlertCircle className="h-4 w-4 shrink-0 text-violet-600 sm:h-5 sm:w-5 dark:text-violet-400" />
               Photo guidelines
             </h3>
-            <ul className="list-inside list-disc space-y-0.5 text-xs leading-relaxed text-gray-400 sm:space-y-1 sm:text-sm">
+            <ul className="list-inside list-disc space-y-0.5 text-xs leading-relaxed text-zinc-600 sm:space-y-1 sm:text-sm dark:text-gray-400">
               <li>Face the camera directly with good lighting</li>
               <li>Follow the random prompts (blink, turn head, smile)</li>
               <li>Stay still for ~1.5 seconds when the progress ring fills</li>
@@ -484,8 +484,8 @@ export default function RegisterFacePage() {
 
           {capturedImage && (
             <div className="mb-2 text-center sm:hidden">
-              <p className="text-lg font-bold text-white">Review your selfie</p>
-              <p className="text-xs text-gray-400">Happy with it? Register or retake below.</p>
+              <p className="text-lg font-bold text-zinc-900 dark:text-white">Review your selfie</p>
+              <p className="text-xs text-zinc-600 dark:text-gray-400">Happy with it? Register or retake below.</p>
             </div>
           )}
 
@@ -495,7 +495,7 @@ export default function RegisterFacePage() {
             {!capturedImage ? (
               <div className={`space-y-3 sm:space-y-4 ${immersiveMobile ? 'max-sm:flex max-sm:min-h-0 max-sm:flex-1 max-sm:flex-col max-sm:space-y-2' : ''}`}>
                 <div
-                  className={`relative mx-auto w-full overflow-hidden rounded-xl border border-white/10 bg-[#0a0a0a] shadow-xl sm:rounded-2xl ${
+                  className={`relative mx-auto w-full overflow-hidden rounded-xl border border-zinc-200/90 bg-zinc-100 shadow-lg shadow-zinc-900/5 dark:border-white/10 dark:bg-[#0a0a0a] dark:shadow-xl sm:rounded-2xl ${
                     isCameraActive
                       ? 'max-sm:h-[80dvh] max-sm:max-h-[82dvh] max-sm:min-h-[78dvh] max-sm:flex-shrink-0 sm:aspect-video'
                       : 'aspect-video max-sm:min-h-[11rem]'
@@ -549,11 +549,11 @@ export default function RegisterFacePage() {
                       )}
                     </>
                   ) : (
-                    <div className="flex h-full min-h-[9rem] flex-col items-center justify-center px-3 text-center text-gray-500 sm:px-4">
-                      <Camera className="mb-2 h-10 w-10 opacity-40 sm:mb-4 sm:h-16 sm:w-16" />
-                      <p className="text-xs leading-snug text-gray-400 sm:text-sm">Camera not active</p>
-                      <p className="mt-1.5 max-w-[17rem] text-[11px] leading-snug text-gray-500 sm:text-xs">
-                        Use <span className="font-medium text-gray-400">Start Camera</span> for a guided live selfie.
+                    <div className="flex h-full min-h-[9rem] flex-col items-center justify-center px-3 text-center text-zinc-500 sm:px-4 dark:text-gray-500">
+                      <Camera className="mb-2 h-10 w-10 opacity-50 text-zinc-400 dark:opacity-40 sm:mb-4 sm:h-16 sm:w-16" />
+                      <p className="text-xs leading-snug text-zinc-600 sm:text-sm dark:text-gray-400">Camera not active</p>
+                      <p className="mt-1.5 max-w-[17rem] text-[11px] leading-snug text-zinc-500 sm:text-xs dark:text-gray-500">
+                        Use <span className="font-medium text-zinc-700 dark:text-gray-400">Start Camera</span> for a guided live selfie.
                       </p>
                     </div>
                   )}
@@ -561,7 +561,9 @@ export default function RegisterFacePage() {
 
                 <div
                   className={`flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-3 ${
-                    isCameraActive ? 'max-sm:sticky max-sm:bottom-0 max-sm:z-30 max-sm:rounded-t-2xl max-sm:border-t max-sm:border-white/10 max-sm:bg-[var(--background)]/95 max-sm:px-1 max-sm:pb-safe-plus max-sm:pt-3 max-sm:backdrop-blur-lg dark:max-sm:bg-[#0a0a0a]/92' : ''
+                    isCameraActive
+                      ? 'max-sm:sticky max-sm:bottom-0 max-sm:z-30 max-sm:rounded-t-2xl max-sm:border-t max-sm:border-zinc-200/90 max-sm:bg-white/95 max-sm:px-1 max-sm:pb-safe-plus max-sm:pt-3 max-sm:shadow-[0_-8px_30px_rgba(0,0,0,0.06)] max-sm:backdrop-blur-lg dark:max-sm:border-white/10 dark:max-sm:bg-[#0a0a0a]/92 dark:max-sm:shadow-none'
+                      : ''
                   }`}
                 >
                   {!isCameraActive ? (
@@ -599,13 +601,15 @@ export default function RegisterFacePage() {
                 </div>
 
                 {landmarkerState === 'error' && (
-                  <p className="text-center text-sm text-amber-300">Face detection failed to load. Try again or use another browser.</p>
+                  <p className="text-center text-sm text-amber-800 dark:text-amber-300">
+                    Face detection failed to load. Try again or use another browser.
+                  </p>
                 )}
               </div>
             ) : (
               <div className={`space-y-4 ${immersiveMobile ? 'max-sm:flex max-sm:min-h-0 max-sm:flex-1 max-sm:flex-col max-sm:space-y-3' : ''}`}>
                 <div
-                  className={`relative overflow-hidden rounded-xl border border-white/10 bg-[#0a0a0a] shadow-xl sm:aspect-video sm:rounded-2xl ${
+                  className={`relative overflow-hidden rounded-xl border border-zinc-200/90 bg-zinc-100 shadow-lg shadow-zinc-900/5 dark:border-white/10 dark:bg-[#0a0a0a] dark:shadow-xl sm:aspect-video sm:rounded-2xl ${
                     immersiveMobile
                       ? 'max-sm:h-[78dvh] max-sm:max-h-[80dvh] max-sm:min-h-[72dvh] max-sm:flex-shrink-0'
                       : 'aspect-video max-sm:min-h-[min(44vh,360px)]'
@@ -629,7 +633,7 @@ export default function RegisterFacePage() {
                   )}
                 </div>
 
-                <div className="flex flex-col-reverse justify-stretch gap-3 max-sm:sticky max-sm:bottom-0 max-sm:z-30 max-sm:rounded-t-2xl max-sm:border-t max-sm:border-white/10 max-sm:bg-[var(--background)]/95 max-sm:px-1 max-sm:pb-safe-plus max-sm:pt-3 max-sm:backdrop-blur-lg dark:max-sm:bg-[#0a0a0a]/92 sm:flex-row sm:justify-center sm:gap-3">
+                <div className="flex flex-col-reverse justify-stretch gap-3 max-sm:sticky max-sm:bottom-0 max-sm:z-30 max-sm:rounded-t-2xl max-sm:border-t max-sm:border-zinc-200/90 max-sm:bg-white/95 max-sm:px-1 max-sm:pb-safe-plus max-sm:pt-3 max-sm:shadow-[0_-8px_30px_rgba(0,0,0,0.06)] max-sm:backdrop-blur-lg dark:max-sm:border-white/10 dark:max-sm:bg-[#0a0a0a]/92 dark:max-sm:shadow-none sm:flex-row sm:justify-center sm:gap-3">
                   <button
                     type="button"
                     onClick={handleRetake}
@@ -663,11 +667,11 @@ export default function RegisterFacePage() {
           </div>
 
           <div
-            className={`animate-fade-in delay-300 border-t border-white/10 pb-safe pt-4 text-center sm:pb-0 sm:pt-4 ${immersiveMobile ? 'max-sm:hidden' : ''}`}
+            className={`animate-fade-in delay-300 border-t border-zinc-200/90 pb-safe pt-4 text-center dark:border-white/10 sm:pb-0 sm:pt-4 ${immersiveMobile ? 'max-sm:hidden' : ''}`}
           >
             <Link
               href="/dashboard"
-              className="inline-flex min-h-[44px] items-center justify-center px-4 text-sm text-gray-500 transition-colors hover:text-violet-400 active:text-violet-400"
+              className="inline-flex min-h-[44px] items-center justify-center px-4 text-sm text-zinc-600 transition-colors hover:text-violet-600 active:text-violet-600 dark:text-gray-500 dark:hover:text-violet-400 dark:active:text-violet-400"
             >
               Skip for now →
             </Link>
@@ -675,7 +679,7 @@ export default function RegisterFacePage() {
         </div>
 
         <p
-          className={`animate-fade-in delay-400 mt-3 px-2 pb-safe text-center text-[11px] leading-relaxed text-gray-500 sm:mt-6 sm:pb-0 sm:text-sm ${immersiveMobile ? 'max-sm:hidden' : ''}`}
+          className={`animate-fade-in delay-400 mt-3 px-2 pb-safe text-center text-[11px] leading-relaxed text-zinc-500 sm:mt-6 sm:pb-0 sm:text-sm dark:text-gray-500 ${immersiveMobile ? 'max-sm:hidden' : ''}`}
         >
           Your face data is securely stored and used only for photo recognition at events
         </p>
