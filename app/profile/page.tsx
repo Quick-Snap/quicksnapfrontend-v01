@@ -63,7 +63,7 @@ export default function ProfilePage() {
     return (
         <div className="max-w-4xl mx-auto space-y-8">
             {/* Hero Header */}
-            <div className="relative overflow-hidden rounded-2xl border border-zinc-200/90 bg-gradient-to-br from-violet-50/95 via-white to-zinc-50 shadow-lg shadow-zinc-900/5 dark:bg-[#111111] dark:border-white/10 dark:shadow-none">
+            <div className="relative overflow-hidden rounded-2xl border border-zinc-200/90 bg-gradient-to-br from-violet-50/95 via-white to-zinc-50 shadow-lg shadow-zinc-900/5 dark:border-white/10 dark:shadow-none dark:from-[#1a1428] dark:via-[#120f1c] dark:to-[#0c1222]">
                 {/* Subtle gradient overlay */}
                 <div className="absolute inset-0 bg-gradient-to-br from-violet-500/8 via-transparent to-indigo-500/8 dark:from-violet-500/5 dark:to-indigo-500/5" />
                 
