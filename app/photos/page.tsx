@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Image as ImageIcon, Download, Calendar, Users, Search, Sparkles, X, Loader2 } from 'lucide-react';
+import { Image as ImageIcon, Download, Calendar, Users, Search, Sparkles, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { photoApi } from '@/lib/api';
 import Pagination from '@/app/components/ui/Pagination';
+import { PhotoLightbox } from '@/app/components/photos/PhotoLightbox';
 import toast from 'react-hot-toast';
 import { useQuery } from 'react-query';
 
@@ -299,67 +300,46 @@ export default function MyPhotosPage() {
         </div>
       )}
 
-      {/* Photo Modal */}
       {selectedPhoto && (
-        <div
-          className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-          onClick={() => setSelectedPhoto(null)}
-        >
-          <div
-            className="max-h-[90vh] w-full max-w-4xl overflow-auto rounded-2xl border border-zinc-200/90 bg-white dark:border-white/10 dark:bg-[#111111]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="relative">
-              <img
-                src={selectedPhoto.url}
-                alt={selectedPhoto.fileName}
-                className="h-auto w-full rounded-t-2xl"
-              />
+        <PhotoLightbox
+          imageSrc={selectedPhoto.url}
+          imageAlt={selectedPhoto.fileName || 'Photo'}
+          onClose={() => setSelectedPhoto(null)}
+          footer={
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <h3 className="truncate text-base font-semibold text-white sm:text-lg">
+                  {selectedPhoto.eventId?.name || 'Event photo'}
+                </h3>
+                <p className="truncate text-xs text-gray-300 sm:text-sm" title={selectedPhoto.fileName}>
+                  {selectedPhoto.fileName}
+                </p>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-400">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Calendar className="h-3.5 w-3.5 shrink-0 text-violet-400" />
+                    {selectedPhoto.uploadedAt
+                      ? new Date(selectedPhoto.uploadedAt).toLocaleDateString()
+                      : 'Unknown date'}
+                  </span>
+                  {selectedPhoto.userConfidence ? (
+                    <span className="inline-flex items-center gap-1.5">
+                      <Users className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
+                      {Math.round(selectedPhoto.userConfidence)}% match
+                    </span>
+                  ) : null}
+                </div>
+              </div>
               <button
                 type="button"
-                onClick={() => setSelectedPhoto(null)}
-                className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-black/60 text-white backdrop-blur-sm transition-colors hover:bg-black/75 dark:border-white/10"
+                onClick={() => handleDownload(selectedPhoto)}
+                className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-5 text-sm font-semibold text-white shadow-lg shadow-violet-900/30 transition hover:from-violet-500 hover:to-indigo-500 sm:h-10 sm:w-auto"
               >
-                <X size={20} />
+                <Download size={18} className="shrink-0" />
+                Download
               </button>
             </div>
-            <div className="space-y-4 p-6">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="text-xl font-bold text-zinc-900 dark:text-white">{selectedPhoto.eventId?.name || 'Event Photo'}</h3>
-                  <p className="mt-1 text-sm text-zinc-500 dark:text-gray-500">{selectedPhoto.fileName}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => handleDownload(selectedPhoto)}
-                  className="btn-gradient flex items-center gap-2 rounded-xl px-5 py-2.5 font-medium"
-                >
-                  <Download size={18} />
-                  Download
-                </button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 border-t border-zinc-200/90 pt-4 dark:border-white/10">
-                <div className="flex items-center gap-3 text-zinc-600 dark:text-gray-400">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-100 dark:bg-white/5">
-                    <Calendar size={16} className="text-violet-600 dark:text-violet-400" />
-                  </div>
-                  <span className="text-sm">
-                    {selectedPhoto.uploadedAt ? new Date(selectedPhoto.uploadedAt).toLocaleDateString() : 'Unknown date'}
-                  </span>
-                </div>
-                {selectedPhoto.userConfidence && (
-                  <div className="flex items-center gap-3 text-zinc-600 dark:text-gray-400">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-100 dark:bg-white/5">
-                      <Users size={16} className="text-emerald-600 dark:text-emerald-400" />
-                    </div>
-                    <span className="text-sm">{Math.round(selectedPhoto.userConfidence)}% match confidence</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+          }
+        />
       )}
     </div>
   );

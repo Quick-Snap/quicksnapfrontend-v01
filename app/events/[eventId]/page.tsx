@@ -15,7 +15,6 @@ import {
     User,
     Sparkles,
     Camera,
-    X,
     Lock
 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -27,6 +26,7 @@ import Pagination from '@/app/components/ui/Pagination';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from 'react-query';
 import { softSurface, softSurfaceHover } from '@/lib/dashboardUi';
+import { PhotoLightbox } from '@/app/components/photos/PhotoLightbox';
 
 const PHOTOS_PER_PAGE = 12;
 const PREVIEW_PHOTO_COUNT = 4;
@@ -658,48 +658,32 @@ export default function PublicEventPage() {
             </section>
 
             {selectedPhoto && (
-                <div
-                    className="fixed inset-0 z-50 flex items-end justify-center bg-black/90 backdrop-blur-md sm:items-center sm:p-6"
-                    onClick={() => setSelectedPhoto(null)}
-                    role="presentation"
-                >
-                    <button
-                        type="button"
-                        className="absolute right-3 top-[max(0.75rem,env(safe-area-inset-top))] z-[51] flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/12 text-white transition-colors hover:bg-white/20 sm:right-5 sm:top-5"
-                        onClick={() => setSelectedPhoto(null)}
-                        aria-label="Close"
-                    >
-                        <X size={20} />
-                    </button>
-                    <div
-                        className="relative flex max-h-[min(92dvh,920px)] w-full max-w-4xl flex-col items-stretch gap-3 overflow-y-auto px-3 pb-safe-plus pt-2 sm:max-h-[85vh] sm:px-0 sm:pb-6 sm:pt-0"
-                        onClick={(e) => e.stopPropagation()}
-                        role="dialog"
-                        aria-modal="true"
-                        aria-label="Photo viewer"
-                    >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                            src={
-                                getPhotoDisplayUrl(selectedPhoto) ||
-                                selectedPhoto.url ||
-                                selectedPhoto.s3Url
-                            }
-                            alt="Selected photo"
-                            className="mx-auto max-h-[min(78dvh,calc(100dvh-10rem))] w-auto max-w-full rounded-t-2xl object-contain shadow-2xl sm:max-h-[min(72vh,calc(85vh-8rem))] sm:rounded-2xl"
-                        />
-                        <div className="flex shrink-0 flex-col gap-3 rounded-2xl border border-zinc-200/90 bg-white/98 p-4 shadow-lg dark:border-white/10 dark:bg-[#14121f]/98 sm:flex-row sm:items-center sm:justify-between sm:rounded-xl">
-                            <div className="min-w-0 text-zinc-900 dark:text-white">
-                                <p className="truncate font-medium">{selectedPhoto.fileName}</p>
-                                <p className="text-sm text-zinc-500 dark:text-gray-400">
-                                    {new Date(selectedPhoto.uploadedAt || selectedPhoto.createdAt).toLocaleDateString()}
+                <PhotoLightbox
+                    imageSrc={
+                        getPhotoDisplayUrl(selectedPhoto) ||
+                        selectedPhoto.url ||
+                        selectedPhoto.s3Url ||
+                        ''
+                    }
+                    imageAlt={selectedPhoto.fileName || 'Selected photo'}
+                    onClose={() => setSelectedPhoto(null)}
+                    footer={
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                            <div className="min-w-0 flex-1">
+                                <p className="truncate font-medium text-white" title={selectedPhoto.fileName}>
+                                    {selectedPhoto.fileName}
+                                </p>
+                                <p className="mt-0.5 text-sm text-gray-300">
+                                    {new Date(
+                                        selectedPhoto.uploadedAt || selectedPhoto.createdAt
+                                    ).toLocaleDateString()}
                                 </p>
                             </div>
                             {currentUser ? (
                                 <Button
                                     onClick={() => handleDownload(selectedPhoto)}
                                     disabled={!!downloading}
-                                    className="h-11 w-full shrink-0 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-500 hover:to-indigo-500 disabled:opacity-50 sm:h-auto sm:w-auto sm:rounded-xl"
+                                    className="h-11 w-full shrink-0 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-500 hover:to-indigo-500 disabled:opacity-50 sm:h-10 sm:w-auto"
                                 >
                                     {downloading === selectedPhoto._id ? (
                                         <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
@@ -711,14 +695,14 @@ export default function PublicEventPage() {
                             ) : (
                                 <Button
                                     onClick={() => router.push('/login')}
-                                    className="h-11 w-full shrink-0 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-500 hover:to-indigo-500 sm:h-auto sm:w-auto sm:rounded-xl"
+                                    className="h-11 w-full shrink-0 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-500 hover:to-indigo-500 sm:h-10 sm:w-auto"
                                 >
                                     Log in to download
                                 </Button>
                             )}
                         </div>
-                    </div>
-                </div>
+                    }
+                />
             )}
             </div>
         </div>
