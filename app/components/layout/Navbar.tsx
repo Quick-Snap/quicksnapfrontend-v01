@@ -4,10 +4,13 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRole } from '@/hooks/useRole';
-import { Camera, Menu, X, User, LogOut, Home, Image as ImageIcon, Calendar, Shield, Settings, Upload, ChevronDown } from 'lucide-react';
+import { Menu, X, User, LogOut, Home, Image as ImageIcon, Calendar, Shield, Settings, Upload, ChevronDown } from 'lucide-react';
+import Image from 'next/image';
 import { useState, useRef, useEffect } from 'react';
 import { UserRole } from '@/types';
 import { ThemeToggle } from '@/app/components/ui/ThemeToggle';
+import lightLogo from '@/components/assets/7.png';
+import darkLogo from '@/components/assets/5.png';
 
 export default function Navbar() {
   const { user, logout, switchRole, activeRole } = useAuth();
@@ -84,13 +87,23 @@ export default function Navbar() {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between gap-2 md:grid md:grid-cols-[1fr_auto_1fr] md:items-center md:justify-normal md:gap-4">
           {/* Logo */}
-          <Link href="/dashboard" className="flex min-w-0 shrink-0 items-center space-x-3 group md:justify-self-start">
-            <div className="w-9 h-9 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-violet-500/20 group-hover:shadow-violet-500/40 transition-all">
-              <Camera className="h-5 w-5 text-white" />
-            </div>
-            <span className="text-lg font-semibold tracking-wide text-zinc-900 dark:text-white">
-              QUICKSNAP
-            </span>
+          <Link href="/dashboard" className="flex min-w-0 shrink-0 items-center group md:justify-self-start">
+            <Image
+              src={lightLogo}
+              alt="QuickSnap"
+              width={160}
+              height={48}
+              className="h-10 w-auto md:h-16 dark:hidden"
+              priority
+            />
+            <Image
+              src={darkLogo}
+              alt="QuickSnap"
+              width={160}
+              height={48}
+              className="h-10 w-auto md:h-16 hidden dark:block"
+              priority
+            />
           </Link>
 
           {/* Desktop Navigation — centered in navbar via middle grid column */}
