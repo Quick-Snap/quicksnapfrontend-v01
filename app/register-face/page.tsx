@@ -13,6 +13,7 @@ import {
   Sparkles,
   Shield,
   ChevronDown,
+  FlipHorizontal2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
@@ -75,6 +76,9 @@ export default function RegisterFacePage() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [landmarkerState, setLandmarkerState] = useState<LandmarkerReadyState>('idle');
+  // Default to non-mirrored preview so on-screen movement matches what the camera will save.
+  // Users that prefer the classic mirror selfie can flip it back with the toggle.
+  const [mirrorPreview, setMirrorPreview] = useState(false);
 
   const stopMediaStream = useCallback(() => {
     stopDetectionRef.current = true;
@@ -508,10 +512,21 @@ export default function RegisterFacePage() {
                         autoPlay
                         playsInline
                         muted
+                        style={{ transform: mirrorPreview ? 'scaleX(-1)' : 'scaleX(1)' }}
                         className="absolute inset-0 h-full w-full object-cover object-[center_top] sm:static sm:object-center"
                       />
                       {showLiveChrome && (
                         <>
+                          <button
+                            type="button"
+                            onClick={() => setMirrorPreview((m) => !m)}
+                            aria-pressed={mirrorPreview}
+                            title={mirrorPreview ? 'Turn off mirror preview' : 'Mirror preview'}
+                            className="absolute right-3 top-3 z-20 inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-black/55 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-md transition-colors hover:bg-black/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
+                          >
+                            <FlipHorizontal2 className="h-3.5 w-3.5" />
+                            {mirrorPreview ? 'Mirror: On' : 'Mirror: Off'}
+                          </button>
                           <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-2">
                             <div
                               className={`aspect-[3/4] w-[min(72vw,17rem)] max-w-[92%] rounded-full border-[3px] sm:h-[min(78%,22rem)] sm:w-[min(62%,17rem)] sm:border-4 ${
