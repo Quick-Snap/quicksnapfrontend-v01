@@ -1,40 +1,27 @@
-'use client';
+import type { Metadata, Viewport } from 'next';
+import { Space_Grotesk, Inter } from 'next/font/google';
+import './globals.css';
+import { RootLayoutClient } from './RootLayoutClient';
 
-import type { Viewport } from 'next';
-import { Space_Grotesk, Inter } from "next/font/google";
-import Script from "next/script";
-import { usePathname } from "next/navigation";
-import "./globals.css";
-import { AuthProvider } from "../contexts/AuthContext";
-import Navbar from "./components/layout/Navbar";
-import { AuthSessionProvider } from "./components/providers/AuthSessionProvider";
-import QueryProvider from "../providers/QueryProvider";
-import { ThemeProvider } from "./components/providers/ThemeProvider";
-import { ThemedToaster } from "./components/ui/ThemedToaster";
-
-const themeInitScript = `
-(function(){
-  try {
-    var k = 'quicksnap-theme';
-    var t = localStorage.getItem(k);
-    var root = document.documentElement;
-    if (t === 'light') root.classList.remove('dark');
-    else if (t === 'dark') root.classList.add('dark');
-    else if (window.matchMedia('(prefers-color-scheme: dark)').matches) root.classList.add('dark');
-    else root.classList.remove('dark');
-  } catch (e) {}
-})();
-`;
-
-const spaceGrotesk = Space_Grotesk({ 
-  subsets: ["latin"],
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
   variable: '--font-space-grotesk',
 });
 
-const inter = Inter({ 
-  subsets: ["latin"],
+const inter = Inter({
+  subsets: ['latin'],
   variable: '--font-inter',
 });
+
+export const metadata: Metadata = {
+  title: { default: 'QuickSnap', template: '%s | QuickSnap' },
+  /** PNG in `public/favicon.png`. `/favicon.ico` rewrites to the same file (see `next.config.js`). */
+  icons: {
+    icon: [{ url: '/favicon.png', type: 'image/png' }],
+    shortcut: '/favicon.png',
+    apple: '/favicon.png',
+  },
+};
 
 /** Safe-area + notch friendly for camera / face flows on mobile */
 export const viewport: Viewport = {
@@ -48,46 +35,12 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
-  const isLandingPage = pathname === '/';
-  const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/forgot-password' || pathname?.startsWith('/reset-password');
-  const isRegisterFace = pathname === '/register-face';
-  const isDashboard = pathname === '/dashboard';
-
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${spaceGrotesk.variable} ${inter.variable} font-sans bg-[var(--background)] text-[var(--foreground)] antialiased`}>
-        <Script id="quicksnap-theme-init" strategy="beforeInteractive">
-          {themeInitScript}
-        </Script>
-        <QueryProvider>
-          <AuthSessionProvider>
-          <AuthProvider>
-            <ThemeProvider>
-            {/* Background gradient mesh — softer on light */}
-            <div className="fixed inset-0 bg-gradient-mesh pointer-events-none opacity-[0.35] dark:opacity-50" />
-
-            <div className="relative min-h-screen">
-              {!isLandingPage && !isAuthPage && <Navbar />}
-              <main
-                className={
-                  isLandingPage || isAuthPage || isRegisterFace
-                    ? isRegisterFace
-                      ? 'min-h-[100dvh] px-0 py-0'
-                      : ''
-                    : isDashboard
-                      ? 'mx-auto w-full max-w-6xl px-4 pb-12 pt-5 sm:px-6 sm:pb-16 sm:pt-8 lg:px-8'
-                      : 'container mx-auto px-4 py-8'
-                }
-              >
-                {children}
-              </main>
-            </div>
-            <ThemedToaster />
-            </ThemeProvider>
-          </AuthProvider>
-          </AuthSessionProvider>
-        </QueryProvider>
+      <body
+        className={`${spaceGrotesk.variable} ${inter.variable} font-sans bg-[var(--background)] text-[var(--foreground)] antialiased`}
+      >
+        <RootLayoutClient>{children}</RootLayoutClient>
       </body>
     </html>
   );

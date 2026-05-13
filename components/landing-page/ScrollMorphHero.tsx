@@ -117,11 +117,19 @@ const lerp = (start: number, end: number, t: number) => start * (1 - t) + end * 
 export interface ScrollMorphHeroProps {
     signupHref?: string;
     loginHref?: string;
+    /** Element id to scroll to when user taps the scroll hints (no route change). */
+    nextSectionId?: string;
+}
+
+function scrollToLandingSection(nextSectionId: string) {
+    const el = document.getElementById(nextSectionId);
+    el?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 export function ScrollMorphHero({
     signupHref = '/register',
-    loginHref = '/login'
+    loginHref = '/login',
+    nextSectionId = 'landing-features',
 }: ScrollMorphHeroProps) {
     const [introPhase, setIntroPhase] = useState<AnimationPhase>("scatter");
     const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
@@ -235,6 +243,17 @@ export function ScrollMorphHero({
         };
     }, [virtualScroll, animationComplete]);
 
+    const scrollToNextSection = () => {
+        if (!animationComplete) {
+            scrollRef.current = MAX_SCROLL;
+            virtualScroll.set(MAX_SCROLL);
+            setAnimationComplete(true);
+        }
+        requestAnimationFrame(() => {
+            scrollToLandingSection(nextSectionId);
+        });
+    };
+
     const morphProgress = useTransform(virtualScroll, [0, 600], [0, 1]);
     const smoothMorph = useSpring(morphProgress, { stiffness: 40, damping: 20 });
 
@@ -329,14 +348,21 @@ export function ScrollMorphHero({
                             <br />
                             <span className="text-violet-400">Delivered Instantly</span>
                         </h1>
-                        <motion.p
+                        <motion.button
+                            type="button"
                             initial={{ opacity: 0 }}
                             animate={introPhase === "circle" ? { opacity: 0.6 } : { opacity: 0 }}
                             transition={{ duration: 1, delay: 0.4 }}
-                            className="mt-6 text-[10px] md:text-xs font-medium tracking-[0.3em] text-violet-300/60 uppercase"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                scrollToNextSection();
+                            }}
+                            className="pointer-events-auto mt-6 cursor-pointer rounded-md px-3 py-2 text-[10px] md:text-xs font-medium tracking-[0.3em] text-violet-300/80 uppercase transition-colors hover:bg-white/5 hover:text-violet-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0a0a]"
+                            aria-label="Scroll to features"
                         >
                             ↓ Scroll
-                        </motion.p>
+                        </motion.button>
                     </motion.div>
                 </motion.div>
 
@@ -429,14 +455,25 @@ export function ScrollMorphHero({
                             animate={{ opacity: 1, y: 0 }}
                             className="absolute -bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center"
                         >
-                            <motion.div
-                                animate={{ y: [0, 8, 0] }}
-                                transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    scrollToNextSection();
+                                }}
+                                className="rounded-full p-2 text-violet-400 transition-colors hover:bg-white/10 hover:text-violet-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0a0a]"
+                                aria-label="Scroll to features"
                             >
-                                <svg className="w-6 h-6 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                                </svg>
-                            </motion.div>
+                                <motion.div
+                                    animate={{ y: [0, 8, 0] }}
+                                    transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                                >
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                                    </svg>
+                                </motion.div>
+                            </button>
                         </motion.div>
                     )}
                 </motion.div>
