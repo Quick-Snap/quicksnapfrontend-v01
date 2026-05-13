@@ -99,13 +99,14 @@ export default function ProfilePage() {
                                     )}
                                 </div>
                             </div>
-                            <button
-                                type="button"
+                            <Link
+                                href="/register-face"
                                 className="absolute bottom-0 right-0 w-9 h-9 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform border-2 border-white dark:border-[#111111]"
-                                aria-label="Change photo"
+                                aria-label={user.faceRegistered ? 'Update face photo' : 'Register your face'}
+                                title={user.faceRegistered ? 'Update face photo' : 'Register your face'}
                             >
                                 <Camera className="h-4 w-4 text-white" />
-                            </button>
+                            </Link>
                         </div>
 
                         {/* User Info */}

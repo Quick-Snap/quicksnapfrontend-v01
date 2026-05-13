@@ -10,6 +10,7 @@ export interface CTASectionProps {
   secondaryButtonText?: string;
   signupHref?: string;
   loginHref?: string;
+  contactHref?: string;
 }
 
 export function CTASection({
@@ -18,7 +19,8 @@ export function CTASection({
   primaryButtonText = "Start Free Trial",
   secondaryButtonText = "Contact Sales",
   signupHref = '/register',
-  loginHref = '/login'
+  loginHref = '/login',
+  contactHref = '/contact'
 }: CTASectionProps) {
   return (
     <section className="relative py-32 px-6 bg-[#0a0a0a]">
@@ -46,7 +48,7 @@ export function CTASection({
             {primaryButtonText}
           </Link>
           <Link
-            href={loginHref}
+            href={contactHref}
             className="px-8 py-4 bg-transparent hover:bg-white/5 text-white text-sm font-medium tracking-wider transition-all border border-white/20"
           >
             {secondaryButtonText}

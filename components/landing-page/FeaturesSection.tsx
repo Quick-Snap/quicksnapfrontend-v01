@@ -5,7 +5,10 @@ import { FeaturesGrid } from './FeaturesGrid';
 
 export function FeaturesSection() {
   return (
-    <section className="relative py-24 md:py-32 px-6 bg-[#0a0a0a]">
+    <section
+      id="landing-features"
+      className="relative scroll-mt-20 py-24 md:py-32 px-6 bg-[#0a0a0a]"
+    >
       {/* Subtle gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-violet-900/5 to-transparent pointer-events-none" />
       
