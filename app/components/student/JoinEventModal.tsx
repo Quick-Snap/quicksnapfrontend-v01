@@ -34,7 +34,7 @@ export default function JoinEventModal({ isOpen, onClose }: JoinEventModalProps)
                 setSuccess(true);
                 
                 // Reload user data to get updated events list
-                await loadUser();
+                await loadUser({ force: true });
                 
                 // Refresh all relevant queries
                 queryClient.invalidateQueries('userStats');

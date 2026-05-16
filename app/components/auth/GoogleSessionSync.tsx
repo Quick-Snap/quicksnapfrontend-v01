@@ -6,11 +6,10 @@ import { useAuthStore } from '@/stores';
 
 /**
  * When the user signs in with Google, NextAuth holds our API JWT. Mirror it
- * into `localStorage` and refresh the Zustand user so existing API clients work.
+ * into `localStorage` and refresh the Zustand user (deduped — no retry loop).
  */
 export function GoogleSessionSync() {
   const { data: session, status } = useSession();
-  const loadUser = useAuthStore((s) => s.loadUser);
   const lastSynced = useRef<string | null>(null);
 
   useEffect(() => {
@@ -27,8 +26,8 @@ export function GoogleSessionSync() {
     } catch {
       return;
     }
-    void loadUser();
-  }, [status, session?.accessToken, loadUser]);
+    void useAuthStore.getState().loadUser({ force: true });
+  }, [status, session?.accessToken]);
 
   return null;
 }

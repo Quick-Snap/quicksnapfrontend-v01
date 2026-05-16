@@ -22,12 +22,9 @@ interface AuthContextType {
  */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
-  const initialize = useAuthStore((state) => state.initialize);
-  const reset = useAuthStore((state) => state.reset);
-
   useEffect(() => {
-    initialize();
-  }, [initialize]);
+    void useAuthStore.getState().initialize();
+  }, []);
 
   // Clear react-query cache when user logs out
   useEffect(() => {

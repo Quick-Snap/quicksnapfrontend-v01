@@ -31,6 +31,13 @@ import { PhotoLightbox } from '@/app/components/photos/PhotoLightbox';
 const PHOTOS_PER_PAGE = 12;
 const PREVIEW_PHOTO_COUNT = 4;
 
+/** Up to 2 retries on 429; one retry otherwise. */
+function reactQueryRetry(failureCount: number, error: unknown): boolean {
+    const status = (error as { response?: { status?: number } })?.response?.status;
+    if (status === 429) return failureCount < 2;
+    return failureCount < 1;
+}
+
 /** Align with manage page — supports several API envelope shapes. */
 function normalizePhotosFromGet(res: any): any[] {
     if (!res) return [];
@@ -98,18 +105,19 @@ export default function PublicEventPage() {
     // Fetch Event details
     const { data: eventResult, isLoading: loading } = useQuery(
         ['event', eventId],
-        () => eventApi.getById(eventId),
-        { enabled: !!eventId }
+        () => eventApi.getById(eventId, { lite: true }),
+        { enabled: !!eventId, staleTime: 60 * 1000, retry: reactQueryRetry }
     );
     const event = eventResult?.data;
 
     // Full gallery — authenticated users only (limit aligned with prior behavior)
     const { data: photosResult, isLoading: photosLoading } = useQuery(
         ['eventPhotos', eventId],
-        () => eventApi.getPhotos(eventId, { limit: 500 }),
+        () => eventApi.getPhotos(eventId, { limit: 100 }),
         {
             enabled: !!eventId && !!currentUser,
             staleTime: 5 * 60 * 1000,
+            retry: reactQueryRetry,
         }
     );
     const allPhotos = normalizeEventPhotosPayload(photosResult);
@@ -152,10 +160,11 @@ export default function PublicEventPage() {
     // Fetch My Photos (filtered by eventId) - only for guest users
     const { data: myPhotosResult, isLoading: myPhotosLoading } = useQuery(
         ['myEventPhotos', eventId],
-        () => photoApi.getMyPhotos({ eventId, limit: 500 }),
+        () => photoApi.getMyPhotos({ eventId, limit: 100 }),
         {
             enabled: !!eventId && !!currentUser && !!isGuest,
-            staleTime: 5 * 60 * 1000, // 5 mins cache
+            staleTime: 5 * 60 * 1000,
+            retry: reactQueryRetry,
         }
     );
     const myPhotos = myPhotosResult?.data?.photos || [];

@@ -11,6 +11,11 @@ const normalizeRole = (role: string): UserRole => {
   return role as UserRole;
 };
 
+/** Debounce + dedupe concurrent /auth/me calls (prevents 429 storms). */
+let loadUserInFlight: Promise<void> | null = null;
+let lastLoadUserSuccessAt = 0;
+const LOAD_USER_DEBOUNCE_MS = 4000;
+
 interface AuthState {
   user: User | null;
   loading: boolean;
@@ -24,7 +29,7 @@ interface AuthActions {
   logout: () => Promise<void>;
   updateUser: (user: User) => void;
   switchRole: (role: UserRole) => void;
-  loadUser: () => Promise<void>;
+  loadUser: (options?: { force?: boolean }) => Promise<void>;
   initialize: () => Promise<void>;
   setLoading: (loading: boolean) => void;
   reset: () => void;
@@ -55,72 +60,114 @@ export const useAuthStore = create<AuthStore>()(
 
         const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
         if (token) {
-          await loadUser();
+          await loadUser({ force: true });
         } else {
           set({ loading: false, initialized: true });
         }
       },
 
-      loadUser: async () => {
-        try {
-          set({ loading: true });
-          const response = await authApi.getMe();
-          
-          if (response.success && response.data) {
-            const userData = response.data;
-            console.log('[AuthStore] Raw user data from API:', userData);
-            
-            const roles = userData.roles || [userData.role || 'guest'];
-            const normalizedRoles = roles.map(normalizeRole);
-            console.log('[AuthStore] Normalized roles:', normalizedRoles);
+      loadUser: async (options) => {
+        const force = options?.force === true;
+        const now = Date.now();
 
-            const user: User = {
-              id: userData._id || userData.id || '',
-              email: userData.email || '',
-              name: userData.name || '',
-              avatar: userData.avatar,
-              role: normalizedRoles[0] || 'user',
-              roles: normalizedRoles,
-              faceRegistered: !!userData.faceId,
-              createdAt: userData.createdAt,
-              settings: userData.settings,
-              events: userData.events?.map((e: any) => typeof e === 'string' ? e : e._id),
-            };
+        if (loadUserInFlight) {
+          return loadUserInFlight;
+        }
 
-            // Load saved active role
-            const savedRole = localStorage.getItem('activeRole') as UserRole | null;
-            const activeRole = savedRole && normalizedRoles.includes(savedRole) 
-              ? savedRole 
-              : normalizedRoles[0];
+        if (
+          !force &&
+          get().user &&
+          now - lastLoadUserSuccessAt < LOAD_USER_DEBOUNCE_MS
+        ) {
+          set({ loading: false, initialized: true });
+          return;
+        }
 
-            set({ user, activeRole, loading: false, initialized: true });
-          } else {
+        const run = async () => {
+          const hadUser = !!get().user;
+          if (!hadUser) {
+            set({ loading: true });
+          }
+
+          try {
+            const response = await authApi.getMe();
+
+            if (response.success && response.data) {
+              const userData = response.data;
+
+              const roles = userData.roles || [userData.role || 'guest'];
+              const normalizedRoles = roles.map(normalizeRole);
+
+              const user: User = {
+                id: userData._id || userData.id || '',
+                email: userData.email || '',
+                name: userData.name || '',
+                avatar: userData.avatar,
+                role: normalizedRoles[0] || 'user',
+                roles: normalizedRoles,
+                faceRegistered: !!userData.faceId || !!userData.faceRegistered,
+                createdAt: userData.createdAt,
+                settings: userData.settings,
+                events: userData.events?.map((e: { _id?: string } | string) =>
+                  typeof e === 'string' ? e : e._id
+                ),
+              };
+
+              const savedRole = localStorage.getItem('activeRole') as UserRole | null;
+              const activeRole =
+                savedRole && normalizedRoles.includes(savedRole)
+                  ? savedRole
+                  : normalizedRoles[0];
+
+              lastLoadUserSuccessAt = Date.now();
+              set({ user, activeRole, loading: false, initialized: true });
+            } else {
+              set({ loading: false, initialized: true });
+            }
+          } catch (error: unknown) {
+            const status = (error as { response?: { status?: number } })?.response?.status;
+
+            if (status === 429) {
+              console.warn('[AuthStore] Rate limited on /auth/me — keeping session, will retry later');
+              set({ loading: false, initialized: true });
+              return;
+            }
+
+            if (status === 401) {
+              localStorage.removeItem('token');
+              localStorage.removeItem('activeRole');
+              set({ user: null, activeRole: null, loading: false, initialized: true });
+              return;
+            }
+
+            console.error('Failed to load user:', error);
             set({ loading: false, initialized: true });
           }
-        } catch (error) {
-          console.error('Failed to load user:', error);
-          localStorage.removeItem('token');
-          localStorage.removeItem('activeRole');
-          set({ user: null, activeRole: null, loading: false, initialized: true });
-        }
+        };
+
+        loadUserInFlight = run().finally(() => {
+          loadUserInFlight = null;
+        });
+
+        return loadUserInFlight;
       },
 
       login: async (email: string, password: string) => {
         try {
           const response = await authApi.login({ email, password });
-          
+
           if (response.success && response.data) {
             localStorage.setItem('token', response.data.token);
-            
-            // Show success toast immediately
+
             toast.success('Logged in successfully!');
-            
-            // Fetch complete user data (including full events array) from /auth/me
+
             const { loadUser } = get();
-            await loadUser();
+            await loadUser({ force: true });
           }
-        } catch (error: any) {
-          const message = error.response?.data?.message || 'Login failed';
+        } catch (error: unknown) {
+          const message =
+            (error as { response?: { data?: { message?: string } } })?.response?.data
+              ?.message || 'Login failed';
           toast.error(message);
           throw error;
         }
@@ -129,27 +176,25 @@ export const useAuthStore = create<AuthStore>()(
       register: async (data: { email: string; password: string; name: string }) => {
         try {
           const response = await authApi.register(data);
-          
+
           if (response.success && response.data) {
             localStorage.setItem('token', response.data.token);
-            
-            // Show success toast immediately
+
             toast.success('Account created successfully!');
-            
-            // Fetch complete user data from /auth/me
+
             const { loadUser } = get();
-            await loadUser();
+            await loadUser({ force: true });
           }
-        } catch (error: any) {
-          const message = error.response?.data?.message || 'Registration failed';
+        } catch (error: unknown) {
+          const message =
+            (error as { response?: { data?: { message?: string } } })?.response?.data
+              ?.message || 'Registration failed';
           toast.error(message);
           throw error;
         }
       },
 
       logout: async () => {
-        // Must await NextAuth sign-out so session cookies clear before we navigate.
-        // Otherwise Google users stay "logged in" and GoogleSessionSync restores the API token.
         try {
           const { signOut } = await import('next-auth/react');
           await signOut({ redirect: false });
@@ -158,6 +203,7 @@ export const useAuthStore = create<AuthStore>()(
         }
         localStorage.removeItem('token');
         localStorage.removeItem('activeRole');
+        lastLoadUserSuccessAt = 0;
         set({ user: null, activeRole: null });
         toast.success('Logged out successfully');
         window.location.href = '/login';
@@ -172,7 +218,9 @@ export const useAuthStore = create<AuthStore>()(
         if (user && user.roles.includes(role)) {
           set({ activeRole: role });
           localStorage.setItem('activeRole', role);
-          toast.success(`Switched to ${role === 'user' ? 'Guest' : role.charAt(0).toUpperCase() + role.slice(1)} view`);
+          toast.success(
+            `Switched to ${role === 'user' ? 'Guest' : role.charAt(0).toUpperCase() + role.slice(1)} view`
+          );
           window.location.href = '/dashboard';
         }
       },
@@ -180,8 +228,7 @@ export const useAuthStore = create<AuthStore>()(
     {
       name: 'auth-storage',
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ 
-        // Only persist minimal data - actual user data is fetched on load
+      partialize: (state) => ({
         activeRole: state.activeRole,
       }),
     }
@@ -194,4 +241,3 @@ export const useUser = () => useAuthStore((state) => state.user);
 export const useActiveRole = () => useAuthStore((state) => state.activeRole);
 export const useAuthLoading = () => useAuthStore((state) => state.loading);
 export const useIsAuthenticated = () => useAuthStore((state) => !!state.user);
-
