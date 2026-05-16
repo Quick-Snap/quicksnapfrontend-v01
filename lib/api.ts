@@ -288,8 +288,10 @@ export const eventApi = {
     return response.data;
   },
 
-  getById: async (eventId: string) => {
-    const response = await api.get<ApiResponse<any>>(`/events/${eventId}`);
+  getById: async (eventId: string, options?: { lite?: boolean }) => {
+    const response = await api.get<ApiResponse<any>>(`/events/${eventId}`, {
+      params: options?.lite ? { lite: 'true' } : undefined,
+    });
     return response.data;
   },
 

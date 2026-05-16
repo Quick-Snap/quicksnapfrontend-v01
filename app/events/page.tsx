@@ -58,7 +58,7 @@ export default function EventsPage() {
         setJoinCode('');
         
         // Reload user data to get updated events list
-        await loadUser();
+        await loadUser({ force: true });
         
         // Invalidate all relevant queries for fresh data
         queryClient.invalidateQueries('userStats');

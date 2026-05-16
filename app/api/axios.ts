@@ -24,16 +24,13 @@ api.interceptors.request.use(
     }
 );
 
-// Response interceptor to handle 401
+// Response interceptor — 401 clears token; 429 is passed through (no token wipe / retry storm)
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
-            if (typeof window !== 'undefined') {
-                localStorage.removeItem('token');
-                // Optional: Redirect to login or use a callback
-                // window.location.href = '/login'; 
-            }
+        const status = error.response?.status;
+        if (status === 401 && typeof window !== 'undefined') {
+            localStorage.removeItem('token');
         }
         return Promise.reject(error);
     }
