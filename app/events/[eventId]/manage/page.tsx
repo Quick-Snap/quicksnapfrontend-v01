@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { eventApi } from '@/lib/api';
+import { fetchAllEventPhotos } from '@/lib/photoFetch';
 import { canAccessEventManagePage, canFullManageEvent } from '@/lib/eventPermissions';
 import { enrichPhotosWithDisplayUrls, getPhotoDisplayUrl } from '@/lib/photoUrl';
 import RefreshAttendeeMatchesCard from '@/app/components/events/RefreshAttendeeMatchesCard';
@@ -164,7 +165,7 @@ export default function ManageEventPage() {
             try {
                 const [eventOutcome, photosOutcome] = await Promise.allSettled([
                     eventApi.getById(eventId),
-                    eventApi.getPhotos(eventId, { all: true, limit: 500 }),
+                    fetchAllEventPhotos(eventId),
                 ]);
 
                 const latestEvent =
@@ -295,7 +296,7 @@ export default function ManageEventPage() {
                 );
                 const [eventRes, photosRes] = await Promise.allSettled([
                     eventApi.getById(eventId),
-                    eventApi.getPhotos(eventId, { all: true, limit: 500 }),
+                    fetchAllEventPhotos(eventId),
                 ]);
                 const latestEvent =
                     eventRes.status === 'fulfilled' ? (eventRes.value as any)?.data : undefined;

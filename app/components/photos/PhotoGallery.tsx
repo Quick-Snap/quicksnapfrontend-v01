@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useQuery } from 'react-query';
 import { photoApi } from '../../../lib/api';
+import { fetchAllMyPhotos } from '@/lib/photoFetch';
 import { useAuth } from '@/contexts/AuthContext';
 import { Download, Eye, Calendar, Users, Image as ImageIcon, Grid, List } from 'lucide-react';
 import { format } from 'date-fns';
@@ -19,7 +20,7 @@ export default function PhotoGallery({ eventId }: PhotoGalleryProps) {
 
   const { data, isLoading } = useQuery(
     ['myPhotos', eventId],
-    () => photoApi.getMyPhotos({ eventId, page: 1, limit: 100 }),
+    () => fetchAllMyPhotos(eventId ? { eventId } : undefined),
     { enabled: !!user }
   );
 
