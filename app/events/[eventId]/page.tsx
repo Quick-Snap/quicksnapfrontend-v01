@@ -19,6 +19,11 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { eventApi, photoApi } from '@/lib/api';
+import {
+    fetchAllEventPhotos,
+    fetchAllMyPhotos,
+    normalizeEventPhotosPayload,
+} from '@/lib/photoFetch';
 import { buildEventShareText } from '@/lib/eventShareText';
 import { getPhotoDisplayUrl } from '@/lib/photoUrl';
 import { Button } from '@/app/components/ui/Button';
@@ -36,30 +41,6 @@ function reactQueryRetry(failureCount: number, error: unknown): boolean {
     const status = (error as { response?: { status?: number } })?.response?.status;
     if (status === 429) return failureCount < 2;
     return failureCount < 1;
-}
-
-/** Align with manage page — supports several API envelope shapes. */
-function normalizePhotosFromGet(res: any): any[] {
-    if (!res) return [];
-    const d = res.data;
-    if (Array.isArray(d)) return d;
-    if (d && Array.isArray(d.photos)) return d.photos;
-    if (d?.data && Array.isArray(d.data.photos)) return d.data.photos;
-    if (Array.isArray(res.photos)) return res.photos;
-    return [];
-}
-
-function flattenGroupedPhotos(photos: any[]): any[] {
-    if (!photos.length) return photos;
-    const first = photos[0];
-    if (first && typeof first === 'object' && Array.isArray(first.photos)) {
-        return photos.flatMap((g: any) => g.photos || []);
-    }
-    return photos;
-}
-
-function normalizeEventPhotosPayload(res: unknown): any[] {
-    return flattenGroupedPhotos(normalizePhotosFromGet(res as any));
 }
 
 /** Total gallery size from GET /events/:id/photos envelope (if API sends it). */
@@ -113,7 +94,7 @@ export default function PublicEventPage() {
     // Full gallery — authenticated users only (limit aligned with prior behavior)
     const { data: photosResult, isLoading: photosLoading } = useQuery(
         ['eventPhotos', eventId],
-        () => eventApi.getPhotos(eventId, { limit: 100 }),
+        () => fetchAllEventPhotos(eventId),
         {
             enabled: !!eventId && !!currentUser,
             staleTime: 5 * 60 * 1000,
@@ -160,7 +141,7 @@ export default function PublicEventPage() {
     // Fetch My Photos (filtered by eventId) - only for guest users
     const { data: myPhotosResult, isLoading: myPhotosLoading } = useQuery(
         ['myEventPhotos', eventId],
-        () => photoApi.getMyPhotos({ eventId, limit: 100 }),
+        () => fetchAllMyPhotos({ eventId }),
         {
             enabled: !!eventId && !!currentUser && !!isGuest,
             staleTime: 5 * 60 * 1000,

@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Image as ImageIcon, Download, Calendar, Users, Search, Sparkles, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { photoApi } from '@/lib/api';
+import { fetchAllMyPhotos } from '@/lib/photoFetch';
 import Pagination from '@/app/components/ui/Pagination';
 import { PhotoLightbox } from '@/app/components/photos/PhotoLightbox';
 import toast from 'react-hot-toast';
@@ -23,7 +24,7 @@ export default function MyPhotosPage() {
 
   const { data: queryData, isLoading: loading } = useQuery(
     ['myPhotos'],
-    () => photoApi.getMyPhotos({ limit: 100 }),
+    () => fetchAllMyPhotos(),
     {
       enabled: !!user,
       staleTime: 5 * 60 * 1000,
@@ -55,9 +56,7 @@ export default function MyPhotosPage() {
     });
   }, [allPhotos, searchTerm]);
 
-  // const totalPhotos = filteredPhotos.length;
-  // Use the accurate total from the backend pagination
-  const totalPhotos = queryData?.data?.pagination?.total ?? filteredPhotos.length;
+  const totalPhotos = filteredPhotos.length;
   const totalPages = Math.ceil(totalPhotos / PHOTOS_PER_PAGE);
   const startIndex = (currentPage - 1) * PHOTOS_PER_PAGE;
   const endIndex = startIndex + PHOTOS_PER_PAGE;
