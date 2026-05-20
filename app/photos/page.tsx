@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Image as ImageIcon, Download, Calendar, Users, Search, Sparkles, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 import { photoApi } from '@/lib/api';
 import { fetchAllMyPhotos } from '@/lib/photoFetch';
 import Pagination from '@/app/components/ui/Pagination';
@@ -16,7 +17,8 @@ const PHOTOS_CARD =
   'card border-zinc-200/90 shadow-lg shadow-zinc-900/5 dark:border-white/5 dark:bg-[#0f0c18] dark:shadow-[0_14px_50px_rgba(0,0,0,0.35)]';
 
 export default function MyPhotosPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
   const [downloading, setDownloading] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -30,6 +32,12 @@ export default function MyPhotosPage() {
       staleTime: 5 * 60 * 1000,
     }
   );
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, authLoading, router]);
 
   // // Get all photos and filter to only show photos from events user has joined
   // const rawPhotos = queryData?.data?.photos || [];
@@ -68,6 +76,19 @@ export default function MyPhotosPage() {
       setCurrentPage(1);
     }
   }, [currentPage, totalPages]);
+
+  if (authLoading) {
+    return (
+      <div className="flex min-h-[65vh] flex-col items-center justify-center px-4">
+        <div className="h-14 w-14 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600 dark:border-white/15 dark:border-t-violet-500" />
+        <p className="mt-6 text-center text-sm font-medium text-zinc-500 dark:text-gray-400">Loading your photos…</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);

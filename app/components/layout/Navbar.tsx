@@ -12,8 +12,16 @@ import { ThemeToggle } from '@/app/components/ui/ThemeToggle';
 import lightLogo from '@/components/assets/7.png';
 import darkLogo from '@/components/assets/5.png';
 
+const LOGIN_PATH = '/login';
+
+/** Protected app routes — guests (e.g. shared event links) go to login instead. */
+function hrefForAuth(href: string, isLoggedIn: boolean) {
+  return isLoggedIn ? href : LOGIN_PATH;
+}
+
 export default function Navbar() {
   const { user, logout, switchRole, activeRole } = useAuth();
+  const isLoggedIn = !!user;
   const { role, roles, isAdmin, isOrganizer, isPhotographer } = useRole();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -55,6 +63,15 @@ export default function Navbar() {
 
   // Build navigation based on role
   const getNavigation = () => {
+    // Shared event / public pages: same nav labels, but require sign-in
+    if (!isLoggedIn) {
+      return [
+        { name: 'Home', href: LOGIN_PATH, icon: Home },
+        { name: 'Events', href: LOGIN_PATH, icon: Calendar },
+        { name: 'My Photos', href: LOGIN_PATH, icon: ImageIcon },
+      ];
+    }
+
     const nav = [
       { name: 'Home', href: '/dashboard', icon: Home },
     ];
@@ -80,14 +97,14 @@ export default function Navbar() {
 
   const navigation = getNavigation();
 
-  const isActive = (path: string) => pathname === path;
+  const isActive = (path: string) => isLoggedIn && pathname === path;
 
   return (
     <nav className="sticky top-0 z-50 border-b border-zinc-200/90 bg-white/85 backdrop-blur-xl dark:border-white/5 dark:bg-[#0d0d0d]/80">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between gap-2 md:grid md:grid-cols-[1fr_auto_1fr] md:items-center md:justify-normal md:gap-4">
           {/* Logo */}
-          <Link href="/dashboard" className="flex min-w-0 shrink-0 items-center group md:justify-self-start">
+          <Link href={hrefForAuth('/dashboard', isLoggedIn)} className="flex min-w-0 shrink-0 items-center group md:justify-self-start">
             <Image
               src={lightLogo}
               alt="QuickSnap"

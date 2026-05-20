@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { format, isSameDay, isThisWeek, isFuture } from 'date-fns';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Button } from '@/app/components/ui/Button';
 import toast from 'react-hot-toast';
 import { buildEventShareText } from '@/lib/eventShareText';
@@ -29,12 +29,22 @@ import { softSurface, softSurfaceHover } from '@/lib/dashboardUi';
 type FilterType = 'all' | 'today' | 'week' | 'upcoming' | 'my';
 
 export default function EventsPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { isOrganizer, isAdmin, isPhotographer, isUser } = useRole();
   const router = useRouter();
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, authLoading, router]);
   const queryClient = useQueryClient();
   const loadUser = useAuthStore((state) => state.loadUser);
-  const { data, isLoading, refetch } = useQuery('events', () => eventApi.getAll({ isActive: true }));
+  const { data, isLoading, refetch } = useQuery(
+    'events',
+    () => eventApi.getAll({ isActive: true }),
+    { enabled: !!user && !authLoading }
+  );
   const [searchQuery, setSearchQuery] = useState('');
   // Photographers and guests only see their joined events
   const showOnlyJoinedEvents = isPhotographer || isUser;
@@ -103,6 +113,19 @@ export default function EventsPage() {
       }
     });
   }, [events, searchQuery, filterType, user?.events]);
+
+  if (authLoading) {
+    return (
+      <div className="flex min-h-[65vh] flex-col items-center justify-center px-4">
+        <div className="h-14 w-14 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600 dark:border-white/15 dark:border-t-violet-500" />
+        <p className="mt-6 text-center text-sm font-medium text-zinc-500 dark:text-gray-400">Loading events…</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   const handleShare = async (e: React.MouseEvent, event: any) => {
     e.preventDefault(); // Prevent navigation
