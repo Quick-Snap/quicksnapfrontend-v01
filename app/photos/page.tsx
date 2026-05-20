@@ -118,7 +118,7 @@ export default function MyPhotosPage() {
   };
 
   const handleDownloadAll = async () => {
-    if (photos.length === 0) return;
+    if (totalPhotos === 0) return;
 
     setDownloading(true);
     const loadingToast = toast.loading('Preparing your ZIP archive...');
@@ -127,18 +127,21 @@ export default function MyPhotosPage() {
       const blob = await photoApi.downloadMyPhotosZip();
 
       // Create a link and trigger download
-      const url = window.URL.createObjectURL(new Blob([blob]));
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', `${user?.name || 'my'}_photos.zip`);
       document.body.appendChild(link);
       link.click();
       link.remove();
+      window.URL.revokeObjectURL(url);
 
       toast.success('Download started!', { id: loadingToast });
     } catch (error) {
       console.error('Bulk download error:', error);
-      toast.error('Failed to prepare download.', { id: loadingToast });
+      const message =
+        error instanceof Error ? error.message : 'Failed to prepare download.';
+      toast.error(message, { id: loadingToast });
     } finally {
       setDownloading(false);
     }

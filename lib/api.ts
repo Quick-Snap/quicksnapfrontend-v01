@@ -252,10 +252,36 @@ export const photoApi = {
   },
 
   downloadMyPhotosZip: async () => {
-    const response = await api.get('/photos/my-photos/download', {
-      responseType: 'blob'
+    // Same-origin proxy avoids CORS when API is on api.* and app is on quicksnap.online
+    const token =
+      typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+
+    const response = await fetch('/api/photos/my-photos/download', {
+      method: 'GET',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      credentials: 'same-origin',
     });
-    return response.data;
+
+    if (!response.ok) {
+      let message = 'Failed to prepare download';
+      try {
+        const contentType = response.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const json = await response.json();
+          message = json.message || json.error || message;
+        } else {
+          const text = await response.text();
+          if (text) message = text.slice(0, 300);
+        }
+      } catch {
+        /* ignore */
+      }
+      throw new Error(message);
+    }
+
+    return response.blob();
   },
 
   deletePhoto: async (photoId: string) => {
