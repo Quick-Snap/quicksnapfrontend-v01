@@ -1,13 +1,16 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { AxiosError } from 'axios';
 import { Image as ImageIcon, Download, Calendar, Users, Search, Sparkles, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { photoApi } from '@/lib/api';
+import { ApiResponse } from '@/types';
 import { fetchAllMyPhotos } from '@/lib/photoFetch';
 import Pagination from '@/app/components/ui/Pagination';
 import { PhotoLightbox } from '@/app/components/photos/PhotoLightbox';
+import { DownloadProgressModal } from '@/app/components/photos/DownloadProgressModal';
 import toast from 'react-hot-toast';
 import { useQuery } from 'react-query';
 
@@ -20,6 +23,8 @@ export default function MyPhotosPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [downloading, setDownloading] = useState(false);
+  const [downloadJobId, setDownloadJobId] = useState<string | null>(null);
+  const [downloadModalOpen, setDownloadModalOpen] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
@@ -118,30 +123,27 @@ export default function MyPhotosPage() {
   };
 
   const handleDownloadAll = async () => {
-    if (totalPhotos === 0) return;
+    if (totalPhotos === 0) {
+      toast.error('No photos to download');
+      return;
+    }
 
     setDownloading(true);
-    const loadingToast = toast.loading('Preparing your ZIP archive...');
-
     try {
-      const blob = await photoApi.downloadMyPhotosZip();
-
-      // Create a link and trigger download
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `${user?.name || 'my'}_photos.zip`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-
-      toast.success('Download started!', { id: loadingToast });
+      const res = await photoApi.createDownloadJob();
+      if (!res.success || !res.data?.jobId) {
+        throw new Error(res.message || 'Failed to start download');
+      }
+      setDownloadJobId(res.data.jobId);
+      setDownloadModalOpen(true);
+      toast.success(res.message || 'Packaging your photos…');
     } catch (error) {
       console.error('Bulk download error:', error);
+      const axiosErr = error as AxiosError<ApiResponse<unknown>>;
       const message =
-        error instanceof Error ? error.message : 'Failed to prepare download.';
-      toast.error(message, { id: loadingToast });
+        axiosErr.response?.data?.message ||
+        (error instanceof Error ? error.message : 'Failed to start download.');
+      toast.error(message);
     } finally {
       setDownloading(false);
     }
@@ -364,6 +366,16 @@ export default function MyPhotosPage() {
           }
         />
       )}
+
+      <DownloadProgressModal
+        open={downloadModalOpen}
+        jobId={downloadJobId}
+        fileName={`${user?.name || 'my'}_photos.zip`}
+        onClose={() => {
+          setDownloadModalOpen(false);
+          setDownloadJobId(null);
+        }}
+      />
     </div>
   );
 }

@@ -2,6 +2,23 @@ import { AxiosError } from 'axios';
 import { ApiResponse } from '@/types';
 import api from '@/app/api/axios';
 
+export interface DownloadJobStatus {
+  jobId: string;
+  status: 'queued' | 'processing' | 'ready' | 'failed' | 'cancelled';
+  phase: string;
+  totalPhotos: number;
+  processedPhotos: number;
+  failedPhotos: number;
+  progressPercent: number;
+  zipFileName?: string;
+  error?: string;
+  createdAt: string;
+  updatedAt: string;
+  completedAt?: string;
+  elapsedMs: number;
+  estimatedMsRemaining: number | null;
+}
+
 // Re-export the api instance
 export { api };
 
@@ -251,37 +268,58 @@ export const photoApi = {
     return response.data;
   },
 
-  downloadMyPhotosZip: async () => {
-    // Same-origin proxy avoids CORS when API is on api.* and app is on quicksnap.online
-    const token =
-      typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  createDownloadJob: async () => {
+    const response = await api.post<ApiResponse<DownloadJobStatus>>(
+      '/photos/my-photos/download/jobs'
+    );
+    return response.data;
+  },
 
-    const response = await fetch('/api/photos/my-photos/download', {
-      method: 'GET',
-      headers: {
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      credentials: 'same-origin',
-    });
+  getDownloadJob: async (jobId: string) => {
+    const response = await api.get<ApiResponse<DownloadJobStatus>>(
+      `/photos/my-photos/download/jobs/${jobId}`
+    );
+    return response.data;
+  },
 
-    if (!response.ok) {
-      let message = 'Failed to prepare download';
-      try {
-        const contentType = response.headers.get('content-type') || '';
-        if (contentType.includes('application/json')) {
-          const json = await response.json();
-          message = json.message || json.error || message;
-        } else {
-          const text = await response.text();
+  cancelDownloadJob: async (jobId: string) => {
+    const response = await api.delete<ApiResponse<DownloadJobStatus>>(
+      `/photos/my-photos/download/jobs/${jobId}`
+    );
+    return response.data;
+  },
+
+  /** Stream ZIP from API when job status is ready (no S3 presigned URL). */
+  downloadJobFile: async (jobId: string) => {
+    try {
+      const response = await api.get(`/photos/my-photos/download/jobs/${jobId}/download`, {
+        responseType: 'blob',
+      });
+      const blob = response.data as Blob;
+      if (blob.type?.includes('application/json')) {
+        const text = await blob.text();
+        let message = 'Failed to download ZIP';
+        try {
+          const err = JSON.parse(text) as { message?: string };
+          message = err.message || message;
+        } catch {
           if (text) message = text.slice(0, 300);
         }
-      } catch {
-        /* ignore */
+        throw new Error(message);
       }
-      throw new Error(message);
+      return blob;
+    } catch (error) {
+      if (error instanceof AxiosError && error.response?.data instanceof Blob) {
+        try {
+          const text = await (error.response.data as Blob).text();
+          const err = JSON.parse(text) as { message?: string };
+          throw new Error(err.message || 'Failed to download ZIP');
+        } catch {
+          throw new Error('Failed to download ZIP');
+        }
+      }
+      throw error;
     }
-
-    return response.blob();
   },
 
   deletePhoto: async (photoId: string) => {
