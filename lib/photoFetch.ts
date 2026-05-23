@@ -75,30 +75,43 @@ function extractEventPhotosTotal(res: unknown): number | undefined {
 export async function fetchAllMyPhotos(params?: {
   eventId?: string;
 }): Promise<ApiResponse<{ photos: any[]; pagination: { total: number } }>> {
+  console.log('[fetchAllMyPhotos] START', { params, PAGE_SIZE });
   const photos: any[] = [];
   let page = 1;
   let lastResponse: ApiResponse<any> | undefined;
 
   for (;;) {
-    const response = await photoApi.getMyPhotos({
+    const reqParams = {
       ...params,
       page,
       limit: PAGE_SIZE,
       all: true,
-    });
+    };
+    console.log(`[fetchAllMyPhotos] Requesting page=${page}`, reqParams);
+    const response = await photoApi.getMyPhotos(reqParams);
     lastResponse = response;
     const batch: any[] = response.data?.photos ?? [];
     const pagination = response.data?.pagination;
     photos.push(...batch);
 
-    if (!batch.length) break;
-    if (pagination?.pages != null && page >= pagination.pages) break;
-    if (pagination?.total != null && photos.length >= pagination.total) break;
-    if (!pagination && batch.length < PAGE_SIZE) break;
+    console.log(`[fetchAllMyPhotos] Page ${page} result:`, {
+      batchLen: batch.length,
+      totalCollected: photos.length,
+      pagination: JSON.stringify(pagination),
+      responseSuccess: response.success,
+      responseKeys: Object.keys(response.data || {}),
+    });
+
+    if (!batch.length) { console.log('[fetchAllMyPhotos] BREAK: empty batch'); break; }
+    if (pagination?.pages != null && page >= pagination.pages) { console.log('[fetchAllMyPhotos] BREAK: page >= pages'); break; }
+    if (pagination?.total != null && photos.length >= pagination.total) { console.log('[fetchAllMyPhotos] BREAK: collected >= total'); break; }
+    if (!pagination && batch.length < PAGE_SIZE) { console.log('[fetchAllMyPhotos] BREAK: no pagination + small batch'); break; }
     page++;
   }
 
   const total = extractMyPhotosTotal(lastResponse) ?? photos.length;
+
+  console.log('[fetchAllMyPhotos] DONE', { photosCount: photos.length, total });
 
   return {
     success: lastResponse?.success ?? true,
