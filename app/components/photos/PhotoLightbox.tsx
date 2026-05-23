@@ -1,7 +1,7 @@
 'use client';
 
-import { X } from 'lucide-react';
-import { useEffect, type ReactNode } from 'react';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
 type PhotoLightboxProps = {
@@ -9,14 +9,26 @@ type PhotoLightboxProps = {
   imageAlt: string;
   onClose: () => void;
   footer: ReactNode;
+  onNext?: () => void;
+  onPrev?: () => void;
 };
 
 /**
  * Full-viewport photo preview: image uses remaining space (object-contain), no page scroll.
- * Portals to document.body so fixed layering isn’t clipped by layout; top bar keeps the close
+ * Portals to document.body so fixed layering isn't clipped by layout; top bar keeps the close
  * control clear of the notch / status bar.
+ * Supports Next / Previous navigation buttons, keyboard arrows, and mobile swipe gestures.
  */
-export function PhotoLightbox({ imageSrc, imageAlt, onClose, footer }: PhotoLightboxProps) {
+export function PhotoLightbox({
+  imageSrc,
+  imageAlt,
+  onClose,
+  footer,
+  onNext,
+  onPrev,
+}: PhotoLightboxProps) {
+  const touchStartX = useRef<number | null>(null);
+
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -25,9 +37,49 @@ export function PhotoLightbox({ imageSrc, imageAlt, onClose, footer }: PhotoLigh
     };
   }, []);
 
+  // Keyboard navigation: Escape to close, Left/Right arrows to navigate
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      } else if (e.key === 'ArrowRight' && onNext) {
+        onNext();
+      } else if (e.key === 'ArrowLeft' && onPrev) {
+        onPrev();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [onClose, onNext, onPrev]);
+
   if (typeof document === 'undefined') {
     return null;
   }
+
+  // Mobile swipe gestures handling
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const diffX = touchEndX - touchStartX.current;
+    const minSwipeDistance = 50; // In pixels
+
+    if (Math.abs(diffX) > minSwipeDistance) {
+      if (diffX > 0 && onPrev) {
+        // Swipe Right -> Prev
+        onPrev();
+      } else if (diffX < 0 && onNext) {
+        // Swipe Left -> Next
+        onNext();
+      }
+    }
+    touchStartX.current = null;
+  };
 
   return createPortal(
     <div
@@ -49,25 +101,59 @@ export function PhotoLightbox({ imageSrc, imageAlt, onClose, footer }: PhotoLigh
         </button>
       </div>
 
+      {/* Main dialog area containing chevrons and image */}
       <div
-        className="flex min-h-0 flex-1 items-center justify-center px-2 pb-1 pt-2 sm:px-4 sm:pb-2 sm:pt-3"
+        className="relative flex min-h-0 flex-1 items-center justify-center px-2 pb-1 pt-2 sm:px-4 sm:pb-2 sm:pt-3"
         onClick={onClose}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
         role="dialog"
         aria-modal="true"
         aria-label="Photo preview"
       >
+        {/* Previous Button (desktop floating chevron) */}
+        {onPrev && (
+          <button
+            type="button"
+            className="absolute left-3 md:left-6 z-[210] flex h-10 w-10 md:h-12 md:w-12 shrink-0 items-center justify-center rounded-full border border-white/15 bg-zinc-900/60 text-white shadow-md backdrop-blur-sm transition-all hover:bg-zinc-800/80 hover:scale-105 active:scale-[0.98]"
+            onClick={(e) => {
+              e.stopPropagation();
+              onPrev();
+            }}
+            aria-label="Previous photo"
+          >
+            <ChevronLeft className="h-6 w-6 md:h-7 md:w-7" strokeWidth={2.25} />
+          </button>
+        )}
+
         {imageSrc ? (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img
             src={imageSrc}
             alt={imageAlt}
-            className="max-h-full max-w-full object-contain shadow-2xl ring-1 ring-white/15 sm:rounded-lg"
+            className="max-h-full max-w-full object-contain shadow-2xl ring-1 ring-white/15 select-none sm:rounded-lg"
             onClick={(e) => e.stopPropagation()}
+            draggable={false}
           />
         ) : (
           <p className="px-4 text-center text-sm text-gray-400" onClick={(e) => e.stopPropagation()}>
             Preview unavailable for this photo.
           </p>
+        )}
+
+        {/* Next Button (desktop floating chevron) */}
+        {onNext && (
+          <button
+            type="button"
+            className="absolute right-3 md:right-6 z-[210] flex h-10 w-10 md:h-12 md:w-12 shrink-0 items-center justify-center rounded-full border border-white/15 bg-zinc-900/60 text-white shadow-md backdrop-blur-sm transition-all hover:bg-zinc-800/80 hover:scale-105 active:scale-[0.98]"
+            onClick={(e) => {
+              e.stopPropagation();
+              onNext();
+            }}
+            aria-label="Next photo"
+          >
+            <ChevronRight className="h-6 w-6 md:h-7 md:w-7" strokeWidth={2.25} />
+          </button>
         )}
       </div>
 

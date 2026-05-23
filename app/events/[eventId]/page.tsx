@@ -152,6 +152,26 @@ export default function PublicEventPage() {
 
     // Determine which photos to display based on view mode
     const displayPhotos = photoViewMode === 'my' && isGuest ? myPhotos : allPhotos;
+
+    const currentIndex = useMemo(() => {
+        if (!selectedPhoto) return -1;
+        return displayPhotos.findIndex((p: any) => p._id === selectedPhoto._id);
+    }, [selectedPhoto, displayPhotos]);
+
+    const handleNextPhoto = useMemo(() => {
+        if (currentIndex !== -1 && currentIndex < displayPhotos.length - 1) {
+            return () => setSelectedPhoto(displayPhotos[currentIndex + 1]);
+        }
+        return undefined;
+    }, [currentIndex, displayPhotos]);
+
+    const handlePrevPhoto = useMemo(() => {
+        if (currentIndex > 0) {
+            return () => setSelectedPhoto(displayPhotos[currentIndex - 1]);
+        }
+        return undefined;
+    }, [currentIndex, displayPhotos]);
+
     const isLoadingPhotos =
         !currentUser
             ? previewLoading
@@ -657,6 +677,8 @@ export default function PublicEventPage() {
                     }
                     imageAlt={selectedPhoto.fileName || 'Selected photo'}
                     onClose={() => setSelectedPhoto(null)}
+                    onNext={handleNextPhoto}
+                    onPrev={handlePrevPhoto}
                     footer={
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                             <div className="min-w-0 flex-1">
