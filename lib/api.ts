@@ -241,12 +241,19 @@ export const photoApi = {
     limit?: number;
     eventId?: string;
     all?: boolean;
+    lastKey?: any;
   }) => {
     const query: Record<string, string | number | undefined> = {};
     if (params?.page != null) query.page = params.page;
     if (params?.limit != null) query.limit = params.limit;
     if (params?.eventId) query.eventId = params.eventId;
     if (params?.all === true) query.all = 'true';
+    // SAFETY: Only send lastKey when it's a real value (not null/undefined)
+    if (params?.lastKey != null && params.lastKey !== '') {
+      query.lastKey = typeof params.lastKey === 'object'
+        ? JSON.stringify(params.lastKey)
+        : String(params.lastKey);
+    }
     const response = await api.get<ApiResponse<any>>('/photos/my-photos', { params: query });
     return response.data;
   },
