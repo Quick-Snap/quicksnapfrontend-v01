@@ -88,8 +88,12 @@ export default function MyPhotosPage() {
     return undefined;
   }, [currentIndex, filteredPhotos]);
 
-  const totalPhotos = filteredPhotos.length;
-  const totalPages = Math.ceil(totalPhotos / PHOTOS_PER_PAGE);
+  const apiTotal = queryData?.data?.pagination?.total;
+  const matchedTotal =
+    typeof apiTotal === 'number' && !Number.isNaN(apiTotal) ? apiTotal : allPhotos.length;
+  const isSearching = Boolean(searchTerm.trim());
+  const totalPhotos = isSearching ? filteredPhotos.length : matchedTotal;
+  const totalPages = Math.ceil(filteredPhotos.length / PHOTOS_PER_PAGE) || 1;
   const startIndex = (currentPage - 1) * PHOTOS_PER_PAGE;
   const endIndex = startIndex + PHOTOS_PER_PAGE;
   const photos = filteredPhotos.slice(startIndex, endIndex);
@@ -142,7 +146,7 @@ export default function MyPhotosPage() {
   };
 
   const handleDownloadAll = async () => {
-    if (totalPhotos === 0) {
+    if (filteredPhotos.length === 0) {
       toast.error('No photos to download');
       return;
     }
@@ -194,7 +198,7 @@ export default function MyPhotosPage() {
               </p>
             </div>
 
-            {totalPhotos > 0 && (
+            {matchedTotal > 0 && (
               <button
                 type="button"
                 onClick={handleDownloadAll}
@@ -260,13 +264,23 @@ export default function MyPhotosPage() {
                 <div>
                   <p className="font-semibold text-zinc-900 dark:text-white">Face recognition active</p>
                   <p className="text-sm text-zinc-500 dark:text-gray-400">
-                    Found {totalPhotos} photo{totalPhotos !== 1 ? 's' : ''} matched to you. Higher confidence = stronger match.
+                    {isSearching ? (
+                      <>
+                        Showing {filteredPhotos.length} of {matchedTotal} photo
+                        {matchedTotal !== 1 ? 's' : ''} matched to you.
+                      </>
+                    ) : (
+                      <>
+                        Found {matchedTotal} photo{matchedTotal !== 1 ? 's' : ''} matched to you. Higher confidence =
+                        stronger match.
+                      </>
+                    )}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-gray-400">
                 <span className="rounded-full border border-zinc-200/90 bg-zinc-50 px-2 py-1 dark:border-white/10 dark:bg-white/5">
-                  {totalPhotos} results
+                  {isSearching ? `${filteredPhotos.length} of ${matchedTotal}` : matchedTotal} results
                 </span>
                 <span className="rounded-full border border-zinc-200/90 bg-zinc-50 px-2 py-1 dark:border-white/10 dark:bg-white/5">
                   {totalPages} page{totalPages !== 1 ? 's' : ''}
@@ -319,7 +333,7 @@ export default function MyPhotosPage() {
                 currentPage={currentPage}
                 totalPages={totalPages}
                 onPageChange={handlePageChange}
-                totalItems={totalPhotos}
+                totalItems={filteredPhotos.length}
                 itemsPerPage={PHOTOS_PER_PAGE}
                 showInfo={true}
               />

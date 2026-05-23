@@ -42,6 +42,38 @@ function extractMyPhotosTotal(res: ApiResponse<any> | undefined): number | undef
   return typeof total === 'number' && !Number.isNaN(total) ? total : undefined;
 }
 
+function getPhotoUniqueId(photo: { _id?: string; imageId?: string }): string | undefined {
+  const id = photo._id ?? photo.imageId;
+  return id != null ? String(id) : undefined;
+}
+
+function mergePhotosDeduped(existing: any[], batch: any[]): any[] {
+  const seen = new Set(existing.map((p) => getPhotoUniqueId(p)).filter(Boolean) as string[]);
+  const merged = [...existing];
+  for (const photo of batch) {
+    const id = getPhotoUniqueId(photo);
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    merged.push(photo);
+  }
+  return merged;
+}
+
+function serializeLastKey(lastKey: unknown): string | undefined {
+  if (lastKey == null) return undefined;
+  if (typeof lastKey === 'string') return lastKey.trim() || undefined;
+  try {
+    return JSON.stringify(lastKey);
+  } catch {
+    return undefined;
+  }
+}
+
+function extractNextLastKey(pagination: { lastKey?: unknown } | undefined): string | undefined {
+  if (!pagination || !('lastKey' in pagination)) return undefined;
+  return serializeLastKey(pagination.lastKey);
+}
+
 function extractEventPhotosTotal(res: unknown): number | undefined {
   if (!res || typeof res !== 'object') return undefined;
   const r = res as Record<string, unknown>;
@@ -75,43 +107,45 @@ function extractEventPhotosTotal(res: unknown): number | undefined {
 export async function fetchAllMyPhotos(params?: {
   eventId?: string;
 }): Promise<ApiResponse<{ photos: any[]; pagination: { total: number } }>> {
-  console.log('[fetchAllMyPhotos] START', { params, PAGE_SIZE });
-  const photos: any[] = [];
+  let photos: any[] = [];
   let page = 1;
+  let cursor: string | undefined;
+  let prevCursor: string | undefined;
   let lastResponse: ApiResponse<any> | undefined;
+  let apiTotal: number | undefined;
 
   for (;;) {
-    const reqParams = {
+    const response = await photoApi.getMyPhotos({
       ...params,
-      page,
       limit: PAGE_SIZE,
       all: true,
-    };
-    console.log(`[fetchAllMyPhotos] Requesting page=${page}`, reqParams);
-    const response = await photoApi.getMyPhotos(reqParams);
+      ...(cursor ? { lastKey: cursor } : { page }),
+    });
     lastResponse = response;
     const batch: any[] = response.data?.photos ?? [];
     const pagination = response.data?.pagination;
-    photos.push(...batch);
+    const batchTotal = extractMyPhotosTotal(response);
+    if (batchTotal != null) apiTotal = batchTotal;
 
-    console.log(`[fetchAllMyPhotos] Page ${page} result:`, {
-      batchLen: batch.length,
-      totalCollected: photos.length,
-      pagination: JSON.stringify(pagination),
-      responseSuccess: response.success,
-      responseKeys: Object.keys(response.data || {}),
-    });
+    photos = mergePhotosDeduped(photos, batch);
 
-    if (!batch.length) { console.log('[fetchAllMyPhotos] BREAK: empty batch'); break; }
-    if (pagination?.pages != null && page >= pagination.pages) { console.log('[fetchAllMyPhotos] BREAK: page >= pages'); break; }
-    if (pagination?.total != null && photos.length >= pagination.total) { console.log('[fetchAllMyPhotos] BREAK: collected >= total'); break; }
-    if (!pagination && batch.length < PAGE_SIZE) { console.log('[fetchAllMyPhotos] BREAK: no pagination + small batch'); break; }
+    if (!batch.length) break;
+    if (apiTotal != null && photos.length >= apiTotal) break;
+
+    const nextCursor = extractNextLastKey(pagination);
+    if (nextCursor) {
+      if (nextCursor === prevCursor) break;
+      prevCursor = nextCursor;
+      cursor = nextCursor;
+      continue;
+    }
+
+    if (pagination?.pages != null && page >= pagination.pages) break;
+    if (!pagination && batch.length < PAGE_SIZE) break;
     page++;
   }
 
-  const total = extractMyPhotosTotal(lastResponse) ?? photos.length;
-
-  console.log('[fetchAllMyPhotos] DONE', { photosCount: photos.length, total });
+  const total = apiTotal ?? extractMyPhotosTotal(lastResponse) ?? photos.length;
 
   return {
     success: lastResponse?.success ?? true,
