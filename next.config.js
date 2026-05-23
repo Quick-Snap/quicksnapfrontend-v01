@@ -1,3 +1,4 @@
+// Force Vercel redeployment to apply Sentry DSN configuration environment variables
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
