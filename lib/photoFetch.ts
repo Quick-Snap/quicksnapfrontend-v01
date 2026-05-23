@@ -78,7 +78,6 @@ export async function fetchAllMyPhotos(params?: {
   const photos: any[] = [];
   let page = 1;
   let lastResponse: ApiResponse<any> | undefined;
-  let cursor: any = undefined;
 
   for (;;) {
     const response = await photoApi.getMyPhotos({
@@ -86,7 +85,6 @@ export async function fetchAllMyPhotos(params?: {
       page,
       limit: PAGE_SIZE,
       all: true,
-      ...(cursor ? { lastKey: cursor } : {}),
     });
     lastResponse = response;
     const batch: any[] = response.data?.photos ?? [];
@@ -97,13 +95,6 @@ export async function fetchAllMyPhotos(params?: {
     if (pagination?.pages != null && page >= pagination.pages) break;
     if (pagination?.total != null && photos.length >= pagination.total) break;
     if (!pagination && batch.length < PAGE_SIZE) break;
-
-    // Use cursor if backend provides one, otherwise rely on page increment
-    if (pagination?.lastKey) {
-      cursor = pagination.lastKey;
-    } else if (batch.length < PAGE_SIZE) {
-      break; // No cursor and incomplete batch = last page
-    }
     page++;
   }
 
