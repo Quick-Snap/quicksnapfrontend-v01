@@ -32,9 +32,12 @@ import { canAccessEventManagePage, canFullManageEvent } from '@/lib/eventPermiss
 import { enrichPhotosWithDisplayUrls, getPhotoDisplayUrl } from '@/lib/photoUrl';
 import RefreshAttendeeMatchesCard from '@/app/components/events/RefreshAttendeeMatchesCard';
 import { Button } from '@/app/components/ui/Button';
+import Pagination from '@/app/components/ui/Pagination';
 import { useAuth } from '@/contexts/AuthContext';
 import RoleGuard from '@/app/components/RoleGuard';
 import { useAppStore } from '@/stores/appStore';
+
+const GALLERY_PHOTOS_PER_PAGE = 50;
 
 const MANAGE_CARD =
     'card border-zinc-200/90 shadow-lg shadow-zinc-900/5 dark:border-white/5 dark:bg-[#0f0c18] dark:shadow-[0_14px_50px_rgba(0,0,0,0.35)]';
@@ -120,6 +123,8 @@ export default function ManageEventPage() {
     const [selectedOfficialIds, setSelectedOfficialIds] = useState<Set<string>>(new Set());
     const [savingOfficial, setSavingOfficial] = useState(false);
     const [previewPhoto, setPreviewPhoto] = useState<any>(null);
+    const [galleryPage, setGalleryPage] = useState(1);
+    const [poolPage, setPoolPage] = useState(1);
 
     // Countdown timer for delete confirmation
     useEffect(() => {
@@ -249,6 +254,27 @@ export default function ManageEventPage() {
         () => allEventPhotos.filter((p) => !isPhotoOfficial(p)),
         [allEventPhotos]
     );
+
+    const galleryTotalPages = Math.ceil(photosOnDashboard.length / GALLERY_PHOTOS_PER_PAGE) || 1;
+    const poolTotalPages = Math.ceil(photosNotOnDashboard.length / GALLERY_PHOTOS_PER_PAGE) || 1;
+
+    const paginatedGalleryPhotos = useMemo(() => {
+        const start = (galleryPage - 1) * GALLERY_PHOTOS_PER_PAGE;
+        return photosOnDashboard.slice(start, start + GALLERY_PHOTOS_PER_PAGE);
+    }, [photosOnDashboard, galleryPage]);
+
+    const paginatedPoolPhotos = useMemo(() => {
+        const start = (poolPage - 1) * GALLERY_PHOTOS_PER_PAGE;
+        return photosNotOnDashboard.slice(start, start + GALLERY_PHOTOS_PER_PAGE);
+    }, [photosNotOnDashboard, poolPage]);
+
+    useEffect(() => {
+        if (galleryPage > galleryTotalPages) setGalleryPage(1);
+    }, [galleryPage, galleryTotalPages]);
+
+    useEffect(() => {
+        if (poolPage > poolTotalPages) setPoolPage(1);
+    }, [poolPage, poolTotalPages]);
 
     const displayedPhotoCount = useMemo(() => {
         const fromArr = Array.isArray(event?.photos) ? event.photos.length : 0;
@@ -787,13 +813,13 @@ export default function ManageEventPage() {
                             </div>
 
                             {photosOnDashboard.length > 0 && (
-                                <div className="mb-8">
+                                <div id="organizer-gallery-photos" className="mb-8">
                                     <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-emerald-800 dark:text-emerald-300/90">
                                         <span className="inline-block h-2 w-2 rounded-full bg-emerald-500 dark:bg-emerald-400" />
                                         On public gallery
                                     </h3>
                                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                                        {photosOnDashboard.map((photo: any, index: number) => {
+                                        {paginatedGalleryPhotos.map((photo: any, index: number) => {
                                             const id = getPhotoId(photo);
                                             const displayUrl = getPhotoDisplayUrl(photo);
                                             const isSelected = !!(id && selectedOfficialIds.has(id));
@@ -858,10 +884,22 @@ export default function ManageEventPage() {
                                             );
                                         })}
                                     </div>
+                                    <Pagination
+                                        currentPage={galleryPage}
+                                        totalPages={galleryTotalPages}
+                                        onPageChange={(page) => {
+                                            setGalleryPage(page);
+                                            document
+                                                .getElementById('organizer-gallery-photos')
+                                                ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                        }}
+                                        totalItems={photosOnDashboard.length}
+                                        itemsPerPage={GALLERY_PHOTOS_PER_PAGE}
+                                    />
                                 </div>
                             )}
 
-                            <div>
+                            <div id="organizer-pool-photos">
                                 <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-violet-800 dark:text-violet-300/90">
                                     <span className="inline-block h-2 w-2 rounded-full bg-violet-600 dark:bg-violet-400" />
                                     Pool — not on public gallery yet
@@ -871,8 +909,9 @@ export default function ManageEventPage() {
                                         All uploaded photos are on the public gallery. Remove some from the section above if you want them back in the pool.
                                     </p>
                                 ) : (
+                                    <>
                                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                                        {photosNotOnDashboard.map((photo: any, index: number) => {
+                                        {paginatedPoolPhotos.map((photo: any, index: number) => {
                                             const id = getPhotoId(photo);
                                             const displayUrl = getPhotoDisplayUrl(photo);
                                             const isSelected = !!(id && selectedOfficialIds.has(id));
@@ -936,6 +975,19 @@ export default function ManageEventPage() {
                                             );
                                         })}
                                     </div>
+                                    <Pagination
+                                        currentPage={poolPage}
+                                        totalPages={poolTotalPages}
+                                        onPageChange={(page) => {
+                                            setPoolPage(page);
+                                            document
+                                                .getElementById('organizer-pool-photos')
+                                                ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                        }}
+                                        totalItems={photosNotOnDashboard.length}
+                                        itemsPerPage={GALLERY_PHOTOS_PER_PAGE}
+                                    />
+                                    </>
                                 )}
                             </div>
                         </>
