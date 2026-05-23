@@ -31,10 +31,11 @@ export default function EditEventPage() {
                 const data = await eventApi.getById(eventId);
                 const event = data.data;
 
-                // Format dates for datetime-local input
+                // Format dates for datetime-local input in local timezone
                 const formatDate = (dateString: string) => {
                     const date = new Date(dateString);
-                    return date.toISOString().slice(0, 16); // YYYY-MM-DDThh:mm
+                    const tzOffset = date.getTimezoneOffset() * 60000;
+                    return new Date(date.getTime() - tzOffset).toISOString().slice(0, 16); // YYYY-MM-DDThh:mm
                 };
 
                 setFormData({
@@ -79,7 +80,12 @@ export default function EditEventPage() {
 
         setSaving(true);
         try {
-            await eventApi.update(eventId, formData);
+            const payload = {
+                ...formData,
+                startDate: new Date(formData.startDate).toISOString(),
+                endDate: new Date(formData.endDate).toISOString(),
+            };
+            await eventApi.update(eventId, payload);
             toast.success('Event updated successfully');
             router.push(`/organizer/events/${eventId}`);
         } catch (error) {

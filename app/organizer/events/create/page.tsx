@@ -54,7 +54,13 @@ export default function CreateEventPage() {
                 return;
             }
 
-            const response = await api.post('/events', formData);
+            const payload = {
+                ...formData,
+                startDate: new Date(formData.startDate).toISOString(),
+                endDate: new Date(formData.endDate).toISOString(),
+            };
+
+            const response = await api.post('/events', payload);
 
             if (response.data.success) {
                 toast.success('Event created successfully!');
