@@ -69,6 +69,26 @@ export default function MyPhotosPage() {
     });
   }, [allPhotos, searchTerm]);
 
+  const currentIndex = useMemo(() => {
+    if (!selectedPhoto) return -1;
+    return filteredPhotos.findIndex((p: any) => p._id === selectedPhoto._id);
+  }, [selectedPhoto, filteredPhotos]);
+
+  const handleNextPhoto = useMemo(() => {
+    if (currentIndex !== -1 && currentIndex < filteredPhotos.length - 1) {
+      return () => setSelectedPhoto(filteredPhotos[currentIndex + 1]);
+    }
+    return undefined;
+  }, [currentIndex, filteredPhotos]);
+
+  const handlePrevPhoto = useMemo(() => {
+    if (currentIndex > 0) {
+      return () => setSelectedPhoto(filteredPhotos[currentIndex - 1]);
+    }
+    return undefined;
+  }, [currentIndex, filteredPhotos]);
+
+
   const totalPhotos = filteredPhotos.length;
   const totalPages = Math.ceil(totalPhotos / PHOTOS_PER_PAGE);
   const startIndex = (currentPage - 1) * PHOTOS_PER_PAGE;
@@ -330,6 +350,8 @@ export default function MyPhotosPage() {
           imageSrc={selectedPhoto.url}
           imageAlt={selectedPhoto.fileName || 'Photo'}
           onClose={() => setSelectedPhoto(null)}
+          onNext={handleNextPhoto}
+          onPrev={handlePrevPhoto}
           footer={
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
               <div className="min-w-0 flex-1 space-y-1.5">
