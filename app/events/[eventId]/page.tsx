@@ -650,9 +650,9 @@ export default function PublicEventPage() {
             {selectedPhoto && (
                 <PhotoLightbox
                     imageSrc={
-                        getPhotoDisplayUrl(selectedPhoto) ||
                         selectedPhoto.url ||
                         selectedPhoto.s3Url ||
+                        getPhotoDisplayUrl(selectedPhoto) ||
                         ''
                     }
                     imageAlt={selectedPhoto.fileName || 'Selected photo'}
