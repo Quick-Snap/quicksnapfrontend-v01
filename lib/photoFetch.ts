@@ -78,13 +78,14 @@ export async function fetchAllMyPhotos(params?: {
   const photos: any[] = [];
   let page = 1;
   let lastResponse: ApiResponse<any> | undefined;
+  let cursor: any = undefined;
 
   for (;;) {
     const response = await photoApi.getMyPhotos({
       ...params,
-      page,
       limit: PAGE_SIZE,
       all: true,
+      lastKey: cursor,
     });
     lastResponse = response;
     const batch: any[] = response.data?.photos ?? [];
@@ -95,6 +96,9 @@ export async function fetchAllMyPhotos(params?: {
     if (pagination?.pages != null && page >= pagination.pages) break;
     if (pagination?.total != null && photos.length >= pagination.total) break;
     if (!pagination && batch.length < PAGE_SIZE) break;
+
+    cursor = pagination?.lastKey;
+    if (!cursor) break;
     page++;
   }
 
