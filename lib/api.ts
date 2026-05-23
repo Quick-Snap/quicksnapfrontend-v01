@@ -440,15 +440,37 @@ export const eventApi = {
   refreshAttendeePhotoMatches: async (eventId: string) => {
     const response = await api.post<
       ApiResponse<{
-        eventId: string;
-        attendeesTotal: number;
+        status: string;
+        progress: number;
+        total: number;
         processedWithFace: number;
         skippedNoFace: number;
         skippedDownloadFailed: number;
         errors: { userId: string; message: string }[];
         totalMappingsWritten: number;
+        startedAt?: string;
+        completedAt?: string;
       }>
     >(`/events/${eventId}/refresh-attendee-photo-matches`, undefined);
+    return response.data;
+  },
+
+  getAttendeePhotoMatchesRefreshStatus: async (eventId: string) => {
+    const response = await api.get<
+      ApiResponse<{
+        status: 'idle' | 'processing' | 'completed' | 'failed';
+        progress: number;
+        total: number;
+        processedWithFace: number;
+        skippedNoFace: number;
+        skippedDownloadFailed: number;
+        errors: { userId: string; message: string }[];
+        totalMappingsWritten: number;
+        startedAt?: string;
+        completedAt?: string;
+        error?: string;
+      }>
+    >(`/events/${eventId}/refresh-status`);
     return response.data;
   },
 };

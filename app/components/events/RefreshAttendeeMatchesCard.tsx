@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { RefreshCw, Users, ChevronDown, ChevronUp } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { eventApi } from '@/lib/api';
@@ -46,23 +46,116 @@ export default function RefreshAttendeeMatchesCard({
   const [pending, setPending] = useState(false);
   const [lastResult, setLastResult] = useState<RefreshData | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [progressStatus, setProgressStatus] = useState<{
+    progress: number;
+    total: number;
+    processedWithFace: number;
+    skippedNoFace: number;
+    skippedDownloadFailed: number;
+  } | null>(null);
+
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const allowed = event ? canRefreshAttendeePhotoMatches(user, event) : false;
+
+  // Clear polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+      }
+    };
+  }, []);
+
+  const checkStatus = useCallback(async () => {
+    if (!eventId) return;
+    try {
+      const res = await eventApi.getAttendeePhotoMatchesRefreshStatus(eventId);
+      if (res.success && res.data) {
+        const job = res.data;
+        if (job.status === 'processing') {
+          setPending(true);
+          setProgressStatus({
+            progress: job.progress || 0,
+            total: job.total || 0,
+            processedWithFace: job.processedWithFace || 0,
+            skippedNoFace: job.skippedNoFace || 0,
+            skippedDownloadFailed: job.skippedDownloadFailed || 0,
+          });
+        } else if (job.status === 'completed') {
+          setPending(false);
+          setProgressStatus(null);
+          if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current = null;
+          }
+          const d: RefreshData = {
+            attendeesTotal: job.total || 0,
+            processedWithFace: job.processedWithFace || 0,
+            skippedNoFace: job.skippedNoFace || 0,
+            skippedDownloadFailed: job.skippedDownloadFailed || 0,
+            errors: job.errors || [],
+            totalMappingsWritten: job.totalMappingsWritten || 0,
+          };
+          setLastResult(d);
+        } else if (job.status === 'failed') {
+          setPending(false);
+          setProgressStatus(null);
+          if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current = null;
+          }
+          toast.error(job.error || 'Matching refresh failed in the background.');
+        } else {
+          // Idle
+          setPending(false);
+          setProgressStatus(null);
+          if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current = null;
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Error fetching refresh status:', e);
+    }
+  }, [eventId]);
+
+  // Start polling
+  const startPolling = useCallback(() => {
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+    }
+    // Poll immediately, then every 2 seconds
+    checkStatus();
+    pollIntervalRef.current = setInterval(checkStatus, 2000);
+  }, [checkStatus]);
+
+  // Check initial status on mount/allowed
+  useEffect(() => {
+    if (allowed && eventId) {
+      checkStatus();
+    }
+  }, [allowed, eventId, checkStatus]);
 
   const runRefresh = useCallback(async () => {
     if (!eventId || pending) return;
     setPending(true);
     setDetailsOpen(false);
+    setProgressStatus(null);
+
     try {
       const res = await eventApi.refreshAttendeePhotoMatches(eventId);
       if (!res.success || !res.data) {
         toast.error(res.message || 'Could not refresh attendee matches');
+        setPending(false);
         return;
       }
-      const d = res.data;
-      setLastResult(d);
-      toast.success(buildSummary(d), { duration: 7000 });
+      
+      toast.success('Attendee photo match refresh started in the background.');
+      startPolling();
     } catch (e: unknown) {
+      setPending(false);
       const err = e as { response?: { status?: number; data?: { message?: string } } };
       const status = err.response?.status;
       const msg = err.response?.data?.message;
@@ -75,10 +168,8 @@ export default function RefreshAttendeeMatchesCard({
       } else {
         toast.error(msg || 'Failed to refresh attendee photo matches');
       }
-    } finally {
-      setPending(false);
     }
-  }, [eventId]);
+  }, [eventId, pending, startPolling]);
 
   if (!allowed) return null;
 
@@ -123,7 +214,9 @@ export default function RefreshAttendeeMatchesCard({
                   <span
                     className={`h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-white/40 border-t-white`}
                   />
-                  Refreshing matches…
+                  {progressStatus
+                    ? `Refreshing (${progressStatus.progress}/${progressStatus.total})…`
+                    : 'Refreshing matches…'}
                 </>
               ) : (
                 <>
@@ -133,7 +226,11 @@ export default function RefreshAttendeeMatchesCard({
               )}
             </button>
             {pending && (
-              <span className={`text-sm ${subClass}`}>Matching faces to this event&apos;s photos — please wait.</span>
+              <span className={`text-sm ${subClass}`}>
+                {progressStatus
+                  ? `Matching faces to photos — Processed ${progressStatus.progress} of ${progressStatus.total} attendees.`
+                  : 'Matching faces to this event\'s photos — please wait.'}
+              </span>
             )}
           </div>
 
