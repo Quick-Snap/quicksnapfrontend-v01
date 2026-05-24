@@ -16,7 +16,7 @@ export default function UploadZone({ onFilesSelected, maxFiles = 50 }: UploadZon
     const [previews, setPreviews] = useState<{ file: File; url: string }[]>([]);
     const [error, setError] = useState<string | null>(null);
 
-    const onDrop = useCallback((acceptedFiles: File[]) => {
+    const onDrop = useCallback(async (acceptedFiles: File[]) => {
         setError(null);
 
         // Role check
@@ -30,7 +30,32 @@ export default function UploadZone({ onFilesSelected, maxFiles = 50 }: UploadZon
             return;
         }
 
-        const newPreviews = acceptedFiles.map(file => {
+        const processedFiles = await Promise.all(
+            acceptedFiles.map(async (file) => {
+                const isHeic = file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif');
+                if (isHeic) {
+                    try {
+                        const heic2any = (await import('heic2any')).default;
+                        const convertedBlob = await heic2any({
+                            blob: file,
+                            toType: 'image/jpeg',
+                            quality: 0.8
+                        });
+                        const blobArray = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+                        const newName = file.name.replace(/\.[^/.]+$/, "") + ".jpg";
+                        return new File([blobArray], newName, {
+                            type: 'image/jpeg'
+                        });
+                    } catch (err) {
+                        console.error('HEIC conversion failed:', err);
+                        return file;
+                    }
+                }
+                return file;
+            })
+        );
+
+        const newPreviews = processedFiles.map(file => {
             return {
                 file,
                 url: URL.createObjectURL(file)
@@ -38,13 +63,13 @@ export default function UploadZone({ onFilesSelected, maxFiles = 50 }: UploadZon
         });
 
         setPreviews(newPreviews);
-        onFilesSelected(acceptedFiles);
+        onFilesSelected(processedFiles);
     }, [maxFiles, onFilesSelected, isPhotographerOrOrganizer]);
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         onDrop,
         accept: {
-            'image/*': ['.jpeg', '.jpg', '.png', '.webp']
+            'image/*': ['.jpeg', '.jpg', '.png', '.webp', '.heic', '.heif']
         },
         maxFiles
     });

@@ -29,8 +29,33 @@ export default function ImageUploader({
     const [files, setFiles] = useState<UploadFile[]>([]);
     const [isUploading, setIsUploading] = useState(false);
 
-    const onDrop = useCallback((acceptedFiles: File[]) => {
-        const newFiles: UploadFile[] = acceptedFiles.map(file => ({
+    const onDrop = useCallback(async (acceptedFiles: File[]) => {
+        const processedFiles = await Promise.all(
+            acceptedFiles.map(async (file) => {
+                const isHeic = file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif');
+                if (isHeic) {
+                    try {
+                        const heic2any = (await import('heic2any')).default;
+                        const convertedBlob = await heic2any({
+                            blob: file,
+                            toType: 'image/jpeg',
+                            quality: 0.8
+                        });
+                        const blobArray = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+                        const newName = file.name.replace(/\.[^/.]+$/, "") + ".jpg";
+                        return new File([blobArray], newName, {
+                            type: 'image/jpeg'
+                        });
+                    } catch (err) {
+                        console.error('HEIC conversion failed:', err);
+                        return file;
+                    }
+                }
+                return file;
+            })
+        );
+
+        const newFiles: UploadFile[] = processedFiles.map(file => ({
             file,
             preview: URL.createObjectURL(file),
             status: 'pending',
@@ -43,7 +68,7 @@ export default function ImageUploader({
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         onDrop,
         accept: {
-            'image/*': ['.jpeg', '.jpg', '.png', '.webp']
+            'image/*': ['.jpeg', '.jpg', '.png', '.webp', '.heic', '.heif']
         },
         maxFiles,
         disabled: isUploading
