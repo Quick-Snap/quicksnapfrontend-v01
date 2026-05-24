@@ -243,13 +243,19 @@ export const photoApi = {
     all?: boolean;
     lastKey?: string;
   }) => {
-    const query: Record<string, string | number | undefined> = {};
-    if (params?.page != null) query.page = params.page;
-    if (params?.limit != null) query.limit = params.limit;
-    if (params?.eventId) query.eventId = params.eventId;
-    if (params?.all === true) query.all = 'true';
-    if (params?.lastKey != null) query.lastKey = params.lastKey;
-    const response = await api.get<ApiResponse<any>>('/photos/my-photos', { params: query });
+    const data: Record<string, any> = {};
+    if (params?.page != null) data.page = params.page;
+    if (params?.limit != null) data.limit = params.limit;
+    if (params?.eventId) data.eventId = params.eventId;
+    if (params?.all === true) data.all = true;
+    if (params?.lastKey != null) {
+      try {
+        data.lastKey = typeof params.lastKey === 'string' ? JSON.parse(params.lastKey) : params.lastKey;
+      } catch {
+        data.lastKey = params.lastKey;
+      }
+    }
+    const response = await api.post<ApiResponse<any>>('/photos/my-photos', data);
     return response.data;
   },
 
