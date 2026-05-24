@@ -5,7 +5,6 @@ import { Upload, X, CheckCircle, AlertCircle, Loader2, Image as ImageIcon } from
 import { useDropzone } from 'react-dropzone';
 import { photoApi } from '@/lib/api';
 import { Button } from '../ui/Button';
-import toast from 'react-hot-toast';
 
 interface ImageUploaderProps {
     eventId: string;
@@ -30,66 +29,21 @@ export default function ImageUploader({
     const [files, setFiles] = useState<UploadFile[]>([]);
     const [isUploading, setIsUploading] = useState(false);
 
-    const onDrop = useCallback(async (acceptedFiles: File[]) => {
-        const hasHeic = acceptedFiles.some(file => 
-            file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')
-        );
+    const onDrop = useCallback((acceptedFiles: File[]) => {
+        const newFiles: UploadFile[] = acceptedFiles.map(file => ({
+            file,
+            preview: URL.createObjectURL(file),
+            status: 'pending',
+            progress: 0
+        }));
 
-        let toastId: string | undefined;
-        if (hasHeic) {
-            toastId = toast.loading('Converting HEIC photos to JPEG...');
-        }
-
-        try {
-            const processedFiles = await Promise.all(
-                acceptedFiles.map(async (file) => {
-                    const isHeic = file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif');
-                    if (isHeic) {
-                        try {
-                            const heic2any = (await import('heic2any')).default;
-                            const convertedBlob = await heic2any({
-                                blob: file,
-                                toType: 'image/jpeg',
-                                quality: 0.8
-                            });
-                            const blobArray = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
-                            const newName = file.name.replace(/\.[^/.]+$/, "") + ".jpg";
-                            return new File([blobArray], newName, {
-                                type: 'image/jpeg'
-                            });
-                        } catch (err) {
-                            console.error(`HEIC conversion failed for ${file.name}:`, err);
-                            return file;
-                        }
-                    }
-                    return file;
-                })
-            );
-
-            if (toastId) {
-                toast.success('HEIC photos successfully converted to JPEG!', { id: toastId });
-            }
-
-            const newFiles: UploadFile[] = processedFiles.map(file => ({
-                file,
-                preview: URL.createObjectURL(file),
-                status: 'pending',
-                progress: 0
-            }));
-
-            setFiles(prev => [...prev, ...newFiles].slice(0, maxFiles));
-        } catch (error) {
-            console.error('Error during file processing:', error);
-            if (toastId) {
-                toast.error('Failed to convert some HEIC photos', { id: toastId });
-            }
-        }
+        setFiles(prev => [...prev, ...newFiles].slice(0, maxFiles));
     }, [maxFiles]);
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         onDrop,
         accept: {
-            'image/*': ['.jpeg', '.jpg', '.png', '.webp', '.heic', '.heif']
+            'image/*': ['.jpeg', '.jpg', '.png', '.webp']
         },
         maxFiles,
         disabled: isUploading

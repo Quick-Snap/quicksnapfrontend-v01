@@ -24,64 +24,19 @@ export default function PhotoUpload({ eventId, onUploadComplete }: PhotoUploadPr
 
   const maxFiles = 50;
 
-  const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    const hasHeic = acceptedFiles.some(file => 
-      file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')
-    );
-
-    let toastId: string | undefined;
-    if (hasHeic) {
-      toastId = toast.loading('Converting HEIC photos to JPEG...');
-    }
-
-    try {
-      const processedFiles = await Promise.all(
-        acceptedFiles.map(async (file) => {
-          const isHeic = file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif');
-          if (isHeic) {
-            try {
-              const heic2any = (await import('heic2any')).default;
-              const convertedBlob = await heic2any({
-                blob: file,
-                toType: 'image/jpeg',
-                quality: 0.8
-              });
-              const blobArray = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
-              const newName = file.name.replace(/\.[^/.]+$/, "") + ".jpg";
-              return new File([blobArray], newName, {
-                type: 'image/jpeg'
-              });
-            } catch (err) {
-              console.error(`HEIC conversion failed for ${file.name}:`, err);
-              return file;
-            }
-          }
-          return file;
-        })
-      );
-
-      if (toastId) {
-        toast.success('HEIC photos successfully converted to JPEG!', { id: toastId });
-      }
-
-      const newStates: FileUploadState[] = processedFiles.map(file => ({
-        file,
-        status: 'pending',
-        progress: 0,
-      }));
-      setFileStates((prev) => [...prev, ...newStates].slice(0, maxFiles));
-    } catch (error) {
-      console.error('Error processing files:', error);
-      if (toastId) {
-        toast.error('Failed to convert some HEIC photos', { id: toastId });
-      }
-    }
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    const newStates: FileUploadState[] = acceptedFiles.map(file => ({
+      file,
+      status: 'pending',
+      progress: 0,
+    }));
+    setFileStates((prev) => [...prev, ...newStates].slice(0, maxFiles));
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp', '.heic', '.heif'],
+      'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp'],
     },
     maxSize: 10 * 1024 * 1024, // 10MB
     maxFiles,
@@ -227,7 +182,7 @@ export default function PhotoUpload({ eventId, onUploadComplete }: PhotoUploadPr
               Drag & drop photos here, or click to select
             </p>
             <p className="text-sm text-gray-500">
-              Supports JPEG, PNG, GIF, WEBP, HEIC (max 10MB per file)
+              Supports JPEG, PNG, GIF, WEBP (max 10MB per file)
             </p>
           </div>
         )}
