@@ -16,7 +16,7 @@ export default function UploadZone({ onFilesSelected, maxFiles = 50 }: UploadZon
     const [previews, setPreviews] = useState<{ file: File; url: string }[]>([]);
     const [error, setError] = useState<string | null>(null);
 
-    const onDrop = useCallback((acceptedFiles: File[]) => {
+    const onDrop = useCallback(async (acceptedFiles: File[]) => {
         setError(null);
 
         // Role check
@@ -30,21 +30,66 @@ export default function UploadZone({ onFilesSelected, maxFiles = 50 }: UploadZon
             return;
         }
 
-        const newPreviews = acceptedFiles.map(file => {
-            return {
-                file,
-                url: URL.createObjectURL(file)
-            };
-        });
+        const hasHeic = acceptedFiles.some(file => 
+            file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')
+        );
 
-        setPreviews(newPreviews);
-        onFilesSelected(acceptedFiles);
+        let toastId: string | undefined;
+        if (hasHeic) {
+            toastId = toast.loading('Converting HEIC photos to JPEG...');
+        }
+
+        try {
+            const processedFiles = await Promise.all(
+                acceptedFiles.map(async (file) => {
+                    const isHeic = file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif');
+                    if (isHeic) {
+                        try {
+                            const heic2any = (await import('heic2any')).default;
+                            const convertedBlob = await heic2any({
+                                blob: file,
+                                toType: 'image/jpeg',
+                                quality: 0.8
+                            });
+                            const blobArray = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+                            const newName = file.name.replace(/\.[^/.]+$/, "") + ".jpg";
+                            return new File([blobArray], newName, {
+                                type: 'image/jpeg'
+                            });
+                        } catch (err) {
+                            console.error(`HEIC conversion failed for ${file.name}:`, err);
+                            return file;
+                        }
+                    }
+                    return file;
+                })
+            );
+
+            if (toastId) {
+                toast.success('HEIC photos successfully converted to JPEG!', { id: toastId });
+            }
+
+            const newPreviews = processedFiles.map(file => {
+                return {
+                    file,
+                    url: URL.createObjectURL(file)
+                };
+            });
+
+            setPreviews(newPreviews);
+            onFilesSelected(processedFiles);
+        } catch (error) {
+            console.error('Error processing files:', error);
+            if (toastId) {
+                toast.error('Failed to convert some HEIC photos', { id: toastId });
+            }
+        }
     }, [maxFiles, onFilesSelected, isPhotographerOrOrganizer]);
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         onDrop,
         accept: {
-            'image/*': ['.jpeg', '.jpg', '.png', '.webp']
+            'image/*': ['.jpeg', '.jpg', '.png', '.webp', '.heic', '.heif']
         },
         maxFiles
     });
@@ -113,7 +158,7 @@ export default function UploadZone({ onFilesSelected, maxFiles = 50 }: UploadZon
                     {/* File Types Badge */}
                     <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10">
                         <ImageIcon size={14} className="text-gray-400" />
-                        <span className="text-xs text-gray-400">JPG, PNG, WEBP up to 10MB each</span>
+                        <span className="text-xs text-gray-400">JPG, PNG, WEBP, HEIC up to 10MB each</span>
                     </div>
                 </div>
             </div>
