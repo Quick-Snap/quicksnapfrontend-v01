@@ -313,7 +313,7 @@ export default function EventUploadPage() {
                                         <div className="w-5 h-5 rounded-full bg-violet-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                                             <CheckCircle className="h-3 w-3 text-violet-400" />
                                         </div>
-                                        <span className="text-gray-400">Supported formats: <span className="text-gray-300">JPG, PNG, WEBP</span></span>
+                                        <span className="text-gray-400">Supported formats: <span className="text-gray-300">JPG, PNG, WEBP, HEIC</span></span>
                                     </li>
                                     <li className="flex items-start gap-3 text-sm">
                                         <div className="w-5 h-5 rounded-full bg-violet-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">

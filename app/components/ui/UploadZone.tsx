@@ -138,7 +138,7 @@ export default function UploadZone({ onFilesSelected, maxFiles = 50 }: UploadZon
                     {/* File Types Badge */}
                     <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10">
                         <ImageIcon size={14} className="text-gray-400" />
-                        <span className="text-xs text-gray-400">JPG, PNG, WEBP up to 10MB each</span>
+                        <span className="text-xs text-gray-400">JPG, PNG, WEBP, HEIC up to 10MB each</span>
                     </div>
                 </div>
             </div>
