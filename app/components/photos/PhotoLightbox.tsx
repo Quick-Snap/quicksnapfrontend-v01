@@ -27,8 +27,6 @@ export function PhotoLightbox({
   onNext,
   onPrev,
 }: PhotoLightboxProps) {
-  const touchStartX = useRef<number | null>(null);
-
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -58,29 +56,6 @@ export function PhotoLightbox({
     return null;
   }
 
-  // Mobile swipe gestures handling
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartX.current === null) return;
-    const touchEndX = e.changedTouches[0].clientX;
-    const diffX = touchEndX - touchStartX.current;
-    const minSwipeDistance = 50; // In pixels
-
-    if (Math.abs(diffX) > minSwipeDistance) {
-      if (diffX > 0 && onPrev) {
-        // Swipe Right -> Prev
-        onPrev();
-      } else if (diffX < 0 && onNext) {
-        // Swipe Left -> Next
-        onNext();
-      }
-    }
-    touchStartX.current = null;
-  };
-
   return createPortal(
     <div
       className="fixed inset-0 z-[200] flex max-h-[100dvh] flex-col bg-zinc-950/95 backdrop-blur-md"
@@ -105,8 +80,6 @@ export function PhotoLightbox({
       <div
         className="relative flex min-h-0 flex-1 items-center justify-center px-2 pb-1 pt-2 sm:px-4 sm:pb-2 sm:pt-3"
         onClick={onClose}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
         role="dialog"
         aria-modal="true"
         aria-label="Photo preview"
