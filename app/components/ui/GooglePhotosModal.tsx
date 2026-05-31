@@ -327,15 +327,20 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
     const getProxyPreviewUrl = (baseUrl: string) => {
         if (!baseUrl) return '';
         
-        // If it's a public Unsplash or public Google Photos CDN link (googleusercontent.com),
-        // we can load it directly in the browser without passing through our proxy.
-        // This is extremely efficient and reduces server load/bandwidth to zero.
-        if (baseUrl.includes('unsplash.com') || baseUrl.includes('googleusercontent.com')) {
+        // Public Unsplash URLs never need proxying
+        if (baseUrl.includes('unsplash.com')) {
             return `${baseUrl}=w150`;
         }
         
-        // For secure Google Picker API URLs (which require authorization and trigger CORS),
-        // we must route them through our secure backend proxy.
+        // Public shared album URLs (from link scraping) are on googleusercontent.com
+        // and are publicly accessible — load them directly without proxying.
+        // But Picker API URLs (also on googleusercontent.com) REQUIRE an Authorization
+        // header, so they MUST be proxied. Use activeTab to distinguish.
+        if (activeTab === 'link' && baseUrl.includes('googleusercontent.com')) {
+            return `${baseUrl}=w150`;
+        }
+        
+        // Everything else (including Picker API URLs) goes through the secure backend proxy
         const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
         const targetUrl = `${baseUrl}=w150`;
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
@@ -505,7 +510,7 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                                         }
                                     `}
                                 >
-                                    <Zap className="w-3.5 h-3.5 text-amber-500 fill-current" />
+                                    <Zap className="w-3.5 h-3.5 text-violet-500 fill-current" />
                                     Import via Album Link
                                 </button>
                                 <button
@@ -530,14 +535,14 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                                 <div className={`
                                     p-6 rounded-2xl border transition-all duration-300 relative overflow-hidden group max-w-xl mx-auto
                                     ${isDarkMode 
-                                        ? 'bg-gradient-to-br from-amber-950/10 via-zinc-950/10 to-transparent border-amber-500/20' 
-                                        : 'bg-gradient-to-br from-amber-50/50 via-zinc-50/20 to-transparent border-amber-200'
+                                        ? 'bg-gradient-to-br from-violet-950/10 via-zinc-950/10 to-transparent border-violet-500/20' 
+                                        : 'bg-gradient-to-br from-violet-50/50 via-zinc-50/20 to-transparent border-violet-200'
                                     }
                                 `}>
                                     <div className="max-w-md space-y-4">
                                         <div>
-                                            <h3 className="text-md font-bold mb-1 flex items-center gap-2 text-amber-600 dark:text-amber-400">
-                                                <Zap className="w-4 h-4 fill-current animate-pulse text-amber-500" />
+                                            <h3 className="text-md font-bold mb-1 flex items-center gap-2 text-violet-600 dark:text-violet-400">
+                                                <Zap className="w-4 h-4 fill-current animate-pulse text-violet-500" />
                                                 Import via Public Shared Album Link
                                             </h3>
                                             <p className="text-xs text-zinc-500 dark:text-gray-400 leading-relaxed">
@@ -551,7 +556,7 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                                                 value={albumUrl}
                                                 onChange={(e) => setAlbumUrl(e.target.value)}
                                                 placeholder="e.g. https://photos.app.goo.gl/... or https://photos.google.com/share/..."
-                                                className="w-full px-4 py-3 rounded-xl border bg-transparent font-medium text-xs focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all border-zinc-200 dark:border-white/10 dark:text-white"
+                                                className="w-full px-4 py-3 rounded-xl border bg-transparent font-medium text-xs focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all border-zinc-200 dark:border-white/10 dark:text-white"
                                             />
                                             <p className="text-[10px] text-zinc-400 dark:text-gray-500">
                                                 💡 **Make sure link-sharing is turned ON** in your Google Photos album options before copying the link.
@@ -561,7 +566,7 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                                         <button
                                             onClick={handleImportAlbumLink}
                                             disabled={!albumUrl || isScrapingLink}
-                                            className="w-full py-3 px-6 rounded-xl font-bold text-white bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center gap-2 text-xs"
+                                            className="w-full py-3 px-6 rounded-xl font-bold text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center gap-2 text-xs shadow-lg shadow-violet-500/20 hover:shadow-violet-500/35"
                                         >
                                             {isScrapingLink ? (
                                                 <>
