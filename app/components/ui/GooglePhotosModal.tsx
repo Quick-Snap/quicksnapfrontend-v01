@@ -94,6 +94,10 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
         }
     }, []);
 
+    const [pickerSessionId, setPickerSessionId] = useState<string | null>(null);
+    const [isWaitingForPicker, setIsWaitingForPicker] = useState(false);
+    const [pickerStatus, setPickerStatus] = useState<string>('idle');
+
     useEffect(() => {
         if (!isOpen) {
             // Reset state on close
@@ -101,6 +105,12 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
             setPhotos([]);
             setSyncing(false);
             setLoading(false);
+            setIsWaitingForPicker(false);
+            setPickerStatus('idle');
+            setPickerSessionId(null);
+            if (typeof window !== 'undefined' && (window as any)._pickerIntervalId) {
+                clearInterval((window as any)._pickerIntervalId);
+            }
         }
     }, [isOpen]);
 
@@ -134,7 +144,7 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
             const google = (window as any).google;
             const client = google.accounts.oauth2.initTokenClient({
                 client_id: clientId,
-                scope: 'https://www.googleapis.com/auth/photoslibrary.readonly',
+                scope: 'https://www.googleapis.com/auth/photospicker.mediaitems.readonly https://www.googleapis.com/auth/photoslibrary.readonly',
                 prompt: 'consent',
                 callback: (tokenResponse: any) => {
                     setLoading(false);
@@ -157,6 +167,109 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
         } catch (err) {
             setLoading(false);
             startDemoMode();
+        }
+    };
+
+    const handleLaunchPicker = async () => {
+        if (!googleToken) {
+            toast.error('Please sign in with Google first.');
+            return;
+        }
+
+        setLoading(true);
+        setIsWaitingForPicker(true);
+        setPickerStatus('created');
+        try {
+            const res = await api.post('/photos/google-photos/picker/sessions', {}, {
+                headers: { 'x-google-access-token': googleToken }
+            });
+
+            if (res.data?.success && res.data?.data?.pickerUri) {
+                const session = res.data.data;
+                setPickerSessionId(session.id);
+                setPickerStatus('polling');
+                
+                // Open picker window
+                const pickerWindow = window.open(session.pickerUri + '/autoclose', '_blank');
+                
+                // Start polling
+                const intervalId = setInterval(async () => {
+                    try {
+                        const statusRes = await api.get(`/photos/google-photos/picker/sessions/${session.id}`, {
+                            headers: { 'x-google-access-token': googleToken }
+                        });
+                        
+                        if (statusRes.data?.success) {
+                            const currentSession = statusRes.data.data;
+                            if (currentSession.mediaItemsSet) {
+                                clearInterval(intervalId);
+                                setPickerStatus('completed');
+                                if (pickerWindow) pickerWindow.close();
+                                
+                                // Fetch selected items
+                                fetchPickerItems(session.id);
+                            }
+                        } else {
+                            clearInterval(intervalId);
+                            setPickerStatus('failed');
+                            setIsWaitingForPicker(false);
+                            toast.error('Failed to check picker session status.');
+                        }
+                    } catch (pollErr) {
+                        console.error('Error polling picker status:', pollErr);
+                    }
+                }, 3000);
+                
+                // Save interval to clear if component unmounts
+                (window as any)._pickerIntervalId = intervalId;
+
+            } else {
+                toast.error('Failed to create Google Photos picker session.');
+                setIsWaitingForPicker(false);
+                setPickerStatus('idle');
+            }
+        } catch (err: any) {
+            console.error('Picker error:', err);
+            toast.error(err.response?.data?.message || 'Failed to open Google Photos picker.');
+            setIsWaitingForPicker(false);
+            setPickerStatus('idle');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchPickerItems = async (sessionId: string) => {
+        setLoading(true);
+        try {
+            const res = await api.get(`/photos/google-photos/picker/sessions/${sessionId}/media-items`, {
+                headers: { 'x-google-access-token': googleToken! }
+            });
+
+            if (res.data?.success && res.data?.data?.mediaItems) {
+                const items = res.data.data.mediaItems;
+                if (items.length === 0) {
+                    toast.error('No photos were selected.');
+                    setIsWaitingForPicker(false);
+                    return;
+                }
+                const mappedPhotos = items.map((item: any) => ({
+                    id: item.id,
+                    baseUrl: item.mediaFile.baseUrl,
+                    filename: item.mediaFile.filename || `photo_${item.id}.jpg`,
+                    mimeType: item.mediaFile.mimeType
+                }));
+                setPhotos(mappedPhotos);
+                setSelectedAlbum({ title: 'Selected Photos' }); // Mock active selection for preview view
+                toast.success(`Successfully loaded ${mappedPhotos.length} selected photos!`);
+            } else {
+                toast.error('Failed to retrieve selected photos.');
+            }
+        } catch (err) {
+            console.error('Error fetching picker media items:', err);
+            toast.error('Failed to fetch selected photos.');
+        } finally {
+            setLoading(false);
+            setIsWaitingForPicker(false);
         }
     };
 
@@ -388,6 +501,43 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                                 </span>
                             </div>
                         </div>
+                    ) : isWaitingForPicker ? (
+                        /* Waiting for Picker selection state */
+                        <div className="py-12 flex flex-col items-center justify-center text-center max-w-md mx-auto">
+                            <div className="relative flex items-center justify-center mb-8">
+                                <div className="absolute w-24 h-24 rounded-full bg-violet-500/10 animate-ping" />
+                                <div className="relative w-16 h-16 rounded-full bg-violet-500/20 flex items-center justify-center">
+                                    <Sparkles className="w-8 h-8 text-violet-600 dark:text-violet-400 animate-pulse" />
+                                </div>
+                            </div>
+
+                            <h3 className="text-xl font-bold mb-2">Google Photos Picker Active</h3>
+                            <p className="text-sm text-zinc-500 dark:text-gray-400 mb-6">
+                                We opened the Google Photos Picker in a new window/tab. Please select the photos you want to import and click **"Done"**.
+                            </p>
+
+                            <div className="w-full p-4 rounded-xl border bg-zinc-50 dark:bg-white/[0.02] border-zinc-100 dark:border-white/5 space-y-3 mb-6">
+                                <div className="flex items-center gap-3 text-xs text-left text-zinc-500 dark:text-gray-400">
+                                    <div className="w-5 h-5 rounded-full bg-violet-500/10 flex items-center justify-center font-bold text-violet-600 dark:text-violet-400">1</div>
+                                    <span>Select files in the Google Photos tab</span>
+                                </div>
+                                <div className="flex items-center gap-3 text-xs text-left text-zinc-500 dark:text-gray-400">
+                                    <div className="w-5 h-5 rounded-full bg-violet-500/10 flex items-center justify-center font-bold text-violet-600 dark:text-violet-400">2</div>
+                                    <span>Click the blue **"Done"** or **"Select"** button</span>
+                                </div>
+                                <div className="flex items-center gap-3 text-xs text-left text-zinc-500 dark:text-gray-400">
+                                    <div className="w-5 h-5 rounded-full bg-violet-500/10 flex items-center justify-center font-bold text-violet-600 dark:text-violet-400">3</div>
+                                    <span>Quick Snap will automatically sync and show previews!</span>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={handleLaunchPicker}
+                                className="text-xs px-4 py-2 rounded-lg font-semibold border border-violet-500/30 text-violet-600 dark:text-violet-400 bg-violet-500/5 hover:bg-violet-500/10 transition-colors"
+                            >
+                                Did popup get blocked? Relaunch Picker
+                            </button>
+                        </div>
                     ) : loading ? (
                         /* Loading state */
                         <div className="flex flex-col items-center justify-center py-20 gap-4">
@@ -431,49 +581,100 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                             </div>
                         </div>
                     ) : !selectedAlbum ? (
-                        /* Albums List view */
+                        /* Albums & Picker Choice Dashboard */
                         <div className="space-y-6">
-                            <h3 className="text-md font-semibold px-1">Select Google Photos Album</h3>
-                            <div className="grid sm:grid-cols-2 gap-4">
-                                {albums.map((album) => (
-                                    <div
-                                        key={album.id}
-                                        onClick={() => handleSelectAlbum(album)}
-                                        className={`
-                                            group flex items-center gap-4 p-4 rounded-xl border cursor-pointer hover:-translate-y-0.5 transition-all duration-300
-                                            ${isDarkMode 
-                                                ? 'bg-white/[0.02] border-white/5 hover:border-violet-500/30 hover:bg-white/[0.04]' 
-                                                : 'bg-zinc-50/50 border-zinc-200 hover:border-violet-500/30 hover:bg-white'
-                                            }
-                                        `}
-                                    >
-                                        <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-zinc-100 dark:bg-white/5">
-                                            {album.coverPhotoBaseUrl ? (
-                                                <Image
-                                                    src={`${album.coverPhotoBaseUrl}=w150`}
-                                                    alt={album.title}
-                                                    fill
-                                                    className="object-cover group-hover:scale-105 transition-transform duration-300"
-                                                    unoptimized
-                                                />
-                                            ) : (
-                                                <div className="flex items-center justify-center h-full">
-                                                    <Folder className="text-zinc-400" size={24} />
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <h4 className="font-semibold text-sm truncate group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
-                                                {album.title}
-                                            </h4>
-                                            <p className="text-xs text-zinc-500 dark:text-gray-400 mt-1 flex items-center gap-1.5">
-                                                <ImageIcon size={12} />
-                                                {album.mediaItemsCount} Photos
-                                            </p>
-                                        </div>
-                                        <ChevronRight size={16} className="text-zinc-400 group-hover:translate-x-0.5 transition-transform" />
+                            {/* Live Google Photos Picker Primary Card */}
+                            {!isDemoMode && (
+                                <div className={`
+                                    p-6 rounded-2xl border transition-all duration-300 relative overflow-hidden group
+                                    ${isDarkMode 
+                                        ? 'bg-gradient-to-br from-violet-950/20 via-indigo-950/10 to-transparent border-violet-500/20 animate-pulse-subtle' 
+                                        : 'bg-gradient-to-br from-violet-50 via-indigo-50/30 to-transparent border-violet-200'
+                                    }
+                                `}>
+                                    <div className="absolute top-4 right-4">
+                                        <span className="text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase bg-violet-500 text-white tracking-wide">
+                                            Recommended & Secure
+                                        </span>
                                     </div>
-                                ))}
+                                    <div className="max-w-md">
+                                        <h3 className="text-lg font-bold mb-2 flex items-center gap-2 text-violet-700 dark:text-violet-300">
+                                            <Sparkles className="w-5 h-5 text-violet-500 animate-pulse" />
+                                            Google Photos Secure Picker
+                                        </h3>
+                                        <p className="text-xs text-zinc-500 dark:text-gray-400 mb-5 leading-relaxed">
+                                            Google requires this secure picker for privacy. Select any photos or videos from your library, and Quick Snap will automatically download, face-match, and index them.
+                                        </p>
+                                        <button
+                                            onClick={handleLaunchPicker}
+                                            className="py-3 px-6 rounded-xl font-bold text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 shadow-md shadow-violet-500/20 hover:shadow-violet-500/35 transition-all flex items-center gap-2 text-sm"
+                                        >
+                                            <Cloud className="w-4 h-4" />
+                                            Launch Live Photos Picker
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Separator or Sub-heading */}
+                            <div className="flex items-center gap-3 pt-2">
+                                <div className="h-[1px] flex-1 bg-zinc-100 dark:bg-white/5" />
+                                <span className="text-xs font-semibold text-zinc-400 dark:text-gray-500 uppercase tracking-wider">
+                                    {isDemoMode ? 'Select Demo Mock Album' : 'Or Browse Albums (Requires Legacy Permission)'}
+                                </span>
+                                <div className="h-[1px] flex-1 bg-zinc-100 dark:bg-white/5" />
+                            </div>
+
+                            {/* Albums grid */}
+                            <div className="grid sm:grid-cols-2 gap-4">
+                                {albums.length > 0 ? (
+                                    albums.map((album) => (
+                                        <div
+                                            key={album.id}
+                                            onClick={() => handleSelectAlbum(album)}
+                                            className={`
+                                                group flex items-center gap-4 p-4 rounded-xl border cursor-pointer hover:-translate-y-0.5 transition-all duration-300
+                                                ${isDarkMode 
+                                                    ? 'bg-white/[0.02] border-white/5 hover:border-violet-500/30 hover:bg-white/[0.04]' 
+                                                    : 'bg-zinc-50/50 border-zinc-200 hover:border-violet-500/30 hover:bg-white'
+                                                }
+                                            `}
+                                        >
+                                            <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-zinc-100 dark:bg-white/5">
+                                                {album.coverPhotoBaseUrl ? (
+                                                    <Image
+                                                        src={`${album.coverPhotoBaseUrl}=w150`}
+                                                        alt={album.title}
+                                                        fill
+                                                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                                                        unoptimized
+                                                    />
+                                                ) : (
+                                                    <div className="flex items-center justify-center h-full">
+                                                        <Folder className="text-zinc-400" size={24} />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <h4 className="font-semibold text-sm truncate group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
+                                                    {album.title}
+                                                </h4>
+                                                <p className="text-xs text-zinc-500 dark:text-gray-400 mt-1 flex items-center gap-1.5">
+                                                    <ImageIcon size={12} />
+                                                    {album.mediaItemsCount} Photos
+                                                </p>
+                                            </div>
+                                            <ChevronRight size={16} className="text-zinc-400 group-hover:translate-x-0.5 transition-transform" />
+                                        </div>
+                                    ))
+                                ) : (
+                                    /* No Albums / 403 Fallback Note */
+                                    <div className="col-span-2 text-center py-6">
+                                        <p className="text-xs text-zinc-400 dark:text-gray-500">
+                                            No legacy albums loaded. Use the **Google Photos Secure Picker** above to choose your photos!
+                                        </p>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     ) : (
