@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { 
     X, 
@@ -24,6 +24,112 @@ interface GooglePhotosModalProps {
     onClose: () => void;
     eventId: string;
     onSyncComplete?: () => void;
+}
+
+/**
+ * ProxyImage: Fetches Google Photos Picker images through the backend proxy
+ * using proper Authorization headers (not URL query params), converts to blob URLs.
+ * Handles HEIC format by requesting JPEG conversion via =w{size}-rj suffix.
+ */
+function ProxyImage({ baseUrl, googleToken, filename, className }: {
+    baseUrl: string;
+    googleToken: string | null;
+    filename: string;
+    className?: string;
+}) {
+    const [blobUrl, setBlobUrl] = useState<string | null>(null);
+    const [error, setError] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const abortRef = useRef<AbortController | null>(null);
+
+    useEffect(() => {
+        if (!baseUrl) {
+            setLoading(false);
+            setError(true);
+            return;
+        }
+
+        // Abort any previous request
+        if (abortRef.current) abortRef.current.abort();
+        const controller = new AbortController();
+        abortRef.current = controller;
+
+        setLoading(true);
+        setError(false);
+
+        const fetchImage = async () => {
+            try {
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+                const jwtToken = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
+                // Request JPEG conversion with =w150-rj to handle HEIC and other exotic formats
+                const targetUrl = `${baseUrl}=w150-rj`;
+
+                const res = await fetch(
+                    `${apiUrl}/photos/google-photos/proxy?url=${encodeURIComponent(targetUrl)}`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${jwtToken || ''}`,
+                            ...(googleToken ? { 'x-google-access-token': googleToken } : {})
+                        },
+                        signal: controller.signal
+                    }
+                );
+
+                if (!res.ok) throw new Error(`Proxy returned ${res.status}`);
+
+                const blob = await res.blob();
+                if (controller.signal.aborted) return;
+
+                const url = URL.createObjectURL(blob);
+                setBlobUrl(url);
+            } catch (err: any) {
+                if (err.name !== 'AbortError') {
+                    console.error(`Preview failed for ${filename}:`, err.message);
+                    setError(true);
+                }
+            } finally {
+                if (!controller.signal.aborted) setLoading(false);
+            }
+        };
+
+        fetchImage();
+
+        return () => {
+            controller.abort();
+            // Revoke blob URL on cleanup
+            setBlobUrl(prev => {
+                if (prev) URL.revokeObjectURL(prev);
+                return null;
+            });
+        };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [baseUrl, googleToken]);
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-full w-full bg-zinc-100 dark:bg-white/5">
+                <Loader2 className="w-5 h-5 text-violet-400 animate-spin" />
+            </div>
+        );
+    }
+
+    if (error || !blobUrl) {
+        return (
+            <div className="flex flex-col items-center justify-center h-full w-full bg-zinc-100 dark:bg-white/5 gap-1">
+                <ImageIcon className="w-5 h-5 text-zinc-300 dark:text-zinc-600" />
+                <span className="text-[9px] text-zinc-400 dark:text-zinc-600 truncate max-w-full px-1">{filename}</span>
+            </div>
+        );
+    }
+
+    return (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+            src={blobUrl}
+            alt={filename}
+            className={className || 'object-cover w-full h-full'}
+        />
+    );
 }
 
 export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComplete }: GooglePhotosModalProps) {
@@ -334,17 +440,14 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
         
         // Public shared album URLs (from link scraping) are on googleusercontent.com
         // and are publicly accessible — load them directly without proxying.
-        // But Picker API URLs (also on googleusercontent.com) REQUIRE an Authorization
-        // header, so they MUST be proxied. Use activeTab to distinguish.
         if (activeTab === 'link' && baseUrl.includes('googleusercontent.com')) {
-            return `${baseUrl}=w150`;
+            // Use -rj to force JPEG conversion (handles HEIC, WebP, etc.)
+            return `${baseUrl}=w150-rj`;
         }
         
-        // Everything else (including Picker API URLs) goes through the secure backend proxy
-        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
-        const targetUrl = `${baseUrl}=w150`;
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-        return `${apiUrl}/photos/google-photos/proxy?url=${encodeURIComponent(targetUrl)}&googleToken=${encodeURIComponent(googleToken || '')}&auth=${encodeURIComponent(token || '')}`;
+        // For Picker API images, ProxyImage component handles fetching directly.
+        // This fallback is only used if somehow called for non-picker, non-link URLs.
+        return `${baseUrl}=w150-rj`;
     };
 
     if (!isOpen) return null;
@@ -669,13 +772,22 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                                         key={photo.id}
                                         className="relative aspect-square rounded-lg overflow-hidden border border-zinc-200 dark:border-white/5 bg-zinc-50 dark:bg-white/5"
                                     >
-                                        <Image
-                                            src={getProxyPreviewUrl(photo.baseUrl)}
-                                            alt={photo.filename}
-                                            fill
-                                            className="object-cover"
-                                            unoptimized
-                                        />
+                                        {activeTab === 'picker' ? (
+                                            <ProxyImage
+                                                baseUrl={photo.baseUrl}
+                                                googleToken={googleToken}
+                                                filename={photo.filename}
+                                                className="object-cover w-full h-full"
+                                            />
+                                        ) : (
+                                            <Image
+                                                src={getProxyPreviewUrl(photo.baseUrl)}
+                                                alt={photo.filename}
+                                                fill
+                                                className="object-cover"
+                                                unoptimized
+                                            />
+                                        )}
                                     </div>
                                 ))}
                             </div>
