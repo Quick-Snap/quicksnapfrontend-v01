@@ -23,10 +23,12 @@ import {
     Camera,
     UserPlus,
     Mail,
-    Eye
+    Eye,
+    XCircle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { eventApi } from '@/lib/api';
+import api from '@/app/api/axios';
 import { fetchAllEventPhotos } from '@/lib/photoFetch';
 import { canAccessEventManagePage, canFullManageEvent } from '@/lib/eventPermissions';
 import { enrichPhotosWithDisplayUrls, getPhotoDisplayUrl } from '@/lib/photoUrl';
@@ -126,6 +128,21 @@ export default function ManageEventPage() {
     const [galleryPage, setGalleryPage] = useState(1);
     const [poolPage, setPoolPage] = useState(1);
 
+    const [isTrashOpen, setIsTrashOpen] = useState(false);
+    const [trashCount, setTrashCount] = useState(0);
+
+    const fetchTrashCount = useCallback(async () => {
+        if (!eventId) return;
+        try {
+            const res = await api.get(`/photos/event/${eventId}/trash`);
+            if (res.data?.success && Array.isArray(res.data?.data?.photos)) {
+                setTrashCount(res.data.data.photos.length);
+            }
+        } catch (err) {
+            console.error("Failed to fetch trash count:", err);
+        }
+    }, [eventId]);
+
     // Countdown timer for delete confirmation
     useEffect(() => {
         let timer: NodeJS.Timeout;
@@ -205,9 +222,10 @@ export default function ManageEventPage() {
             } finally {
                 if (!quiet) setLoading(false);
                 setPhotosLoading(false);
+                void fetchTrashCount();
             }
         },
-        [eventId, applyPhotosAndOfficialState]
+        [eventId, applyPhotosAndOfficialState, fetchTrashCount]
     );
 
     useEffect(() => {
@@ -294,6 +312,33 @@ export default function ManageEventPage() {
             else next.add(id);
             return next;
         });
+    };
+
+    const handleDeletePhoto = async (photoId: string) => {
+        if (!confirm('Are you sure you want to delete this photo? It will be moved to the Trash Bin for 3 days.')) {
+            return;
+        }
+
+        try {
+            await api.delete(`/photos/${photoId}`);
+            toast.success('Photo moved to Trash Bin');
+            
+            // Instantly remove from UI grid
+            setAllEventPhotos(prev => prev.filter(p => p._id !== photoId && p.imageId !== photoId));
+            
+            // Remove from selectedOfficialIds if it was there
+            setSelectedOfficialIds(prev => {
+                const next = new Set(prev);
+                next.delete(photoId);
+                return next;
+            });
+            
+            // Update trash count
+            void fetchTrashCount();
+        } catch (err) {
+            console.error("Failed to delete photo:", err);
+            toast.error("Failed to delete photo");
+        }
     };
 
     const handleSaveOfficialSelection = async () => {
@@ -759,16 +804,31 @@ export default function ManageEventPage() {
                 {/* Select photos for dashboard (official gallery) */}
                 {canFullManage && (
                 <div className={MANAGE_CARD}>
-                    <div className="mb-2 flex items-center gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-violet-100 to-indigo-100 dark:from-violet-500/20 dark:to-indigo-500/20">
-                            <ImageIcon className="h-6 w-6 text-violet-700 dark:text-violet-400" />
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-zinc-100 pb-6 dark:border-white/5">
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-violet-100 to-indigo-100 dark:from-violet-500/20 dark:to-indigo-500/20">
+                                <ImageIcon className="h-6 w-6 text-violet-700 dark:text-violet-400" />
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Public event gallery</h2>
+                                <p className="text-sm text-zinc-500 dark:text-gray-400">
+                                    Add photos from the pool below, then save. They move to “On public gallery” once the server confirms. Click a live photo to remove it from the public page.
+                                </p>
+                            </div>
                         </div>
-                        <div>
-                            <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Public event gallery</h2>
-                            <p className="text-sm text-zinc-500 dark:text-gray-400">
-                                Add photos from the pool below, then save. They move to “On public gallery” once the server confirms. Click a live photo to remove it from the public page.
-                            </p>
-                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setIsTrashOpen(true)}
+                            className="flex items-center gap-2 px-4 py-2 border border-zinc-200 hover:border-zinc-300 dark:border-white/10 dark:hover:border-white/20 text-zinc-700 dark:text-gray-200 rounded-xl font-semibold transition-all hover:bg-zinc-50 dark:hover:bg-white/5 shadow-sm self-start sm:self-auto shrink-0 animate-fade-in"
+                        >
+                            <Trash2 size={16} className="text-red-500" />
+                            <span>Trash Bin</span>
+                            {trashCount > 0 && (
+                                <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">
+                                    {trashCount}
+                                </span>
+                            )}
+                        </button>
                     </div>
                     {photosLoading ? (
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 py-8">
@@ -880,6 +940,18 @@ export default function ManageEventPage() {
                                                     >
                                                         <Eye className="h-4 w-4" strokeWidth={2} />
                                                     </button>
+                                                    <button
+                                                        type="button"
+                                                        title="Move to Trash"
+                                                        aria-label="Delete photo"
+                                                        className="absolute bottom-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity flex h-8 w-8 items-center justify-center rounded-lg bg-red-600/90 border border-red-500 text-white hover:bg-red-700 hover:border-red-600 transition-colors shadow-lg shadow-red-500/10 active:scale-95"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDeletePhoto(id);
+                                                        }}
+                                                    >
+                                                        <Trash2 className="h-4 w-4" strokeWidth={2} />
+                                                    </button>
                                                 </div>
                                             );
                                         })}
@@ -970,6 +1042,18 @@ export default function ManageEventPage() {
                                                         }}
                                                     >
                                                         <Eye className="h-4 w-4" strokeWidth={2} />
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        title="Move to Trash"
+                                                        aria-label="Delete photo"
+                                                        className="absolute bottom-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity flex h-8 w-8 items-center justify-center rounded-lg bg-red-600/90 border border-red-500 text-white hover:bg-red-700 hover:border-red-600 transition-colors shadow-lg shadow-red-500/10 active:scale-95"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDeletePhoto(id);
+                                                        }}
+                                                    >
+                                                        <Trash2 className="h-4 w-4" strokeWidth={2} />
                                                     </button>
                                                 </div>
                                             );
@@ -1119,8 +1203,204 @@ export default function ManageEventPage() {
                         </div>
                     </div>
                 )}
+
+                {/* Trash Bin Modal */}
+                <TrashBinModal
+                    isOpen={isTrashOpen}
+                    onClose={() => setIsTrashOpen(false)}
+                    eventId={eventId}
+                    onRefresh={() => {
+                        void refreshEventPhotos({ quiet: true });
+                        void fetchTrashCount();
+                    }}
+                />
             </div>
         </RoleGuard>
+    );
+}
+
+interface TrashBinModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    eventId: string;
+    onRefresh: () => void;
+}
+
+function TrashBinModal({ isOpen, onClose, eventId, onRefresh }: TrashBinModalProps) {
+    const [photos, setPhotos] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [actioning, setActioning] = useState<string | null>(null);
+
+    const fetchTrashPhotos = useCallback(async () => {
+        setLoading(true);
+        try {
+            const res = await api.get(`/photos/event/${eventId}/trash`);
+            if (res.data?.success && res.data?.data?.photos) {
+                setPhotos(res.data.data.photos);
+            }
+        } catch (err) {
+            console.error("Failed to load trash photos:", err);
+            toast.error("Failed to load trash photos");
+        } finally {
+            setLoading(false);
+        }
+    }, [eventId]);
+
+    useEffect(() => {
+        if (isOpen && eventId) {
+            fetchTrashPhotos();
+        }
+    }, [isOpen, eventId, fetchTrashPhotos]);
+
+    const handleRestore = async (photoId: string) => {
+        setActioning(photoId);
+        try {
+            await api.post(`/photos/${photoId}/restore`);
+            toast.success("Photo restored successfully!");
+            setPhotos(prev => prev.filter(p => p._id !== photoId && p.imageId !== photoId));
+            onRefresh();
+        } catch (err) {
+            console.error("Failed to restore photo:", err);
+            toast.error("Failed to restore photo");
+        } finally {
+            setActioning(null);
+        }
+    };
+
+    const handlePurge = async (photoId: string) => {
+        if (!confirm("Are you sure you want to permanently delete this photo? This cannot be undone and S3 storage will be cleared immediately.")) {
+            return;
+        }
+        setActioning(photoId);
+        try {
+            await api.delete(`/photos/${photoId}?hard=true`);
+            toast.success("Photo permanently deleted!");
+            setPhotos(prev => prev.filter(p => p._id !== photoId && p.imageId !== photoId));
+            onRefresh();
+        } catch (err) {
+            console.error("Failed to purge photo:", err);
+            toast.error("Failed to permanently delete photo");
+        } finally {
+            setActioning(null);
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <div 
+                className="absolute inset-0 bg-zinc-950/40 dark:bg-black/60 backdrop-blur-md transition-opacity duration-300"
+                onClick={onClose}
+            />
+
+            {/* Modal Content */}
+            <div className="relative w-full max-w-2xl max-h-[80vh] flex flex-col bg-white dark:bg-[#0f0c18] border border-zinc-200 dark:border-white/5 text-zinc-900 dark:text-white rounded-2xl overflow-hidden shadow-2xl transition-all duration-300 animate-scale-in">
+                {/* Header */}
+                <div className="flex items-center justify-between p-6 border-b border-zinc-100 dark:border-white/5 bg-zinc-50/50 dark:bg-white/[0.01]">
+                    <div className="flex items-center gap-2">
+                        <Trash2 className="w-5 h-5 text-red-500" />
+                        <h2 className="text-lg font-bold">Trash Bin - Recently Deleted</h2>
+                    </div>
+                    <button 
+                        onClick={onClose}
+                        className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-white/5 text-zinc-500 transition-colors"
+                    >
+                        <XCircle size={20} />
+                    </button>
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto p-6 min-h-[30vh]">
+                    {loading ? (
+                        <div className="flex flex-col items-center justify-center py-12 gap-2 text-zinc-500">
+                            <div className="w-6 h-6 border-2 border-violet-600 border-t-transparent rounded-full animate-spin" />
+                            <p className="text-sm">Loading trash bin...</p>
+                        </div>
+                    ) : photos.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-12 text-center text-zinc-500 dark:text-gray-400 gap-2">
+                            <div className="w-12 h-12 rounded-full bg-zinc-100 dark:bg-white/5 flex items-center justify-center text-zinc-300">
+                                <Trash2 size={24} />
+                            </div>
+                            <p className="font-semibold text-sm">Trash is empty</p>
+                            <p className="text-xs text-zinc-400 dark:text-gray-500 max-w-xs">
+                                Deleted photos remain here for up to 3 days before being permanently purged.
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                            {photos.map((photo) => {
+                                const deletedTime = photo.deletedAt ? new Date(photo.deletedAt).getTime() : Date.now();
+                                const expiryTime = deletedTime + 3 * 24 * 60 * 60 * 1000;
+                                const timeRemainingMs = Math.max(0, expiryTime - Date.now());
+                                const daysLeft = Math.floor(timeRemainingMs / (24 * 60 * 60 * 1000));
+                                const hoursLeft = Math.floor((timeRemainingMs % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+                                
+                                let countText = "Expired";
+                                if (daysLeft > 0) {
+                                    countText = `${daysLeft}d left`;
+                                } else if (hoursLeft > 0) {
+                                    countText = `${hoursLeft}h left`;
+                                } else if (timeRemainingMs > 0) {
+                                    countText = "<1h left";
+                                }
+
+                                return (
+                                    <div 
+                                        key={photo._id} 
+                                        className="relative aspect-square rounded-xl overflow-hidden border border-zinc-200 dark:border-white/5 bg-zinc-50 dark:bg-white/5 group shadow-sm animate-scale-in"
+                                    >
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img
+                                            src={photo.thumbnailUrl || photo.url}
+                                            alt={photo.fileName}
+                                            className="w-full h-full object-cover"
+                                        />
+
+                                        {/* Days Left badge */}
+                                        <div className="absolute top-2 left-2 bg-zinc-950/75 dark:bg-black/75 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded-full z-10">
+                                            {countText}
+                                        </div>
+
+                                        {/* Hover Overlay Controls */}
+                                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-3 gap-2 text-center z-10">
+                                            <p className="text-[10px] text-white/90 truncate max-w-full font-medium">{photo.fileName}</p>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => handleRestore(photo._id || photo.imageId)}
+                                                    disabled={actioning !== null}
+                                                    className="px-2.5 py-1.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-all shadow-md active:scale-95"
+                                                >
+                                                    Restore
+                                                </button>
+                                                <button
+                                                    onClick={() => handlePurge(photo._id || photo.imageId)}
+                                                    disabled={actioning !== null}
+                                                    className="px-2.5 py-1.5 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-all shadow-md active:scale-95"
+                                                >
+                                                    Purge
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+
+                {/* Footer */}
+                <div className="p-6 border-t border-zinc-100 dark:border-white/5 bg-zinc-50/50 dark:bg-white/[0.01] flex justify-end">
+                    <button
+                        onClick={onClose}
+                        className="py-2 px-5 text-sm font-semibold rounded-xl text-zinc-700 bg-zinc-100 hover:bg-zinc-200/80 transition-all dark:text-gray-300 dark:bg-white/5 dark:hover:bg-white/10"
+                    >
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
     );
 }
 
