@@ -362,6 +362,8 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                     eventId,
                     baseUrl: photo.baseUrl,
                     filename: photo.filename
+                }, {
+                    headers: isDemoMode ? {} : { 'x-google-access-token': googleToken! }
                 });
 
                 if (res.data?.success) {
