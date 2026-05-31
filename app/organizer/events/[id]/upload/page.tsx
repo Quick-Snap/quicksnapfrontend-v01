@@ -47,19 +47,19 @@ export default function EventUploadPage() {
     const [uploading, setUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
 
-    useEffect(() => {
-        const fetchEvent = async () => {
-            try {
-                const res = await api.get(`/events/${eventId}`);
-                setEventData(res.data.data);
-            } catch (error) {
-                console.error('Error fetching event:', error);
-                toast.error('Failed to load event details');
-            } finally {
-                setLoading(false);
-            }
-        };
+    const fetchEvent = async () => {
+        try {
+            const res = await api.get(`/events/${eventId}`);
+            setEventData(res.data.data);
+        } catch (error) {
+            console.error('Error fetching event:', error);
+            toast.error('Failed to load event details');
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    useEffect(() => {
         if (eventId) {
             fetchEvent();
         }
@@ -247,6 +247,7 @@ export default function EventUploadPage() {
                                     onFilesSelected={setFiles}
                                     maxFiles={50}
                                     eventId={eventId}
+                                    onSyncComplete={fetchEvent}
                                 />
 
                                 {/* File Summary */}

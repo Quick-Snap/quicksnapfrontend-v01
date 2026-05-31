@@ -59,9 +59,10 @@ interface GooglePhotosModalProps {
     isOpen: boolean;
     onClose: () => void;
     eventId: string;
+    onSyncComplete?: () => void;
 }
 
-export default function GooglePhotosModal({ isOpen, onClose, eventId }: GooglePhotosModalProps) {
+export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComplete }: GooglePhotosModalProps) {
     const theme = useAppStore(state => state.ui.theme);
     const isDarkMode = theme === 'dark';
 
@@ -258,6 +259,9 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId }: GooglePh
 
         toast.success(`Google Photos Sync completed!`);
         setSyncing(false);
+        if (onSyncComplete) {
+            onSyncComplete();
+        }
         
         // Wait and close
         setTimeout(() => {
