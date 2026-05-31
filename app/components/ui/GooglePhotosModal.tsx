@@ -135,6 +135,7 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
             const client = google.accounts.oauth2.initTokenClient({
                 client_id: clientId,
                 scope: 'https://www.googleapis.com/auth/photoslibrary.readonly',
+                prompt: 'consent',
                 callback: (tokenResponse: any) => {
                     setLoading(false);
                     if (tokenResponse.access_token) {
