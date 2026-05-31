@@ -289,18 +289,17 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
             if (res.data?.success) {
                 setAlbums(res.data.data || []);
             } else {
-                toast.error('Failed to load Google Albums. Reverting to Demo Mode.');
-                startDemoMode();
+                setAlbums([]);
             }
         } catch (err: any) {
             // Safe error handling (Axios translations handled in Phase 2 backend)
             console.error('Error fetching albums:', err);
+            setAlbums([]);
             if (err.response?.data?.code === 'GOOGLE_AUTH_EXPIRED') {
                 toast.error('Google login expired. Please sign in again.');
                 setGoogleToken(null);
             } else {
-                toast.error('Failed to load live Google albums. Reverting to Demo Mode.');
-                startDemoMode();
+                toast.error('Legacy albums list is restricted. Please use the Secure Photos Picker!');
             }
         } finally {
             setLoading(false);
