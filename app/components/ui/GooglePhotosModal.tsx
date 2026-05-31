@@ -19,42 +19,6 @@ import toast from 'react-hot-toast';
 import api from '@/app/api/axios';
 import { useAppStore } from '@/stores/appStore';
 
-// Curated high-resolution Unsplash event photos with clear, detectable faces for Demo Mode
-const DEMO_ALBUMS = [
-    {
-        id: 'demo-wedding',
-        title: '🎉 Wedding Ceremony (High-Res)',
-        mediaItemsCount: 3,
-        coverPhotoBaseUrl: 'https://images.unsplash.com/photo-1519741497674-611481863552',
-        photos: [
-            { id: 'w1', filename: 'wedding_couple.jpg', baseUrl: 'https://images.unsplash.com/photo-1519741497674-611481863552' },
-            { id: 'w2', filename: 'wedding_bride.jpg', baseUrl: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc' },
-            { id: 'w3', filename: 'wedding_guest.jpg', baseUrl: 'https://images.unsplash.com/photo-1505232458627-539c1a281a14' }
-        ]
-    },
-    {
-        id: 'demo-birthday',
-        title: '🎂 Golden Birthday Bash',
-        mediaItemsCount: 3,
-        coverPhotoBaseUrl: 'https://images.unsplash.com/photo-1530103862676-de8c9debad1d',
-        photos: [
-            { id: 'b1', filename: 'birthday_group.jpg', baseUrl: 'https://images.unsplash.com/photo-1513151233558-d860c5398176' },
-            { id: 'b2', filename: 'birthday_celebration.jpg', baseUrl: 'https://images.unsplash.com/photo-1530103862676-de8c9debad1d' },
-            { id: 'b3', filename: 'birthday_dance.jpg', baseUrl: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7' }
-        ]
-    },
-    {
-        id: 'demo-corporate',
-        title: '🏢 Corporate Gala Night',
-        mediaItemsCount: 2,
-        coverPhotoBaseUrl: 'https://images.unsplash.com/photo-1511578314322-379afb476865',
-        photos: [
-            { id: 'c1', filename: 'corporate_networking.jpg', baseUrl: 'https://images.unsplash.com/photo-1511578314322-379afb476865' },
-            { id: 'c2', filename: 'corporate_presentation.jpg', baseUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87' }
-        ]
-    }
-];
-
 interface GooglePhotosModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -66,9 +30,7 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
     const theme = useAppStore(state => state.ui.theme);
     const isDarkMode = theme === 'dark';
 
-    const [isDemoMode, setIsDemoMode] = useState(false);
     const [googleToken, setGoogleToken] = useState<string | null>(null);
-    const [albums, setAlbums] = useState<any[]>([]);
     const [selectedAlbum, setSelectedAlbum] = useState<any | null>(null);
     const [photos, setPhotos] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
@@ -120,11 +82,10 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
         }
     }, [isOpen]);
 
-    // Handle initial Authentication or fallback to Demo Mode
+    // Handle initial Authentication
     const handleConnectGoogle = () => {
         if (!clientId) {
-            toast.success('No Google Client ID set — enabling full-featured Demo Mode!');
-            startDemoMode();
+            toast.error('Google Client ID is not configured in environment variables. Please check your settings.');
             return;
         }
 
@@ -140,8 +101,8 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
             initTokenClient();
         } catch (err: any) {
             console.error('Google auth error:', err);
-            toast.error('Failed to initialize Google Authentication. Entering Demo Mode.');
-            startDemoMode();
+            toast.error('Failed to initialize Google Authentication. Please try again.');
+            setLoading(false);
         }
     };
 
@@ -156,7 +117,6 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                     setLoading(false);
                     if (tokenResponse.access_token) {
                         setGoogleToken(tokenResponse.access_token);
-                        setIsDemoMode(false);
                     } else {
                         toast.error('Google authorization declined.');
                     }
@@ -164,14 +124,13 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                 error_callback: (err: any) => {
                     setLoading(false);
                     console.error('GSI client error:', err);
-                    toast.error('Failed to get permissions. Entering Demo Mode.');
-                    startDemoMode();
+                    toast.error('Failed to get Google Photos permissions.');
                 }
             });
             client.requestAccessToken();
         } catch (err) {
             setLoading(false);
-            startDemoMode();
+            toast.error('An error occurred while launching Google Sign-in.');
         }
     };
 
@@ -305,41 +264,6 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
         }
     };
 
-    const startDemoMode = () => {
-        setIsDemoMode(true);
-        setGoogleToken(null);
-        setAlbums(DEMO_ALBUMS);
-        setLoading(false);
-    };
-
-    const handleSelectAlbum = async (album: any) => {
-        setSelectedAlbum(album);
-        setLoading(true);
-
-        if (isDemoMode) {
-            // Pre-seed demo photos immediately
-            setPhotos(album.photos || []);
-            setLoading(false);
-            return;
-        }
-
-        try {
-            const res = await api.get(`/photos/google-photos/albums/${album.id}/photos`, {
-                headers: { 'x-google-access-token': googleToken! }
-            });
-            if (res.data?.success) {
-                setPhotos(res.data.data.photos || []);
-            } else {
-                toast.error('Failed to fetch album photos.');
-            }
-        } catch (err: any) {
-            console.error('Error fetching album photos:', err);
-            toast.error('Failed to fetch photos from Google. Please try again.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
     // Execute batch photo ingestion sequentially or with small parallel chunks
     const handleSyncAlbum = async () => {
         if (photos.length === 0) {
@@ -369,7 +293,7 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                     baseUrl: photo.baseUrl,
                     filename: photo.filename
                 }, {
-                    headers: (isDemoMode || !googleToken) ? {} : { 'x-google-access-token': googleToken }
+                    headers: (activeTab === 'link' || !googleToken) ? {} : { 'x-google-access-token': googleToken }
                 });
 
                 if (res.data?.success) {
@@ -398,6 +322,24 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
         setTimeout(() => {
             onClose();
         }, 1500);
+    };
+
+    const getProxyPreviewUrl = (baseUrl: string) => {
+        if (!baseUrl) return '';
+        
+        // If it's a public Unsplash or public Google Photos CDN link (googleusercontent.com),
+        // we can load it directly in the browser without passing through our proxy.
+        // This is extremely efficient and reduces server load/bandwidth to zero.
+        if (baseUrl.includes('unsplash.com') || baseUrl.includes('googleusercontent.com')) {
+            return `${baseUrl}=w150`;
+        }
+        
+        // For secure Google Picker API URLs (which require authorization and trigger CORS),
+        // we must route them through our secure backend proxy.
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
+        const targetUrl = `${baseUrl}=w150`;
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+        return `${apiUrl}/photos/google-photos/proxy?url=${encodeURIComponent(targetUrl)}&googleToken=${encodeURIComponent(googleToken || '')}&auth=${encodeURIComponent(token || '')}`;
     };
 
     if (!isOpen) return null;
@@ -430,11 +372,6 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                         <div>
                             <h2 className="text-xl font-bold flex items-center gap-2">
                                 Google Photos Sync
-                                {isDemoMode && (
-                                    <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold uppercase bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                                        Demo Mode
-                                    </span>
-                                )}
                             </h2>
                             <p className="text-xs text-zinc-500 dark:text-gray-400">Import event photos seamlessly from your albums</p>
                         </div>
@@ -559,7 +496,6 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                                 <button
                                     onClick={() => {
                                         setActiveTab('link');
-                                        setIsDemoMode(false);
                                     }}
                                     className={`
                                         flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2
@@ -644,61 +580,7 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                             ) : (
                                 /* Option A: Live Google Photos Picker Card */
                                 <>
-                                    {isDemoMode ? (
-                                        <>
-                                            {/* Separator or Sub-heading */}
-                                            <div className="flex items-center gap-3 pt-2">
-                                                <div className="h-[1px] flex-1 bg-zinc-100 dark:bg-white/5" />
-                                                <span className="text-xs font-semibold text-zinc-400 dark:text-gray-500 uppercase tracking-wider">
-                                                    Select Demo Mock Album
-                                                </span>
-                                                <div className="h-[1px] flex-1 bg-zinc-100 dark:bg-white/5" />
-                                            </div>
-
-                                            {/* Albums grid */}
-                                            <div className="grid sm:grid-cols-2 gap-4">
-                                                {albums.map((album) => (
-                                                    <div
-                                                        key={album.id}
-                                                        onClick={() => handleSelectAlbum(album)}
-                                                        className={`
-                                                            group flex items-center gap-4 p-4 rounded-xl border cursor-pointer hover:-translate-y-0.5 transition-all duration-300
-                                                            ${isDarkMode 
-                                                                ? 'bg-white/[0.02] border-white/5 hover:border-violet-500/30 hover:bg-white/[0.04]' 
-                                                                : 'bg-zinc-50/50 border-zinc-200 hover:border-violet-500/30 hover:bg-white'
-                                                            }
-                                                        `}
-                                                    >
-                                                        <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-zinc-100 dark:bg-white/5">
-                                                            {album.coverPhotoBaseUrl ? (
-                                                                <Image
-                                                                    src={`${album.coverPhotoBaseUrl}=w150`}
-                                                                    alt={album.title}
-                                                                    fill
-                                                                    className="object-cover group-hover:scale-105 transition-transform duration-300"
-                                                                    unoptimized
-                                                                />
-                                                            ) : (
-                                                                <div className="flex items-center justify-center h-full">
-                                                                    <Folder className="text-zinc-400" size={24} />
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                        <div className="min-w-0 flex-1">
-                                                            <h4 className="font-semibold text-sm truncate group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
-                                                                {album.title}
-                                                            </h4>
-                                                            <p className="text-xs text-zinc-500 dark:text-gray-400 mt-1 flex items-center gap-1.5">
-                                                                <ImageIcon size={12} />
-                                                                {album.mediaItemsCount} Photos
-                                                            </p>
-                                                        </div>
-                                                        <ChevronRight size={16} className="text-zinc-400 group-hover:translate-x-0.5 transition-transform" />
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </>
-                                    ) : googleToken ? (
+                                    {googleToken ? (
                                         <div className={`
                                             p-6 rounded-2xl border transition-all duration-300 relative overflow-hidden group max-w-xl mx-auto
                                             ${isDarkMode 
@@ -754,14 +636,6 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                                                     </svg>
                                                     Sign in with Google
                                                 </button>
-
-                                                <button
-                                                    onClick={startDemoMode}
-                                                    className="w-full py-3 px-6 rounded-xl font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200/80 transition-all dark:text-gray-300 dark:bg-white/5 dark:hover:bg-white/10 flex items-center justify-center gap-2 border border-zinc-200 dark:border-white/5"
-                                                >
-                                                    <Zap className="w-4 h-4 text-amber-500" />
-                                                    Try Local Test Album (Demo Mode)
-                                                </button>
                                             </div>
                                         </div>
                                     )}
@@ -791,7 +665,7 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                                         className="relative aspect-square rounded-lg overflow-hidden border border-zinc-200 dark:border-white/5 bg-zinc-50 dark:bg-white/5"
                                     >
                                         <Image
-                                            src={`${photo.baseUrl}=w150`}
+                                            src={getProxyPreviewUrl(photo.baseUrl)}
                                             alt={photo.filename}
                                             fill
                                             className="object-cover"
@@ -813,7 +687,6 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                         <button
                             onClick={() => {
                                 setGoogleToken(null);
-                                setAlbums([]);
                                 setSelectedAlbum(null);
                             }}
                             className="text-xs text-zinc-500 hover:text-red-500 font-semibold transition-colors"
