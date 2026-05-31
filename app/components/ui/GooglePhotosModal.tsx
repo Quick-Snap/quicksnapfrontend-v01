@@ -81,6 +81,20 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
     useEffect(() => {
+        // Load Google Identity Services script immediately on mount to enable synchronous user click popups
+        if (typeof window !== 'undefined') {
+            const google = (window as any).google;
+            if (!google || !google.accounts || !google.accounts.oauth2) {
+                const script = document.createElement('script');
+                script.src = 'https://accounts.google.com/gsi/client';
+                script.async = true;
+                script.defer = true;
+                document.body.appendChild(script);
+            }
+        }
+    }, []);
+
+    useEffect(() => {
         if (!isOpen) {
             // Reset state on close
             setSelectedAlbum(null);
@@ -91,27 +105,23 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
     }, [isOpen]);
 
     // Handle initial Authentication or fallback to Demo Mode
-    const handleConnectGoogle = async () => {
+    const handleConnectGoogle = () => {
         if (!clientId) {
             toast.success('No Google Client ID set — enabling full-featured Demo Mode!');
             startDemoMode();
             return;
         }
 
+        // Check if GSI is loaded
+        const google = (window as any).google;
+        if (!google || !google.accounts || !google.accounts.oauth2) {
+            toast.error('Google Auth library is still loading. Please try again in a second.');
+            return;
+        }
+
         setLoading(true);
         try {
-            // Dynamically check and initialize Google Token Client
-            const google = (window as any).google;
-            if (!google || !google.accounts || !google.accounts.oauth2) {
-                // Try dynamically injecting script if missing
-                const script = document.createElement('script');
-                script.src = 'https://accounts.google.com/gsi/client';
-                script.async = true;
-                script.onload = () => initTokenClient();
-                document.body.appendChild(script);
-            } else {
-                initTokenClient();
-            }
+            initTokenClient();
         } catch (err: any) {
             console.error('Google auth error:', err);
             toast.error('Failed to initialize Google Authentication. Entering Demo Mode.');
