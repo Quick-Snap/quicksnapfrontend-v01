@@ -370,7 +370,7 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
         }
     };
 
-    // Execute batch photo ingestion sequentially or with small parallel chunks
+    // Execute batch photo ingestion concurrently with a limit of 3 workers
     const handleSyncAlbum = async () => {
         if (photos.length === 0) {
             toast.error('No photos to import.');
@@ -385,33 +385,67 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
             failed: 0
         });
 
-        // Loop through all photos in the album to trigger ingestion
-        for (let i = 0; i < photos.length; i++) {
-            const photo = photos[i];
-            
-            // Set current photo name in state
-            setSyncProgress(prev => ({ ...prev, current: i + 1 }));
+        // Concurrency settings
+        // Future extension: Adjust dynamically (e.g., limit to 1 concurrent request during high-traffic 11 AM - 6 PM,
+        // and 3 concurrent requests at night/other times).
+        const CONCURRENCY_LIMIT = 3;
+        const totalPhotos = photos.length;
+        
+        let activeIndex = 0;
+        let successCount = 0;
+        let failedCount = 0;
+        let processedCount = 0;
 
-            try {
-                // Ingest Google Photo URL on backend
-                const res = await api.post('/photos/google-photos/import-file', {
-                    eventId,
-                    baseUrl: photo.baseUrl,
-                    filename: photo.filename
-                }, {
-                    headers: (activeTab === 'link' || !googleToken) ? {} : { 'x-google-access-token': googleToken }
-                });
-
-                if (res.data?.success) {
-                    setSyncProgress(prev => ({ ...prev, success: prev.success + 1 }));
-                } else {
-                    setSyncProgress(prev => ({ ...prev, failed: prev.failed + 1 }));
+        const runWorker = async () => {
+            while (true) {
+                // Fetch next photo index atomically (JS event loop execution makes this safe)
+                const currentIndex = activeIndex++;
+                if (currentIndex >= totalPhotos) {
+                    break;
                 }
-            } catch (err) {
-                console.error(`Import failed for ${photo.filename}:`, err);
-                setSyncProgress(prev => ({ ...prev, failed: prev.failed + 1 }));
+
+                const photo = photos[currentIndex];
+
+                try {
+                    // Ingest Google Photo URL on backend
+                    const res = await api.post('/photos/google-photos/import-file', {
+                        eventId,
+                        baseUrl: photo.baseUrl,
+                        filename: photo.filename
+                    }, {
+                        headers: (activeTab === 'link' || !googleToken) ? {} : { 'x-google-access-token': googleToken }
+                    });
+
+                    if (res.data?.success) {
+                        successCount++;
+                    } else {
+                        failedCount++;
+                    }
+                } catch (err) {
+                    console.error(`Import failed for ${photo.filename}:`, err);
+                    failedCount++;
+                } finally {
+                    processedCount++;
+                    // Functional state update avoids any state merging race conditions
+                    setSyncProgress(prev => ({
+                        ...prev,
+                        current: processedCount,
+                        success: successCount,
+                        failed: failedCount
+                    }));
+                }
             }
+        };
+
+        // Spawn concurrent workers
+        const workers = [];
+        const actualWorkersCount = Math.min(CONCURRENCY_LIMIT, totalPhotos);
+        for (let w = 0; w < actualWorkersCount; w++) {
+            workers.push(runWorker());
         }
+
+        // Await completion of all workers
+        await Promise.all(workers);
 
         // Notify parent context to refresh matches index
         if (typeof window !== 'undefined') {
