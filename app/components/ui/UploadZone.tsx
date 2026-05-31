@@ -1,20 +1,23 @@
 import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, X, FileImage, AlertCircle, ImageIcon, Sparkles } from 'lucide-react';
+import { Upload, X, FileImage, AlertCircle, ImageIcon, Sparkles, Cloud } from 'lucide-react';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRole } from '@/hooks/useRole';
 import toast from 'react-hot-toast';
+import GooglePhotosModal from './GooglePhotosModal';
 
 interface UploadZoneProps {
     onFilesSelected: (files: File[]) => void;
     maxFiles?: number;
+    eventId?: string;
 }
 
-export default function UploadZone({ onFilesSelected, maxFiles = 50 }: UploadZoneProps) {
+export default function UploadZone({ onFilesSelected, maxFiles = 50, eventId }: UploadZoneProps) {
     const { isPhotographerOrOrganizer } = useRole();
     const [previews, setPreviews] = useState<{ file: File; url: string }[]>([]);
     const [error, setError] = useState<string | null>(null);
+    const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
 
     const onDrop = useCallback(async (acceptedFiles: File[]) => {
         setError(null);
@@ -134,6 +137,23 @@ export default function UploadZone({ onFilesSelected, maxFiles = 50 }: UploadZon
                             or <span className="text-violet-600 hover:text-violet-500 dark:text-violet-400 dark:hover:text-violet-300 transition-colors">browse files</span> from your computer
                         </p>
                     </div>
+
+                    {/* Google Photos Sync Action Button (Premium calm styling) */}
+                    {!isDragActive && eventId && (
+                        <div className="mt-1 flex flex-col sm:flex-row gap-3">
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation(); // Prevent react-dropzone browse trigger
+                                    setIsGoogleModalOpen(true);
+                                }}
+                                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-xs transition-all bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-md shadow-violet-500/10 hover:shadow-violet-500/25"
+                            >
+                                <Cloud size={14} />
+                                Sync from Google Photos
+                            </button>
+                        </div>
+                    )}
  
                     {/* File Types Badge */}
                     <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-50 border border-zinc-200 dark:bg-white/5 dark:border-white/10">
@@ -142,6 +162,15 @@ export default function UploadZone({ onFilesSelected, maxFiles = 50 }: UploadZon
                     </div>
                 </div>
             </div>
+
+            {/* Google Photos Sync Modal */}
+            {eventId && (
+                <GooglePhotosModal 
+                    isOpen={isGoogleModalOpen} 
+                    onClose={() => setIsGoogleModalOpen(false)} 
+                    eventId={eventId} 
+                />
+            )}
  
             {/* Error Message */}
             {error && (

@@ -246,6 +246,7 @@ export default function EventUploadPage() {
                                 <UploadZone
                                     onFilesSelected={setFiles}
                                     maxFiles={50}
+                                    eventId={eventId}
                                 />
 
                                 {/* File Summary */}
