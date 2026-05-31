@@ -167,7 +167,9 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
     const [pickerStatus, setPickerStatus] = useState<string>('idle');
     const [albumUrl, setAlbumUrl] = useState('');
     const [isScrapingLink, setIsScrapingLink] = useState(false);
-    const [activeTab, setActiveTab] = useState<'picker' | 'link'>('link');
+    const [driveFolderUrl, setDriveFolderUrl] = useState('');
+    const [isListingDrive, setIsListingDrive] = useState(false);
+    const [activeTab, setActiveTab] = useState<'picker' | 'link' | 'drive'>('link');
 
     useEffect(() => {
         if (!isOpen) {
@@ -181,6 +183,8 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
             setPickerSessionId(null);
             setAlbumUrl('');
             setIsScrapingLink(false);
+            setDriveFolderUrl('');
+            setIsListingDrive(false);
             setActiveTab('link');
             if (typeof window !== 'undefined' && (window as any)._pickerIntervalId) {
                 clearInterval((window as any)._pickerIntervalId);
@@ -370,6 +374,33 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
         }
     };
 
+    const handleImportDriveFolder = async () => {
+        if (!driveFolderUrl) return;
+        setIsListingDrive(true);
+        setLoading(true);
+        try {
+            const res = await api.post('/photos/google-drive/import-folder', {
+                eventId,
+                folderUrl: driveFolderUrl
+            });
+            
+            if (res.data?.success && res.data?.data?.photos) {
+                const photosList = res.data.data.photos;
+                setPhotos(photosList);
+                setSelectedAlbum({ title: res.data.data.albumTitle || 'Google Drive Shared Folder' });
+                toast.success(`Successfully found ${photosList.length} photos in the shared folder!`);
+            } else {
+                toast.error('Could not find any photos in the shared folder. Make sure link-sharing is ON.');
+            }
+        } catch (err: any) {
+            console.error('Drive folder import error:', err);
+            toast.error(err.response?.data?.message || 'Failed to load folder photos from link.');
+        } finally {
+            setIsListingDrive(false);
+            setLoading(false);
+        }
+    };
+
     // Execute batch photo ingestion concurrently with a limit of 3 workers
     const handleSyncAlbum = async () => {
         if (photos.length === 0) {
@@ -407,14 +438,23 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                 const photo = photos[currentIndex];
 
                 try {
-                    // Ingest Google Photo URL on backend
-                    const res = await api.post('/photos/google-photos/import-file', {
-                        eventId,
-                        baseUrl: photo.baseUrl,
-                        filename: photo.filename
-                    }, {
-                        headers: (activeTab === 'link' || !googleToken) ? {} : { 'x-google-access-token': googleToken }
-                    });
+                    // Ingest photo from Google Photo or Google Drive
+                    let res;
+                    if (activeTab === 'drive') {
+                        res = await api.post('/photos/google-drive/import-file', {
+                            eventId,
+                            fileId: photo.id,
+                            filename: photo.filename
+                        });
+                    } else {
+                        res = await api.post('/photos/google-photos/import-file', {
+                            eventId,
+                            baseUrl: photo.baseUrl,
+                            filename: photo.filename
+                        }, {
+                            headers: (activeTab === 'link' || !googleToken) ? {} : { 'x-google-access-token': googleToken }
+                        });
+                    }
 
                     if (res.data?.success) {
                         successCount++;
@@ -634,40 +674,115 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                         /* Choice Dashboard */
                         <div className="space-y-6">
                             {/* Premium Tab Selector */}
-                            <div className="flex p-1 rounded-xl bg-zinc-100 dark:bg-white/5 max-w-md mx-auto">
+                            <div className="flex p-1 rounded-xl bg-zinc-100 dark:bg-white/5 max-w-xl mx-auto gap-1">
                                 <button
                                     onClick={() => {
                                         setActiveTab('link');
                                     }}
                                     className={`
-                                        flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2
+                                        flex-1 py-2.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5
                                         ${activeTab === 'link'
                                             ? (isDarkMode ? 'bg-[#18132d] text-white shadow-lg shadow-black/40' : 'bg-white text-zinc-900 shadow-sm')
                                             : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300'
                                         }
                                     `}
                                 >
-                                    <Zap className="w-3.5 h-3.5 text-violet-500 fill-current" />
-                                    Import via Album Link
+                                    <Zap className="w-3.5 h-3.5 text-violet-500 fill-current animate-pulse" />
+                                    Photos Link
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setActiveTab('drive');
+                                    }}
+                                    className={`
+                                        flex-1 py-2.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5
+                                        ${activeTab === 'drive'
+                                            ? (isDarkMode ? 'bg-[#18132d] text-white shadow-lg shadow-black/40' : 'bg-white text-zinc-900 shadow-sm')
+                                            : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300'
+                                        }
+                                    `}
+                                >
+                                    <Folder className="w-3.5 h-3.5 text-blue-500" />
+                                    Drive Folder
                                 </button>
                                 <button
                                     onClick={() => {
                                         setActiveTab('picker');
                                     }}
                                     className={`
-                                        flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2
+                                        flex-1 py-2.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5
                                         ${activeTab === 'picker'
                                             ? (isDarkMode ? 'bg-[#18132d] text-white shadow-lg shadow-black/40' : 'bg-white text-zinc-900 shadow-sm')
                                             : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300'
                                         }
                                     `}
                                 >
-                                    <Cloud className="w-3.5 h-3.5" />
-                                    Live Photos Picker
+                                    <Cloud className="w-3.5 h-3.5 text-indigo-500" />
+                                    Live Picker
                                 </button>
                             </div>
 
-                            {activeTab === 'link' ? (
+                            {activeTab === 'drive' ? (
+                                /* Option C: Paste Public Google Drive Folder Link Card */
+                                <div className={`
+                                    p-6 rounded-2xl border transition-all duration-300 relative overflow-hidden group max-w-xl mx-auto
+                                    ${isDarkMode 
+                                        ? 'bg-gradient-to-br from-blue-950/10 via-zinc-950/10 to-transparent border-blue-500/20' 
+                                        : 'bg-gradient-to-br from-blue-50/50 via-zinc-50/20 to-transparent border-blue-200'
+                                    }
+                                `}>
+                                    <div className="max-w-md space-y-4">
+                                        <div>
+                                            <h3 className="text-md font-bold mb-1 flex items-center gap-2 text-blue-600 dark:text-blue-400">
+                                                <Folder className="w-4 h-4 text-blue-500" />
+                                                Import via Public Google Drive Folder
+                                            </h3>
+                                            <p className="text-xs text-zinc-500 dark:text-gray-400 leading-relaxed">
+                                                Paste a public Google Drive folder link to import **hundreds or thousands of photos** recursively with no volume limits!
+                                            </p>
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            <input
+                                                type="text"
+                                                value={driveFolderUrl}
+                                                onChange={(e) => setDriveFolderUrl(e.target.value)}
+                                                placeholder="e.g. https://drive.google.com/drive/folders/... or Folder ID"
+                                                className="w-full px-4 py-3 rounded-xl border bg-transparent font-medium text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all border-zinc-200 dark:border-white/10 dark:text-white"
+                                            />
+                                            <div className="rounded-xl bg-blue-500/5 border border-blue-500/10 p-3 space-y-1.5">
+                                                <p className="text-[10px] text-zinc-500 dark:text-gray-400 font-medium">
+                                                    🔒 **How to share your Google Drive folder correctly:**
+                                                </p>
+                                                <ul className="list-disc pl-4 space-y-0.5 text-[9px] text-zinc-400 dark:text-gray-500">
+                                                    <li>Click **Share** on your Google Drive folder</li>
+                                                    <li>Under **General Access**, change to **"Anyone with the link"**</li>
+                                                    <li>Set role as **Viewer** (minimum required for safe access)</li>
+                                                    <li>Copy and paste the folder link above!</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            onClick={handleImportDriveFolder}
+                                            disabled={!driveFolderUrl || isListingDrive}
+                                            className="w-full py-3 px-6 rounded-xl font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center gap-2 text-xs shadow-lg shadow-blue-500/20 hover:shadow-blue-500/35"
+                                        >
+                                            {isListingDrive ? (
+                                                <>
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                    Listing Folder Files...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Folder className="w-3.5 h-3.5" />
+                                                    Scan & Load Folder
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : activeTab === 'link' ? (
                                 /* Option B: Paste Public Shared Album Link Card */
                                 <div className={`
                                     p-6 rounded-2xl border transition-all duration-300 relative overflow-hidden group max-w-xl mx-auto
@@ -813,6 +928,18 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                                                 filename={photo.filename}
                                                 className="object-cover w-full h-full"
                                             />
+                                        ) : activeTab === 'drive' ? (
+                                            <div className="flex flex-col items-center justify-center h-full w-full p-2 bg-blue-500/5 hover:bg-blue-500/10 transition-colors gap-1.5 text-center">
+                                                <ImageIcon className="w-6 h-6 text-blue-500/70 dark:text-blue-400/70" />
+                                                <span className="text-[9px] font-semibold text-zinc-600 dark:text-zinc-300 truncate max-w-full px-1">
+                                                    {photo.filename}
+                                                </span>
+                                                {photo.size > 0 && (
+                                                    <span className="text-[8px] text-zinc-400 dark:text-zinc-500 font-medium">
+                                                        {(photo.size / (1024 * 1024)).toFixed(2)} MB
+                                                    </span>
+                                                )}
+                                            </div>
                                         ) : (
                                             <Image
                                                 src={getProxyPreviewUrl(photo.baseUrl)}
