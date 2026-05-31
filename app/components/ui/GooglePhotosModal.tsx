@@ -97,6 +97,9 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
     const [pickerSessionId, setPickerSessionId] = useState<string | null>(null);
     const [isWaitingForPicker, setIsWaitingForPicker] = useState(false);
     const [pickerStatus, setPickerStatus] = useState<string>('idle');
+    const [albumUrl, setAlbumUrl] = useState('');
+    const [isScrapingLink, setIsScrapingLink] = useState(false);
+    const [activeTab, setActiveTab] = useState<'picker' | 'link'>('picker');
 
     useEffect(() => {
         if (!isOpen) {
@@ -108,6 +111,9 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
             setIsWaitingForPicker(false);
             setPickerStatus('idle');
             setPickerSessionId(null);
+            setAlbumUrl('');
+            setIsScrapingLink(false);
+            setActiveTab('picker');
             if (typeof window !== 'undefined' && (window as any)._pickerIntervalId) {
                 clearInterval((window as any)._pickerIntervalId);
             }
@@ -270,6 +276,33 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
         } finally {
             setLoading(false);
             setIsWaitingForPicker(false);
+        }
+    };
+
+    const handleImportAlbumLink = async () => {
+        if (!albumUrl) return;
+        setIsScrapingLink(true);
+        setLoading(true);
+        try {
+            const res = await api.post('/photos/google-photos/import-album-link', {
+                eventId,
+                albumUrl
+            });
+            
+            if (res.data?.success && res.data?.data?.photos) {
+                const photosList = res.data.data.photos;
+                setPhotos(photosList);
+                setSelectedAlbum({ title: res.data.data.albumTitle || 'Shared Album Link' });
+                toast.success(`Successfully found ${photosList.length} photos in the shared album!`);
+            } else {
+                toast.error('Could not find any photos in the shared album. Make sure link-sharing is ON.');
+            }
+        } catch (err: any) {
+            console.error('Album link import error:', err);
+            toast.error(err.response?.data?.message || 'Failed to load album photos from link.');
+        } finally {
+            setIsScrapingLink(false);
+            setLoading(false);
         }
     };
 
@@ -584,99 +617,187 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                     ) : !selectedAlbum ? (
                         /* Albums & Picker Choice Dashboard */
                         <div className="space-y-6">
-                            {/* Live Google Photos Picker Primary Card */}
+                            {/* Premium Tab Selector */}
                             {!isDemoMode && (
-                                <div className={`
-                                    p-6 rounded-2xl border transition-all duration-300 relative overflow-hidden group
-                                    ${isDarkMode 
-                                        ? 'bg-gradient-to-br from-violet-950/20 via-indigo-950/10 to-transparent border-violet-500/20 animate-pulse-subtle' 
-                                        : 'bg-gradient-to-br from-violet-50 via-indigo-50/30 to-transparent border-violet-200'
-                                    }
-                                `}>
-                                    <div className="absolute top-4 right-4">
-                                        <span className="text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase bg-violet-500 text-white tracking-wide">
-                                            Recommended & Secure
-                                        </span>
-                                    </div>
-                                    <div className="max-w-md">
-                                        <h3 className="text-lg font-bold mb-2 flex items-center gap-2 text-violet-700 dark:text-violet-300">
-                                            <Sparkles className="w-5 h-5 text-violet-500 animate-pulse" />
-                                            Google Photos Secure Picker
-                                        </h3>
-                                        <p className="text-xs text-zinc-500 dark:text-gray-400 mb-5 leading-relaxed">
-                                            Google requires this secure picker for privacy. Select any photos or videos from your library, and Quick Snap will automatically download, face-match, and index them.
-                                        </p>
-                                        <button
-                                            onClick={handleLaunchPicker}
-                                            className="py-3 px-6 rounded-xl font-bold text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 shadow-md shadow-violet-500/20 hover:shadow-violet-500/35 transition-all flex items-center gap-2 text-sm"
-                                        >
-                                            <Cloud className="w-4 h-4" />
-                                            Launch Live Photos Picker
-                                        </button>
-                                    </div>
+                                <div className="flex p-1 rounded-xl bg-zinc-100 dark:bg-white/5 max-w-md mx-auto">
+                                    <button
+                                        onClick={() => setActiveTab('picker')}
+                                        className={`
+                                            flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2
+                                            ${activeTab === 'picker'
+                                                ? (isDarkMode ? 'bg-[#18132d] text-white shadow-lg shadow-black/40' : 'bg-white text-zinc-900 shadow-sm')
+                                                : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300'
+                                            }
+                                        `}
+                                    >
+                                        <Cloud className="w-3.5 h-3.5" />
+                                        Live Photos Picker
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTab('link')}
+                                        className={`
+                                            flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2
+                                            ${activeTab === 'link'
+                                                ? (isDarkMode ? 'bg-[#18132d] text-white shadow-lg shadow-black/40' : 'bg-white text-zinc-900 shadow-sm')
+                                                : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300'
+                                            }
+                                        `}
+                                    >
+                                        <Zap className="w-3.5 h-3.5 text-amber-500 fill-current" />
+                                        Import via Album Link
+                                    </button>
                                 </div>
                             )}
 
-                            {/* Separator or Sub-heading */}
-                            <div className="flex items-center gap-3 pt-2">
-                                <div className="h-[1px] flex-1 bg-zinc-100 dark:bg-white/5" />
-                                <span className="text-xs font-semibold text-zinc-400 dark:text-gray-500 uppercase tracking-wider">
-                                    {isDemoMode ? 'Select Demo Mock Album' : 'Or Browse Albums (Requires Legacy Permission)'}
-                                </span>
-                                <div className="h-[1px] flex-1 bg-zinc-100 dark:bg-white/5" />
-                            </div>
+                            {activeTab === 'link' && !isDemoMode ? (
+                                /* Option B: Paste Public Shared Album Link Card */
+                                <div className={`
+                                    p-6 rounded-2xl border transition-all duration-300 relative overflow-hidden group max-w-xl mx-auto
+                                    ${isDarkMode 
+                                        ? 'bg-gradient-to-br from-amber-950/10 via-zinc-950/10 to-transparent border-amber-500/20' 
+                                        : 'bg-gradient-to-br from-amber-50/50 via-zinc-50/20 to-transparent border-amber-200'
+                                    }
+                                `}>
+                                    <div className="max-w-md space-y-4">
+                                        <div>
+                                            <h3 className="text-md font-bold mb-1 flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                                                <Zap className="w-4 h-4 fill-current animate-pulse text-amber-500" />
+                                                Import via Public Shared Album Link
+                                            </h3>
+                                            <p className="text-xs text-zinc-500 dark:text-gray-400 leading-relaxed">
+                                                Paste a public Google Photos shared link to import **every single photo** from the album in a single click, regardless of who owns it!
+                                            </p>
+                                        </div>
 
-                            {/* Albums grid */}
-                            <div className="grid sm:grid-cols-2 gap-4">
-                                {albums.length > 0 ? (
-                                    albums.map((album) => (
-                                        <div
-                                            key={album.id}
-                                            onClick={() => handleSelectAlbum(album)}
-                                            className={`
-                                                group flex items-center gap-4 p-4 rounded-xl border cursor-pointer hover:-translate-y-0.5 transition-all duration-300
-                                                ${isDarkMode 
-                                                    ? 'bg-white/[0.02] border-white/5 hover:border-violet-500/30 hover:bg-white/[0.04]' 
-                                                    : 'bg-zinc-50/50 border-zinc-200 hover:border-violet-500/30 hover:bg-white'
-                                                }
-                                            `}
+                                        <div className="space-y-3">
+                                            <input
+                                                type="text"
+                                                value={albumUrl}
+                                                onChange={(e) => setAlbumUrl(e.target.value)}
+                                                placeholder="e.g. https://photos.app.goo.gl/... or https://photos.google.com/share/..."
+                                                className="w-full px-4 py-3 rounded-xl border bg-transparent font-medium text-xs focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all border-zinc-200 dark:border-white/10 dark:text-white"
+                                            />
+                                            <p className="text-[10px] text-zinc-400 dark:text-gray-500">
+                                                💡 **Make sure link-sharing is turned ON** in your Google Photos album options before copying the link.
+                                            </p>
+                                        </div>
+
+                                        <button
+                                            onClick={handleImportAlbumLink}
+                                            disabled={!albumUrl || isScrapingLink}
+                                            className="w-full py-3 px-6 rounded-xl font-bold text-white bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center gap-2 text-xs"
                                         >
-                                            <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-zinc-100 dark:bg-white/5">
-                                                {album.coverPhotoBaseUrl ? (
-                                                    <Image
-                                                        src={`${album.coverPhotoBaseUrl}=w150`}
-                                                        alt={album.title}
-                                                        fill
-                                                        className="object-cover group-hover:scale-105 transition-transform duration-300"
-                                                        unoptimized
-                                                    />
-                                                ) : (
-                                                    <div className="flex items-center justify-center h-full">
-                                                        <Folder className="text-zinc-400" size={24} />
-                                                    </div>
-                                                )}
+                                            {isScrapingLink ? (
+                                                <>
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                    Parsing Album...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Zap className="w-3.5 h-3.5 fill-current" />
+                                                    Load and Sync All Photos
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                /* Option A: Live Google Photos Picker Card */
+                                <>
+                                    {!isDemoMode && (
+                                        <div className={`
+                                            p-6 rounded-2xl border transition-all duration-300 relative overflow-hidden group max-w-xl mx-auto
+                                            ${isDarkMode 
+                                                ? 'bg-gradient-to-br from-violet-950/20 via-indigo-950/10 to-transparent border-violet-500/20 animate-pulse-subtle' 
+                                                : 'bg-gradient-to-br from-violet-50 via-indigo-50/30 to-transparent border-violet-200'
+                                            }
+                                        `}>
+                                            <div className="absolute top-4 right-4">
+                                                <span className="text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase bg-violet-500 text-white tracking-wide">
+                                                    Recommended & Secure
+                                                </span>
                                             </div>
-                                            <div className="min-w-0 flex-1">
-                                                <h4 className="font-semibold text-sm truncate group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
-                                                    {album.title}
-                                                </h4>
-                                                <p className="text-xs text-zinc-500 dark:text-gray-400 mt-1 flex items-center gap-1.5">
-                                                    <ImageIcon size={12} />
-                                                    {album.mediaItemsCount} Photos
+                                            <div className="max-w-md">
+                                                <h3 className="text-lg font-bold mb-2 flex items-center gap-2 text-violet-700 dark:text-violet-300">
+                                                    <Sparkles className="w-5 h-5 text-violet-500 animate-pulse" />
+                                                    Google Photos Secure Picker
+                                                </h3>
+                                                <p className="text-xs text-zinc-500 dark:text-gray-400 mb-5 leading-relaxed">
+                                                    Google requires this secure picker for privacy. Select any photos or videos from your library, and Quick Snap will automatically download, face-match, and index them.
+                                                </p>
+                                                <button
+                                                    onClick={handleLaunchPicker}
+                                                    className="py-3 px-6 rounded-xl font-bold text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 shadow-md shadow-violet-500/20 hover:shadow-violet-500/35 transition-all flex items-center gap-2 text-sm"
+                                                >
+                                                    <Cloud className="w-4 h-4" />
+                                                    Launch Live Photos Picker
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Separator or Sub-heading */}
+                                    <div className="flex items-center gap-3 pt-2">
+                                        <div className="h-[1px] flex-1 bg-zinc-100 dark:bg-white/5" />
+                                        <span className="text-xs font-semibold text-zinc-400 dark:text-gray-500 uppercase tracking-wider">
+                                            {isDemoMode ? 'Select Demo Mock Album' : 'Or Browse Albums (Requires Legacy Permission)'}
+                                        </span>
+                                        <div className="h-[1px] flex-1 bg-zinc-100 dark:bg-white/5" />
+                                    </div>
+
+                                    {/* Albums grid */}
+                                    <div className="grid sm:grid-cols-2 gap-4">
+                                        {albums.length > 0 ? (
+                                            albums.map((album) => (
+                                                <div
+                                                    key={album.id}
+                                                    onClick={() => handleSelectAlbum(album)}
+                                                    className={`
+                                                        group flex items-center gap-4 p-4 rounded-xl border cursor-pointer hover:-translate-y-0.5 transition-all duration-300
+                                                        ${isDarkMode 
+                                                            ? 'bg-white/[0.02] border-white/5 hover:border-violet-500/30 hover:bg-white/[0.04]' 
+                                                            : 'bg-zinc-50/50 border-zinc-200 hover:border-violet-500/30 hover:bg-white'
+                                                        }
+                                                    `}
+                                                >
+                                                    <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-zinc-100 dark:bg-white/5">
+                                                        {album.coverPhotoBaseUrl ? (
+                                                            <Image
+                                                                src={`${album.coverPhotoBaseUrl}=w150`}
+                                                                alt={album.title}
+                                                                fill
+                                                                className="object-cover group-hover:scale-105 transition-transform duration-300"
+                                                                unoptimized
+                                                            />
+                                                        ) : (
+                                                            <div className="flex items-center justify-center h-full">
+                                                                <Folder className="text-zinc-400" size={24} />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="min-w-0 flex-1">
+                                                        <h4 className="font-semibold text-sm truncate group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
+                                                            {album.title}
+                                                        </h4>
+                                                        <p className="text-xs text-zinc-500 dark:text-gray-400 mt-1 flex items-center gap-1.5">
+                                                            <ImageIcon size={12} />
+                                                            {album.mediaItemsCount} Photos
+                                                        </p>
+                                                    </div>
+                                                    <ChevronRight size={16} className="text-zinc-400 group-hover:translate-x-0.5 transition-transform" />
+                                                </div>
+                                            ))
+                                        ) : (
+                                            /* No Albums / 403 Fallback Note */
+                                            <div className="col-span-2 text-center py-6">
+                                                <p className="text-xs text-zinc-400 dark:text-gray-500">
+                                                    No legacy albums loaded. Use the **Google Photos Secure Picker** above to choose your photos!
                                                 </p>
                                             </div>
-                                            <ChevronRight size={16} className="text-zinc-400 group-hover:translate-x-0.5 transition-transform" />
-                                        </div>
-                                    ))
-                                ) : (
-                                    /* No Albums / 403 Fallback Note */
-                                    <div className="col-span-2 text-center py-6">
-                                        <p className="text-xs text-zinc-400 dark:text-gray-500">
-                                            No legacy albums loaded. Use the **Google Photos Secure Picker** above to choose your photos!
-                                        </p>
+                                        )}
                                     </div>
-                                )}
-                            </div>
+                                </>
+                            )}
                         </div>
                     ) : (
                         /* Photos Preview view */
