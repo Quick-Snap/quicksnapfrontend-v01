@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useQuery } from 'react-query';
 import {
   ArrowLeft,
@@ -13,13 +13,29 @@ import {
   ShieldCheck,
   Sparkles,
   Zap,
-  Camera
+  Camera,
+  Trash2,
+  Clock,
+  Loader2,
+  Info,
+  X,
+  Upload
 } from 'lucide-react';
-import { Button } from '../../components/ui/Button';
-import ImageUploader from '../../components/upload/ImageUploader';
-import { eventApi } from '../../../lib/api';
-import { useAuth } from '../../../contexts/AuthContext';
+import { Button } from '@/app/components/ui/Button';
+import UploadZone from '@/app/components/ui/UploadZone';
+import { eventApi, photoApi } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 import RefreshAttendeeMatchesCard from '@/app/components/events/RefreshAttendeeMatchesCard';
+import toast from 'react-hot-toast';
+import { softSurface, softSurfaceHover } from '@/lib/dashboardUi';
+
+interface UploadProgress {
+  total: number;
+  uploaded: number;
+  failed: number;
+  currentFile: string;
+  percent: number;
+}
 
 export default function PhotographerUploadPage() {
   return (
@@ -37,17 +53,30 @@ export default function PhotographerUploadPage() {
 
 function PhotographerUploadContent() {
   const { user } = useAuth();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const eventIdFromUrl = searchParams.get('eventId');
   
   const [selectedEvent, setSelectedEvent] = useState('');
+  const [files, setFiles] = useState<File[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
   const [uploadComplete, setUploadComplete] = useState(false);
   const [uploadedCount, setUploadedCount] = useState(0);
+  const [dirtyCount, setDirtyCount] = useState(0);
 
+  // Fetch active photographer events
   const { data: eventsData, isLoading: eventsLoading } = useQuery(
     ['photographer-events'],
     () => eventApi.getAll({ isActive: true, limit: 50 }),
     { enabled: !!user }
+  );
+
+  // Fetch event photos for gallery list
+  const { data: photosData, isLoading: photosLoading, refetch: refetchPhotos } = useQuery(
+    ['photographer-photos', selectedEvent, dirtyCount],
+    () => eventApi.getPhotos(selectedEvent, { all: true, limit: 100 }),
+    { enabled: !!selectedEvent }
   );
 
   // Pre-select event from URL query parameter
@@ -56,6 +85,26 @@ function PhotographerUploadContent() {
       setSelectedEvent(eventIdFromUrl);
     }
   }, [eventIdFromUrl, selectedEvent]);
+
+  // Handle browser exit/refresh exit guard during active device uploads
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (uploading) {
+        e.preventDefault();
+        e.returnValue = ''; // Standard browser exit popup
+        return '';
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('beforeunload', handleBeforeUnload);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+      }
+    };
+  }, [uploading]);
 
   // Handle both array response and paginated response { events: [], ... }
   const rawData = eventsData?.data;
@@ -76,15 +125,118 @@ function PhotographerUploadContent() {
     return isOrganizer || isPhotographer;
   });
 
-  const handleUploadComplete = (photos: any[]) => {
-    setUploadedCount(photos.length);
-    setUploadComplete(true);
-  };
-
   const selectedEventData =
     selectedEvent && events.length > 0
       ? events.find((ev: { _id?: string }) => ev._id === selectedEvent) ?? null
       : null;
+
+  // Filter photos uploaded by the logged-in photographer
+  const allEventPhotos = photosData?.data?.photos || [];
+  const myUploadedPhotos = allEventPhotos.filter((p: any) => {
+    const uploaderId = p.uploadedBy?._id || p.uploadedBy;
+    return uploaderId === user?.id;
+  });
+
+  const handleUpload = async () => {
+    if (files.length === 0) {
+      toast.error('Please select files to upload');
+      return;
+    }
+
+    setUploading(true);
+    setUploadComplete(false);
+    setUploadProgress({
+      total: files.length,
+      uploaded: 0,
+      failed: 0,
+      currentFile: '',
+      percent: 0,
+    });
+
+    try {
+      const result = await photoApi.uploadWithPresignedUrls(
+        selectedEvent,
+        files,
+        (fileIndex, progress) => {
+          setUploadProgress(prev => prev ? {
+            ...prev,
+            currentFile: files[fileIndex].name,
+            percent: progress.percent,
+          } : null);
+        },
+        (fileIndex) => {
+          setUploadProgress(prev => prev ? {
+            ...prev,
+            uploaded: prev.uploaded + 1,
+          } : null);
+        },
+        (fileIndex, error) => {
+          setUploadProgress(prev => prev ? {
+            ...prev,
+            failed: prev.failed + 1,
+          } : null);
+          console.error(`Failed to upload ${files[fileIndex].name}: ${error}`);
+        }
+      );
+
+      setUploadedCount(result.successCount);
+      setUploadComplete(true);
+      setFiles([]); // Clear local preview list
+      setDirtyCount(prev => prev + 1); // Refresh photo gallery list
+
+      if (result.successCount > 0) {
+        toast.success(`${result.successCount} photo(s) uploaded successfully!`);
+      }
+      if (result.errorCount > 0) {
+        toast.error(`${result.errorCount} photo(s) failed to upload`);
+      }
+
+      // Automatically hide upload success screen after 4 seconds
+      setTimeout(() => {
+        setUploadComplete(false);
+      }, 4000);
+
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      toast.error(error.response?.data?.message || 'Failed to upload photos');
+      setUploadComplete(false);
+      setUploadProgress(null);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDeletePhoto = async (photoId: string) => {
+    if (!confirm('Are you sure you want to delete this photo uploaded by you? It will be soft-deleted and placed in the Trash Bin.')) {
+      return;
+    }
+
+    try {
+      const res = await photoApi.deletePhoto(photoId);
+      if (res.success) {
+        toast.success('Photo moved to Trash successfully.');
+        setDirtyCount(prev => prev + 1); // Refresh gallery list
+      } else {
+        toast.error(res.message || 'Failed to delete photo');
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to delete photo');
+    }
+  };
+
+  const handleSyncComplete = () => {
+    setDirtyCount(prev => prev + 1); // Refresh gallery list
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  };
+
+  const totalFileSize = files.reduce((acc, file) => acc + file.size, 0);
 
   if (!user) {
     return (
@@ -119,35 +271,33 @@ function PhotographerUploadContent() {
           <div>
             <div className="flex items-center gap-2 text-sm text-violet-400 bg-violet-500/10 px-4 py-1.5 rounded-full w-fit mb-4 border border-violet-500/20">
               <Camera className="h-4 w-4" />
-              Photographer RAW Ingest
+              Photographer Workspace
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-white">Bulk Upload to S3</h1>
+            <h1 className="text-3xl md:text-4xl font-bold text-white">Bulk Ingest Workspace</h1>
             <p className="text-gray-400 mt-3 max-w-2xl leading-relaxed">
-              Drop full-size shots, let multer stream them into the RAW bucket, and AWS Lambda +
-              Rekognition take over. Perfect for campus/event photographers moving large batches fast.
+              Drop full-size shots (JPG/PNG/WEBP/HEIC), leverage automatic local conversion, sync from Google Photos or Drive shared folders, and let AWS Lambda + Rekognition process them instantly.
             </p>
           </div>
           <Link 
-            href="/events" 
-            className="hidden sm:inline-flex items-center text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl border border-white/10 transition-all"
+            href="/photographer" 
+            className="hidden sm:inline-flex items-center text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl border border-white/10 transition-all font-medium"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to events
+            Back to Dashboard
           </Link>
         </div>
 
-        {/* Status cards */}
+        {/* Pipeline checklist */}
         <div className="grid md:grid-cols-3 gap-4">
           <div className="bg-[#111111] rounded-2xl border border-white/5 p-6 hover:border-blue-500/30 transition-all group">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
                 <Layers className="h-5 w-5 text-blue-400" />
               </div>
-              <p className="font-semibold text-white">Multer → S3 RAW</p>
+              <p className="font-semibold text-white">S3 Stream Ingest</p>
             </div>
             <p className="text-sm text-gray-400 leading-relaxed">
-              In-memory multer pipeline pushes files straight to the RAW bucket with event + uploader
-              metadata.
+              Pushes full-res photos directly into the raw ingestion bucket with strict photographer uploader metadata.
             </p>
           </div>
           <div className="bg-[#111111] rounded-2xl border border-white/5 p-6 hover:border-violet-500/30 transition-all group">
@@ -155,10 +305,10 @@ function PhotographerUploadContent() {
               <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center group-hover:bg-violet-500/20 transition-colors">
                 <Sparkles className="h-5 w-5 text-violet-400" />
               </div>
-              <p className="font-semibold text-white">Lambda + Rekognition</p>
+              <p className="font-semibold text-white">Automatic HEIC Conversion</p>
             </div>
             <p className="text-sm text-gray-400 leading-relaxed">
-              S3 event triggers Lambda to run moderation, face detection, and user matching in minutes.
+              HEIC and HEIF shot formats from modern mobile devices are converted to JPEG locally on the fly.
             </p>
           </div>
           <div className="bg-[#111111] rounded-2xl border border-white/5 p-6 hover:border-emerald-500/30 transition-all group">
@@ -166,15 +316,15 @@ function PhotographerUploadContent() {
               <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
                 <CheckCircle2 className="h-5 w-5 text-emerald-400" />
               </div>
-              <p className="font-semibold text-white">Database sync</p>
+              <p className="font-semibold text-white">Drive / Google Photos</p>
             </div>
             <p className="text-sm text-gray-400 leading-relaxed">
-              DynamoDB + Mongo capture image metadata, event linkage, and user visibility once matches land.
+              Import folders straight from Google Drive shared links or Google Photos albums directly into the pipeline.
             </p>
           </div>
         </div>
 
-        {/* Event selection and upload */}
+        {/* Event selection and upload zone */}
         <div className="bg-[#111111] rounded-2xl border border-white/5 p-6 md:p-8 space-y-6">
           <div className="grid md:grid-cols-[1.1fr_0.9fr] gap-6">
             <div>
@@ -183,9 +333,12 @@ function PhotographerUploadContent() {
               </label>
               <select
                 value={selectedEvent}
-                onChange={(e) => setSelectedEvent(e.target.value)}
+                onChange={(e) => {
+                  setSelectedEvent(e.target.value);
+                  setFiles([]); // Clear queue when event changes
+                }}
                 className="w-full p-3.5 rounded-xl border border-white/10 focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 bg-white/5 text-white transition-all outline-none"
-                disabled={eventsLoading}
+                disabled={eventsLoading || uploading}
               >
                 <option value="" className="bg-[#1a1a1a]">Select an event...</option>
                 {events.map((event: any) => (
@@ -194,150 +347,238 @@ function PhotographerUploadContent() {
                   </option>
                 ))}
               </select>
-              {eventsLoading && <p className="text-sm text-gray-500 mt-3">Loading events…</p>}
+              {eventsLoading && <p className="text-sm text-gray-500 mt-3">Loading assigned events…</p>}
               {!eventsLoading && events.length === 0 && (
                 <p className="text-sm text-amber-400 mt-3">
-                  No active events found. Create one first from organizer tools.
+                  No active events assigned. Ask an organizer to add you as a photographer.
                 </p>
               )}
             </div>
 
-            <div className="bg-white/5 rounded-xl p-5 border border-white/5">
-              <p className="text-sm font-semibold text-white mb-3">Pipeline checklist</p>
-              <ul className="text-sm text-gray-300 space-y-3">
-                <li className="flex items-center gap-3">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-                  <span>Multer memory storage enabled (10MB per file, 50 max).</span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-                  <span>RAW bucket S3 notification wired to Lambda processor.</span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-                  <span>Rekognition collections warm for face matching.</span>
-                </li>
-              </ul>
+            <div className="bg-white/5 rounded-xl p-5 border border-white/5 flex flex-col justify-center">
+              <p className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
+                <Info className="h-4 w-4 text-violet-400" />
+                Pipeline Integration Notes
+              </p>
+              <p className="text-xs text-gray-300 leading-relaxed">
+                Organizers see all public uploads. Face matches map straight to registered guest portfolios. Photographers can manage and delete their own uploads below.
+              </p>
             </div>
           </div>
 
+          {/* Upload Progress Overlay */}
+          {uploading && uploadProgress && (
+            <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
+                    <Loader2 className="h-4 w-4 text-violet-400 animate-spin" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-white">Uploading photos to S3 RAW...</p>
+                    <p className="text-xs text-gray-400">Please do not close this window.</p>
+                  </div>
+                </div>
+                <span className="text-sm font-bold text-violet-300">
+                  {uploadProgress.uploaded} of {uploadProgress.total} uploaded
+                </span>
+              </div>
+
+              {uploadProgress.currentFile && (
+                <div className="space-y-1">
+                  <p className="text-xs text-gray-300 truncate">Current file: {uploadProgress.currentFile}</p>
+                  <div className="w-full bg-white/5 rounded-full h-1.5">
+                    <div 
+                      className="bg-gradient-to-r from-violet-500 to-indigo-500 h-1.5 rounded-full transition-all duration-300"
+                      style={{ width: `${uploadProgress.percent}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Upload Complete Summary */}
           {uploadComplete && (
-            <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-6">
+            <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-6 animate-scale-in">
               <div className="flex items-start gap-4">
                 <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0">
                   <CheckCircle2 className="h-5 w-5 text-emerald-400" />
                 </div>
                 <div>
                   <p className="font-semibold text-emerald-300 text-lg">
-                    {uploadedCount} {uploadedCount === 1 ? 'photo' : 'photos'} uploaded to RAW bucket
+                    {uploadedCount} {uploadedCount === 1 ? 'photo' : 'photos'} uploaded successfully
                   </p>
                   <p className="text-sm text-gray-400 mt-1 leading-relaxed">
-                    Lambda is now processing the batch: moderation → face detection → user matches →
-                    DynamoDB write-back. Users see their photos once matching completes.
+                    Ingested into raw S3 bucket. Lambda matching workers are now indexing faces and parsing moderation limits. Scroll down to monitor match status.
                   </p>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Active Upload Box */}
+          {!uploading && (
+            <div>
+              {selectedEvent ? (
+                <div className="space-y-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
+                      <ImageIcon className="h-4 w-4 text-violet-400" />
+                    </div>
+                    <h2 className="text-lg font-semibold text-white">Select Photos</h2>
+                  </div>
+
+                  <UploadZone
+                    onFilesSelected={setFiles}
+                    maxFiles={50}
+                    eventId={selectedEvent}
+                    onSyncComplete={handleSyncComplete}
+                  />
+
+                  {files.length > 0 && (
+                    <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-white/5">
+                      <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-2">
+                          <ImageIcon size={16} className="text-violet-400" />
+                          <span className="text-sm text-gray-300">
+                            <span className="text-white font-semibold">{files.length}</span> photos selected
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <CloudUpload size={16} className="text-indigo-400" />
+                          <span className="text-sm text-gray-300">
+                            <span className="text-white font-semibold">{formatFileSize(totalFileSize)}</span> total size
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-3">
+                        <Button
+                          variant="ghost"
+                          onClick={() => setFiles([])}
+                          className="text-gray-400 hover:text-white"
+                        >
+                          Clear
+                        </Button>
+                        <Button
+                          onClick={handleUpload}
+                          className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold shadow-lg shadow-violet-500/20"
+                        >
+                          <Upload className="mr-2 h-4 w-4" />
+                          Upload {files.length} Photo{files.length !== 1 ? 's' : ''}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="rounded-xl border-2 border-dashed border-white/10 p-12 text-center bg-white/5 hover:border-violet-500/30 transition-all">
+                  <div className="w-16 h-16 bg-violet-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-pulse">
+                    <CloudUpload className="h-8 w-8 text-violet-400" />
+                  </div>
+                  <p className="text-white font-medium mb-2">Select an assigned event to start uploading</p>
+                  <p className="text-sm text-gray-400 mb-5 max-w-sm mx-auto">
+                    Choose an event from the destination dropdown to reveal the upload box and view your previously uploaded pictures.
+                  </p>
+                  <div className="flex items-center justify-center gap-2 text-xs text-amber-400 bg-amber-500/10 px-4 py-2 rounded-lg w-fit mx-auto border border-amber-500/20">
+                    <Zap className="h-4 w-4" />
+                    <span>Upload limit is 50 files per batch (10MB size cap).</span>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
           {selectedEvent && selectedEventData && (
             <RefreshAttendeeMatchesCard eventId={selectedEvent} event={selectedEventData} variant="dark" />
           )}
+        </div>
 
-          {!uploadComplete && (
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
-                  <ImageIcon className="h-4 w-4 text-violet-400" />
+        {/* Scoped "Your Uploads" Photo Gallery */}
+        {selectedEvent && (
+          <section className={`p-6 md:p-8 ${softSurface}`}>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-6 border-b border-white/5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-100 dark:bg-violet-500/10">
+                  <ImageIcon className="h-5 w-5 text-violet-700 dark:text-violet-400" />
                 </div>
-                <h2 className="text-lg font-semibold text-white">Upload photos</h2>
+                <div>
+                  <h2 className="text-xl font-semibold text-white">Your Uploads in this Event</h2>
+                  <p className="text-xs text-gray-400">Photos uploaded by your photographer account.</p>
+                </div>
               </div>
-              {selectedEvent ? (
-                <ImageUploader
-                  eventId={selectedEvent}
-                  onUploadComplete={handleUploadComplete}
-                  maxFiles={50}
-                />
-              ) : (
-                <div className="rounded-xl border-2 border-dashed border-white/10 p-10 text-center bg-white/5 hover:border-violet-500/30 transition-all">
-                  <div className="w-16 h-16 bg-violet-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <CloudUpload className="h-8 w-8 text-violet-400" />
-                  </div>
-                  <p className="text-white font-medium mb-2">Select an event to start uploading</p>
-                  <p className="text-sm text-gray-500 mb-5">
-                    Files flow through multer to AWS S3 RAW. Lambda picks them up automatically.
-                  </p>
-                  <div className="flex items-center justify-center gap-2 text-sm text-amber-400 bg-amber-500/10 px-4 py-2 rounded-lg w-fit mx-auto border border-amber-500/20">
-                    <Zap className="h-4 w-4" />
-                    <span>Tip: group uploads by event for faster reconciliation.</span>
-                  </div>
-                </div>
-              )}
+              <span className="rounded-full border border-violet-500/20 bg-violet-500/10 px-3.5 py-1 text-xs font-semibold text-violet-300">
+                {myUploadedPhotos.length} photo{myUploadedPhotos.length !== 1 ? 's' : ''} uploaded
+              </span>
             </div>
-          )}
-        </div>
 
-        {/* Flow explainer */}
-        <div className="grid md:grid-cols-3 gap-4">
-          {[
-            {
-              title: '1) Upload',
-              desc: 'Photographer drops up to 50 images; multer validates type and size before streaming.',
-              icon: CloudUpload,
-              color: 'blue'
-            },
-            {
-              title: '2) Process',
-              desc: 'S3 event triggers Lambda → Rekognition for moderation + face indexing and matching.',
-              icon: Sparkles,
-              color: 'violet'
-            },
-            {
-              title: '3) Deliver',
-              desc: 'Matched users and events are persisted to DynamoDB + Mongo, then surfaced in galleries.',
-              icon: CheckCircle2,
-              color: 'emerald'
-            }
-          ].map((item, idx) => {
-            const Icon = item.icon;
-            const colorClasses = {
-              blue: 'bg-blue-500/10 text-blue-400 group-hover:bg-blue-500/20',
-              violet: 'bg-violet-500/10 text-violet-400 group-hover:bg-violet-500/20',
-              emerald: 'bg-emerald-500/10 text-emerald-400 group-hover:bg-emerald-500/20'
-            };
-            return (
-              <div key={idx} className="bg-[#111111] rounded-2xl border border-white/5 p-6 hover:border-white/10 transition-all group">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-colors ${colorClasses[item.color as keyof typeof colorClasses]}`}>
-                  <Icon className="h-6 w-6" />
-                </div>
-                <p className="font-semibold text-white mb-2">{item.title}</p>
-                <p className="text-sm text-gray-400 leading-relaxed">{item.desc}</p>
+            {photosLoading ? (
+              <div className="flex items-center gap-3 text-gray-400 py-12 justify-center">
+                <Loader2 className="h-5 w-5 animate-spin text-violet-500" />
+                <span>Loading your uploaded photos…</span>
               </div>
-            );
-          })}
-        </div>
+            ) : myUploadedPhotos.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 pt-6">
+                {myUploadedPhotos.map((photo: any) => (
+                  <div
+                    key={photo._id}
+                    className="group relative aspect-square rounded-2xl overflow-hidden bg-zinc-900 border border-white/5 hover:border-violet-500/30 transition-all duration-300 shadow-sm hover:shadow-lg"
+                  >
+                    <img
+                      src={photo.thumbnailUrl || photo.url}
+                      alt={photo.fileName}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
 
-        {/* CTA */}
-        <div className="relative overflow-hidden bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 rounded-2xl p-8 shadow-2xl shadow-violet-500/20">
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yIDItNCAyLTZzLTItNC0yLTYgMi00IDItNi0yLTQtMi02bDIgMmMwIDItMiA0LTIgNnMyIDQgMiA2LTIgNC0yIDYgMiA0IDIgNmwtMi0yeiIvPjwvZz48L2c+PC9zdmc+')] opacity-20"></div>
-          <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-            <div>
-              <p className="text-2xl font-bold text-white mb-2">Ready to push your next batch?</p>
-              <p className="text-violet-200">
-                Files land in S3 RAW with event + uploader context; Lambda handles the rest.
-              </p>
-            </div>
-            <Button
-              onClick={() => {
-                const selector = document.querySelector('select');
-                selector?.focus();
-              }}
-              className="bg-white hover:bg-gray-100 text-violet-700 font-semibold px-6 py-3 rounded-xl shadow-lg transition-all shrink-0"
-            >
-              Pick event & upload
-            </Button>
-          </div>
-        </div>
+                    {/* Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="absolute bottom-0 left-0 right-0 p-3 space-y-1 leading-tight">
+                        <p className="text-xs font-medium text-white truncate">{photo.fileName}</p>
+                        <p className="text-[10px] text-gray-400">
+                          {photo.uploadedAt ? new Date(photo.uploadedAt).toLocaleDateString() : 'Just now'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Matching Confidence Badge */}
+                    {photo.matchedUsers && photo.matchedUsers.length > 0 && (
+                      <div className="absolute top-3 left-3 bg-emerald-500/15 border border-emerald-400/30 backdrop-blur-sm text-emerald-100 text-[10px] px-2 py-0.5 rounded-md font-semibold flex items-center gap-1 shadow-md">
+                        <CheckCircle2 className="h-3 w-3 text-emerald-400" />
+                        <span>Matched</span>
+                      </div>
+                    )}
+
+                    {/* Official Stamp */}
+                    {photo.isOfficial && (
+                      <div className="absolute top-3 left-3 bg-violet-500/25 border border-violet-400/40 backdrop-blur-sm text-violet-100 text-[10px] px-2 py-0.5 rounded-md font-semibold flex items-center gap-1 shadow-md">
+                        <Sparkles className="h-3 w-3 text-violet-300" />
+                        <span>Official</span>
+                      </div>
+                    )}
+
+                    {/* Delete button (Photographer self-deletion) */}
+                    <button
+                      onClick={() => handleDeletePhoto(photo._id || photo.imageId)}
+                      className="absolute top-3 right-3 p-1.5 rounded-lg bg-black/60 backdrop-blur-sm text-white opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-red-500 hover:scale-110 shadow-md"
+                      title="Delete photo uploaded by mistake"
+                    >
+                      <Trash2 size={13} className="text-white" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-2xl bg-white/[0.02] py-16 text-center text-gray-400 border border-white/5 mt-6">
+                <ImageIcon className="mx-auto mb-4 h-12 w-12 text-gray-600" />
+                <h3 className="font-semibold text-white mb-1">No uploads in this event yet</h3>
+                <p className="text-xs text-gray-400 max-w-sm mx-auto">
+                  Drag and drop files in the workspace above to sync photos. They will appear here once processed.
+                </p>
+              </div>
+            )}
+          </section>
+        )}
       </div>
     </div>
   );
