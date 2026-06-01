@@ -382,8 +382,15 @@ export const eventApi = {
     return response.data;
   },
 
-  delete: async (eventId: string) => {
-    const response = await api.delete<ApiResponse<any>>(`/events/${eventId}`);
+  delete: async (eventId: string, options?: { hard?: boolean }) => {
+    const response = await api.delete<ApiResponse<any>>(`/events/${eventId}`, {
+      params: options?.hard ? { hard: 'true' } : undefined,
+    });
+    return response.data;
+  },
+
+  restore: async (eventId: string) => {
+    const response = await api.post<ApiResponse<any>>(`/events/${eventId}/restore`);
     return response.data;
   },
 

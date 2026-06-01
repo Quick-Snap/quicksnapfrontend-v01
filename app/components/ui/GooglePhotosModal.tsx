@@ -471,6 +471,8 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                             eventId,
                             fileId: photo.id,
                             filename: photo.filename
+                        }, {
+                            headers: !googleToken ? {} : { 'x-google-access-token': googleToken }
                         });
                     } else {
                         res = await api.post('/photos/google-photos/import-file', {
@@ -482,22 +484,24 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                         });
                     }
 
-                    if (res.data?.success) {
-                        successCount++;
-                    } else {
-                        failedCount++;
-                    }
+                    const isSuccess = !!res?.data?.success;
+                    setSyncProgress(prev => {
+                        const newSuccess = isSuccess ? prev.success + 1 : prev.success;
+                        const newFailed = isSuccess ? prev.failed : prev.failed + 1;
+                        const newCurrent = prev.current + 1;
+                        return {
+                            ...prev,
+                            current: newCurrent,
+                            success: newSuccess,
+                            failed: newFailed
+                        };
+                    });
                 } catch (err) {
                     console.error(`Import failed for ${photo.filename}:`, err);
-                    failedCount++;
-                } finally {
-                    processedCount++;
-                    // Functional state update avoids any state merging race conditions
                     setSyncProgress(prev => ({
                         ...prev,
-                        current: processedCount,
-                        success: successCount,
-                        failed: failedCount
+                        current: prev.current + 1,
+                        failed: prev.failed + 1
                     }));
                 }
             }

@@ -77,14 +77,14 @@ export default function EventDetailsPage() {
     };
 
     const handleDelete = async () => {
-        if (!confirm('Are you sure you want to delete this event? This action cannot be undone.')) {
+        if (!confirm('Are you sure you want to move this event to the Trash Bin? You can recover it within 7 days.')) {
             return;
         }
 
         setDeleting(true);
         try {
             await eventApi.delete(eventId);
-            toast.success('Event deleted successfully');
+            toast.success('Event moved to Trash Bin successfully. You can recover it within 7 days.');
             router.push('/organizer/events');
         } catch (error) {
             console.error('Error deleting event:', error);

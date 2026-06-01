@@ -2,41 +2,79 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, Calendar, MapPin, Users, Plus, Upload, Sparkles, Eye } from 'lucide-react';
+import { Search, Calendar, MapPin, Users, Plus, Upload, Sparkles, Eye, Trash2 } from 'lucide-react';
 import RoleGuard from '@/app/components/RoleGuard';
 import api from '@/app/api/axios';
+import { eventApi } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'react-hot-toast';
 
 export default function OrganizerEventsPage() {
   const { user } = useAuth();
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterActive, setFilterActive] = useState<'all' | 'active' | 'past'>('all');
+  const [filterActive, setFilterActive] = useState<'all' | 'active' | 'past' | 'trash'>('all');
+  const [actionInProgress, setActionInProgress] = useState<string | null>(null);
+
+  const fetchEvents = async () => {
+    setLoading(true);
+    try {
+      const url = filterActive === 'trash' ? '/events/managed/all?trash=true' : '/events/managed/all';
+      const res = await api.get(url);
+      setEvents(res.data.data || []);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching events:', error);
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        const res = await api.get('/events/managed/all');
-        setEvents(res.data.data || []);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching events:', error);
-        setLoading(false);
-      }
-    };
-
     if (user) {
       fetchEvents();
     }
-  }, [user]);
+  }, [user, filterActive]);
+
+  const handleRestore = async (eventId: string) => {
+    if (actionInProgress) return;
+    setActionInProgress(eventId);
+    try {
+      await eventApi.restore(eventId);
+      toast.success('Event successfully restored!');
+      fetchEvents();
+    } catch (err: any) {
+      console.error('Restore event failed:', err);
+      toast.error(err.response?.data?.message || 'Failed to restore event');
+    } finally {
+      setActionInProgress(null);
+    }
+  };
+
+  const handlePermanentDelete = async (eventId: string) => {
+    if (actionInProgress) return;
+    if (!confirm('Are you sure you want to permanently delete this event? This will instantly and irreversibly clear S3 physical files, Rekognition face collection indexes, and all metadata!')) {
+      return;
+    }
+    setActionInProgress(eventId);
+    try {
+      await eventApi.delete(eventId, { hard: true });
+      toast.success('Event permanently deleted and storage purged!');
+      fetchEvents();
+    } catch (err: any) {
+      console.error('Permanent delete failed:', err);
+      toast.error(err.response?.data?.message || 'Failed to permanently delete event');
+    } finally {
+      setActionInProgress(null);
+    }
+  };
 
   const filteredEvents = events.filter((event) => {
     const matchesSearch =
       event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       event.description?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    if (filterActive === 'all') return matchesSearch;
+    if (filterActive === 'all' || filterActive === 'trash') return matchesSearch;
 
     const isActive = event.isActive && new Date(event.endDate) > new Date();
     if (filterActive === 'active') return matchesSearch && isActive;
@@ -58,24 +96,30 @@ export default function OrganizerEventsPage() {
                 <span className="text-xs uppercase tracking-[0.25em] text-violet-800/90 dark:text-gray-200">Organizer</span>
               </div>
               <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-3xl font-semibold text-zinc-900 dark:text-white md:text-4xl">My Events</h1>
+                <h1 className="text-3xl font-semibold text-zinc-900 dark:text-white md:text-4xl">
+                  {filterActive === 'trash' ? 'Event Trash Bin' : 'My Events'}
+                </h1>
                 <span className="rounded-full border border-zinc-200/90 bg-white px-3 py-1 text-xs text-zinc-700 dark:border-white/10 dark:bg-white/5 dark:text-gray-200">
                   {events.length} total
                 </span>
               </div>
               <p className="max-w-2xl text-zinc-600 dark:text-gray-300">
-                Manage, search, and upload to your events with the same calm theme as the landing page.
+                {filterActive === 'trash' 
+                  ? 'Soft-deleted events are safely stored here for 7 days before permanent cascading cleanup occurs.' 
+                  : 'Manage, search, and upload to your events with the same calm theme as the landing page.'}
               </p>
             </div>
-            <Link href="/organizer/events/create">
-              <button
-                type="button"
-                className="inline-flex items-center gap-2 rounded-xl border border-violet-600 bg-violet-600 px-6 py-3 font-semibold text-white shadow-lg shadow-violet-500/25 transition-all hover:bg-violet-500 dark:border-white/10 dark:bg-white/5 dark:shadow-[0_10px_35px_rgba(0,0,0,0.3)] dark:hover:bg-white/10"
-              >
-                <Plus size={18} />
-                Create Event
-              </button>
-            </Link>
+            {filterActive !== 'trash' && (
+              <Link href="/organizer/events/create">
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-2 rounded-xl border border-violet-600 bg-violet-600 px-6 py-3 font-semibold text-white shadow-lg shadow-violet-500/25 transition-all hover:bg-violet-500 dark:border-white/10 dark:bg-white/5 dark:shadow-[0_10px_35px_rgba(0,0,0,0.3)] dark:hover:bg-white/10"
+                >
+                  <Plus size={18} />
+                  Create Event
+                </button>
+              </Link>
+            )}
           </div>
         </div>
 
@@ -99,16 +143,19 @@ export default function OrganizerEventsPage() {
               { id: 'all', label: 'All Events' },
               { id: 'active', label: 'Active' },
               { id: 'past', label: 'Past' },
+              { id: 'trash', label: 'Trash Bin 🗑️' },
             ].map((f) => (
               <button
                 key={f.id}
                 type="button"
-                onClick={() => setFilterActive(f.id as 'all' | 'active' | 'past')}
+                onClick={() => setFilterActive(f.id as 'all' | 'active' | 'past' | 'trash')}
                 className={`whitespace-nowrap rounded-xl border px-4 py-2 text-sm font-medium transition-all ${
                   filterActive === f.id
                     ? f.id === 'active'
                       ? 'border-emerald-300 bg-emerald-50 text-emerald-900 shadow-sm dark:border-emerald-500/40 dark:bg-emerald-500/20 dark:text-emerald-200 dark:shadow-lg dark:shadow-emerald-500/10'
-                      : 'border-violet-300 bg-violet-50 text-violet-900 shadow-sm dark:border-violet-500/40 dark:bg-violet-500/20 dark:text-violet-200 dark:shadow-lg dark:shadow-violet-500/10'
+                      : f.id === 'trash'
+                        ? 'border-red-300 bg-red-50 text-red-900 shadow-sm dark:border-red-500/40 dark:bg-red-500/20 dark:text-red-200 dark:shadow-lg dark:shadow-red-500/10'
+                        : 'border-violet-300 bg-violet-50 text-violet-900 shadow-sm dark:border-violet-500/40 dark:bg-violet-500/20 dark:text-violet-200 dark:shadow-lg dark:shadow-violet-500/10'
                     : 'border-zinc-200 bg-zinc-50 text-zinc-600 hover:border-zinc-300 hover:bg-white dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:border-white/20 dark:hover:bg-white/10 dark:hover:text-white'
                 }`}
               >
@@ -144,15 +191,28 @@ export default function OrganizerEventsPage() {
                     <Calendar size={12} className="text-violet-600 dark:text-violet-300" />
                     {new Date(event.startDate).toLocaleDateString()}
                   </div>
-                  <span
-                    className={`rounded-full border px-3 py-1 text-xs font-medium ${
-                      event.isActive
-                        ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-200'
-                        : 'border-zinc-200 bg-zinc-100 text-zinc-600 dark:border-white/15 dark:bg-white/5 dark:text-gray-300'
-                    }`}
-                  >
-                    {event.isActive ? 'Active' : 'Archived'}
-                  </span>
+                  {filterActive === 'trash' ? (
+                    (() => {
+                      const deletedTime = event.deletedAt ? new Date(event.deletedAt).getTime() : Date.now();
+                      const expiryTime = deletedTime + 7 * 24 * 60 * 60 * 1000;
+                      const daysLeft = Math.max(0, Math.ceil((expiryTime - Date.now()) / (24 * 60 * 60 * 1000)));
+                      return (
+                        <span className="rounded-full border border-red-200/80 bg-red-50 px-3 py-1 text-xs font-semibold text-red-700 dark:border-red-500/30 dark:bg-red-500/15 dark:text-red-200 animate-pulse">
+                          Expires in {daysLeft}d
+                        </span>
+                      );
+                    })()
+                  ) : (
+                    <span
+                      className={`rounded-full border px-3 py-1 text-xs font-medium ${
+                        event.isActive
+                          ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-200'
+                          : 'border-zinc-200 bg-zinc-100 text-zinc-600 dark:border-white/15 dark:bg-white/5 dark:text-gray-300'
+                      }`}
+                    >
+                      {event.isActive ? 'Active' : 'Archived'}
+                    </span>
+                  )}
                 </div>
 
                 <h3 className="mb-2 text-lg font-semibold text-zinc-900 transition-colors group-hover:text-violet-700 dark:text-white dark:group-hover:text-violet-300">
@@ -174,35 +234,67 @@ export default function OrganizerEventsPage() {
                   </div>
                 </div>
 
-                <div className="flex gap-2 border-t border-zinc-200/90 pt-4 dark:border-white/10">
-                  <Link href={`/organizer/events/${event._id}/upload`} className="flex-1">
+                {filterActive === 'trash' ? (
+                  <div className="flex gap-2 border-t border-zinc-200/90 pt-4 dark:border-white/10 mt-auto">
                     <button
                       type="button"
-                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 py-2.5 text-sm font-semibold text-white shadow-violet-500/20 hover:from-violet-500 hover:to-indigo-500"
+                      disabled={actionInProgress !== null}
+                      onClick={() => handleRestore(event._id)}
+                      className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 py-2.5 text-sm font-semibold text-white transition-all shadow-lg shadow-emerald-500/10 disabled:opacity-50 text-xs"
                     >
-                      <Upload size={16} /> Upload Photos
+                      <Sparkles size={16} /> Restore
                     </button>
-                  </Link>
-                  <Link
-                    href={`/events/${event._id}/manage`}
-                    className="rounded-xl border border-zinc-200 bg-white p-2.5 text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-white/10 dark:bg-white/5 dark:text-gray-200 dark:hover:bg-white/10"
-                  >
-                    <Eye size={18} />
-                  </Link>
-                </div>
+                    <button
+                      type="button"
+                      disabled={actionInProgress !== null}
+                      onClick={() => handlePermanentDelete(event._id)}
+                      className="rounded-xl border border-red-200 bg-red-50 p-2.5 text-red-600 transition-colors hover:bg-red-100 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20 disabled:opacity-50"
+                      title="Delete Permanently"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2 border-t border-zinc-200/90 pt-4 dark:border-white/10">
+                    <Link href={`/organizer/events/${event._id}/upload`} className="flex-1">
+                      <button
+                        type="button"
+                        className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 py-2.5 text-sm font-semibold text-white shadow-violet-500/20 hover:from-violet-500 hover:to-indigo-500"
+                      >
+                        <Upload size={16} /> Upload Photos
+                      </button>
+                    </Link>
+                    <Link
+                      href={`/events/${event._id}/manage`}
+                      className="rounded-xl border border-zinc-200 bg-white p-2.5 text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-white/10 dark:bg-white/5 dark:text-gray-200 dark:hover:bg-white/10"
+                    >
+                      <Eye size={18} />
+                    </Link>
+                  </div>
+                )}
               </div>
             ))}
           </div>
         ) : (
           <div className="card border-zinc-200/90 py-16 text-center shadow-lg shadow-zinc-900/5 dark:border-white/5 dark:bg-[#0f0c18] dark:shadow-[0_14px_50px_rgba(0,0,0,0.35)]">
             <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-500/10">
-              <Calendar size={32} className="text-violet-600 dark:text-violet-400" />
+              {filterActive === 'trash' ? (
+                <Trash2 size={32} className="text-red-500 dark:text-red-400" />
+              ) : (
+                <Calendar size={32} className="text-violet-600 dark:text-violet-400" />
+              )}
             </div>
-            <h3 className="mb-2 text-xl font-semibold text-zinc-900 dark:text-white">No events found</h3>
+            <h3 className="mb-2 text-xl font-semibold text-zinc-900 dark:text-white">
+              {filterActive === 'trash' ? 'Trash Bin is empty' : 'No events found'}
+            </h3>
             <p className="mb-6 text-zinc-600 dark:text-gray-400">
-              {searchTerm ? 'Try adjusting your search filters' : 'Create an event to get started'}
+              {searchTerm 
+                ? 'Try adjusting your search filters' 
+                : filterActive === 'trash'
+                  ? 'No soft-deleted events are currently stored.'
+                  : 'Create an event to get started'}
             </p>
-            {!searchTerm && (
+            {!searchTerm && filterActive !== 'trash' && (
               <Link href="/organizer/events/create">
                 <button type="button" className="btn-gradient rounded-xl px-6 py-3 font-semibold">
                   Create Event

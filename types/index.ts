@@ -39,6 +39,8 @@ export interface Event {
   accessCode?: string;
   tags: string[];
   coverImage?: string;
+  isDeleted?: boolean;
+  deletedAt?: string;
   createdAt?: string;
   updatedAt?: string;
 }
