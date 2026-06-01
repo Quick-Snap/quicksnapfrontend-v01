@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useMemo } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useQuery } from 'react-query';
@@ -19,13 +19,16 @@ import {
   Loader2,
   Info,
   X,
-  Upload
+  Upload,
+  Eye,
+  RotateCcw
 } from 'lucide-react';
 import { Button } from '@/app/components/ui/Button';
 import UploadZone from '@/app/components/ui/UploadZone';
-import { eventApi, photoApi } from '@/lib/api';
+import { eventApi, photoApi, api } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import RefreshAttendeeMatchesCard from '@/app/components/events/RefreshAttendeeMatchesCard';
+import { PhotoLightbox } from '@/app/components/photos/PhotoLightbox';
 import toast from 'react-hot-toast';
 import { softSurface, softSurfaceHover } from '@/lib/dashboardUi';
 
@@ -64,6 +67,12 @@ function PhotographerUploadContent() {
   const [uploadComplete, setUploadComplete] = useState(false);
   const [uploadedCount, setUploadedCount] = useState(0);
   const [dirtyCount, setDirtyCount] = useState(0);
+  
+  // Lightbox Zoom State
+  const [selectedPhoto, setSelectedPhoto] = useState<any>(null);
+  
+  // Trash toggle state
+  const [showTrash, setShowTrash] = useState(false);
 
   // Fetch active photographer events
   const { data: eventsData, isLoading: eventsLoading } = useQuery(
@@ -73,10 +82,17 @@ function PhotographerUploadContent() {
   );
 
   // Fetch event photos for gallery list
-  const { data: photosData, isLoading: photosLoading, refetch: refetchPhotos } = useQuery(
+  const { data: photosData, isLoading: photosLoading } = useQuery(
     ['photographer-photos', selectedEvent, dirtyCount],
     () => eventApi.getPhotos(selectedEvent, { all: true, limit: 100 }),
-    { enabled: !!selectedEvent }
+    { enabled: !!selectedEvent && !showTrash }
+  );
+
+  // Fetch soft-deleted photos for trash gallery
+  const { data: trashPhotosData, isLoading: trashLoading } = useQuery(
+    ['photographer-trash-photos', selectedEvent, dirtyCount],
+    () => api.get(`/photos/event/${selectedEvent}/trash`).then(res => res.data?.data?.photos || []),
+    { enabled: !!selectedEvent && showTrash }
   );
 
   // Pre-select event from URL query parameter
@@ -130,12 +146,40 @@ function PhotographerUploadContent() {
       ? events.find((ev: { _id?: string }) => ev._id === selectedEvent) ?? null
       : null;
 
-  // Filter photos uploaded by the logged-in photographer
-  const allEventPhotos = photosData?.data?.photos || [];
-  const myUploadedPhotos = allEventPhotos.filter((p: any) => {
-    const uploaderId = p.uploadedBy?._id || p.uploadedBy;
-    return uploaderId === user?.id;
-  });
+  // Active photos uploaded by this photographer
+  const activePhotos = useMemo(() => {
+    const all = photosData?.data?.photos || [];
+    return all.filter((p: any) => {
+      const uploaderId = p.uploadedBy?._id || p.uploadedBy;
+      return uploaderId === user?.id;
+    });
+  }, [photosData, user?.id]);
+
+  // Soft-deleted photos in the trash
+  const trashPhotos = trashPhotosData || [];
+
+  // Determine current active photos in display grid (active vs trash)
+  const currentPhotos = showTrash ? trashPhotos : activePhotos;
+
+  // Next / Prev Lightbox Logic
+  const currentIndex = useMemo(() => {
+    if (!selectedPhoto) return -1;
+    return currentPhotos.findIndex((p: any) => (p._id === selectedPhoto._id || p.imageId === selectedPhoto.imageId));
+  }, [selectedPhoto, currentPhotos]);
+
+  const handleNextPhoto = useMemo(() => {
+    if (currentIndex !== -1 && currentIndex < currentPhotos.length - 1) {
+      return () => setSelectedPhoto(currentPhotos[currentIndex + 1]);
+    }
+    return undefined;
+  }, [currentIndex, currentPhotos]);
+
+  const handlePrevPhoto = useMemo(() => {
+    if (currentIndex > 0) {
+      return () => setSelectedPhoto(currentPhotos[currentIndex - 1]);
+    }
+    return undefined;
+  }, [currentIndex, currentPhotos]);
 
   const handleUpload = async () => {
     if (files.length === 0) {
@@ -207,7 +251,7 @@ function PhotographerUploadContent() {
   };
 
   const handleDeletePhoto = async (photoId: string) => {
-    if (!confirm('Are you sure you want to delete this photo uploaded by you? It will be soft-deleted and placed in the Trash Bin.')) {
+    if (!confirm('Are you sure you want to delete this photo uploaded by you? It will be soft-deleted and placed in your event Trash Bin.')) {
       return;
     }
 
@@ -221,6 +265,20 @@ function PhotographerUploadContent() {
       }
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to delete photo');
+    }
+  };
+
+  const handleRestorePhoto = async (photoId: string) => {
+    try {
+      const res = await api.post(`/photos/${photoId}/restore`);
+      if (res.data?.success) {
+        toast.success('Photo recovered successfully.');
+        setDirtyCount(prev => prev + 1); // Refresh gallery list
+      } else {
+        toast.error(res.data?.message || 'Failed to restore photo');
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to restore photo');
     }
   };
 
@@ -504,25 +562,46 @@ function PhotographerUploadContent() {
                   <ImageIcon className="h-5 w-5 text-violet-700 dark:text-violet-400" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold text-white">Your Uploads in this Event</h2>
-                  <p className="text-xs text-gray-400">Photos uploaded by your photographer account.</p>
+                  <h2 className="text-xl font-semibold text-white">
+                    {showTrash ? 'Your Trash Bin (Deleted Photos)' : 'Your Uploads in this Event'}
+                  </h2>
+                  <p className="text-xs text-gray-400">
+                    {showTrash 
+                      ? 'Deleted photos will be permanently removed after the event retention period.' 
+                      : 'Active photos uploaded by your photographer account.'}
+                  </p>
                 </div>
               </div>
-              <span className="rounded-full border border-violet-500/20 bg-violet-500/10 px-3.5 py-1 text-xs font-semibold text-violet-300">
-                {myUploadedPhotos.length} photo{myUploadedPhotos.length !== 1 ? 's' : ''} uploaded
-              </span>
+              
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setShowTrash(!showTrash)}
+                  className={`px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                    showTrash 
+                      ? 'bg-violet-600 border-violet-500 text-white shadow-md' 
+                      : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10'
+                  }`}
+                >
+                  {showTrash ? 'View Active Uploads' : '🗑️ Open Trash Bin'}
+                </button>
+
+                <span className="rounded-full border border-violet-500/20 bg-violet-500/10 px-3.5 py-1 text-xs font-semibold text-violet-300">
+                  {showTrash ? trashPhotos.length : activePhotos.length} photo{ (showTrash ? trashPhotos.length : activePhotos.length) !== 1 ? 's' : ''}
+                </span>
+              </div>
             </div>
 
-            {photosLoading ? (
+            {/* Gallery Loading state */}
+            {(showTrash ? trashLoading : photosLoading) ? (
               <div className="flex items-center gap-3 text-gray-400 py-12 justify-center">
                 <Loader2 className="h-5 w-5 animate-spin text-violet-500" />
-                <span>Loading your uploaded photos…</span>
+                <span>{showTrash ? 'Loading Trash Bin…' : 'Loading your uploaded photos…'}</span>
               </div>
-            ) : myUploadedPhotos.length > 0 ? (
+            ) : currentPhotos.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 pt-6">
-                {myUploadedPhotos.map((photo: any) => (
+                {currentPhotos.map((photo: any) => (
                   <div
-                    key={photo._id}
+                    key={photo._id || photo.imageId}
                     className="group relative aspect-square rounded-2xl overflow-hidden bg-zinc-900 border border-white/5 hover:border-violet-500/30 transition-all duration-300 shadow-sm hover:shadow-lg"
                   >
                     <img
@@ -535,14 +614,14 @@ function PhotographerUploadContent() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       <div className="absolute bottom-0 left-0 right-0 p-3 space-y-1 leading-tight">
                         <p className="text-xs font-medium text-white truncate">{photo.fileName}</p>
-                        <p className="text-[10px] text-gray-400">
-                          {photo.uploadedAt ? new Date(photo.uploadedAt).toLocaleDateString() : 'Just now'}
+                        <p className="text-[10px] text-gray-400 font-medium">
+                          {photo.uploadedAt || photo.deletedAt ? new Date(photo.uploadedAt || photo.deletedAt).toLocaleDateString() : 'Just now'}
                         </p>
                       </div>
                     </div>
 
                     {/* Matching Confidence Badge */}
-                    {photo.matchedUsers && photo.matchedUsers.length > 0 && (
+                    {!showTrash && photo.matchedUsers && photo.matchedUsers.length > 0 && (
                       <div className="absolute top-3 left-3 bg-emerald-500/15 border border-emerald-400/30 backdrop-blur-sm text-emerald-100 text-[10px] px-2 py-0.5 rounded-md font-semibold flex items-center gap-1 shadow-md">
                         <CheckCircle2 className="h-3 w-3 text-emerald-400" />
                         <span>Matched</span>
@@ -550,36 +629,113 @@ function PhotographerUploadContent() {
                     )}
 
                     {/* Official Stamp */}
-                    {photo.isOfficial && (
+                    {!showTrash && photo.isOfficial && (
                       <div className="absolute top-3 left-3 bg-violet-500/25 border border-violet-400/40 backdrop-blur-sm text-violet-100 text-[10px] px-2 py-0.5 rounded-md font-semibold flex items-center gap-1 shadow-md">
                         <Sparkles className="h-3 w-3 text-violet-300" />
                         <span>Official</span>
                       </div>
                     )}
 
-                    {/* Delete button (Photographer self-deletion) */}
-                    <button
-                      onClick={() => handleDeletePhoto(photo._id || photo.imageId)}
-                      className="absolute top-3 right-3 p-1.5 rounded-lg bg-black/60 backdrop-blur-sm text-white opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-red-500 hover:scale-110 shadow-md"
-                      title="Delete photo uploaded by mistake"
-                    >
-                      <Trash2 size={13} className="text-white" />
-                    </button>
+                    {/* Hover controls overlay */}
+                    <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                      {/* Zoom View Icon */}
+                      <button
+                        onClick={() => setSelectedPhoto(photo)}
+                        className="p-1.5 rounded-lg bg-black/60 backdrop-blur-sm text-white hover:bg-violet-600 hover:scale-110 shadow-md transition-all"
+                        title="Zoom view"
+                      >
+                        <Eye size={13} />
+                      </button>
+
+                      {showTrash ? (
+                        /* Restore Icon in Trash Mode */
+                        <button
+                          onClick={() => handleRestorePhoto(photo._id || photo.imageId)}
+                          className="p-1.5 rounded-lg bg-black/60 backdrop-blur-sm text-white hover:bg-emerald-500 hover:scale-110 shadow-md transition-all"
+                          title="Restore photo to active downloads"
+                        >
+                          <RotateCcw size={13} className="text-white" />
+                        </button>
+                      ) : (
+                        /* Delete Icon in Active Mode */
+                        <button
+                          onClick={() => handleDeletePhoto(photo._id || photo.imageId)}
+                          className="p-1.5 rounded-lg bg-black/60 backdrop-blur-sm text-white hover:bg-red-500 hover:scale-110 shadow-md transition-all"
+                          title="Delete photo uploaded by mistake"
+                        >
+                          <Trash2 size={13} className="text-white" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
             ) : (
               <div className="rounded-2xl bg-white/[0.02] py-16 text-center text-gray-400 border border-white/5 mt-6">
                 <ImageIcon className="mx-auto mb-4 h-12 w-12 text-gray-600" />
-                <h3 className="font-semibold text-white mb-1">No uploads in this event yet</h3>
+                <h3 className="font-semibold text-white mb-1">
+                  {showTrash ? 'Trash Bin is empty' : 'No uploads in this event yet'}
+                </h3>
                 <p className="text-xs text-gray-400 max-w-sm mx-auto">
-                  Drag and drop files in the workspace above to sync photos. They will appear here once processed.
+                  {showTrash 
+                    ? 'Photos you delete will appear here, and can be recovered within the event retention window.'
+                    : 'Drag and drop files in the workspace above to sync photos. They will appear here once processed.'}
                 </p>
               </div>
             )}
           </section>
         )}
       </div>
+
+      {/* Lightbox Zoom Render */}
+      {selectedPhoto && (
+        <PhotoLightbox
+          imageSrc={selectedPhoto.url}
+          imageAlt={selectedPhoto.fileName || 'Photo'}
+          onClose={() => setSelectedPhoto(null)}
+          onNext={handleNextPhoto}
+          onPrev={handlePrevPhoto}
+          footer={
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4 w-full">
+              <div className="min-w-0 flex-1">
+                <h3 className="truncate text-base font-semibold text-white">
+                  {selectedPhoto.fileName}
+                </h3>
+                <p className="truncate text-xs text-gray-400">
+                  {selectedPhoto.uploadedAt || selectedPhoto.deletedAt 
+                    ? `Ingested: ${new Date(selectedPhoto.uploadedAt || selectedPhoto.deletedAt).toLocaleString()}` 
+                    : 'Just now'}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                {showTrash ? (
+                  <button
+                    onClick={() => {
+                      handleRestorePhoto(selectedPhoto._id || selectedPhoto.imageId);
+                      setSelectedPhoto(null);
+                    }}
+                    className="inline-flex h-9 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 text-xs font-semibold text-white shadow-lg transition hover:bg-emerald-500"
+                  >
+                    <RotateCcw size={14} />
+                    Restore Photo
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      handleDeletePhoto(selectedPhoto._id || selectedPhoto.imageId);
+                      setSelectedPhoto(null);
+                    }}
+                    className="inline-flex h-9 items-center justify-center gap-2 rounded-xl bg-red-600 px-4 text-xs font-semibold text-white shadow-lg transition hover:bg-red-500"
+                  >
+                    <Trash2 size={14} />
+                    Delete Photo
+                  </button>
+                )}
+              </div>
+            </div>
+          }
+        />
+      )}
     </div>
   );
 }
