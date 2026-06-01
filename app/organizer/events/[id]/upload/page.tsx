@@ -59,6 +59,26 @@ export default function EventUploadPage() {
         }
     };
 
+    // Prevent accidental browser exit/refresh during active device uploads
+    useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            if (uploading) {
+                e.preventDefault();
+                e.returnValue = ''; // Standard browser exit popup
+                return '';
+            }
+        };
+
+        if (typeof window !== 'undefined') {
+            window.addEventListener('beforeunload', handleBeforeUnload);
+        }
+        return () => {
+            if (typeof window !== 'undefined') {
+                window.removeEventListener('beforeunload', handleBeforeUnload);
+            }
+        };
+    }, [uploading]);
+
     useEffect(() => {
         if (eventId) {
             fetchEvent();

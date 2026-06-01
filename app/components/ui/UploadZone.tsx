@@ -151,7 +151,7 @@ export default function UploadZone({ onFilesSelected, maxFiles = 50, eventId, on
                                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-xs transition-all bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-md shadow-violet-500/10 hover:shadow-violet-500/25"
                             >
                                 <Cloud size={14} />
-                                Sync from Google Photos
+                                Sync from Google Photos/Drive
                             </button>
                         </div>
                     )}

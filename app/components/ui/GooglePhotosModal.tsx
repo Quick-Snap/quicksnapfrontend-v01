@@ -144,6 +144,8 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
     // Ingestion state
     const [syncing, setSyncing] = useState(false);
     const [syncProgress, setSyncProgress] = useState({ total: 0, current: 0, success: 0, failed: 0 });
+    const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+    const isCancelledRef = useRef(false);
 
     // Try reading credentials in client window
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
@@ -185,13 +187,33 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
             setIsScrapingLink(false);
             setDriveFolderUrl('');
             setIsListingDrive(false);
+            setShowCancelConfirm(false);
+            isCancelledRef.current = false;
             setActiveTab('link');
             if (typeof window !== 'undefined' && (window as any)._pickerIntervalId) {
                 clearInterval((window as any)._pickerIntervalId);
             }
         }
     }, [isOpen]);
+    // Prevent accidental browser exit/refresh during active upload syncing
+    useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            if (syncing) {
+                e.preventDefault();
+                e.returnValue = ''; // Required standard for browser warning popups
+                return '';
+            }
+        };
 
+        if (typeof window !== 'undefined') {
+            window.addEventListener('beforeunload', handleBeforeUnload);
+        }
+        return () => {
+            if (typeof window !== 'undefined') {
+                window.removeEventListener('beforeunload', handleBeforeUnload);
+            }
+        };
+    }, [syncing]);
     // Handle initial Authentication
     const handleConnectGoogle = () => {
         if (!clientId) {
@@ -427,8 +449,12 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
         let failedCount = 0;
         let processedCount = 0;
 
+        isCancelledRef.current = false; // Reset cancellation token on starting a new sync session
         const runWorker = async () => {
             while (true) {
+                if (isCancelledRef.current) {
+                    break;
+                }
                 // Fetch next photo index atomically (JS event loop execution makes this safe)
                 const currentIndex = activeIndex++;
                 if (currentIndex >= totalPhotos) {
@@ -487,6 +513,11 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
         // Await completion of all workers
         await Promise.all(workers);
 
+        // If cancelled, exit early (custom stop handler already took care of alerts and closing)
+        if (isCancelledRef.current) {
+            return;
+        }
+
         // Notify parent context to refresh matches index
         if (typeof window !== 'undefined') {
             sessionStorage.setItem(`qs_event_photos_dirty_${eventId}`, '1');
@@ -500,7 +531,9 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
         
         // Wait and close
         setTimeout(() => {
-            onClose();
+            if (!isCancelledRef.current) {
+                onClose();
+            }
         }, 1500);
     };
 
@@ -531,7 +564,13 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
             {/* Backdrop */}
             <div 
                 className="absolute inset-0 bg-zinc-950/40 dark:bg-black/60 backdrop-blur-md transition-opacity duration-300"
-                onClick={() => !syncing && onClose()}
+                onClick={() => {
+                    if (syncing) {
+                        setShowCancelConfirm(true);
+                    } else {
+                        onClose();
+                    }
+                }}
             />
 
             {/* Modal Body */}
@@ -559,14 +598,18 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                         </div>
                     </div>
 
-                    {!syncing && (
-                        <button 
-                            onClick={onClose}
-                            className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"
-                        >
-                            <X size={20} className="text-zinc-500" />
-                        </button>
-                    )}
+                    <button 
+                        onClick={() => {
+                            if (syncing) {
+                                setShowCancelConfirm(true);
+                            } else {
+                                onClose();
+                            }
+                        }}
+                        className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"
+                    >
+                        <X size={20} className="text-zinc-500" />
+                    </button>
                 </div>
 
                 {/* Content Container */}
@@ -976,27 +1019,88 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                     )}
                     <div />
 
-                    {!syncing && (
-                        <div className="flex gap-3">
+                    <div className="flex gap-3">
+                        {(syncing || !selectedAlbum) ? (
+                            syncing && (
+                                <button
+                                    onClick={() => setShowCancelConfirm(true)}
+                                    className="py-2.5 px-5 rounded-xl font-semibold text-red-600 bg-red-500/5 hover:bg-red-500/10 border border-red-500/10 text-xs transition-all"
+                                >
+                                    Cancel Sync
+                                </button>
+                            )
+                        ) : (
                             <button
-                                onClick={() => !syncing && onClose()}
-                                className="py-2.5 px-5 rounded-xl font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200/80 transition-all dark:text-gray-300 dark:bg-white/5 dark:hover:bg-white/10"
+                                onClick={onClose}
+                                className="py-2.5 px-5 rounded-xl font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200/80 transition-all dark:text-gray-300 dark:bg-white/5 dark:hover:bg-white/10 text-xs"
                             >
                                 Cancel
                             </button>
-                            
-                            {selectedAlbum && (
-                                <button
-                                    onClick={handleSyncAlbum}
-                                    className="py-2.5 px-6 rounded-xl font-semibold text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 shadow-lg shadow-violet-500/20 hover:shadow-violet-500/35 transition-all flex items-center gap-2"
-                                >
-                                    <Cloud className="w-4 h-4" />
-                                    Sync {photos.length} Photos
-                                </button>
-                            )}
-                        </div>
-                    )}
+                        )}
+                        
+                        {!syncing && selectedAlbum && (
+                            <button
+                                onClick={handleSyncAlbum}
+                                className="py-2.5 px-6 rounded-xl font-semibold text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 shadow-lg shadow-violet-500/20 hover:shadow-violet-500/35 transition-all flex items-center gap-2 text-xs"
+                            >
+                                <Cloud className="w-4 h-4" />
+                                Sync {photos.length} Photos
+                            </button>
+                        )}
+                    </div>
                 </div>
+
+                {/* Cancel Confirmation Dialog (Nested Overlay) */}
+                {showCancelConfirm && (
+                    <div className="absolute inset-0 z-50 flex items-center justify-center p-6 bg-zinc-950/80 backdrop-blur-md transition-all duration-300">
+                        <div className={`
+                            w-full max-w-sm p-6 rounded-2xl border shadow-2xl animate-scale-in text-center space-y-5
+                            ${isDarkMode 
+                                ? 'bg-[#120f22] border-white/5 text-white shadow-black/80' 
+                                : 'bg-white border-zinc-200 text-zinc-900 shadow-zinc-900/10'
+                            }
+                        `}>
+                            <div className="w-12 h-12 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center mx-auto animate-pulse">
+                                <AlertCircle size={24} />
+                            </div>
+                            
+                            <div className="space-y-2">
+                                <h4 className="text-md font-bold">Stop Syncing?</h4>
+                                <p className="text-xs text-zinc-500 dark:text-gray-400 leading-relaxed">
+                                    You have successfully synced <span className="font-semibold text-emerald-600 dark:text-emerald-400">{syncProgress.success}</span> of <span className="font-semibold">{syncProgress.total}</span> photos.
+                                    <span className="block mt-1 text-[11px] text-red-500/90 font-medium">
+                                        ⚠️ The remaining {syncProgress.total - syncProgress.current} photos will not be imported.
+                                    </span>
+                                </p>
+                            </div>
+
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => {
+                                        // Resume syncing, hide confirm
+                                        setShowCancelConfirm(false);
+                                    }}
+                                    className="flex-1 py-2.5 rounded-xl font-semibold text-xs text-zinc-700 bg-zinc-100 hover:bg-zinc-200/80 transition-all dark:text-gray-300 dark:bg-white/5 dark:hover:bg-white/10"
+                                >
+                                    Keep Syncing
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        // Stop syncing
+                                        isCancelledRef.current = true;
+                                        setShowCancelConfirm(false);
+                                        setSyncing(false);
+                                        toast.success('Sync cancelled. Already imported photos were saved!');
+                                        onClose();
+                                    }}
+                                    className="flex-1 py-2.5 rounded-xl font-semibold text-xs text-white bg-red-600 hover:bg-red-500 transition-all shadow-lg shadow-red-600/20"
+                                >
+                                    Stop Syncing
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
