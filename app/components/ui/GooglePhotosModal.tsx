@@ -639,7 +639,7 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
 
                             <h3 className="text-xl font-bold mb-2">Google Photos Picker Active</h3>
                             <p className="text-sm text-zinc-500 dark:text-gray-400 mb-6">
-                                We opened the Google Photos Picker in a new window/tab. Please select the photos you want to import and click **"Done"**.
+                                We opened the Google Photos Picker in a new window/tab. Please select the photos you want to import and click <span className="font-semibold text-zinc-900 dark:text-white">"Done"</span>.
                             </p>
 
                             <div className="w-full p-4 rounded-xl border bg-zinc-50 dark:bg-white/[0.02] border-zinc-100 dark:border-white/5 space-y-3 mb-6">
@@ -649,7 +649,7 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                                 </div>
                                 <div className="flex items-center gap-3 text-xs text-left text-zinc-500 dark:text-gray-400">
                                     <div className="w-5 h-5 rounded-full bg-violet-500/10 flex items-center justify-center font-bold text-violet-600 dark:text-violet-400">2</div>
-                                    <span>Click the blue **"Done"** or **"Select"** button</span>
+                                    <span>Click the blue <span className="font-semibold text-zinc-900 dark:text-white">"Done"</span> or <span className="font-semibold text-zinc-900 dark:text-white">"Select"</span> button</span>
                                 </div>
                                 <div className="flex items-center gap-3 text-xs text-left text-zinc-500 dark:text-gray-400">
                                     <div className="w-5 h-5 rounded-full bg-violet-500/10 flex items-center justify-center font-bold text-violet-600 dark:text-violet-400">3</div>
@@ -733,12 +733,12 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                                 `}>
                                     <div className="max-w-md space-y-4">
                                         <div>
-                                            <h3 className="text-md font-bold mb-1 flex items-center gap-2 text-blue-600 dark:text-blue-400">
+                                            <h3 className="text-sm font-bold mb-1 flex items-center gap-2 text-blue-600 dark:text-blue-400">
                                                 <Folder className="w-4 h-4 text-blue-500" />
-                                                Import via Public Google Drive Folder
+                                                Google Drive Folder
                                             </h3>
-                                            <p className="text-xs text-zinc-500 dark:text-gray-400 leading-relaxed">
-                                                Paste a public Google Drive folder link to import **hundreds or thousands of photos** recursively with no volume limits!
+                                            <p className="text-[11px] text-zinc-500 dark:text-gray-400 leading-relaxed">
+                                                Paste a public shared Google Drive folder link to import all high-resolution photos recursively with <span className="font-semibold text-zinc-800 dark:text-zinc-200">no volume limits</span>.
                                             </p>
                                         </div>
 
@@ -751,14 +751,13 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                                                 className="w-full px-4 py-3 rounded-xl border bg-transparent font-medium text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all border-zinc-200 dark:border-white/10 dark:text-white"
                                             />
                                             <div className="rounded-xl bg-blue-500/5 border border-blue-500/10 p-3 space-y-1.5">
-                                                <p className="text-[10px] text-zinc-500 dark:text-gray-400 font-medium">
-                                                    🔒 **How to share your Google Drive folder correctly:**
+                                                <p className="text-[10px] text-zinc-600 dark:text-zinc-300 font-semibold flex items-center gap-1.5">
+                                                    <span>🔒 Sharing Requirements:</span>
                                                 </p>
                                                 <ul className="list-disc pl-4 space-y-0.5 text-[9px] text-zinc-400 dark:text-gray-500">
-                                                    <li>Click **Share** on your Google Drive folder</li>
-                                                    <li>Under **General Access**, change to **"Anyone with the link"**</li>
-                                                    <li>Set role as **Viewer** (minimum required for safe access)</li>
-                                                    <li>Copy and paste the folder link above!</li>
+                                                    <li>Click <span className="font-medium text-zinc-700 dark:text-zinc-300">Share</span> on the folder in Google Drive</li>
+                                                    <li>Set General Access to <span className="font-medium text-zinc-700 dark:text-zinc-300">"Anyone with the link can view"</span></li>
+                                                    <li>Ensure the role is set to <span className="font-medium text-zinc-700 dark:text-zinc-300">Viewer</span></li>
                                                 </ul>
                                             </div>
                                         </div>
@@ -793,12 +792,15 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                                 `}>
                                     <div className="max-w-md space-y-4">
                                         <div>
-                                            <h3 className="text-md font-bold mb-1 flex items-center gap-2 text-violet-600 dark:text-violet-400">
+                                            <h3 className="text-sm font-bold mb-1 flex items-center gap-2 text-violet-600 dark:text-violet-400">
                                                 <Zap className="w-4 h-4 fill-current animate-pulse text-violet-500" />
-                                                Import via Public Shared Album Link
+                                                Google Photos Shared Link
                                             </h3>
-                                            <p className="text-xs text-zinc-500 dark:text-gray-400 leading-relaxed">
-                                                Paste a public Google Photos shared link to import **every single photo** from the album in a single click, regardless of who owns it!
+                                            <p className="text-[11px] text-zinc-500 dark:text-gray-400 leading-relaxed">
+                                                Paste a public shared link to import photos. 
+                                                <span className="block mt-1 text-[10px] text-amber-600 dark:text-amber-400/80 font-medium">
+                                                    ⚠️ Limits: Up to <span className="font-semibold text-zinc-800 dark:text-zinc-200">300 photos</span> are supported via shared link. For larger albums, please use the <span className="font-semibold underline text-violet-600 dark:text-violet-400">Live Picker</span> or the <span className="font-semibold underline text-blue-600 dark:text-blue-400">Drive Folder</span> features.
+                                                </span>
                                             </p>
                                         </div>
 
@@ -811,7 +813,7 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                                                 className="w-full px-4 py-3 rounded-xl border bg-transparent font-medium text-xs focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all border-zinc-200 dark:border-white/10 dark:text-white"
                                             />
                                             <p className="text-[10px] text-zinc-400 dark:text-gray-500">
-                                                💡 **Make sure link-sharing is turned ON** in your Google Photos album options before copying the link.
+                                                💡 Make sure <span className="font-semibold text-zinc-700 dark:text-zinc-300">link-sharing is turned ON</span> in your Google Photos album options.
                                             </p>
                                         </div>
 
