@@ -21,17 +21,15 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        // Prepare parallel requests if endpoints available
-        // For now, mocking system stats or deriving from lists
-        // In real app, GET /admin/stats
-        const usersRes = await api.get('/users?limit=1'); // Just to get total count if pagination provided
+        // Fetch total count using the correct admin route
+        const usersRes = await api.get('/users/admin/all?limit=1');
         const eventsRes = await api.get('/events?limit=1');
 
         setStats({
-          totalUsers: usersRes.data.data?.pagination?.total || 150, // Fallback mock
-          totalEvents: eventsRes.data.data?.pagination?.total || 24,
-          totalPhotos: 1250, // Mock
-          activeEvents: 5 // Mock
+          totalUsers: usersRes.data.data?.pagination?.total || 0,
+          totalEvents: eventsRes.data.data?.pagination?.total || 0,
+          totalPhotos: 0, // Mocked/fallback
+          activeEvents: eventsRes.data.data?.pagination?.total || 0
         });
         setLoading(false);
       } catch (error) {

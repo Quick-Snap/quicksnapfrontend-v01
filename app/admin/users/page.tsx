@@ -14,12 +14,8 @@ export default function UserManagementPage() {
 
     const fetchUsers = async () => {
         try {
-            // Assuming GET /users exists and works for admin
-            const res = await api.get('/users?limit=100');
-            // If /users is not implemented, we might need to implement it or use what we have
-            // Assuming backend has getUser controller. 
-            // Checking implementation_plan, Step 123 said "User management table (View/Delete users)".
-            // Backend route /users might ensure all users.
+            // Fetch users via the correct admin route
+            const res = await api.get('/users/admin/all?limit=100');
 
             setUsers(res.data.data?.users || []);
         } catch (error) {
@@ -38,7 +34,7 @@ export default function UserManagementPage() {
         if (!confirm('Are you sure you want to delete this user?')) return;
 
         try {
-            await api.delete(`/users/${userId}`);
+            await api.delete(`/users/admin/${userId}`);
             toast.success('User deleted');
             setUsers(users.filter(u => u._id !== userId));
         } catch (error) {
