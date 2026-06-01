@@ -486,6 +486,11 @@ export const eventApi = {
     >(`/events/${eventId}/refresh-status`);
     return response.data;
   },
+
+  resetAttendeePhotoMatchesRefreshStatus: async (eventId: string) => {
+    const response = await api.post<ApiResponse<any>>(`/events/${eventId}/reset-refresh-status`);
+    return response.data;
+  },
 };
 
 // User API

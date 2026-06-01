@@ -138,6 +138,30 @@ export default function RefreshAttendeeMatchesCard({
     }
   }, [allowed, eventId, checkStatus]);
 
+  const handleForceReset = useCallback(async () => {
+    if (!eventId) return;
+    if (!confirm('Are you sure you want to force-reset this matching session? Use this if the session is stuck indefinitely due to a server update.')) {
+      return;
+    }
+
+    try {
+      const res = await eventApi.resetAttendeePhotoMatchesRefreshStatus(eventId);
+      if (res.success) {
+        toast.success('Refresh session reset to idle successfully.');
+        setPending(false);
+        setProgressStatus(null);
+        if (pollIntervalRef.current) {
+          clearInterval(pollIntervalRef.current);
+          pollIntervalRef.current = null;
+        }
+      } else {
+        toast.error(res.message || 'Failed to reset status');
+      }
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || 'Failed to reset matching status');
+    }
+  }, [eventId]);
+
   const runRefresh = useCallback(async () => {
     if (!eventId || pending) return;
     setPending(true);
@@ -226,11 +250,21 @@ export default function RefreshAttendeeMatchesCard({
               )}
             </button>
             {pending && (
-              <span className={`text-sm ${subClass}`}>
-                {progressStatus
-                  ? `Matching faces to photos — Processed ${progressStatus.progress} of ${progressStatus.total} attendees.`
-                  : 'Matching faces to this event\'s photos — please wait.'}
-              </span>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <span className={`text-sm ${subClass}`}>
+                  {progressStatus
+                    ? `Matching faces to photos — Processed ${progressStatus.progress} of ${progressStatus.total} attendees.`
+                    : 'Matching faces to this event\'s photos — please wait.'}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleForceReset}
+                  className="text-xs font-semibold text-red-500 hover:text-red-400 underline cursor-pointer transition-all ml-1 shrink-0"
+                  title="Force reset stuck refresh status back to idle"
+                >
+                  Stuck? Reset Status
+                </button>
+              </div>
             )}
           </div>
 
