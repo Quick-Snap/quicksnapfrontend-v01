@@ -7,7 +7,9 @@ import { useRole } from '@/hooks/useRole';
 import { Menu, X, User, LogOut, Home, Image as ImageIcon, Calendar, Shield, Settings, Upload, ChevronDown } from 'lucide-react';
 import Image from 'next/image';
 import { useState, useRef, useEffect } from 'react';
+import { useQuery } from 'react-query';
 import { UserRole } from '@/types';
+import { adminOrganizerRequestApi } from '@/lib/api';
 import { ThemeToggle } from '@/app/components/ui/ThemeToggle';
 import lightLogo from '@/components/assets/7.png';
 import darkLogo from '@/components/assets/5.png';
@@ -29,6 +31,13 @@ export default function Navbar() {
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
+
+  const { data: organizerStats } = useQuery(
+    'organizerRequestStatsNav',
+    () => adminOrganizerRequestApi.stats(),
+    { enabled: isAdmin, staleTime: 60_000, refetchInterval: 120_000 }
+  );
+  const pendingOrganizerRequests = organizerStats?.data?.pending ?? 0;
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -80,7 +89,7 @@ export default function Navbar() {
     if (isAdmin) {
       nav.push({ name: 'Events', href: '/events', icon: Calendar });
       nav.push({ name: 'My Photos', href: '/photos', icon: ImageIcon });
-      nav.push({ name: 'Admin Panel', href: '/admin', icon: Shield });
+      nav.push({ name: 'Organizer Requests', href: '/admin', icon: Shield });
     } else if (isOrganizer) {
       // Organizers only see My Events (no Events, My Photos, or Photographer Upload)
       nav.push({ name: 'My Events', href: '/organizer/events', icon: Calendar });
@@ -138,6 +147,11 @@ export default function Navbar() {
                 >
                   <Icon className="h-4 w-4" />
                   <span className="text-sm font-medium">{item.name}</span>
+                  {item.href === '/admin' && pendingOrganizerRequests > 0 && (
+                    <span className="rounded-full bg-amber-500 px-1.5 py-0.5 text-xs font-bold text-white">
+                      {pendingOrganizerRequests}
+                    </span>
+                  )}
                 </Link>
               );
             })}
@@ -390,6 +404,11 @@ export default function Navbar() {
                   >
                     <Icon className="h-5 w-5" />
                     <span className="font-medium">{item.name}</span>
+                    {item.href === '/admin' && pendingOrganizerRequests > 0 && (
+                      <span className="ml-auto rounded-full bg-amber-500 px-2 py-0.5 text-xs font-bold text-white">
+                        {pendingOrganizerRequests}
+                      </span>
+                    )}
                   </Link>
                 );
               })}

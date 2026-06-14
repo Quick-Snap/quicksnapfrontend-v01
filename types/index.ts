@@ -103,3 +103,43 @@ export interface PaginationResponse<T> {
   };
 }
 
+export type OrganizerRequestStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
+
+export interface OrganizerRequestUser {
+  _id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+  roles: string[];
+}
+
+export interface OrganizerRequest {
+  _id: string;
+  userId: string | OrganizerRequestUser;
+  status: OrganizerRequestStatus;
+  reason: string;
+  organizationName?: string;
+  organizationEmail?: string;
+  phone?: string;
+  reviewedBy?: string | { _id: string; name: string; email: string };
+  reviewNote?: string;
+  reviewedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OrganizerRequestStats {
+  pending: number;
+  approved: number;
+  rejected: number;
+  cancelled: number;
+  total: number;
+}
+
+export interface SubmitOrganizerRequestDto {
+  reason: string;
+  organizationName?: string;
+  organizationEmail?: string;
+  phone?: string;
+}
+

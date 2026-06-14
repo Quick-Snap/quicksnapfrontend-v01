@@ -1,5 +1,5 @@
 import { AxiosError } from 'axios';
-import { ApiResponse } from '@/types';
+import { ApiResponse, OrganizerRequest, OrganizerRequestStats, SubmitOrganizerRequestDto } from '@/types';
 import api from '@/app/api/axios';
 
 export interface DownloadJobStatus {
@@ -527,8 +527,75 @@ export const userApi = {
     return response.data;
   },
 
-  becomeOrganizer: async () => {
-    const response = await api.patch<ApiResponse<any>>('/users/become-organizer');
+  becomeOrganizer: async (body?: SubmitOrganizerRequestDto) => {
+    const response = await api.patch<ApiResponse<OrganizerRequest>>('/users/become-organizer', body);
+    return response.data;
+  },
+};
+
+export const organizerRequestApi = {
+  submit: async (body: SubmitOrganizerRequestDto) => {
+    const response = await api.post<ApiResponse<OrganizerRequest>>('/organizer-requests', body);
+    return response.data;
+  },
+
+  getMine: async () => {
+    const response = await api.get<ApiResponse<OrganizerRequest | null>>('/organizer-requests/me');
+    return response.data;
+  },
+
+  cancel: async () => {
+    const response = await api.delete<ApiResponse<OrganizerRequest>>('/organizer-requests/me');
+    return response.data;
+  },
+};
+
+export const adminOrganizerRequestApi = {
+  list: async (params?: {
+    status?: string;
+    page?: number;
+    limit?: number;
+    search?: string;
+  }) => {
+    const response = await api.get<
+      ApiResponse<{
+        requests: OrganizerRequest[];
+        pagination: { total: number; page: number; pages: number; limit?: number };
+      }>
+    >('/organizer-requests/admin/all', { params });
+    return response.data;
+  },
+
+  stats: async () => {
+    const response = await api.get<ApiResponse<OrganizerRequestStats>>(
+      '/organizer-requests/admin/stats'
+    );
+    return response.data;
+  },
+
+  getById: async (id: string) => {
+    const response = await api.get<ApiResponse<OrganizerRequest>>(
+      `/organizer-requests/admin/${id}`
+    );
+    return response.data;
+  },
+
+  approve: async (
+    id: string,
+    body?: { reviewNote?: string; createOrganization?: boolean }
+  ) => {
+    const response = await api.patch<ApiResponse<OrganizerRequest>>(
+      `/organizer-requests/admin/${id}/approve`,
+      body
+    );
+    return response.data;
+  },
+
+  reject: async (id: string, body?: { reviewNote?: string }) => {
+    const response = await api.patch<ApiResponse<OrganizerRequest>>(
+      `/organizer-requests/admin/${id}/reject`,
+      body
+    );
     return response.data;
   },
 };
