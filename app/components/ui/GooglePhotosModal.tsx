@@ -146,6 +146,7 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
     const [syncProgress, setSyncProgress] = useState({ total: 0, current: 0, success: 0, failed: 0 });
     const [showCancelConfirm, setShowCancelConfirm] = useState(false);
     const isCancelledRef = useRef(false);
+    const syncInProgressRef = useRef(false);
 
     // Try reading credentials in client window
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
@@ -425,11 +426,13 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
 
     // Execute batch photo ingestion concurrently with a limit of 3 workers
     const handleSyncAlbum = async () => {
+        if (syncInProgressRef.current) return;
         if (photos.length === 0) {
             toast.error('No photos to import.');
             return;
         }
 
+        syncInProgressRef.current = true;
         setSyncing(true);
         setSyncProgress({
             total: photos.length,
@@ -438,107 +441,111 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
             failed: 0
         });
 
-        // Concurrency settings
-        // Future extension: Adjust dynamically (e.g., limit to 1 concurrent request during high-traffic 11 AM - 6 PM,
-        // and 3 concurrent requests at night/other times).
-        const CONCURRENCY_LIMIT = 3;
-        const totalPhotos = photos.length;
-        
-        let activeIndex = 0;
-        let successCount = 0;
-        let failedCount = 0;
-        let processedCount = 0;
+        try {
+            // Concurrency settings
+            // Future extension: Adjust dynamically (e.g., limit to 1 concurrent request during high-traffic 11 AM - 6 PM,
+            // and 3 concurrent requests at night/other times).
+            const CONCURRENCY_LIMIT = 3;
+            const totalPhotos = photos.length;
+            
+            let activeIndex = 0;
+            let successCount = 0;
+            let failedCount = 0;
+            let processedCount = 0;
 
-        isCancelledRef.current = false; // Reset cancellation token on starting a new sync session
-        const runWorker = async () => {
-            while (true) {
-                if (isCancelledRef.current) {
-                    break;
-                }
-                // Fetch next photo index atomically (JS event loop execution makes this safe)
-                const currentIndex = activeIndex++;
-                if (currentIndex >= totalPhotos) {
-                    break;
-                }
-
-                const photo = photos[currentIndex];
-
-                try {
-                    // Ingest photo from Google Photo or Google Drive
-                    let res;
-                    if (activeTab === 'drive') {
-                        res = await api.post('/photos/google-drive/import-file', {
-                            eventId,
-                            fileId: photo.id,
-                            filename: photo.filename
-                        }, {
-                            headers: !googleToken ? {} : { 'x-google-access-token': googleToken }
-                        });
-                    } else {
-                        res = await api.post('/photos/google-photos/import-file', {
-                            eventId,
-                            baseUrl: photo.baseUrl,
-                            filename: photo.filename
-                        }, {
-                            headers: (activeTab === 'link' || !googleToken) ? {} : { 'x-google-access-token': googleToken }
-                        });
+            isCancelledRef.current = false; // Reset cancellation token on starting a new sync session
+            const runWorker = async () => {
+                while (true) {
+                    if (isCancelledRef.current) {
+                        break;
+                    }
+                    // Fetch next photo index atomically (JS event loop execution makes this safe)
+                    const currentIndex = activeIndex++;
+                    if (currentIndex >= totalPhotos) {
+                        break;
                     }
 
-                    const isSuccess = !!res?.data?.success;
-                    setSyncProgress(prev => {
-                        const newSuccess = isSuccess ? prev.success + 1 : prev.success;
-                        const newFailed = isSuccess ? prev.failed : prev.failed + 1;
-                        const newCurrent = prev.current + 1;
-                        return {
+                    const photo = photos[currentIndex];
+
+                    try {
+                        // Ingest photo from Google Photo or Google Drive
+                        let res;
+                        if (activeTab === 'drive') {
+                            res = await api.post('/photos/google-drive/import-file', {
+                                eventId,
+                                fileId: photo.id,
+                                filename: photo.filename
+                            }, {
+                                headers: !googleToken ? {} : { 'x-google-access-token': googleToken }
+                            });
+                        } else {
+                            res = await api.post('/photos/google-photos/import-file', {
+                                eventId,
+                                baseUrl: photo.baseUrl,
+                                filename: photo.filename
+                            }, {
+                                headers: (activeTab === 'link' || !googleToken) ? {} : { 'x-google-access-token': googleToken }
+                            });
+                        }
+
+                        const isSuccess = !!res?.data?.success;
+                        setSyncProgress(prev => {
+                            const newSuccess = isSuccess ? prev.success + 1 : prev.success;
+                            const newFailed = isSuccess ? prev.failed : prev.failed + 1;
+                            const newCurrent = prev.current + 1;
+                            return {
+                                ...prev,
+                                current: newCurrent,
+                                success: newSuccess,
+                                failed: newFailed
+                            };
+                        });
+                    } catch (err) {
+                        console.error(`Import failed for ${photo.filename}:`, err);
+                        setSyncProgress(prev => ({
                             ...prev,
-                            current: newCurrent,
-                            success: newSuccess,
-                            failed: newFailed
-                        };
-                    });
-                } catch (err) {
-                    console.error(`Import failed for ${photo.filename}:`, err);
-                    setSyncProgress(prev => ({
-                        ...prev,
-                        current: prev.current + 1,
-                        failed: prev.failed + 1
-                    }));
+                            current: prev.current + 1,
+                            failed: prev.failed + 1
+                        }));
+                    }
                 }
+            };
+
+            // Spawn concurrent workers
+            const workers = [];
+            const actualWorkersCount = Math.min(CONCURRENCY_LIMIT, totalPhotos);
+            for (let w = 0; w < actualWorkersCount; w++) {
+                workers.push(runWorker());
             }
-        };
 
-        // Spawn concurrent workers
-        const workers = [];
-        const actualWorkersCount = Math.min(CONCURRENCY_LIMIT, totalPhotos);
-        for (let w = 0; w < actualWorkersCount; w++) {
-            workers.push(runWorker());
-        }
+            // Await completion of all workers
+            await Promise.all(workers);
 
-        // Await completion of all workers
-        await Promise.all(workers);
-
-        // If cancelled, exit early (custom stop handler already took care of alerts and closing)
-        if (isCancelledRef.current) {
-            return;
-        }
-
-        // Notify parent context to refresh matches index
-        if (typeof window !== 'undefined') {
-            sessionStorage.setItem(`qs_event_photos_dirty_${eventId}`, '1');
-        }
-
-        toast.success(`Google Photos Sync completed!`);
-        setSyncing(false);
-        if (onSyncComplete) {
-            onSyncComplete();
-        }
-        
-        // Wait and close
-        setTimeout(() => {
-            if (!isCancelledRef.current) {
-                onClose();
+            // If cancelled, exit early (custom stop handler already took care of alerts and closing)
+            if (isCancelledRef.current) {
+                return;
             }
-        }, 1500);
+
+            // Notify parent context to refresh matches index
+            if (typeof window !== 'undefined') {
+                sessionStorage.setItem(`qs_event_photos_dirty_${eventId}`, '1');
+            }
+
+            toast.success(`Google Photos Sync completed!`);
+            setSyncing(false);
+            if (onSyncComplete) {
+                onSyncComplete();
+            }
+            
+            // Wait and close
+            setTimeout(() => {
+                if (!isCancelledRef.current) {
+                    onClose();
+                }
+            }, 1500);
+        } finally {
+            syncInProgressRef.current = false;
+        }
     };
 
     const getProxyPreviewUrl = (baseUrl: string) => {
