@@ -22,7 +22,7 @@ export default function PhotoUpload({ eventId, onUploadComplete }: PhotoUploadPr
   const [uploading, setUploading] = useState(false);
   const [fileStates, setFileStates] = useState<FileUploadState[]>([]);
 
-  const maxFiles = 50;
+  const maxFiles = 100;
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     const processedFiles = await Promise.all(
@@ -63,7 +63,7 @@ export default function PhotoUpload({ eventId, onUploadComplete }: PhotoUploadPr
     accept: {
       'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp', '.heic', '.heif'],
     },
-    maxSize: 10 * 1024 * 1024, // 10MB
+    maxSize: 20 * 1024 * 1024, // 20MB
     maxFiles,
     disabled: uploading,
   });
@@ -207,7 +207,7 @@ export default function PhotoUpload({ eventId, onUploadComplete }: PhotoUploadPr
               Drag & drop photos here, or click to select
             </p>
             <p className="text-sm text-gray-500">
-              Supports JPEG, PNG, GIF, WEBP (max 10MB per file)
+              Supports JPEG, PNG, GIF, WEBP (max 20MB per file)
             </p>
           </div>
         )}

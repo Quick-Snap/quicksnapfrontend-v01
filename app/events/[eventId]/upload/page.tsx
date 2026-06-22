@@ -182,7 +182,7 @@ export default function EventUploadPage() {
                         <ImageUploader
                             eventId={eventId}
                             onUploadComplete={handleUploadComplete}
-                            maxFiles={50}
+                            maxFiles={100}
                         />
                     </div>
                 )}
@@ -197,7 +197,7 @@ export default function EventUploadPage() {
                             <h4 className="font-semibold text-gray-900">Bulk Upload</h4>
                         </div>
                         <p className="text-sm text-gray-600">
-                            Upload up to 50 photos at once. Perfect for large events with hundreds of attendees.
+                            Upload up to 100 photos at once. Perfect for large events with hundreds of attendees.
                         </p>
                     </div>
 

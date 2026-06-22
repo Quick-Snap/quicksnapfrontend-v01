@@ -489,7 +489,7 @@ function PhotographerUploadContent() {
 
                   <UploadZone
                     onFilesSelected={setFiles}
-                    maxFiles={50}
+                    maxFiles={100}
                     eventId={selectedEvent}
                     onSyncComplete={handleSyncComplete}
                   />
@@ -541,7 +541,7 @@ function PhotographerUploadContent() {
                   </p>
                   <div className="flex items-center justify-center gap-2 text-xs text-amber-400 bg-amber-500/10 px-4 py-2 rounded-lg w-fit mx-auto border border-amber-500/20">
                     <Zap className="h-4 w-4" />
-                    <span>Upload limit is 50 files per batch (10MB size cap).</span>
+                    <span>Upload limit is 100 files per batch (20MB size cap).</span>
                   </div>
                 </div>
               )}

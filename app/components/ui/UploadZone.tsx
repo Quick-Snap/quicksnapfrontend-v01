@@ -14,7 +14,7 @@ interface UploadZoneProps {
     onSyncComplete?: () => void;
 }
 
-export default function UploadZone({ onFilesSelected, maxFiles = 50, eventId, onSyncComplete }: UploadZoneProps) {
+export default function UploadZone({ onFilesSelected, maxFiles = 100, eventId, onSyncComplete }: UploadZoneProps) {
     const { isPhotographerOrOrganizer } = useRole();
     const [previews, setPreviews] = useState<{ file: File; url: string }[]>([]);
     const [error, setError] = useState<string | null>(null);
@@ -159,7 +159,7 @@ export default function UploadZone({ onFilesSelected, maxFiles = 50, eventId, on
                     {/* File Types Badge */}
                     <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-50 border border-zinc-200 dark:bg-white/5 dark:border-white/10">
                         <ImageIcon size={14} className="text-zinc-500 dark:text-gray-400" />
-                        <span className="text-xs text-zinc-500 dark:text-gray-400">JPG, PNG, WEBP, HEIC up to 10MB each</span>
+                        <span className="text-xs text-zinc-500 dark:text-gray-400">JPG, PNG, WEBP, HEIC up to 20MB each</span>
                     </div>
                 </div>
             </div>

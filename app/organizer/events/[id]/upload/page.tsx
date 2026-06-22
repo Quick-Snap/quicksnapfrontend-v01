@@ -265,7 +265,7 @@ export default function EventUploadPage() {
 
                                 <UploadZone
                                     onFilesSelected={setFiles}
-                                    maxFiles={50}
+                                    maxFiles={100}
                                     eventId={eventId}
                                     onSyncComplete={fetchEvent}
                                 />
@@ -343,13 +343,13 @@ export default function EventUploadPage() {
                                         <div className="w-5 h-5 rounded-full bg-violet-100 dark:bg-violet-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                                             <CheckCircle className="h-3 w-3 text-violet-600 dark:text-violet-400" />
                                         </div>
-                                        <span className="text-zinc-600 dark:text-gray-400">Max file size: <span className="text-zinc-800 dark:text-gray-300 font-medium">10MB per photo</span></span>
+                                        <span className="text-zinc-600 dark:text-gray-400">Max file size: <span className="text-zinc-800 dark:text-gray-300 font-medium">20MB per photo</span></span>
                                     </li>
                                     <li className="flex items-start gap-3 text-sm">
                                         <div className="w-5 h-5 rounded-full bg-violet-100 dark:bg-violet-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                                             <CheckCircle className="h-3 w-3 text-violet-600 dark:text-violet-400" />
                                         </div>
-                                        <span className="text-zinc-600 dark:text-gray-400">Max files: <span className="text-zinc-800 dark:text-gray-300 font-medium">50 at a time</span></span>
+                                        <span className="text-zinc-600 dark:text-gray-400">Max files: <span className="text-zinc-800 dark:text-gray-300 font-medium">100 at a time</span></span>
                                     </li>
                                 </ul>
                             </div>
