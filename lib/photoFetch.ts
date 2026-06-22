@@ -159,14 +159,16 @@ export async function fetchAllMyPhotos(params?: {
 /** Fetch every event photo (no cap) by paging until the API reports no more. */
 export async function fetchAllEventPhotos(eventId: string): Promise<unknown> {
   let page = 1;
+  let cursor: string | undefined;
+  let prevCursor: string | undefined;
   const photos: any[] = [];
   let lastResponse: unknown;
 
   for (;;) {
     const response = await eventApi.getPhotos(eventId, {
       all: true,
-      page,
       limit: PAGE_SIZE,
+      ...(cursor ? { lastKey: cursor } : { page }),
     });
     lastResponse = response;
     const batch = normalizeEventPhotosPayload(response);
@@ -179,8 +181,17 @@ export async function fetchAllEventPhotos(eventId: string): Promise<unknown> {
     const responseRecord = response as unknown as Record<string, unknown> | undefined;
     const dataBlock = responseRecord?.data as Record<string, unknown> | undefined;
     const pagination =
-      (dataBlock?.pagination as { pages?: number } | undefined) ??
-      (responseRecord?.pagination as { pages?: number } | undefined);
+      (dataBlock?.pagination as { pages?: number; lastKey?: unknown } | undefined) ??
+      (responseRecord?.pagination as { pages?: number; lastKey?: unknown } | undefined);
+
+    const nextCursor = extractNextLastKey(pagination);
+    if (nextCursor) {
+      if (nextCursor === prevCursor) break;
+      prevCursor = nextCursor;
+      cursor = nextCursor;
+      continue;
+    }
+
     const pages =
       pagination && typeof pagination === 'object' && 'pages' in pagination
         ? (pagination as { pages: number }).pages
