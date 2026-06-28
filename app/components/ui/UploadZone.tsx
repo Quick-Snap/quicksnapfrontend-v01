@@ -134,25 +134,37 @@ export default function UploadZone({ onFilesSelected, maxFiles = 100, eventId, o
                         <p className="font-semibold text-lg text-zinc-900 dark:text-white">
                             {isDragActive ? 'Drop your photos here' : 'Drag & drop photos here'}
                         </p>
-                        <p className="text-sm text-zinc-500 dark:text-gray-400">
-                            or <span className="text-violet-600 hover:text-violet-500 dark:text-violet-400 dark:hover:text-violet-300 transition-colors">browse files</span> from your computer
-                        </p>
+                        {!isDragActive && (
+                            <p className="text-xs text-zinc-400 dark:text-zinc-500">
+                                Select an upload method below
+                            </p>
+                        )}
                     </div>
 
-                    {/* Google Photos Sync Action Button (Premium calm styling) */}
-                    {!isDragActive && eventId && (
+                    {/* Action Buttons */}
+                    {!isDragActive && (
                         <div className="mt-1 flex flex-col sm:flex-row gap-3">
                             <button
                                 type="button"
-                                onClick={(e) => {
-                                    e.stopPropagation(); // Prevent react-dropzone browse trigger
-                                    setIsGoogleModalOpen(true);
-                                }}
-                                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-xs transition-all bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-md shadow-violet-500/10 hover:shadow-violet-500/25"
+                                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-xs transition-all bg-white border border-zinc-200 hover:bg-zinc-50 dark:bg-zinc-800 dark:border-zinc-700 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 shadow-sm"
                             >
-                                <Cloud size={14} />
-                                Sync from Google Photos/Drive
+                                <FileImage size={14} className="text-violet-600 dark:text-violet-400" />
+                                Browse Local Files
                             </button>
+
+                            {eventId && (
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation(); // Prevent react-dropzone browse trigger
+                                        setIsGoogleModalOpen(true);
+                                    }}
+                                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-xs transition-all bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-md shadow-violet-500/10 hover:shadow-violet-500/25"
+                                >
+                                    <Cloud size={14} />
+                                    Sync from Google Photos/Drive
+                                </button>
+                            )}
                         </div>
                     )}
  
