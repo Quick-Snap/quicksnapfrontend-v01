@@ -82,22 +82,10 @@ function PreviewContent() {
       if (type === 'fullscreen') {
         setLightboxPhoto(photo);
       } else {
-        // Direct download using blob fetch (prevents opening URL in a new tab)
-        try {
-          const imageResponse = await fetch(photo.url);
-          const blob = await imageResponse.blob();
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.setAttribute('download', `quicksnap-photo-${photo.imageId}.jpg`);
-          document.body.appendChild(link);
-          link.click();
-          link.remove();
-          window.URL.revokeObjectURL(url);
-        } catch (err) {
-          console.error('Download failed, falling back to tab open:', err);
-          window.open(photo.url, '_blank');
-        }
+        // Proxy download through backend to bypass browser cross-origin limits completely
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+        const downloadUrl = `${baseUrl}/previews/download?url=${encodeURIComponent(photo.url)}&filename=quicksnap-photo-${photo.imageId}.jpg`;
+        window.location.href = downloadUrl;
       }
     } else {
       setModalType(type);
@@ -148,7 +136,6 @@ function PreviewContent() {
             <img 
               src={event.coverImage} 
               alt={event.name} 
-              crossOrigin="anonymous"
               className="object-cover w-full h-full"
             />
           </div>
@@ -224,7 +211,6 @@ function PreviewContent() {
               <img 
                 src={photo.url} 
                 alt="Matched guest preview" 
-                crossOrigin="anonymous"
                 className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
               />
             </div>
@@ -287,7 +273,6 @@ function PreviewContent() {
             <img 
               src={lightboxPhoto.url} 
               alt="Fullscreen view" 
-              crossOrigin="anonymous"
               className="max-w-full max-h-full rounded-2xl object-contain shadow-2xl border border-white/10"
             />
             <button
