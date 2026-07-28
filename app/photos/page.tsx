@@ -31,7 +31,7 @@ export default function MyPhotosPage() {
   const [searchTerm, setSearchTerm] = useState('');
 
   const handleUntag = async (photo: any) => {
-    if (!confirm('Are you sure you want to untag yourself from this photo? This photo will be removed from your personal gallery.')) {
+    if (!confirm("Remove yourself from this photo?\n\nThis will delete your face tag from this photo, hide it from your personal gallery, and ensure it won't be matched to you again even if matching is refreshed.")) {
       return;
     }
     try {
@@ -386,6 +386,7 @@ export default function MyPhotosPage() {
           onClose={() => setSelectedPhoto(null)}
           onNext={handleNextPhoto}
           onPrev={handlePrevPhoto}
+          onUntag={() => handleUntag(selectedPhoto)}
           footer={
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
               <div className="min-w-0 flex-1 space-y-1.5">
@@ -410,24 +411,14 @@ export default function MyPhotosPage() {
                   ) : null}
                 </div>
               </div>
-              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-                <button
-                  type="button"
-                  onClick={() => handleUntag(selectedPhoto)}
-                  className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-xl border border-red-500/30 bg-red-950/20 px-5 text-sm font-semibold text-red-400 hover:bg-red-950/40 sm:h-10 sm:w-auto"
-                >
-                  <EyeOff size={18} className="shrink-0" />
-                  Untag Me
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleDownload(selectedPhoto)}
-                  className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-5 text-sm font-semibold text-white shadow-lg shadow-violet-900/30 transition hover:from-violet-500 hover:to-indigo-500 sm:h-10 sm:w-auto"
-                >
-                  <Download size={18} className="shrink-0" />
-                  Download
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => handleDownload(selectedPhoto)}
+                className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-5 text-sm font-semibold text-white shadow-lg shadow-violet-900/30 transition hover:from-violet-500 hover:to-indigo-500 sm:h-10 sm:w-auto"
+              >
+                <Download size={18} className="shrink-0" />
+                Download
+              </button>
             </div>
           }
         />

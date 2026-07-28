@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, EyeOff } from 'lucide-react';
 import { useEffect, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -11,6 +11,7 @@ type PhotoLightboxProps = {
   footer: ReactNode;
   onNext?: () => void;
   onPrev?: () => void;
+  onUntag?: () => void;
 };
 
 /**
@@ -26,6 +27,7 @@ export function PhotoLightbox({
   footer,
   onNext,
   onPrev,
+  onUntag,
 }: PhotoLightboxProps) {
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -66,6 +68,20 @@ export function PhotoLightbox({
         className="flex shrink-0 items-center justify-end gap-2 border-b border-white/10 bg-black/40 px-3 pb-3 pt-[max(12px,calc(env(safe-area-inset-top,0px)+8px))] backdrop-blur-md sm:px-4 sm:pb-3 sm:pt-[max(14px,calc(env(safe-area-inset-top,0px)+10px))]"
         onClick={(e) => e.stopPropagation()}
       >
+        {onUntag && (
+          <button
+            type="button"
+            className="flex h-11 min-h-[44px] w-11 min-w-[44px] shrink-0 items-center justify-center rounded-full border border-red-500/25 bg-red-950/40 text-red-400 shadow-lg shadow-black/40 transition-colors hover:bg-red-900/60 active:scale-[0.98]"
+            onClick={(e) => {
+              e.stopPropagation();
+              onUntag();
+            }}
+            title="Untag me from this photo"
+            aria-label="Untag me"
+          >
+            <EyeOff className="h-5 w-5 shrink-0" strokeWidth={2} aria-hidden />
+          </button>
+        )}
         <button
           type="button"
           className="flex h-11 min-h-[44px] w-11 min-w-[44px] shrink-0 items-center justify-center rounded-full border border-white/25 bg-zinc-900/90 text-white shadow-lg shadow-black/40 transition-colors hover:bg-zinc-800 active:scale-[0.98]"

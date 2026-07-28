@@ -83,7 +83,7 @@ export default function PublicEventPage() {
     const [photoViewMode, setPhotoViewMode] = useState<'all' | 'my'>('all');
 
     const handleUntag = async (photo: any) => {
-        if (!confirm('Are you sure you want to untag yourself from this photo? This photo will be removed from your personal gallery.')) {
+        if (!confirm("Remove yourself from this photo?\n\nThis will delete your face tag from this photo, hide it from your personal gallery, and ensure it won't be matched to you again even if matching is refreshed.")) {
             return;
         }
         try {
@@ -701,6 +701,7 @@ export default function PublicEventPage() {
                     onClose={() => setSelectedPhoto(null)}
                     onNext={handleNextPhoto}
                     onPrev={handlePrevPhoto}
+                    onUntag={photoViewMode === 'my' ? () => handleUntag(selectedPhoto) : undefined}
                     footer={
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                             <div className="min-w-0 flex-1">
@@ -714,29 +715,18 @@ export default function PublicEventPage() {
                                 </p>
                             </div>
                             {currentUser ? (
-                                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-                                    {photoViewMode === 'my' && (
-                                        <Button
-                                            onClick={() => handleUntag(selectedPhoto)}
-                                            className="h-11 w-full shrink-0 rounded-xl border border-red-500/30 bg-red-950/20 text-red-400 hover:bg-red-950/40 sm:h-10 sm:w-auto animate-fade-in"
-                                        >
-                                            <EyeOff size={18} className="mr-2 shrink-0" />
-                                            Untag Me
-                                        </Button>
+                                <Button
+                                    onClick={() => handleDownload(selectedPhoto)}
+                                    disabled={!!downloading}
+                                    className="h-11 w-full shrink-0 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-500 hover:to-indigo-500 disabled:opacity-50 sm:h-10 sm:w-auto"
+                                >
+                                    {downloading === selectedPhoto._id ? (
+                                        <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                    ) : (
+                                        <Download size={18} className="mr-2" />
                                     )}
-                                    <Button
-                                        onClick={() => handleDownload(selectedPhoto)}
-                                        disabled={!!downloading}
-                                        className="h-11 w-full shrink-0 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-500 hover:to-indigo-500 disabled:opacity-50 sm:h-10 sm:w-auto"
-                                    >
-                                        {downloading === selectedPhoto._id ? (
-                                            <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                                        ) : (
-                                            <Download size={18} className="mr-2" />
-                                        )}
-                                        {downloading === selectedPhoto._id ? 'Downloading…' : 'Download'}
-                                    </Button>
-                                </div>
+                                    {downloading === selectedPhoto._id ? 'Downloading…' : 'Download'}
+                                </Button>
                             ) : (
                                 <Button
                                     onClick={() => router.push('/login')}
