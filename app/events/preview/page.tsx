@@ -148,6 +148,7 @@ function PreviewContent() {
             <img 
               src={event.coverImage} 
               alt={event.name} 
+              crossOrigin="anonymous"
               className="object-cover w-full h-full"
             />
           </div>
@@ -223,6 +224,7 @@ function PreviewContent() {
               <img 
                 src={photo.url} 
                 alt="Matched guest preview" 
+                crossOrigin="anonymous"
                 className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
               />
             </div>
@@ -285,6 +287,7 @@ function PreviewContent() {
             <img 
               src={lightboxPhoto.url} 
               alt="Fullscreen view" 
+              crossOrigin="anonymous"
               className="max-w-full max-h-full rounded-2xl object-contain shadow-2xl border border-white/10"
             />
             <button
