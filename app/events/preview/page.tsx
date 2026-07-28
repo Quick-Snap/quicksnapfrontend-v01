@@ -2,7 +2,6 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { 
   Calendar, 
   MapPin, 
@@ -125,13 +124,11 @@ function PreviewContent() {
       <div className="relative rounded-3xl overflow-hidden border border-white/10 bg-zinc-900/50 backdrop-blur-md p-6 sm:p-8 flex flex-col md:flex-row gap-6 items-center">
         {event.coverImage ? (
           <div className="relative w-full md:w-48 h-32 rounded-2xl overflow-hidden flex-shrink-0">
-            <Image 
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
               src={event.coverImage} 
               alt={event.name} 
-              fill 
-              sizes="(max-width: 768px) 100vw, 192px"
-              priority
-              className="object-cover"
+              className="object-cover w-full h-full"
             />
           </div>
         ) : (
@@ -200,12 +197,11 @@ function PreviewContent() {
               </div>
 
               {/* Image element */}
-              <Image 
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img 
                 src={photo.url} 
                 alt="Matched guest preview" 
-                fill 
-                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 250px"
-                className="object-cover transition-transform duration-500 group-hover:scale-105"
+                className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
               />
             </div>
           ))}
