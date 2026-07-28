@@ -212,21 +212,15 @@ function PreviewContent() {
       <div className="rounded-3xl border border-white/5 bg-gradient-to-r from-indigo-500/10 to-violet-500/10 p-8 text-center space-y-6 max-w-xl mx-auto border-dashed border-indigo-500/20">
         <h3 className="text-xl font-bold text-white">Want to unlock your entire album?</h3>
         <p className="text-sm text-zinc-400 leading-relaxed max-w-md mx-auto">
-          We have indexed all photos from this event. Create a free account or sign in now to get high-resolution copies of all your matched photos!
+          Sign in using the registered email address that received this link to access high-resolution downloads and view your full event album.
         </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        <div className="flex justify-center">
           <button 
-            onClick={() => router.push('/register')}
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-all shadow-md shadow-indigo-600/10"
+            onClick={() => router.push(`/login?redirect=/events/preview?token=${token}`)}
+            className="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-all shadow-md shadow-indigo-600/10"
           >
-            Create Free Account
+            Log In to Account
             <ArrowRight size={16} />
-          </button>
-          <button 
-            onClick={() => router.push('/login')}
-            className="px-6 py-3 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 text-white font-bold text-sm transition-all"
-          >
-            Log In
           </button>
         </div>
       </div>
@@ -249,18 +243,12 @@ function PreviewContent() {
                 {modalType === 'download' ? 'Sign In to Download' : 'Sign In for Full-Screen'}
               </h4>
               <p className="text-sm text-zinc-400 leading-relaxed">
-                To protect privacy and access high-resolution images, you need to sign in or create an account.
+                To protect privacy and access high-resolution images, please sign in using the email address that received this preview link.
               </p>
-              <div className="pt-4 flex flex-col gap-3">
-                <button 
-                  onClick={() => router.push(`/register?redirect=/events/preview?token=${token}`)}
-                  className="w-full py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-all"
-                >
-                  Register Account
-                </button>
+              <div className="pt-4">
                 <button 
                   onClick={() => router.push(`/login?redirect=/events/preview?token=${token}`)}
-                  className="w-full py-3 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 text-white font-bold text-sm transition-all"
+                  className="w-full py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-all shadow-md shadow-indigo-600/10"
                 >
                   Log In
                 </button>
