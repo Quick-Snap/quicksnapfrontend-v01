@@ -80,8 +80,8 @@ export default function PublicEventPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [photoViewMode, setPhotoViewMode] = useState<'all' | 'my'>('all');
 
-    // Check if user is a guest (not organizer or admin)
-    const isGuest = currentUser && currentUser.role !== 'organizer' && currentUser.role !== 'admin';
+    // Allow any logged-in user to see their matched photos under 'My Photos'
+    const isGuest = !!currentUser;
 
     // Fetch Event details
     const { data: eventResult, isLoading: loading } = useQuery(

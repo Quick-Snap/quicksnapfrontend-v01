@@ -140,8 +140,8 @@ export async function fetchAllMyPhotos(params?: {
       continue;
     }
 
-    // Break if the endpoint is cursor-paginated and the cursor has ended (lastKey is null/undefined)
-    if (pagination && 'lastKey' in pagination && !pagination.lastKey) {
+    // Break if the endpoint is cursor-paginated (no pages property) and the cursor has ended
+    if (pagination && pagination.pages === undefined) {
       break;
     }
 
@@ -171,7 +171,7 @@ export async function fetchAllEventPhotos(eventId: string): Promise<unknown> {
 
   for (;;) {
     const response = await eventApi.getPhotos(eventId, {
-      all: true,
+      all: false,
       limit: PAGE_SIZE,
       ...(cursor ? { lastKey: cursor } : { page }),
     });
@@ -197,8 +197,8 @@ export async function fetchAllEventPhotos(eventId: string): Promise<unknown> {
       continue;
     }
 
-    // Break if the endpoint is cursor-paginated and the cursor has ended (lastKey is null/undefined)
-    if (pagination && 'lastKey' in pagination && !pagination.lastKey) {
+    // Break if the endpoint is cursor-paginated (no pages property) and the cursor has ended
+    if (pagination && (pagination as { pages?: number }).pages === undefined) {
       break;
     }
 
