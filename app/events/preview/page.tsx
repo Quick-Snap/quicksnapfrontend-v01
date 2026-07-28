@@ -172,7 +172,12 @@ function PreviewContent() {
       <div className="space-y-6">
         <div>
           <h2 className="text-xl font-bold text-white tracking-tight">Your Preview Album</h2>
-          <p className="text-xs text-zinc-400 mt-1">We found these matching photos of you. Sign in to download or view full-screen.</p>
+          <p className="text-xs text-zinc-400 mt-1">
+            {totalCount > 12 
+              ? `Showing 12 highlights out of your ${totalCount} matched photos. To view and download all your photos, visit the "My Photos" section after logging in.`
+              : `We found these matching photos of you. Sign in to download or view full-screen.`
+            }
+          </p>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
