@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { AxiosError } from 'axios';
-import { Image as ImageIcon, Download, Calendar, Users, Search, Sparkles, Loader2 } from 'lucide-react';
+import { Image as ImageIcon, Download, Calendar, Users, Search, Sparkles, Loader2, EyeOff } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { photoApi } from '@/lib/api';
@@ -12,7 +12,7 @@ import Pagination from '@/app/components/ui/Pagination';
 import { PhotoLightbox } from '@/app/components/photos/PhotoLightbox';
 import { DownloadProgressModal } from '@/app/components/photos/DownloadProgressModal';
 import toast from 'react-hot-toast';
-import { useQuery } from 'react-query';
+import { useQuery, useQueryClient } from 'react-query';
 
 const PHOTOS_PER_PAGE = 12;
 
@@ -22,12 +22,33 @@ const PHOTOS_CARD =
 export default function MyPhotosPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [downloading, setDownloading] = useState(false);
   const [downloadJobId, setDownloadJobId] = useState<string | null>(null);
   const [downloadModalOpen, setDownloadModalOpen] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
+
+  const handleUntag = async (photo: any) => {
+    if (!confirm('Are you sure you want to untag yourself from this photo? This photo will be removed from your personal gallery.')) {
+      return;
+    }
+    try {
+      const response = await photoApi.untag(photo._id || photo.imageId);
+      if (response.success) {
+        toast.success('Photo untagged successfully');
+        setSelectedPhoto(null);
+        queryClient.invalidateQueries(['myPhotos']);
+        queryClient.invalidateQueries(['myEventPhotos']);
+      } else {
+        toast.error('Failed to untag photo');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to untag photo');
+    }
+  };
 
   const { data: queryData, isLoading: loading } = useQuery(
     ['myPhotos'],
@@ -389,14 +410,24 @@ export default function MyPhotosPage() {
                   ) : null}
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => handleDownload(selectedPhoto)}
-                className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-5 text-sm font-semibold text-white shadow-lg shadow-violet-900/30 transition hover:from-violet-500 hover:to-indigo-500 sm:h-10 sm:w-auto"
-              >
-                <Download size={18} className="shrink-0" />
-                Download
-              </button>
+              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+                <button
+                  type="button"
+                  onClick={() => handleUntag(selectedPhoto)}
+                  className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-xl border border-red-500/30 bg-red-950/20 px-5 text-sm font-semibold text-red-400 hover:bg-red-950/40 sm:h-10 sm:w-auto"
+                >
+                  <EyeOff size={18} className="shrink-0" />
+                  Untag Me
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDownload(selectedPhoto)}
+                  className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-5 text-sm font-semibold text-white shadow-lg shadow-violet-900/30 transition hover:from-violet-500 hover:to-indigo-500 sm:h-10 sm:w-auto"
+                >
+                  <Download size={18} className="shrink-0" />
+                  Download
+                </button>
+              </div>
             </div>
           }
         />

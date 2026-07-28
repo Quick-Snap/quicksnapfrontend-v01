@@ -276,6 +276,11 @@ export const photoApi = {
     return response.data;
   },
 
+  untag: async (photoId: string) => {
+    const response = await api.delete<ApiResponse<any>>(`/photos/${photoId}/untag`);
+    return response.data;
+  },
+
   createDownloadJob: async () => {
     const response = await api.post<ApiResponse<DownloadJobStatus>>(
       '/photos/my-photos/download/jobs'

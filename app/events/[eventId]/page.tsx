@@ -15,7 +15,8 @@ import {
     User,
     Sparkles,
     Camera,
-    Lock
+    Lock,
+    EyeOff
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { eventApi, photoApi } from '@/lib/api';
@@ -29,7 +30,7 @@ import { getPhotoDisplayUrl } from '@/lib/photoUrl';
 import { Button } from '@/app/components/ui/Button';
 import Pagination from '@/app/components/ui/Pagination';
 import { useAuth } from '@/contexts/AuthContext';
-import { useQuery } from 'react-query';
+import { useQuery, useQueryClient } from 'react-query';
 import { softSurface, softSurfaceHover } from '@/lib/dashboardUi';
 import { PhotoLightbox } from '@/app/components/photos/PhotoLightbox';
 
@@ -73,12 +74,33 @@ export default function PublicEventPage() {
     const { user: currentUser } = useAuth();
     const params = useParams();
     const router = useRouter();
+    const queryClient = useQueryClient();
     const eventId = params?.eventId as string;
 
     const [downloading, setDownloading] = useState<string | null>(null);
     const [selectedPhoto, setSelectedPhoto] = useState<any>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [photoViewMode, setPhotoViewMode] = useState<'all' | 'my'>('all');
+
+    const handleUntag = async (photo: any) => {
+        if (!confirm('Are you sure you want to untag yourself from this photo? This photo will be removed from your personal gallery.')) {
+            return;
+        }
+        try {
+            const response = await photoApi.untag(photo._id || photo.imageId);
+            if (response.success) {
+                toast.success('Photo untagged successfully');
+                setSelectedPhoto(null);
+                queryClient.invalidateQueries(['myPhotos']);
+                queryClient.invalidateQueries(['myEventPhotos']);
+            } else {
+                toast.error('Failed to untag photo');
+            }
+        } catch (err) {
+            console.error(err);
+            toast.error('Failed to untag photo');
+        }
+    };
 
     // Allow any logged-in user to see their matched photos under 'My Photos'
     const isGuest = !!currentUser;
@@ -692,18 +714,29 @@ export default function PublicEventPage() {
                                 </p>
                             </div>
                             {currentUser ? (
-                                <Button
-                                    onClick={() => handleDownload(selectedPhoto)}
-                                    disabled={!!downloading}
-                                    className="h-11 w-full shrink-0 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-500 hover:to-indigo-500 disabled:opacity-50 sm:h-10 sm:w-auto"
-                                >
-                                    {downloading === selectedPhoto._id ? (
-                                        <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                                    ) : (
-                                        <Download size={18} className="mr-2" />
+                                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+                                    {photoViewMode === 'my' && (
+                                        <Button
+                                            onClick={() => handleUntag(selectedPhoto)}
+                                            className="h-11 w-full shrink-0 rounded-xl border border-red-500/30 bg-red-950/20 text-red-400 hover:bg-red-950/40 sm:h-10 sm:w-auto animate-fade-in"
+                                        >
+                                            <EyeOff size={18} className="mr-2 shrink-0" />
+                                            Untag Me
+                                        </Button>
                                     )}
-                                    {downloading === selectedPhoto._id ? 'Downloading…' : 'Download'}
-                                </Button>
+                                    <Button
+                                        onClick={() => handleDownload(selectedPhoto)}
+                                        disabled={!!downloading}
+                                        className="h-11 w-full shrink-0 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-500 hover:to-indigo-500 disabled:opacity-50 sm:h-10 sm:w-auto"
+                                    >
+                                        {downloading === selectedPhoto._id ? (
+                                            <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                        ) : (
+                                            <Download size={18} className="mr-2" />
+                                        )}
+                                        {downloading === selectedPhoto._id ? 'Downloading…' : 'Download'}
+                                    </Button>
+                                </div>
                             ) : (
                                 <Button
                                     onClick={() => router.push('/login')}
