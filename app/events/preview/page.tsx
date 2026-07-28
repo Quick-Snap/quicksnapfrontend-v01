@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   Calendar, 
   MapPin, 
@@ -37,12 +38,14 @@ function PreviewContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get('token');
+  const { user } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<PreviewData | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [modalType, setModalType] = useState<'download' | 'fullscreen'>('download');
+  const [lightboxPhoto, setLightboxPhoto] = useState<PreviewPhoto | null>(null);
 
   useEffect(() => {
     if (!token) {
@@ -74,9 +77,32 @@ function PreviewContent() {
     fetchPreview();
   }, [token]);
 
-  const handleActionClick = (type: 'download' | 'fullscreen') => {
-    setModalType(type);
-    setShowAuthModal(true);
+  const handleActionClick = async (photo: PreviewPhoto, type: 'download' | 'fullscreen') => {
+    if (user) {
+      if (type === 'fullscreen') {
+        setLightboxPhoto(photo);
+      } else {
+        // Direct download using blob fetch (prevents opening URL in a new tab)
+        try {
+          const imageResponse = await fetch(photo.url);
+          const blob = await imageResponse.blob();
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.setAttribute('download', `quicksnap-photo-${photo.imageId}.jpg`);
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          window.URL.revokeObjectURL(url);
+        } catch (err) {
+          console.error('Download failed, falling back to tab open:', err);
+          window.open(photo.url, '_blank');
+        }
+      }
+    } else {
+      setModalType(type);
+      setShowAuthModal(true);
+    }
   };
 
   if (loading) {
@@ -104,12 +130,6 @@ function PreviewContent() {
             className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-colors"
           >
             Sign In to Account
-          </button>
-          <button 
-            onClick={() => router.push('/register')}
-            className="px-6 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white font-semibold transition-colors"
-          >
-            Register Free
           </button>
         </div>
       </div>
@@ -176,14 +196,14 @@ function PreviewContent() {
               {/* Blur Overlay & Buttons on Hover */}
               <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 flex flex-col justify-center items-center gap-3 p-4">
                 <button 
-                  onClick={() => handleActionClick('fullscreen')}
+                  onClick={() => handleActionClick(photo, 'fullscreen')}
                   className="flex items-center gap-1.5 px-4 py-2 w-full max-w-[140px] justify-center rounded-xl bg-white text-zinc-900 font-bold text-xs shadow hover:bg-zinc-100 transition-all"
                 >
                   <Maximize2 size={14} />
                   Full-Screen
                 </button>
                 <button 
-                  onClick={() => handleActionClick('download')}
+                  onClick={() => handleActionClick(photo, 'download')}
                   className="flex items-center gap-1.5 px-4 py-2 w-full max-w-[140px] justify-center rounded-xl bg-indigo-600 text-white font-bold text-xs shadow hover:bg-indigo-500 transition-all"
                 >
                   <Download size={14} />
@@ -191,10 +211,12 @@ function PreviewContent() {
                 </button>
               </div>
 
-              {/* Watermark symbol overlay */}
-              <div className="absolute top-3 right-3 z-10 bg-black/40 backdrop-blur-md p-1.5 rounded-full border border-white/10 text-white/60 pointer-events-none">
-                <Lock size={12} />
-              </div>
+              {/* Watermark/lock symbol overlay (hidden if logged in since photos are unlocked) */}
+              {!user && (
+                <div className="absolute top-3 right-3 z-10 bg-black/40 backdrop-blur-md p-1.5 rounded-full border border-white/10 text-white/60 pointer-events-none">
+                  <Lock size={12} />
+                </div>
+              )}
 
               {/* Image element */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -209,23 +231,77 @@ function PreviewContent() {
       </div>
 
       {/* Re-engagement Footer Callout */}
-      <div className="rounded-3xl border border-white/5 bg-gradient-to-r from-indigo-500/10 to-violet-500/10 p-8 text-center space-y-6 max-w-xl mx-auto border-dashed border-indigo-500/20">
-        <h3 className="text-xl font-bold text-white">Want to unlock your entire album?</h3>
-        <p className="text-sm text-zinc-400 leading-relaxed max-w-md mx-auto">
-          Sign in using the registered email address that received this link to access high-resolution downloads and view your full event album.
-        </p>
-        <div className="flex justify-center">
-          <button 
-            onClick={() => router.push(`/login?redirect=/events/preview?token=${token}`)}
-            className="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-all shadow-md shadow-indigo-600/10"
-          >
-            Log In to Account
-            <ArrowRight size={16} />
-          </button>
+      {user ? (
+        <div className="rounded-3xl border border-white/5 bg-gradient-to-r from-indigo-500/10 to-violet-500/10 p-8 text-center space-y-6 max-w-xl mx-auto border-dashed border-indigo-500/20">
+          <h3 className="text-xl font-bold text-white">Viewing as {user.name || user.email}</h3>
+          <p className="text-sm text-zinc-400 leading-relaxed max-w-md mx-auto">
+            You are signed in! Go to your Photos page to view all your matched photos from all events.
+          </p>
+          <div className="flex justify-center">
+            <button 
+              onClick={() => router.push('/photos')}
+              className="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-all shadow-md shadow-indigo-600/10"
+            >
+              Go to My Photos
+              <ArrowRight size={16} />
+            </button>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="rounded-3xl border border-white/5 bg-gradient-to-r from-indigo-500/10 to-violet-500/10 p-8 text-center space-y-6 max-w-xl mx-auto border-dashed border-indigo-500/20">
+          <h3 className="text-xl font-bold text-white">Want to unlock your entire album?</h3>
+          <p className="text-sm text-zinc-400 leading-relaxed max-w-md mx-auto">
+            Sign in using the registered email address that received this link to access high-resolution downloads and view your full event album.
+          </p>
+          <div className="flex justify-center">
+            <button 
+              onClick={() => router.push(`/login?redirect=/events/preview?token=${token}`)}
+              className="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-all shadow-md shadow-indigo-600/10"
+            >
+              Log In to Account
+              <ArrowRight size={16} />
+            </button>
+          </div>
+        </div>
+      )}
 
-      {/* Auth Prompt Modal */}
+      {/* Lightbox Modal (For logged-in users to view in full-screen) */}
+      {lightboxPhoto && (
+        <div 
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/90 p-4"
+          onClick={() => setLightboxPhoto(null)}
+        >
+          <div 
+            className="relative max-w-4xl max-h-[80vh] w-full h-full flex flex-col justify-center items-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button 
+              onClick={() => setLightboxPhoto(null)}
+              className="absolute -top-12 right-0 text-white hover:text-zinc-300 text-sm font-bold bg-white/10 backdrop-blur px-4 py-2 rounded-full border border-white/10"
+            >
+              ✕ Close
+            </button>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
+              src={lightboxPhoto.url} 
+              alt="Fullscreen view" 
+              className="max-w-full max-h-full rounded-2xl object-contain shadow-2xl border border-white/10"
+            />
+            <button
+              onClick={() => {
+                setLightboxPhoto(null);
+                handleActionClick(lightboxPhoto, 'download');
+              }}
+              className="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-all"
+            >
+              <Download size={16} />
+              Download High-Res
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Auth Prompt Modal (For guest/logged-out users) */}
       {showAuthModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
           <div className="w-full max-w-md rounded-3xl border border-white/10 bg-zinc-950 p-6 shadow-2xl relative">
