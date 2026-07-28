@@ -65,10 +65,10 @@ export function PhotoLightbox({
     >
       {/* Top chrome: safe-area + row so the close control is never clipped */}
       <div
-        className="flex shrink-0 items-center justify-end gap-2 border-b border-white/10 bg-black/40 px-3 pb-3 pt-[max(12px,calc(env(safe-area-inset-top,0px)+8px))] backdrop-blur-md sm:px-4 sm:pb-3 sm:pt-[max(14px,calc(env(safe-area-inset-top,0px)+10px))]"
+        className="flex shrink-0 items-center justify-between border-b border-white/10 bg-black/40 px-3 pb-3 pt-[max(12px,calc(env(safe-area-inset-top,0px)+8px))] backdrop-blur-md sm:px-4 sm:pb-3 sm:pt-[max(14px,calc(env(safe-area-inset-top,0px)+10px))]"
         onClick={(e) => e.stopPropagation()}
       >
-        {onUntag && (
+        {onUntag ? (
           <button
             type="button"
             className="flex h-11 min-h-[44px] w-11 min-w-[44px] shrink-0 items-center justify-center rounded-full border border-red-500/25 bg-red-950/40 text-red-400 shadow-lg shadow-black/40 transition-colors hover:bg-red-900/60 active:scale-[0.98]"
@@ -81,6 +81,8 @@ export function PhotoLightbox({
           >
             <EyeOff className="h-5 w-5 shrink-0" strokeWidth={2} aria-hidden />
           </button>
+        ) : (
+          <div className="w-11" />
         )}
         <button
           type="button"
