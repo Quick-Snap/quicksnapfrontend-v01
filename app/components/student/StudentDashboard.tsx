@@ -1,9 +1,10 @@
 'use client';
 
 import { useQuery } from 'react-query';
-import { userApi, eventApi } from '@/lib/api';
+import { userApi, eventApi, photoApi } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
-import { Image as ImageIcon, Calendar, Upload, Plus, Sparkles, ShieldCheck, ChevronRight } from 'lucide-react';
+import { Image as ImageIcon, Calendar, Upload, Plus, Sparkles, ShieldCheck, ChevronRight, Award, Share2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { useState, useMemo } from 'react';
 import JoinEventModal from './JoinEventModal';
@@ -26,6 +27,16 @@ export default function StudentDashboard() {
     if (!eventsData?.data?.events || !user?.events) return [];
     return eventsData.data.events.filter((e: any) => user.events?.includes(e._id));
   }, [eventsData?.data?.events, user?.events]);
+
+  const { data: coOccurringRes } = useQuery(
+    ['coOccurringPhotos', user?.id],
+    () => photoApi.getCoOccurring(),
+    { enabled: !!user }
+  );
+
+  const photosWithFriends = coOccurringRes?.data?.photosWithFriends || [];
+  const photosWithUnregistered = coOccurringRes?.data?.photosWithUnregistered || [];
+  const referralCount = coOccurringRes?.data?.referralStats?.referralCount || 0;
 
   return (
     <div className="space-y-8 sm:space-y-10">
@@ -52,6 +63,108 @@ export default function StudentDashboard() {
           </div>
         </div>
       </header>
+
+      {/* Spotted with Friends banner */}
+      {(photosWithFriends.length > 0 || photosWithUnregistered.length > 0) && (
+        <section className="space-y-4" aria-label="Spotted highlights">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-500"></span>
+              </div>
+              <h2 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-white">
+                Spotted with Friends!
+              </h2>
+            </div>
+            {referralCount > 0 && (
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-violet-600 dark:text-violet-400">
+                <Award className="h-3.5 w-3.5" />
+                {referralCount} Friend{referralCount > 1 ? 's' : ''} Referred
+              </span>
+            )}
+          </div>
+
+          <div className="flex gap-4 overflow-x-auto pb-3 snap-x scrollbar-none">
+            {/* Unregistered Faces / Invite cards first */}
+            {photosWithUnregistered.map((photo: any) => {
+              const previewUrl = photo.url
+                ? photo.url
+                : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001'}/api/photos/${photo._id || photo.imageId}/spotted-preview`;
+
+              return (
+                <div
+                  key={`unreg-${photo._id || photo.imageId}`}
+                  className="flex w-[280px] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-zinc-200/60 bg-white p-3.5 shadow-sm transition hover:shadow-md dark:border-white/[0.08] dark:bg-zinc-950/40"
+                >
+                  <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-zinc-900">
+                    <img
+                      src={previewUrl}
+                      alt="Spotted preview"
+                      className="h-full w-full object-cover"
+                    />
+                    <div className="absolute bottom-2 left-2 rounded-lg bg-black/60 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm">
+                      {photo.unregisteredCount} Unregistered Face{photo.unregisteredCount > 1 ? 's' : ''}
+                    </div>
+                  </div>
+                  <div className="mt-3 flex flex-col justify-between flex-1">
+                    <div>
+                      <p className="text-xs font-semibold text-zinc-800 dark:text-gray-200 line-clamp-1">
+                        {photo.eventId?.name || 'Shared Moment'}
+                      </p>
+                      <p className="mt-1 text-[11px] leading-snug text-zinc-500 dark:text-gray-400">
+                        Someone was spotted near you! Invite them to tag themselves.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const inviteMsg = `Hey! I spotted you in this photo on QuickSnap! 📸 View it here: ${window.location.origin}/api/photos/${photo._id || photo.imageId}/spotted-preview or sign up using my link: ${window.location.origin}/register?referredBy=${user?.id}`;
+                        navigator.clipboard.writeText(inviteMsg);
+                        toast.success('Invite link copied!');
+                      }}
+                      className="mt-3 flex items-center justify-center gap-1.5 rounded-xl bg-violet-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-violet-500 active:scale-[0.98]"
+                    >
+                      <Share2 className="h-3.5 w-3.5" />
+                      Invite & Tag
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Registered Friends cards */}
+            {photosWithFriends.map((photo: any) => {
+              const previewUrl = photo.url
+                ? photo.url
+                : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001'}/api/photos/${photo._id || photo.imageId}/spotted-preview`;
+
+              return (
+                <div
+                  key={`friend-${photo._id || photo.imageId}`}
+                  className="flex w-[280px] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-zinc-200/60 bg-white p-3.5 shadow-sm transition hover:shadow-md dark:border-white/[0.08] dark:bg-zinc-950/40"
+                >
+                  <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-zinc-900">
+                    <img
+                      src={previewUrl}
+                      alt="Spotted with friends"
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                  <div className="mt-3 flex flex-col justify-between flex-1">
+                    <p className="text-xs font-semibold text-zinc-800 dark:text-gray-200 line-clamp-1">
+                      Spotted with {photo.friends.map((f: any) => f.name.split(' ')[0]).join(', ')}
+                    </p>
+                    <p className="mt-1 text-[11px] leading-snug text-zinc-500 dark:text-gray-400">
+                      Captured together at {photo.eventId?.name || 'Shared Event'}.
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* Stats — mobile-first single column; comfortable tap targets */}
       <section aria-label="Overview stats" className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">

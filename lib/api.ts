@@ -361,6 +361,11 @@ export const photoApi = {
     });
     return response.data;
   },
+
+  getCoOccurring: async () => {
+    const response = await api.get<ApiResponse<any>>('/photos/co-occurring');
+    return response.data;
+  },
 };
 
 // Event API

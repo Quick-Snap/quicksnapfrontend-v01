@@ -60,7 +60,7 @@ export function PhotoLightbox({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[200] flex max-h-[100dvh] flex-col bg-zinc-950/95 backdrop-blur-md"
+      className="fixed inset-0 z-[200] flex h-[100dvh] flex-col overflow-hidden bg-zinc-950/95 backdrop-blur-md"
       role="presentation"
     >
       {/* Top chrome: safe-area + row so the close control is never clipped */}
