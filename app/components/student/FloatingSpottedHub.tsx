@@ -1,29 +1,44 @@
 'use client';
 
 import { useState } from 'react';
-import { Sparkles, Share2, Check, Users, Award, X, Copy } from 'lucide-react';
+import { Sparkles, Share2, Check, Award, X, Copy } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { softSurface } from '@/lib/dashboardUi';
 
 type SpottedHubProps = {
   unregisteredSummary: any[];
-  registeredFriendsSummary: any[];
+  registeredFriendsSummary?: any[];
   referralCount: number;
   userId?: string;
 };
 
+// Helper: Calculate CSS objectPosition & scale to zoom into face bounding box
+function getFaceCropStyle(box?: any) {
+  if (!box) return { objectPosition: 'center center', transform: 'scale(1.1)' };
+  
+  const left = box.Left !== undefined ? box.Left : (box.left || 0.3);
+  const top = box.Top !== undefined ? box.Top : (box.top || 0.3);
+  const width = box.Width !== undefined ? box.Width : (box.width || 0.3);
+  const height = box.Height !== undefined ? box.Height : (box.height || 0.3);
+
+  const centerX = Math.min(100, Math.max(0, (left + width / 2) * 100));
+  const centerY = Math.min(100, Math.max(0, (top + height / 2) * 100));
+
+  return {
+    objectPosition: `${centerX.toFixed(1)}% ${centerY.toFixed(1)}%`,
+    transform: 'scale(2.4)'
+  };
+}
+
 export default function FloatingSpottedHub({
   unregisteredSummary = [],
-  registeredFriendsSummary = [],
   referralCount = 0,
   userId = '',
 }: SpottedHubProps) {
   const [selectedPerson, setSelectedPerson] = useState<any | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const totalSpottedPeople = unregisteredSummary.length + registeredFriendsSummary.length;
-
-  if (totalSpottedPeople === 0) return null;
+  if (unregisteredSummary.length === 0) return null;
 
   return (
     <section className="space-y-4" aria-label="Spotted highlights">
@@ -35,10 +50,10 @@ export default function FloatingSpottedHub({
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-violet-500" />
           </div>
           <h2 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-white sm:text-xl">
-            Spotted with People
+            Spotted People
           </h2>
           <span className="rounded-full bg-violet-500/10 px-2.5 py-0.5 text-xs font-semibold text-violet-600 dark:text-violet-300 ring-1 ring-violet-500/20">
-            {totalSpottedPeople} {totalSpottedPeople === 1 ? 'Person' : 'People'}
+            {unregisteredSummary.length} Unregistered {unregisteredSummary.length === 1 ? 'Person' : 'People'}
           </span>
         </div>
 
@@ -51,59 +66,32 @@ export default function FloatingSpottedHub({
       </div>
 
       {/* Floating Avatars Container */}
-      <div className={`relative overflow-hidden rounded-3xl p-6 ${softSurface} border border-violet-500/10 dark:border-white/[0.08]`}>
+      <div className={`relative overflow-hidden rounded-3xl p-5 sm:p-6 ${softSurface} border border-violet-500/10 dark:border-white/[0.08]`}>
         <p className="text-xs text-zinc-500 dark:text-gray-400 mb-4">
-          Tap a face to invite them or share a secure blurred preview link:
+          Tap a spotted face to copy an invite link. When they register, they will be automatically tagged!
         </p>
 
-        <div className="flex flex-wrap items-center gap-4 py-2">
-          {/* Registered Friends Bubbles */}
-          {registeredFriendsSummary.map((item, idx) => {
-            const friend = item.friend;
-            return (
-              <button
-                key={`reg-friend-${friend?._id || idx}`}
-                type="button"
-                onClick={() => setSelectedPerson({ type: 'friend', ...item })}
-                className="group relative flex flex-col items-center gap-1.5 transition hover:scale-105 active:scale-95"
-              >
-                <div className="relative h-14 w-14 rounded-2xl border-2 border-emerald-500/80 bg-zinc-900 p-0.5 shadow-lg shadow-emerald-500/10 overflow-hidden">
-                  {friend?.avatar ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={friend.avatar} alt={friend.name} className="h-full w-full rounded-xl object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center rounded-xl bg-emerald-950 text-sm font-bold text-emerald-300">
-                      {friend?.name ? friend.name.charAt(0) : 'F'}
-                    </div>
-                  )}
-                  <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white shadow">
-                    {item.photoCount}
-                  </span>
-                </div>
-                <span className="max-w-[70px] truncate text-[11px] font-medium text-zinc-800 dark:text-gray-200">
-                  {friend?.name?.split(' ')[0] || 'Friend'}
-                </span>
-              </button>
-            );
-          })}
-
-          {/* Unregistered Spotted Bubbles */}
+        <div className="flex flex-wrap items-center gap-4 py-1">
           {unregisteredSummary.map((item, idx) => {
+            const faceBox = item.bestPhoto?.unregisteredFaces?.[0]?.boundingBox;
+            const faceStyle = getFaceCropStyle(faceBox);
+
             return (
               <button
                 key={`unreg-person-${item.personId || idx}`}
                 type="button"
-                onClick={() => setSelectedPerson({ type: 'unregistered', ...item })}
-                className="group relative flex flex-col items-center gap-1.5 transition hover:scale-105 active:scale-95"
+                onClick={() => setSelectedPerson({ index: idx + 1, ...item })}
+                className="group relative flex flex-col items-center gap-1.5 transition hover:scale-110 active:scale-95"
               >
                 <div className="relative h-14 w-14 rounded-2xl border-2 border-violet-500/80 bg-zinc-900 p-0.5 shadow-lg shadow-violet-500/20 overflow-hidden">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={item.bestPhoto?.url}
-                    alt="Spotted guest"
-                    className="h-full w-full rounded-xl object-cover blur-[2px] scale-110 group-hover:blur-0 transition"
+                    alt={`Spotted #${idx + 1}`}
+                    style={faceStyle}
+                    className="h-full w-full rounded-xl object-cover transition-transform duration-300"
                   />
-                  <div className="absolute inset-0 bg-violet-900/20" />
+                  <div className="absolute inset-0 bg-violet-900/10 group-hover:bg-transparent transition" />
                   <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-violet-600 text-[9px] font-bold text-white shadow">
                     <Sparkles className="h-2.5 w-2.5" />
                   </span>
@@ -111,7 +99,7 @@ export default function FloatingSpottedHub({
                     {item.photoCount}
                   </span>
                 </div>
-                <span className="max-w-[75px] truncate text-[11px] font-medium text-violet-600 dark:text-violet-300">
+                <span className="max-w-[75px] truncate text-[11px] font-semibold text-violet-600 dark:text-violet-300">
                   Spotted #{idx + 1}
                 </span>
               </button>
@@ -120,7 +108,7 @@ export default function FloatingSpottedHub({
         </div>
       </div>
 
-      {/* Person Detail & Share Modal */}
+      {/* Detail & Share Modal */}
       {selectedPerson && (
         <div
           className="fixed inset-0 z-[250] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
@@ -137,9 +125,7 @@ export default function FloatingSpottedHub({
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-violet-400" />
                 <h3 className="font-semibold text-base">
-                  {selectedPerson.type === 'friend'
-                    ? selectedPerson.friend?.name || 'Spotted Friend'
-                    : 'Spotted Unregistered Guest'}
+                  Spotted #{selectedPerson.index}
                 </h3>
               </div>
               <button
@@ -162,15 +148,13 @@ export default function FloatingSpottedHub({
                 alt="Spotted preview photo"
                 className="h-full w-full object-cover"
               />
-              <div className="absolute bottom-2 left-2 rounded-lg bg-black/60 px-2 py-0.5 text-xs font-medium text-white backdrop-blur-sm">
+              <div className="absolute bottom-2 left-2 rounded-lg bg-black/60 px-2.5 py-1 text-xs font-medium text-white backdrop-blur-sm">
                 Spotted in {selectedPerson.photoCount} photo{selectedPerson.photoCount > 1 ? 's' : ''}
               </div>
             </div>
 
             <p className="text-xs text-zinc-400 leading-relaxed">
-              {selectedPerson.type === 'friend'
-                ? `You and ${selectedPerson.friend?.name?.split(' ')[0]} were captured together!`
-                : 'Share this preview link. When they register, they will automatically be tagged and credited to your referrals!'}
+              Share this secure blurred preview link with your friend. Once they register, their face will be automatically matched!
             </p>
 
             <button
@@ -183,7 +167,7 @@ export default function FloatingSpottedHub({
                 toast.success('Spotted invite link copied!');
                 setTimeout(() => setCopied(false), 2500);
               }}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-violet-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-600/30 transition hover:bg-violet-500 active:scale-[0.98]"
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-violet-600 px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-violet-600/30 transition hover:bg-violet-500 active:scale-[0.98]"
             >
               {copied ? (
                 <>

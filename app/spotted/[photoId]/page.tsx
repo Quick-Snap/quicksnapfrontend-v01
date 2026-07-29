@@ -57,6 +57,7 @@ export default function SpottedPreviewPage() {
             <img
               src={previewImageUrl}
               alt="Spotted preview"
+              crossOrigin="anonymous"
               onLoad={() => setImgLoaded(true)}
               className={`h-full w-full object-cover transition duration-500 ${
                 imgLoaded ? 'opacity-100' : 'opacity-0'
