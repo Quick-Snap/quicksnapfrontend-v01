@@ -119,10 +119,10 @@ export default function SpottedHubPage() {
 
                     <div className="min-w-0 flex-1">
                       <h3 className="font-semibold text-base text-zinc-900 dark:text-white">
-                        Spotted #{idx + 1}
+                        {item.unregisteredCount} {item.unregisteredCount === 1 ? 'New Face' : 'New Faces'}
                       </h3>
                       <p className="text-xs text-zinc-500 dark:text-gray-400 mt-0.5">
-                        Spotted in {item.photoCount} photo{item.photoCount > 1 ? 's' : ''}
+                        Spotted with you
                       </p>
                     </div>
                   </div>
