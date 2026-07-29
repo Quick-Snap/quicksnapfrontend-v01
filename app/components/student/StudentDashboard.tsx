@@ -8,7 +8,6 @@ import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { useState, useMemo } from 'react';
 import JoinEventModal from './JoinEventModal';
-import FloatingSpottedHub from './FloatingSpottedHub';
 import { softSurface, softSurfaceHover } from '@/lib/dashboardUi';
 
 export default function StudentDashboard() {
@@ -65,13 +64,29 @@ export default function StudentDashboard() {
         </div>
       </header>
 
-      {/* Floating Spotted Hub */}
-      <FloatingSpottedHub
-        unregisteredSummary={unregisteredSummary}
-        registeredFriendsSummary={registeredFriendsSummary}
-        referralCount={referralCount}
-        userId={user?.id}
-      />
+      {/* 1-Line Spotted Notification Banner */}
+      {unregisteredSummary.length > 0 && (
+        <Link
+          href="/spotted"
+          className="flex items-center justify-between gap-4 rounded-2xl bg-gradient-to-r from-violet-600 via-indigo-600 to-violet-700 p-4 text-white shadow-lg shadow-violet-500/20 transition hover:opacity-95 active:scale-[0.99]"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
+              <Sparkles className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold">
+                You were spotted in photos with {unregisteredSummary.length} unregistered {unregisteredSummary.length === 1 ? 'person' : 'people'}!
+              </p>
+              <p className="text-xs text-violet-200">Tap to view your Spotted Hub & invite them</p>
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-1 rounded-xl bg-white/20 px-3 py-1.5 text-xs font-semibold backdrop-blur-sm">
+            View Hub
+            <ChevronRight className="h-4 w-4" />
+          </div>
+        </Link>
+      )}
 
       {/* Stats — mobile-first single column; comfortable tap targets */}
       <section aria-label="Overview stats" className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
