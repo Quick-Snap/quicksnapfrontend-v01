@@ -75,7 +75,7 @@ export default function SpottedPreviewPage() {
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-4 text-left">
               <div className="flex items-center gap-2 text-xs font-medium text-violet-200">
                 <EyeOff className="h-4 w-4 text-violet-400" />
-                <span>Faces blurred for privacy</span>
+                <span>Guest Preview • Sign up to unlock full quality & claim your photos</span>
               </div>
             </div>
           </div>
