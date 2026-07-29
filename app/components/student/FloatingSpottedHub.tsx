@@ -14,19 +14,24 @@ type SpottedHubProps = {
 
 // Helper: Calculate CSS objectPosition & scale to zoom into face bounding box
 function getFaceCropStyle(box?: any) {
-  if (!box) return { objectPosition: 'center center', transform: 'scale(1.1)' };
+  if (!box) return { objectPosition: 'center center', transform: 'scale(1.4)' };
   
-  const left = box.Left !== undefined ? box.Left : (box.left || 0.3);
-  const top = box.Top !== undefined ? box.Top : (box.top || 0.3);
-  const width = box.Width !== undefined ? box.Width : (box.width || 0.3);
-  const height = box.Height !== undefined ? box.Height : (box.height || 0.3);
+  const left = box.Left !== undefined ? box.Left : (box.left ?? 0.3);
+  const top = box.Top !== undefined ? box.Top : (box.top ?? 0.3);
+  const width = box.Width !== undefined ? box.Width : (box.width ?? 0.2);
+  const height = box.Height !== undefined ? box.Height : (box.height ?? 0.2);
 
   const centerX = Math.min(100, Math.max(0, (left + width / 2) * 100));
   const centerY = Math.min(100, Math.max(0, (top + height / 2) * 100));
 
+  // Dynamic zoom: smaller faces in group photos get higher zoom factor (up to 6.5x)
+  const faceDim = Math.max(width, height, 0.05);
+  const zoomScale = Math.min(6.5, Math.max(3.2, 1 / (faceDim * 1.5)));
+
   return {
     objectPosition: `${centerX.toFixed(1)}% ${centerY.toFixed(1)}%`,
-    transform: 'scale(2.4)'
+    transformOrigin: `${centerX.toFixed(1)}% ${centerY.toFixed(1)}%`,
+    transform: `scale(${zoomScale.toFixed(1)})`
   };
 }
 

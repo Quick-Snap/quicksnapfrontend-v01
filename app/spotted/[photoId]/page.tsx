@@ -15,8 +15,10 @@ export default function SpottedPreviewPage() {
   const photoId = params?.photoId as string;
   const referredBy = searchParams?.get('referredBy') || '';
 
-  const backendApi = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
-  const previewImageUrl = `${backendApi}/api/photos/${photoId}/spotted-preview`;
+  const rawApi = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+  const apiBase = rawApi.replace(/\/$/, '');
+  const cleanBase = apiBase.endsWith('/api') ? apiBase : `${apiBase}/api`;
+  const previewImageUrl = `${cleanBase}/photos/${photoId}/spotted-preview`;
 
   const [imgLoaded, setImgLoaded] = useState(false);
 
