@@ -44,7 +44,7 @@ export default function Home() {
     <LandingPage
       loginHref="/login"
       signupHref="/register"
-      brandName="QUICKSNAP"
+      brandName="Roopixo"
     />
   );
 }

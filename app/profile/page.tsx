@@ -335,7 +335,7 @@ export default function ProfilePage() {
                         </div>
                         <div>
                             <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Become an Organizer</h2>
-                            <p className="text-sm text-zinc-600 dark:text-gray-400">Host events and manage your organization on QuickSnap</p>
+                            <p className="text-sm text-zinc-600 dark:text-gray-400">Host events and manage your organization on Roopixo</p>
                         </div>
                     </div>
 
@@ -404,7 +404,7 @@ export default function ProfilePage() {
                                     <div>
                                         <p className="font-semibold text-blue-900 dark:text-blue-300 text-lg">Apply to become an organizer</p>
                                         <p className="text-zinc-600 dark:text-gray-400 mt-1">
-                                            Create and manage events, upload photos, and run your organization on QuickSnap.
+                                            Create and manage events, upload photos, and run your organization on Roopixo.
                                         </p>
                                     </div>
                                 </div>
@@ -426,7 +426,7 @@ export default function ProfilePage() {
                         <div>
                             <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Organizer access</h2>
                             <p className="text-sm text-zinc-600 dark:text-gray-400">
-                                {isAdmin ? 'You have admin access with full organizer privileges.' : 'You are already an organizer on QuickSnap.'}
+                                {isAdmin ? 'You have admin access with full organizer privileges.' : 'You are already an organizer on Roopixo.'}
                             </p>
                         </div>
                     </div>

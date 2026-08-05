@@ -5,14 +5,12 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRole } from '@/hooks/useRole';
 import { Menu, X, User, LogOut, Home, Image as ImageIcon, Calendar, Shield, Settings, Upload, ChevronDown } from 'lucide-react';
-import Image from 'next/image';
 import { useState, useRef, useEffect } from 'react';
 import { useQuery } from 'react-query';
 import { UserRole } from '@/types';
 import { adminOrganizerRequestApi } from '@/lib/api';
 import { ThemeToggle } from '@/app/components/ui/ThemeToggle';
-import lightLogo from '@/components/assets/7.png';
-import darkLogo from '@/components/assets/5.png';
+import { BrandLogo } from '@/components/BrandLogo';
 
 const LOGIN_PATH = '/login';
 
@@ -113,24 +111,9 @@ export default function Navbar() {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between gap-2 md:grid md:grid-cols-[1fr_auto_1fr] md:items-center md:justify-normal md:gap-4">
           {/* Logo */}
-          <Link href={hrefForAuth('/dashboard', isLoggedIn)} className="flex min-w-0 shrink-0 items-center group md:justify-self-start">
-            <Image
-              src={lightLogo}
-              alt="QuickSnap"
-              width={160}
-              height={48}
-              className="h-10 w-auto md:h-16 dark:hidden"
-              priority
-            />
-            <Image
-              src={darkLogo}
-              alt="QuickSnap"
-              width={160}
-              height={48}
-              className="h-10 w-auto md:h-16 hidden dark:block"
-              priority
-            />
-          </Link>
+          <div className="flex min-w-0 shrink-0 items-center md:justify-self-start">
+            <BrandLogo href={hrefForAuth('/dashboard', isLoggedIn)} size="sm" tone="auto" />
+          </div>
 
           {/* Desktop Navigation — centered in navbar via middle grid column */}
           <div className="hidden md:flex md:items-center md:justify-center md:justify-self-center md:space-x-1">

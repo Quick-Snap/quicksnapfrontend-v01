@@ -7,7 +7,8 @@ import { signIn } from 'next-auth/react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthStore } from '@/stores';
 import { LoginAuthError } from '@/app/components/auth/LoginAuthError';
-import { Camera, Loader2, Eye, EyeOff, ArrowRight, CheckCircle } from 'lucide-react';
+import { Loader2, Eye, EyeOff, ArrowRight, CheckCircle } from 'lucide-react';
+import { BrandLogo } from '@/components/BrandLogo';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -98,12 +99,7 @@ export default function LoginPage() {
           <div className="relative h-full flex flex-col justify-between p-8">
             {/* Logo & Back Link */}
             <div className="flex items-center justify-between">
-              <Link href="/" className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-sm flex items-center justify-center">
-                  <Camera className="h-4 w-4 text-white" />
-                </div>
-                <span className="text-white font-light tracking-[0.15em]">QUICKSNAP</span>
-              </Link>
+              <BrandLogo href="/" size="sm" tone="light" />
               <Link 
                 href="/" 
                 className="hidden lg:flex items-center gap-1 text-white/60 hover:text-white text-sm font-light tracking-wider transition-colors"
@@ -114,10 +110,10 @@ export default function LoginPage() {
 
             {/* Bottom Text */}
             <div className="mt-auto">
-              <h2 className="text-3xl lg:text-4xl font-light text-white leading-tight tracking-wide">
+              <h2 className="font-display text-3xl lg:text-4xl font-semibold text-white leading-tight tracking-[-0.02em]">
                 Welcome Back,
               </h2>
-              <h2 className="text-3xl lg:text-4xl font-light text-white leading-tight tracking-wide">
+              <h2 className="font-display text-3xl lg:text-4xl font-semibold text-white leading-tight tracking-[-0.02em]">
                 We Missed You
               </h2>
               
@@ -134,7 +130,7 @@ export default function LoginPage() {
         <div className="lg:w-[55%] p-8 lg:p-12 flex flex-col justify-center bg-zinc-50/50 dark:bg-transparent">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-light text-zinc-900 dark:text-white mb-2 tracking-wide">Sign in to your account</h1>
+            <h1 className="font-display text-3xl font-semibold tracking-[-0.02em] text-zinc-900 dark:text-white mb-2">Sign in to your account</h1>
             <p className="text-zinc-600 dark:text-white/50 text-sm font-light tracking-wide">
               Don&apos;t have an account?{' '}
               <Link href="/register" className="text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300 transition-colors">

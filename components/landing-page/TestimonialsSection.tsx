@@ -14,7 +14,7 @@ export interface TestimonialsSectionProps {
 
 export function TestimonialsSection({
   title = "Loved by Event Planners",
-  subtitle = "See what photographers, planners, and event organizers say about QuickSnap.",
+  subtitle = "See what photographers, planners, and event organizers say about Roopixo.",
   badgeText = "Customer Stories",
   testimonials,
   autoRotateInterval = 5000,

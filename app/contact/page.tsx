@@ -1,19 +1,25 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Mail, Linkedin, Instagram, Twitter, MapPin, Clock } from 'lucide-react';
+import { BrandLogo } from '@/components/BrandLogo';
 
 export const metadata: Metadata = {
   title: 'Contact Us',
   description:
-    'Get in touch with the QuickSnap team. We help event organizers and photographers deliver photos instantly with AI.',
+    'Get in touch with the Roopixo team. We help event organizers and photographers deliver photos instantly with AI.',
 };
 
-const CONTACT_EMAIL = 'contact@quicksnap.online';
+const CONTACT_EMAIL = 'contact@roopixo.online';
 
 export default function ContactPage() {
   return (
     <div className="relative min-h-screen bg-white text-zinc-900 dark:bg-[#0a0a0a] dark:text-white font-sans">
-      <main className="pt-20 pb-24 px-6">
+      <header className="px-6 pt-8">
+        <div className="max-w-5xl mx-auto">
+          <BrandLogo href="/" size="sm" tone="auto" />
+        </div>
+      </header>
+      <main className="pt-12 pb-24 px-6">
         <div className="max-w-5xl mx-auto">
           {/* Heading */}
           <div className="text-center mb-16">
@@ -106,7 +112,7 @@ export default function ContactPage() {
               </p>
               <p className="text-sm font-light text-zinc-600 dark:text-white/60 leading-relaxed">
                 Want to streamline your delivery and impress clients? We&apos;d
-                love to onboard you to QuickSnap.
+                love to onboard you to Roopixo.
               </p>
             </div>
             <div className="border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/[0.02] p-6">
@@ -128,7 +134,7 @@ export default function ContactPage() {
               </h3>
               <div className="flex items-center gap-4">
                 <a
-                  href="https://www.linkedin.com/company/quicksnap-online"
+                  href="https://www.linkedin.com/company/roopixo"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="LinkedIn"
@@ -137,7 +143,7 @@ export default function ContactPage() {
                   <Linkedin className="w-4 h-4" />
                 </a>
                 <a
-                  href="https://www.instagram.com/quicksnap.online"
+                  href="https://www.instagram.com/roopixo"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Instagram"
@@ -146,7 +152,7 @@ export default function ContactPage() {
                   <Instagram className="w-4 h-4" />
                 </a>
                 <a
-                  href="https://x.com/QuickSnapOnline"
+                  href="https://x.com/Roopixo"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="X"

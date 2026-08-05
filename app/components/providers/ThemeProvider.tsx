@@ -3,7 +3,7 @@
 import { useLayoutEffect, useState } from 'react';
 import { useAppStore } from '@/stores/appStore';
 
-const STORAGE_KEY = 'quicksnap-theme';
+const STORAGE_KEY = 'roopixo-theme';
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const theme = useAppStore((s) => s.ui.theme);

@@ -707,7 +707,7 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                                 </div>
                                 <div className="flex items-center gap-3 text-xs text-left text-zinc-500 dark:text-gray-400">
                                     <div className="w-5 h-5 rounded-full bg-violet-500/10 flex items-center justify-center font-bold text-violet-600 dark:text-violet-400">3</div>
-                                    <span>Quick Snap will automatically sync and show previews!</span>
+                                    <span>Roopixo will automatically sync and show previews!</span>
                                 </div>
                             </div>
 
@@ -912,7 +912,7 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                                                     Google Photos Secure Picker
                                                 </h3>
                                                 <p className="text-xs text-zinc-500 dark:text-gray-400 mb-5 leading-relaxed">
-                                                    Google requires this secure picker for privacy. Select any photos or videos from your library, and Quick Snap will automatically download, face-match, and index them.
+                                                    Google requires this secure picker for privacy. Select any photos or videos from your library, and Roopixo will automatically download, face-match, and index them.
                                                 </p>
                                                 <button
                                                     onClick={handleLaunchPicker}

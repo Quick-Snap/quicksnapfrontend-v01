@@ -26,8 +26,8 @@ export function FeaturesSection() {
             <span className="text-xs font-medium tracking-[0.2em] text-violet-400 uppercase">Features</span>
             <div className="h-px w-12 bg-gradient-to-l from-transparent to-violet-400/50" />
           </div>
-          <h2 className="text-3xl md:text-4xl font-light tracking-tight text-white mb-6">
-            Why Choose <span className="text-violet-400">QuickSnap</span>?
+          <h2 className="font-display text-3xl md:text-4xl font-semibold tracking-[-0.03em] text-white mb-6">
+            Why Choose <span className="text-violet-400">Roopixo</span>?
           </h2>
           <p className="text-white/50 max-w-2xl mx-auto text-base md:text-lg font-light leading-relaxed">
             We solve the two biggest pain points in event photography: slow delivery and missed sharing opportunities.

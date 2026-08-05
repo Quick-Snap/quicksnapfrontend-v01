@@ -5,8 +5,9 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthStore } from '@/stores';
-import { Camera, Loader2, CheckCircle, ShieldCheck, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { Loader2, CheckCircle, ShieldCheck, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { BrandLogo } from '@/components/BrandLogo';
 
 declare global {
   interface Window {
@@ -214,12 +215,7 @@ export default function RegisterPage() {
             <div className="relative h-full flex flex-col justify-between p-8">
               {/* Logo & Back Link */}
               <div className="flex items-center justify-between">
-                <Link href="/" className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-sm flex items-center justify-center">
-                    <Camera className="h-4 w-4 text-white" />
-                  </div>
-                  <span className="text-white font-light tracking-[0.15em]">QUICKSNAP</span>
-                </Link>
+                <BrandLogo href="/" size="sm" tone="light" />
                 <Link 
                   href="/" 
                   className="hidden lg:flex items-center gap-1 text-white/60 hover:text-white text-sm font-light tracking-wider transition-colors"
@@ -230,10 +226,10 @@ export default function RegisterPage() {
 
               {/* Bottom Text */}
               <div className="mt-auto">
-                <h2 className="text-3xl lg:text-4xl font-light text-white leading-tight tracking-wide">
+                <h2 className="font-display text-3xl lg:text-4xl font-semibold text-white leading-tight tracking-[-0.02em]">
                   Capturing Moments,
                 </h2>
-                <h2 className="text-3xl lg:text-4xl font-light text-white leading-tight tracking-wide">
+                <h2 className="font-display text-3xl lg:text-4xl font-semibold text-white leading-tight tracking-[-0.02em]">
                   Creating Memories
                 </h2>
                 
@@ -250,7 +246,7 @@ export default function RegisterPage() {
           <div className="lg:w-[55%] p-8 lg:p-12 flex flex-col justify-center">
             {/* Header */}
             <div className="mb-8">
-              <h1 className="text-3xl font-light text-white mb-2 tracking-wide">Create an account</h1>
+              <h1 className="font-display text-3xl font-semibold tracking-[-0.02em] text-white mb-2">Create an account</h1>
               <p className="text-white/50 text-sm font-light tracking-wide">
                 Already have an account?{' '}
                 <Link href="/login" className="text-violet-400 hover:text-violet-300 transition-colors">

@@ -6,7 +6,7 @@ const steps = [
   { 
     step: "01", 
     title: "Scan QR Code", 
-    description: "Find the QuickSnap QR code at your event and scan it with your phone." 
+    description: "Find the Roopixo QR code at your event and scan it with your phone." 
   },
   { 
     step: "02", 
@@ -40,7 +40,7 @@ export function HowItWorks({ customSteps }: HowItWorksProps) {
           className="text-center mb-20"
         >
           <div className="mb-6 h-px w-16 bg-violet-400/50 mx-auto" />
-          <h2 className="text-3xl md:text-4xl font-light tracking-tight text-white mb-6">
+          <h2 className="font-display text-3xl md:text-4xl font-semibold tracking-[-0.03em] text-white mb-6">
             How It Works
           </h2>
           <p className="text-white/50 max-w-2xl mx-auto text-lg font-light leading-relaxed">
@@ -58,10 +58,10 @@ export function HowItWorks({ customSteps }: HowItWorksProps) {
               viewport={{ once: true }}
               className="relative p-8 border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-colors"
             >
-              <span className="text-5xl font-extralight text-violet-500/20 absolute top-4 right-6">
+              <span className="font-display text-5xl font-bold text-violet-500/20 absolute top-4 right-6">
                 {item.step}
               </span>
-              <h3 className="text-lg font-medium tracking-wide text-white mb-4 mt-8">
+              <h3 className="font-display text-lg font-semibold tracking-tight text-white mb-4 mt-8">
                 {item.title}
               </h3>
               <p className="text-white/50 text-sm leading-relaxed font-light">

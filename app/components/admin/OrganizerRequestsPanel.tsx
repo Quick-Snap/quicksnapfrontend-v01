@@ -102,7 +102,7 @@ function ApproveModal({ request, onClose, onConfirm, loading }: ApproveModalProp
             </label>
             <textarea
               className="input min-h-[80px] resize-none"
-              placeholder="Welcome to QuickSnap organizers!"
+              placeholder="Welcome to Roopixo organizers!"
               value={reviewNote}
               onChange={(e) => setReviewNote(e.target.value)}
             />

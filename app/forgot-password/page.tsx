@@ -3,9 +3,10 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Camera, Loader2, Mail, ArrowLeft, Sparkles, CheckCircle } from 'lucide-react';
+import { Loader2, Mail, ArrowLeft, Sparkles, CheckCircle } from 'lucide-react';
 import { authApi } from '@/lib/api';
 import toast from 'react-hot-toast';
+import { BrandLogo } from '@/components/BrandLogo';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -61,12 +62,10 @@ export default function ForgotPasswordPage() {
 
           {/* Logo and Header */}
           <div className="text-center mb-8">
-            <div className="flex justify-center mb-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-violet-500/30 hover:shadow-violet-500/50 transform hover:scale-110 transition-all duration-300">
-                <Camera className="h-8 w-8 text-white" />
-              </div>
+            <div className="flex justify-center mb-6">
+              <BrandLogo href="/" size="lg" tone="auto" />
             </div>
-            <h2 className="text-3xl font-bold text-gradient mb-2">
+            <h2 className="font-display text-3xl font-semibold tracking-[-0.02em] text-gradient mb-2">
               {emailSent ? 'Check Your Email' : 'Forgot Password?'}
             </h2>
             <p className="text-gray-400 flex items-center justify-center gap-2">

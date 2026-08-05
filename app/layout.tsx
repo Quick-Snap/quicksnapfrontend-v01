@@ -1,20 +1,22 @@
 import type { Metadata, Viewport } from 'next';
-import { Space_Grotesk, Inter } from 'next/font/google';
+import { Syne, Outfit } from 'next/font/google';
 import './globals.css';
 import { RootLayoutClient } from './RootLayoutClient';
 
-const spaceGrotesk = Space_Grotesk({
+const syne = Syne({
   subsets: ['latin'],
-  variable: '--font-space-grotesk',
+  variable: '--font-syne',
+  weight: ['400', '500', '600', '700', '800'],
 });
 
-const inter = Inter({
+const outfit = Outfit({
   subsets: ['latin'],
-  variable: '--font-inter',
+  variable: '--font-outfit',
+  weight: ['300', '400', '500', '600', '700'],
 });
 
 export const metadata: Metadata = {
-  title: { default: 'QuickSnap', template: '%s | QuickSnap' },
+  title: { default: 'Roopixo', template: '%s | Roopixo' },
   /** PNG in `public/favicon.png`. `/favicon.ico` rewrites to the same file (see `next.config.js`). */
   icons: {
     icon: [{ url: '/favicon.png', type: 'image/png' }],
@@ -38,7 +40,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${spaceGrotesk.variable} ${inter.variable} font-sans bg-[var(--background)] text-[var(--foreground)] antialiased`}
+        className={`${syne.variable} ${outfit.variable} font-sans bg-[var(--background)] text-[var(--foreground)] antialiased`}
       >
         <RootLayoutClient>{children}</RootLayoutClient>
       </body>

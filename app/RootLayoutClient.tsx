@@ -12,7 +12,7 @@ import { ThemedToaster } from './components/ui/ThemedToaster';
 const themeInitScript = `
 (function(){
   try {
-    var k = 'quicksnap-theme';
+    var k = 'roopixo-theme';
     var t = localStorage.getItem(k);
     var root = document.documentElement;
     if (t === 'light') root.classList.remove('dark');
@@ -36,7 +36,7 @@ export function RootLayoutClient({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <Script id="quicksnap-theme-init" strategy="beforeInteractive">
+      <Script id="roopixo-theme-init" strategy="beforeInteractive">
         {themeInitScript}
       </Script>
       <QueryProvider>

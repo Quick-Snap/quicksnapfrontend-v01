@@ -178,7 +178,7 @@ export function AnimatedTestimonials({
                 </div>
               )}
 
-              <h2 className="text-3xl font-light tracking-tight text-white sm:text-4xl md:text-5xl">{title}</h2>
+              <h2 className="font-display text-3xl font-semibold tracking-[-0.03em] text-white sm:text-4xl md:text-5xl">{title}</h2>
 
               <p className="max-w-[600px] text-white/50 font-light md:text-lg leading-relaxed">{subtitle}</p>
 

@@ -150,7 +150,7 @@ export default function ApplyOrganizerModal({
             </label>
             <textarea
               className="input min-h-[120px] resize-none"
-              placeholder="I run a wedding photography business and want to host events on QuickSnap…"
+              placeholder="I run a wedding photography business and want to host events on Roopixo…"
               value={form.reason}
               onChange={(e) => handleChange('reason', e.target.value)}
               disabled={loading}

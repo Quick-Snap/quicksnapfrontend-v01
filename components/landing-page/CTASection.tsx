@@ -15,7 +15,7 @@ export interface CTASectionProps {
 
 export function CTASection({
   title = "Ready to Transform Your Events?",
-  subtitle = "Join thousands of event organizers and photographers who trust QuickSnap.",
+  subtitle = "Join thousands of event organizers and photographers who trust Roopixo.",
   primaryButtonText = "Start Free Trial",
   secondaryButtonText = "Contact Sales",
   signupHref = '/register',
@@ -34,7 +34,7 @@ export function CTASection({
         className="max-w-4xl mx-auto text-center relative z-10"
       >
         <div className="mb-8 h-px w-16 bg-violet-400/50 mx-auto" />
-        <h2 className="text-3xl md:text-5xl font-light tracking-tight text-white mb-6">
+        <h2 className="font-display text-3xl md:text-5xl font-semibold tracking-[-0.03em] text-white mb-6">
           {title}
         </h2>
         <p className="text-white/50 max-w-xl mx-auto text-lg font-light leading-relaxed mb-10">
@@ -43,13 +43,13 @@ export function CTASection({
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
             href={signupHref}
-            className="px-8 py-4 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium tracking-wider transition-all border border-violet-500"
+            className="px-8 py-4 bg-violet-600 hover:bg-violet-500 text-white font-display text-sm font-semibold tracking-[0.08em] transition-all border border-violet-500"
           >
             {primaryButtonText}
           </Link>
           <Link
             href={contactHref}
-            className="px-8 py-4 bg-transparent hover:bg-white/5 text-white text-sm font-medium tracking-wider transition-all border border-white/20"
+            className="px-8 py-4 bg-transparent hover:bg-white/5 text-white font-display text-sm font-semibold tracking-[0.08em] transition-all border border-white/20"
           >
             {secondaryButtonText}
           </Link>

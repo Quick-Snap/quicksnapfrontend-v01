@@ -74,7 +74,7 @@ function FlipCard({
                     style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
                 >
                     <div className="text-center">
-                        <p className="text-[8px] font-bold text-violet-300 uppercase tracking-widest mb-1">QuickSnap</p>
+                        <p className="text-[8px] font-bold text-violet-300 uppercase tracking-widest mb-1">Roopixo</p>
                         <p className="text-xs font-medium text-white">Your Photo</p>
                     </div>
                 </div>
@@ -374,7 +374,7 @@ export function ScrollMorphHero({
                     <div className="max-w-3xl mx-auto">
                         <div className="mb-6 flex items-center justify-center gap-3">
                             <div className="h-px w-12 bg-gradient-to-r from-transparent to-violet-400/50" />
-                            <span className="text-xs font-medium tracking-[0.2em] text-violet-400 uppercase">QuickSnap</span>
+                            <span className="text-xs font-medium tracking-[0.2em] text-violet-400 uppercase">Roopixo</span>
                             <div className="h-px w-12 bg-gradient-to-l from-transparent to-violet-400/50" />
                         </div>
                         <h2 className="text-3xl md:text-5xl lg:text-6xl font-light tracking-tight text-white mb-6 leading-tight">
