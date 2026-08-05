@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import DriftWall from '@/components/DriftWall/DriftWall';
+import { TrustRibbon } from './TrustRibbon';
 
 const EVENT_PHOTOS = [
   { image: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&q=80', title: 'Wedding moment' },
@@ -36,7 +37,6 @@ export interface DriftWallHeroProps {
 export function DriftWallHero({
   signupHref = '/register',
   loginHref = '/login',
-  brandName = 'Roopixo',
 }: DriftWallHeroProps) {
   return (
     <div className="relative h-full w-full overflow-hidden bg-[#060010]">
@@ -75,7 +75,7 @@ export function DriftWallHero({
       />
 
       {/* Hero copy — brand first */}
-      <div className="relative z-10 flex h-full flex-col items-center justify-center px-6 pt-20 text-center">
+      <div className="relative z-10 flex h-full flex-col items-center justify-center px-6 pb-28 pt-20 text-center">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
@@ -132,30 +132,17 @@ export function DriftWallHero({
             </Link>
           </motion.div>
         </motion.div>
-
-        <motion.button
-          type="button"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.7 }}
-          transition={{ delay: 1, duration: 0.8 }}
-          onClick={() => {
-            document.getElementById('landing-features')?.scrollIntoView({
-              behavior: 'smooth',
-              block: 'start',
-            });
-          }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 cursor-pointer rounded-md px-3 py-2 text-[10px] font-medium uppercase tracking-[0.3em] text-violet-300/80 transition-colors hover:bg-white/5 hover:text-violet-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 md:text-xs"
-          aria-label="Scroll to features"
-        >
-          <motion.span
-            animate={{ y: [0, 6, 0] }}
-            transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
-            className="inline-block"
-          >
-            ↓ Scroll
-          </motion.span>
-        </motion.button>
       </div>
+
+      {/* Community trust ribbon */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.6 }}
+        className="absolute inset-x-0 bottom-0 z-20"
+      >
+        <TrustRibbon />
+      </motion.div>
     </div>
   );
 }

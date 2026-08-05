@@ -105,6 +105,7 @@ export default LandingPage;
 
 export { Header } from './Header';
 export { DriftWallHero } from './DriftWallHero';
+export { TrustRibbon } from './TrustRibbon';
 export { ScrollMorphHero } from './ScrollMorphHero';
 export { FeaturesSection } from './FeaturesSection';
 export { HowItWorks } from './HowItWorks';

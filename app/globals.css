@@ -410,3 +410,31 @@
   outline: 2px solid #8b5cf6;
   outline-offset: 2px;
 }
+
+/* Hero partner trust ribbon — seamless infinite marquee */
+@keyframes trust-marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.trust-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: trust-marquee 55s linear infinite;
+  will-change: transform;
+}
+
+.trust-marquee-track:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trust-marquee-track {
+    animation-duration: 90s;
+  }
+}
+

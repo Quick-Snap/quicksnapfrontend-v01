@@ -38,6 +38,7 @@ const config: Config = {
         'slide-up': 'slide-up 0.6s ease-out forwards',
         'slide-down': 'slide-down 0.6s ease-out forwards',
         'fade-in': 'fade-in 0.6s ease-out forwards',
+        'marquee': 'marquee 28s linear infinite',
       },
       keyframes: {
         float: {
@@ -59,6 +60,10 @@ const config: Config = {
         'fade-in': {
           from: { opacity: '0' },
           to: { opacity: '1' },
+        },
+        marquee: {
+          from: { transform: 'translateX(0)' },
+          to: { transform: 'translateX(-100%)' },
         },
       },
     },
