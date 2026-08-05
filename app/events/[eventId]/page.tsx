@@ -180,19 +180,18 @@ export default function PublicEventPage() {
         return displayPhotos.findIndex((p: any) => p._id === selectedPhoto._id);
     }, [selectedPhoto, displayPhotos]);
 
-    const handleNextPhoto = useMemo(() => {
-        if (currentIndex !== -1 && currentIndex < displayPhotos.length - 1) {
-            return () => setSelectedPhoto(displayPhotos[currentIndex + 1]);
-        }
-        return undefined;
-    }, [currentIndex, displayPhotos]);
-
-    const handlePrevPhoto = useMemo(() => {
-        if (currentIndex > 0) {
-            return () => setSelectedPhoto(displayPhotos[currentIndex - 1]);
-        }
-        return undefined;
-    }, [currentIndex, displayPhotos]);
+    const lightboxItems = useMemo(
+        () =>
+            displayPhotos.map((p: any) => ({
+                image:
+                    p.url ||
+                    p.s3Url ||
+                    getPhotoDisplayUrl(p) ||
+                    '',
+                caption: p.fileName || 'Photo',
+            })),
+        [displayPhotos]
+    );
 
     const isLoadingPhotos =
         !currentUser
@@ -689,18 +688,12 @@ export default function PublicEventPage() {
                 )}
             </section>
 
-            {selectedPhoto && (
+            {selectedPhoto && currentIndex >= 0 && (
                 <PhotoLightbox
-                    imageSrc={
-                        selectedPhoto.url ||
-                        selectedPhoto.s3Url ||
-                        getPhotoDisplayUrl(selectedPhoto) ||
-                        ''
-                    }
-                    imageAlt={selectedPhoto.fileName || 'Selected photo'}
+                    items={lightboxItems}
+                    startIndex={currentIndex}
+                    onIndexChange={(i) => setSelectedPhoto(displayPhotos[i])}
                     onClose={() => setSelectedPhoto(null)}
-                    onNext={handleNextPhoto}
-                    onPrev={handlePrevPhoto}
                     onUntag={photoViewMode === 'my' ? () => handleUntag(selectedPhoto) : undefined}
                     footer={
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">

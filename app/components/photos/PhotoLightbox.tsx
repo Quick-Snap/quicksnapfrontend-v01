@@ -1,34 +1,54 @@
 'use client';
 
-import { ChevronLeft, ChevronRight, X, EyeOff } from 'lucide-react';
-import { useEffect, useRef, type ReactNode } from 'react';
+import { X, EyeOff } from 'lucide-react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import MorphSlider from '@/components/MorphSlider/MorphSlider';
+
+export type PhotoLightboxItem = {
+  image: string;
+  caption?: string;
+};
 
 type PhotoLightboxProps = {
-  imageSrc: string;
-  imageAlt: string;
+  /** All slides for MorphSlider (index-aligned with the gallery list). */
+  items: PhotoLightboxItem[];
+  /** Index of the photo that opened the lightbox. */
+  startIndex?: number;
+  /** Fired when the morph transition commits to a new slide. */
+  onIndexChange?: (index: number) => void;
   onClose: () => void;
   footer: ReactNode;
-  onNext?: () => void;
-  onPrev?: () => void;
   onUntag?: () => void;
 };
 
 /**
- * Full-viewport photo preview: image uses remaining space (object-contain), no page scroll.
- * Portals to document.body so fixed layering isn't clipped by layout; top bar keeps the close
- * control clear of the notch / status bar.
- * Supports Next / Previous navigation buttons, keyboard arrows, and mobile swipe gestures.
+ * Full-viewport photo preview with MorphSlider melt transitions between photos.
+ * Portals to document.body; chrome (close / untag / footer) stays outside the slider.
  */
 export function PhotoLightbox({
-  imageSrc,
-  imageAlt,
+  items,
+  startIndex = 0,
+  onIndexChange,
   onClose,
   footer,
-  onNext,
-  onPrev,
   onUntag,
 }: PhotoLightboxProps) {
+  // Freeze the opening slide list + index for the whole lightbox session.
+  // Live parent updates (signed URLs, selection sync) must not remount WebGL mid-tween.
+  const [session] = useState(() => {
+    // Keep index alignment with the parent gallery list (do not drop empty URLs).
+    const slides = (items || []).map((item) => ({
+      image: item.image || '',
+      caption: item.caption || '',
+    }));
+    const safeStart = Math.max(0, Math.min(startIndex, Math.max(slides.length - 1, 0)));
+    return { slides, startIndex: safeStart };
+  });
+
+  const onIndexChangeRef = useRef(onIndexChange);
+  onIndexChangeRef.current = onIndexChange;
+
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -37,33 +57,29 @@ export function PhotoLightbox({
     };
   }, []);
 
-  // Keyboard navigation: Escape to close, Left/Right arrows to navigate
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         onClose();
-      } else if (e.key === 'ArrowRight' && onNext) {
-        onNext();
-      } else if (e.key === 'ArrowLeft' && onPrev) {
-        onPrev();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [onClose, onNext, onPrev]);
+  }, [onClose]);
 
   if (typeof document === 'undefined') {
     return null;
   }
+
+  const hasSlides = session.slides.some((item) => item.image);
 
   return createPortal(
     <div
       className="fixed inset-0 z-[200] flex h-[100dvh] flex-col overflow-hidden bg-zinc-950/95 backdrop-blur-md"
       role="presentation"
     >
-      {/* Top chrome: safe-area + row so the close control is never clipped */}
       <div
         className="flex shrink-0 items-center justify-between border-b border-white/10 bg-black/40 px-3 pb-3 pt-[max(12px,calc(env(safe-area-inset-top,0px)+8px))] backdrop-blur-md sm:px-4 sm:pb-3 sm:pt-[max(14px,calc(env(safe-area-inset-top,0px)+10px))]"
         onClick={(e) => e.stopPropagation()}
@@ -94,57 +110,34 @@ export function PhotoLightbox({
         </button>
       </div>
 
-      {/* Main dialog area containing chevrons and image */}
       <div
-        className="relative flex min-h-0 flex-1 items-center justify-center px-2 pb-1 pt-2 sm:px-4 sm:pb-2 sm:pt-3"
-        onClick={onClose}
+        className="relative flex min-h-0 flex-1 items-center justify-center"
         role="dialog"
         aria-modal="true"
         aria-label="Photo preview"
+        onClick={(e) => e.stopPropagation()}
       >
-        {/* Previous Button (desktop floating chevron) */}
-        {onPrev && (
-          <button
-            type="button"
-            className="absolute left-3 md:left-6 z-[210] flex h-10 w-10 md:h-12 md:w-12 shrink-0 items-center justify-center rounded-full border border-white/15 bg-zinc-900/60 text-white shadow-md backdrop-blur-sm transition-all hover:bg-zinc-800/80 hover:scale-105 active:scale-[0.98]"
-            onClick={(e) => {
-              e.stopPropagation();
-              onPrev();
-            }}
-            aria-label="Previous photo"
-          >
-            <ChevronLeft className="h-6 w-6 md:h-7 md:w-7" strokeWidth={2.25} />
-          </button>
-        )}
-
-        {imageSrc ? (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img
-            src={imageSrc}
-            alt={imageAlt}
-            className="max-h-full max-w-full object-contain shadow-2xl ring-1 ring-white/15 select-none sm:rounded-lg"
-            onClick={(e) => e.stopPropagation()}
-            draggable={false}
+        {hasSlides ? (
+          <MorphSlider
+            items={session.slides}
+            startIndex={session.startIndex}
+            onIndexChange={(i: number) => onIndexChangeRef.current?.(i)}
+            showCaptions={false}
+            showIndicators={false}
+            showControls={session.slides.filter((s) => s.image).length > 1}
+            loop={false}
+            radius={0}
+            fit="contain"
+            drift={0}
+            aberration={0.15}
+            intensity={0.4}
+            transition="melt"
+            duration={0.9}
+            className="h-full w-full bg-transparent"
+            overlayColor="#09090b"
           />
         ) : (
-          <p className="px-4 text-center text-sm text-gray-400" onClick={(e) => e.stopPropagation()}>
-            Preview unavailable for this photo.
-          </p>
-        )}
-
-        {/* Next Button (desktop floating chevron) */}
-        {onNext && (
-          <button
-            type="button"
-            className="absolute right-3 md:right-6 z-[210] flex h-10 w-10 md:h-12 md:w-12 shrink-0 items-center justify-center rounded-full border border-white/15 bg-zinc-900/60 text-white shadow-md backdrop-blur-sm transition-all hover:bg-zinc-800/80 hover:scale-105 active:scale-[0.98]"
-            onClick={(e) => {
-              e.stopPropagation();
-              onNext();
-            }}
-            aria-label="Next photo"
-          >
-            <ChevronRight className="h-6 w-6 md:h-7 md:w-7" strokeWidth={2.25} />
-          </button>
+          <p className="px-4 text-center text-sm text-gray-400">Preview unavailable for this photo.</p>
         )}
       </div>
 

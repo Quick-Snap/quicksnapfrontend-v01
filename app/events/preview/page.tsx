@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useMemo, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   ArrowRight
 } from 'lucide-react';
+import { PhotoLightbox } from '@/app/components/photos/PhotoLightbox';
 
 interface PreviewPhoto {
   imageId: string;
@@ -125,6 +126,20 @@ function PreviewContent() {
   }
 
   const { event, photos, totalCount } = data;
+
+  const lightboxIndex = useMemo(() => {
+    if (!lightboxPhoto) return -1;
+    return photos.findIndex((p) => p.imageId === lightboxPhoto.imageId);
+  }, [lightboxPhoto, photos]);
+
+  const lightboxItems = useMemo(
+    () =>
+      photos.map((p) => ({
+        image: p.url || '',
+        caption: `Match ${Math.round(p.confidence)}%`,
+      })),
+    [photos]
+  );
 
   return (
     <div className="space-y-10 py-6 max-w-5xl mx-auto px-4">
@@ -259,39 +274,34 @@ function PreviewContent() {
       )}
 
       {/* Lightbox Modal (For logged-in users to view in full-screen) */}
-      {lightboxPhoto && (
-        <div 
-          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/90 p-4"
-          onClick={() => setLightboxPhoto(null)}
-        >
-          <div 
-            className="relative max-w-4xl max-h-[80vh] w-full h-full flex flex-col justify-center items-center"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button 
-              onClick={() => setLightboxPhoto(null)}
-              className="absolute -top-12 right-0 text-white hover:text-zinc-300 text-sm font-bold bg-white/10 backdrop-blur px-4 py-2 rounded-full border border-white/10"
-            >
-              ✕ Close
-            </button>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img 
-              src={lightboxPhoto.url} 
-              alt="Fullscreen view" 
-              className="max-w-full max-h-full rounded-2xl object-contain shadow-2xl border border-white/10"
-            />
-            <button
-              onClick={() => {
-                setLightboxPhoto(null);
-                handleActionClick(lightboxPhoto, 'download');
-              }}
-              className="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-all"
-            >
-              <Download size={16} />
-              Download High-Res
-            </button>
-          </div>
-        </div>
+      {lightboxPhoto && lightboxIndex >= 0 && (
+        <PhotoLightbox
+          items={lightboxItems}
+          startIndex={lightboxIndex}
+          onIndexChange={(i) => setLightboxPhoto(photos[i])}
+          onClose={() => setLightboxPhoto(null)}
+          footer={
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-medium text-white">Preview photo</p>
+                <p className="mt-0.5 text-sm text-gray-300">
+                  {Math.round(lightboxPhoto.confidence)}% match
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setLightboxPhoto(null);
+                  handleActionClick(lightboxPhoto, 'download');
+                }}
+                className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white transition hover:bg-indigo-500 sm:h-10 sm:w-auto"
+              >
+                <Download size={16} />
+                Download High-Res
+              </button>
+            </div>
+          }
+        />
       )}
 
       {/* Auth Prompt Modal (For guest/logged-out users) */}

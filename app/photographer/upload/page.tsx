@@ -161,25 +161,21 @@ function PhotographerUploadContent() {
   // Determine current active photos in display grid (active vs trash)
   const currentPhotos = showTrash ? trashPhotos : activePhotos;
 
-  // Next / Prev Lightbox Logic
   const currentIndex = useMemo(() => {
     if (!selectedPhoto) return -1;
-    return currentPhotos.findIndex((p: any) => (p._id === selectedPhoto._id || p.imageId === selectedPhoto.imageId));
+    return currentPhotos.findIndex(
+      (p: any) => p._id === selectedPhoto._id || p.imageId === selectedPhoto.imageId
+    );
   }, [selectedPhoto, currentPhotos]);
 
-  const handleNextPhoto = useMemo(() => {
-    if (currentIndex !== -1 && currentIndex < currentPhotos.length - 1) {
-      return () => setSelectedPhoto(currentPhotos[currentIndex + 1]);
-    }
-    return undefined;
-  }, [currentIndex, currentPhotos]);
-
-  const handlePrevPhoto = useMemo(() => {
-    if (currentIndex > 0) {
-      return () => setSelectedPhoto(currentPhotos[currentIndex - 1]);
-    }
-    return undefined;
-  }, [currentIndex, currentPhotos]);
+  const lightboxItems = useMemo(
+    () =>
+      currentPhotos.map((p: any) => ({
+        image: p.url || '',
+        caption: p.fileName || 'Photo',
+      })),
+    [currentPhotos]
+  );
 
   const handleUpload = async () => {
     if (files.length === 0) {
@@ -688,13 +684,12 @@ function PhotographerUploadContent() {
       </div>
 
       {/* Lightbox Zoom Render */}
-      {selectedPhoto && (
+      {selectedPhoto && currentIndex >= 0 && (
         <PhotoLightbox
-          imageSrc={selectedPhoto.url}
-          imageAlt={selectedPhoto.fileName || 'Photo'}
+          items={lightboxItems}
+          startIndex={currentIndex}
+          onIndexChange={(i) => setSelectedPhoto(currentPhotos[i])}
           onClose={() => setSelectedPhoto(null)}
-          onNext={handleNextPhoto}
-          onPrev={handlePrevPhoto}
           footer={
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4 w-full">
               <div className="min-w-0 flex-1">

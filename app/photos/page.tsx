@@ -95,19 +95,14 @@ export default function MyPhotosPage() {
     return filteredPhotos.findIndex((p: any) => p._id === selectedPhoto._id);
   }, [selectedPhoto, filteredPhotos]);
 
-  const handleNextPhoto = useMemo(() => {
-    if (currentIndex !== -1 && currentIndex < filteredPhotos.length - 1) {
-      return () => setSelectedPhoto(filteredPhotos[currentIndex + 1]);
-    }
-    return undefined;
-  }, [currentIndex, filteredPhotos]);
-
-  const handlePrevPhoto = useMemo(() => {
-    if (currentIndex > 0) {
-      return () => setSelectedPhoto(filteredPhotos[currentIndex - 1]);
-    }
-    return undefined;
-  }, [currentIndex, filteredPhotos]);
+  const lightboxItems = useMemo(
+    () =>
+      filteredPhotos.map((p: any) => ({
+        image: p.url || '',
+        caption: p.fileName || 'Photo',
+      })),
+    [filteredPhotos]
+  );
 
   const apiTotal = queryData?.data?.pagination?.total;
   const matchedTotal =
@@ -379,13 +374,12 @@ export default function MyPhotosPage() {
         </div>
       )}
 
-      {selectedPhoto && (
+      {selectedPhoto && currentIndex >= 0 && (
         <PhotoLightbox
-          imageSrc={selectedPhoto.url}
-          imageAlt={selectedPhoto.fileName || 'Photo'}
+          items={lightboxItems}
+          startIndex={currentIndex}
+          onIndexChange={(i) => setSelectedPhoto(filteredPhotos[i])}
           onClose={() => setSelectedPhoto(null)}
-          onNext={handleNextPhoto}
-          onPrev={handlePrevPhoto}
           onUntag={() => handleUntag(selectedPhoto)}
           footer={
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">

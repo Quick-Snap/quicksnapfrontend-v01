@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { photoApi } from '../../../lib/api';
 import { fetchAllMyPhotos } from '@/lib/photoFetch';
@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Download, Eye, Calendar, Users, Image as ImageIcon, Grid, List } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
+import { PhotoLightbox } from '@/app/components/photos/PhotoLightbox';
 
 interface PhotoGalleryProps {
   eventId?: string;
@@ -46,6 +47,44 @@ export default function PhotoGallery({ eventId }: PhotoGalleryProps) {
     }
   };
 
+  // Handle both flat array and grouped by event formats
+  const rawPhotos = useMemo(() => {
+    let list: any[] = [];
+    if (data?.data?.photos) {
+      if (Array.isArray(data.data.photos) && data.data.photos.length > 0) {
+        const firstItem = data.data.photos[0];
+        if (firstItem.photos && Array.isArray(firstItem.photos)) {
+          list = data.data.photos.flatMap((group: any) => group.photos || []);
+        } else {
+          list = data.data.photos;
+        }
+      }
+    }
+    return list;
+  }, [data]);
+
+  const photos = useMemo(() => {
+    const userJoinedEvents = user?.events || [];
+    return rawPhotos.filter((photo: any) => {
+      const photoEventId = photo.eventId?._id || photo.eventId;
+      return photoEventId && userJoinedEvents.includes(photoEventId);
+    });
+  }, [rawPhotos, user?.events]);
+
+  const currentIndex = useMemo(() => {
+    if (!selectedPhoto) return -1;
+    return photos.findIndex((p: any) => p._id === selectedPhoto._id);
+  }, [selectedPhoto, photos]);
+
+  const lightboxItems = useMemo(
+    () =>
+      photos.map((p: any) => ({
+        image: p.url || '',
+        caption: p.fileName || 'Photo',
+      })),
+    [photos]
+  );
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -53,30 +92,6 @@ export default function PhotoGallery({ eventId }: PhotoGalleryProps) {
       </div>
     );
   }
-
-  // Handle both flat array and grouped by event formats
-  let rawPhotos: any[] = [];
-  if (data?.data?.photos) {
-    // Check if photos are grouped by event
-    if (Array.isArray(data.data.photos) && data.data.photos.length > 0) {
-      const firstItem = data.data.photos[0];
-      // If first item has 'photos' property, it's grouped by event
-      if (firstItem.photos && Array.isArray(firstItem.photos)) {
-        // Flatten grouped photos
-        rawPhotos = data.data.photos.flatMap((group: any) => group.photos || []);
-      } else {
-        // It's a flat array
-        rawPhotos = data.data.photos;
-      }
-    }
-  }
-
-  // Filter photos to only include those from events the user has joined
-  const userJoinedEvents = user?.events || [];
-  const photos = rawPhotos.filter((photo: any) => {
-    const photoEventId = photo.eventId?._id || photo.eventId;
-    return photoEventId && userJoinedEvents.includes(photoEventId);
-  });
 
   if (photos.length === 0) {
     return (
@@ -266,104 +281,54 @@ export default function PhotoGallery({ eventId }: PhotoGalleryProps) {
       </div>
 
       {/* Photo Modal */}
-      {selectedPhoto && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4"
-          onClick={() => setSelectedPhoto(null)}
-        >
-          <div
-            className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-semibold">{selectedPhoto.fileName}</h3>
-                <button
-                  onClick={() => setSelectedPhoto(null)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  ✕
-                </button>
-              </div>
-
-              {selectedPhoto.url && (
-                <div className="mb-4">
-                  <img
-                    src={selectedPhoto.url}
-                    alt={selectedPhoto.fileName}
-                    className="w-full rounded-lg"
-                  />
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <p className="text-sm text-gray-600">Event</p>
-                  <p className="font-semibold">{selectedPhoto.eventId?.name || 'Unknown'}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Uploaded</p>
-                  <p className="font-semibold">
+      {selectedPhoto && currentIndex >= 0 && (
+        <PhotoLightbox
+          items={lightboxItems}
+          startIndex={currentIndex}
+          onIndexChange={(i) => setSelectedPhoto(photos[i])}
+          onClose={() => setSelectedPhoto(null)}
+          footer={
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <h3 className="truncate text-base font-semibold text-white sm:text-lg">
+                  {selectedPhoto.fileName}
+                </h3>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-400">
+                  <span>{selectedPhoto.eventId?.name || 'Unknown event'}</span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <Calendar className="h-3.5 w-3.5 shrink-0 text-violet-400" />
                     {selectedPhoto.createdAt
                       ? format(new Date(selectedPhoto.createdAt), 'MMM dd, yyyy')
                       : 'Unknown'}
-                  </p>
+                  </span>
+                  <span>{selectedPhoto.viewCount || 0} views</span>
+                  <span>{selectedPhoto.downloadCount || 0} downloads</span>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-600">Views</p>
-                  <p className="font-semibold">{selectedPhoto.viewCount || 0}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Downloads</p>
-                  <p className="font-semibold">{selectedPhoto.downloadCount || 0}</p>
-                </div>
-              </div>
-
-              {/* People in photo */}
-              {selectedPhoto.faceMatches && selectedPhoto.faceMatches.length > 0 && (
-                <div className="mb-4">
-                  <p className="text-sm text-gray-600 mb-2">People in this photo:</p>
-                  <div className="flex flex-wrap gap-2">
+                {selectedPhoto.faceMatches && selectedPhoto.faceMatches.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pt-1">
                     {selectedPhoto.faceMatches.map((match: any, idx: number) => (
-                      <div
+                      <span
                         key={idx}
-                        className="flex items-center gap-2 bg-gray-100 px-3 py-1 rounded-full"
+                        className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 text-xs text-white"
                       >
-                        {match.userId?.avatar ? (
-                          <img
-                            src={match.userId.avatar}
-                            alt={match.userId.name}
-                            className="w-6 h-6 rounded-full"
-                          />
-                        ) : (
-                          <div className="w-6 h-6 rounded-full bg-primary-600 flex items-center justify-center text-white text-xs">
-                            {match.userId?.name?.charAt(0) || '?'}
-                          </div>
-                        )}
-                        <span className="text-sm font-medium">
-                          {match.userId?.name || 'Unknown'}
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          {Math.round(match.confidence)}%
-                        </span>
-                      </div>
+                        {match.userId?.name || 'Unknown'}
+                        <span className="text-gray-400">{Math.round(match.confidence)}%</span>
+                      </span>
                     ))}
                   </div>
-                </div>
-              )}
-
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleDownload(selectedPhoto)}
-                  className="flex-1 flex items-center justify-center gap-2 bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700"
-                >
-                  <Download className="h-5 w-5" />
-                  Download Photo
-                </button>
+                )}
               </div>
+              <button
+                type="button"
+                onClick={() => handleDownload(selectedPhoto)}
+                className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-5 text-sm font-semibold text-white shadow-lg shadow-violet-900/30 transition hover:from-violet-500 hover:to-indigo-500 sm:h-10 sm:w-auto"
+              >
+                <Download size={18} className="shrink-0" />
+                Download Photo
+              </button>
             </div>
-          </div>
-        </div>
+          }
+        />
       )}
     </div>
   );
