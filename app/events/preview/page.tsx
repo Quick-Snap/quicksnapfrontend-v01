@@ -35,6 +35,8 @@ interface PreviewData {
   expiresAt: string;
 }
 
+const EMPTY_PHOTOS: PreviewPhoto[] = [];
+
 function PreviewContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -77,6 +79,22 @@ function PreviewContent() {
 
     fetchPreview();
   }, [token]);
+
+  const photos = data?.photos ?? EMPTY_PHOTOS;
+
+  const lightboxIndex = useMemo(() => {
+    if (!lightboxPhoto) return -1;
+    return photos.findIndex((p) => p.imageId === lightboxPhoto.imageId);
+  }, [lightboxPhoto, photos]);
+
+  const lightboxItems = useMemo(
+    () =>
+      photos.map((p) => ({
+        image: p.url || '',
+        caption: `Match ${Math.round(p.confidence)}%`,
+      })),
+    [photos]
+  );
 
   const handleActionClick = async (photo: PreviewPhoto, type: 'download' | 'fullscreen') => {
     if (user) {
@@ -125,21 +143,7 @@ function PreviewContent() {
     );
   }
 
-  const { event, photos, totalCount } = data;
-
-  const lightboxIndex = useMemo(() => {
-    if (!lightboxPhoto) return -1;
-    return photos.findIndex((p) => p.imageId === lightboxPhoto.imageId);
-  }, [lightboxPhoto, photos]);
-
-  const lightboxItems = useMemo(
-    () =>
-      photos.map((p) => ({
-        image: p.url || '',
-        caption: `Match ${Math.round(p.confidence)}%`,
-      })),
-    [photos]
-  );
+  const { event, totalCount } = data;
 
   return (
     <div className="space-y-10 py-6 max-w-5xl mx-auto px-4">
