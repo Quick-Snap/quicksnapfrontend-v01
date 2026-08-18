@@ -34,7 +34,7 @@ export default function SpottedPreviewPage() {
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-600 shadow-lg shadow-violet-500/30">
             <Camera className="h-5 w-5 text-white" />
           </div>
-          <span className="text-xl font-bold tracking-tight text-white">QuickSnap</span>
+          <span className="text-xl font-bold tracking-tight text-white">Roopixo</span>
         </div>
 
         {/* Card */}
@@ -113,7 +113,7 @@ export default function SpottedPreviewPage() {
         {/* Security footer note */}
         <p className="text-center text-xs text-zinc-500 flex items-center justify-center gap-1.5">
           <ShieldCheck className="h-4 w-4 text-emerald-400" />
-          <span>QuickSnap uses AI face recognition to automatically deliver your photos securely.</span>
+          <span>Roopixo uses AI face recognition to automatically deliver your photos securely.</span>
         </p>
       </div>
     </main>

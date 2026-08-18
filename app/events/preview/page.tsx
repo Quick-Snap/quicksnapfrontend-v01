@@ -103,7 +103,7 @@ function PreviewContent() {
       } else {
         // Proxy download through backend to bypass browser cross-origin limits completely
         const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
-        const downloadUrl = `${baseUrl}/previews/download?url=${encodeURIComponent(photo.url)}&filename=quicksnap-photo-${photo.imageId}.jpg`;
+        const downloadUrl = `${baseUrl}/previews/download?url=${encodeURIComponent(photo.url)}&filename=roopixo-photo-${photo.imageId}.jpg`;
         window.location.href = downloadUrl;
       }
     } else {

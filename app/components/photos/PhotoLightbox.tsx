@@ -3,7 +3,12 @@
 import { X, EyeOff } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import MorphSlider from '@/components/MorphSlider/MorphSlider';
+import dynamic from 'next/dynamic';
+
+const MorphSlider = dynamic(
+  () => import('@/components/MorphSlider/MorphSlider'),
+  { ssr: false }
+);
 
 export type PhotoLightboxItem = {
   image: string;
