@@ -104,9 +104,7 @@ export default function MyPhotosPage() {
     [filteredPhotos]
   );
 
-  const apiTotal = queryData?.data?.pagination?.total;
-  const matchedTotal =
-    typeof apiTotal === 'number' && !Number.isNaN(apiTotal) ? apiTotal : allPhotos.length;
+  const matchedTotal = allPhotos.length;
   const isSearching = Boolean(searchTerm.trim());
   const totalPhotos = isSearching ? filteredPhotos.length : matchedTotal;
   const totalPages = Math.ceil(filteredPhotos.length / PHOTOS_PER_PAGE) || 1;

@@ -150,7 +150,7 @@ export async function fetchAllMyPhotos(params?: {
     page++;
   }
 
-  const total = apiTotal ?? extractMyPhotosTotal(lastResponse) ?? photos.length;
+  const total = photos.length;
 
   return {
     success: lastResponse?.success ?? true,
