@@ -69,14 +69,17 @@ export default function CustomizeAccessCodeModal({
 
     const timer = setTimeout(async () => {
       try {
-        const res = await eventApi.checkAccessCode(cleanCode, event?._id);
+        const res: any = await eventApi.checkAccessCode(cleanCode, event?._id);
         if (isMounted) {
-          if (res.success && res.data) {
-            setIsAvailable(res.data.available);
-            setValidationMessage(res.data.message || (res.data.available ? 'Code is available!' : 'Code is taken'));
+          const availableVal = res?.data?.available !== undefined ? res.data.available : res?.available;
+          const msg = res?.data?.message || res?.message;
+
+          if (res?.success && typeof availableVal === 'boolean') {
+            setIsAvailable(availableVal);
+            setValidationMessage(msg || (availableVal ? `Code "${cleanCode}" is available!` : 'Code is taken'));
           } else {
             setIsAvailable(false);
-            setValidationMessage(res.message || 'Error checking availability');
+            setValidationMessage(msg || 'Error checking availability');
           }
         }
       } catch (err: any) {
@@ -181,10 +184,16 @@ export default function CustomizeAccessCodeModal({
                 onChange={handleInputChange}
                 maxLength={16}
                 placeholder="e.g. BWAI-26 or TANVI-WEDDING"
-                className="w-full rounded-xl border border-zinc-300 bg-zinc-50/50 px-4 py-3 font-mono text-base font-semibold tracking-wider text-zinc-900 focus:border-violet-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet-500/20 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-violet-400"
+                className={`w-full rounded-xl border bg-zinc-50/50 px-4 py-3 font-mono text-base font-semibold tracking-wider text-zinc-900 focus:bg-white focus:outline-none focus:ring-2 dark:bg-white/5 dark:text-white transition-colors ${
+                  isAvailable === true
+                    ? 'border-emerald-500 focus:border-emerald-500 focus:ring-emerald-500/20'
+                    : isAvailable === false
+                    ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20'
+                    : 'border-zinc-300 focus:border-violet-500 focus:ring-violet-500/20 dark:border-white/10 dark:focus:border-violet-400'
+                }`}
               />
-              <div className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
-                {checking && <Loader2 size={16} className="animate-spin text-zinc-400" />}
+              <div className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5 pointer-events-none">
+                {checking && <Loader2 size={18} className="animate-spin text-zinc-400" />}
                 {!checking && isAvailable === true && (
                   <CheckCircle2 size={18} className="text-emerald-500" />
                 )}
@@ -196,15 +205,17 @@ export default function CustomizeAccessCodeModal({
 
             {/* Validation Message */}
             {validationMessage && (
-              <p className={`mt-2 text-xs font-medium flex items-center gap-1.5 ${
+              <div className={`mt-2 text-xs font-semibold flex items-center gap-1.5 ${
                 isAvailable === true 
                   ? 'text-emerald-600 dark:text-emerald-400' 
                   : isAvailable === false 
                     ? 'text-red-600 dark:text-red-400' 
                     : 'text-zinc-500 dark:text-gray-400'
               }`}>
-                {validationMessage}
-              </p>
+                {isAvailable === true && <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />}
+                {isAvailable === false && <AlertCircle size={14} className="text-red-500 shrink-0" />}
+                <span>{validationMessage}</span>
+              </div>
             )}
           </div>
 
