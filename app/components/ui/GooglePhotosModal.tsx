@@ -172,6 +172,9 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
     const [isScrapingLink, setIsScrapingLink] = useState(false);
     const [driveFolderUrl, setDriveFolderUrl] = useState('');
     const [isListingDrive, setIsListingDrive] = useState(false);
+    const [autoSyncEnabled, setAutoSyncEnabled] = useState(true);
+    const [syncDurationDays, setSyncDurationDays] = useState<number>(5);
+    const [isStartingBackgroundSync, setIsStartingBackgroundSync] = useState(false);
     const [activeTab, setActiveTab] = useState<'picker' | 'link' | 'drive'>('link');
 
     useEffect(() => {
@@ -394,6 +397,39 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
         } finally {
             setIsScrapingLink(false);
             setLoading(false);
+        }
+    };
+
+    const handleStartBackgroundDriveSync = async () => {
+        if (!driveFolderUrl) return;
+        setIsStartingBackgroundSync(true);
+        try {
+            const res = await api.post('/photos/google-drive/start-sync', {
+                eventId,
+                folderUrl: driveFolderUrl,
+                autoSyncEnabled,
+                syncDurationDays: autoSyncEnabled ? syncDurationDays : 0
+            });
+
+            if (res.data?.success) {
+                toast.success('🚀 Google Drive import started in background! You can safely close your window.', {
+                    duration: 5000
+                });
+                if (typeof window !== 'undefined') {
+                    sessionStorage.setItem(`qs_event_photos_dirty_${eventId}`, '1');
+                }
+                if (onSyncComplete) {
+                    onSyncComplete();
+                }
+                onClose();
+            } else {
+                toast.error(res.data?.message || 'Failed to start background import.');
+            }
+        } catch (err: any) {
+            console.error('Background drive sync error:', err);
+            toast.error(err.response?.data?.message || 'Failed to start background import.');
+        } finally {
+            setIsStartingBackgroundSync(false);
         }
     };
 
@@ -814,25 +850,84 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                                                     <li>Ensure the role is set to <span className="font-medium text-zinc-700 dark:text-zinc-300">Viewer</span></li>
                                                 </ul>
                                             </div>
+
+                                            {/* Auto-Sync Consent & Duration Options */}
+                                            <div className="rounded-xl border border-zinc-200 dark:border-white/10 p-3.5 space-y-3 bg-zinc-50/50 dark:bg-white/[0.02]">
+                                                <label className="flex items-start gap-2.5 cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={autoSyncEnabled}
+                                                        onChange={(e) => setAutoSyncEnabled(e.target.checked)}
+                                                        className="mt-0.5 w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900"
+                                                    />
+                                                    <div className="space-y-0.5">
+                                                        <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 block">
+                                                            Keep syncing this Google Drive automatically for new photos
+                                                        </span>
+                                                        <p className="text-[10px] text-zinc-500 dark:text-gray-400">
+                                                            When photographers drop new pictures into this folder later, Roopixo will automatically detect and sync them.
+                                                        </p>
+                                                    </div>
+                                                </label>
+
+                                                {autoSyncEnabled && (
+                                                    <div className="pt-2 border-t border-zinc-200 dark:border-white/10 space-y-2">
+                                                        <div className="flex items-center justify-between">
+                                                            <span className="text-[11px] font-medium text-zinc-700 dark:text-zinc-300">
+                                                                Auto-sync duration:
+                                                            </span>
+                                                            <span className="text-[10px] text-zinc-400 dark:text-gray-500">
+                                                                Stops automatically after duration
+                                                            </span>
+                                                        </div>
+                                                        <div className="grid grid-cols-4 gap-1.5">
+                                                            {[
+                                                                { days: 2, label: '2 Days' },
+                                                                { days: 5, label: '5 Days', tag: 'Popular' },
+                                                                { days: 15, label: '15 Days' },
+                                                                { days: 30, label: '1 Month' }
+                                                            ].map(opt => (
+                                                                <button
+                                                                    key={opt.days}
+                                                                    type="button"
+                                                                    onClick={() => setSyncDurationDays(opt.days)}
+                                                                    className={`
+                                                                        py-1.5 px-2 rounded-lg text-xs font-medium transition-all text-center relative
+                                                                        ${syncDurationDays === opt.days 
+                                                                            ? 'bg-blue-600 text-white shadow-sm' 
+                                                                            : 'bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10 text-zinc-700 dark:text-zinc-300 hover:border-blue-400'
+                                                                        }
+                                                                    `}
+                                                                >
+                                                                    {opt.label}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
 
                                         <button
-                                            onClick={handleImportDriveFolder}
-                                            disabled={!driveFolderUrl || isListingDrive}
-                                            className="w-full py-3 px-6 rounded-xl font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center gap-2 text-xs shadow-lg shadow-blue-500/20 hover:shadow-blue-500/35"
+                                            onClick={handleStartBackgroundDriveSync}
+                                            disabled={!driveFolderUrl || isStartingBackgroundSync}
+                                            className="w-full py-3.5 px-6 rounded-xl font-bold text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 hover:from-blue-500 hover:to-indigo-500 disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center gap-2 text-xs shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40"
                                         >
-                                            {isListingDrive ? (
+                                            {isStartingBackgroundSync ? (
                                                 <>
                                                     <Loader2 className="w-4 h-4 animate-spin" />
-                                                    Listing Folder Files...
+                                                    Starting Cloud Import...
                                                 </>
                                             ) : (
                                                 <>
-                                                    <Folder className="w-3.5 h-3.5" />
-                                                    Scan & Load Folder
+                                                    <Folder className="w-4 h-4" />
+                                                    Start Background Import &amp; Sync
                                                 </>
                                             )}
                                         </button>
+                                        <p className="text-[10px] text-center text-zinc-500 dark:text-gray-400">
+                                            ⚡ Cloud-managed: You can close your laptop right after clicking. We'll email you when done!
+                                        </p>
                                     </div>
                                 </div>
                             ) : activeTab === 'link' ? (

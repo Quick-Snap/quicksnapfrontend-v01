@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRole } from '@/hooks/useRole';
 import toast from 'react-hot-toast';
 import GooglePhotosModal from './GooglePhotosModal';
+import GoogleDriveSyncCard from '../upload/GoogleDriveSyncCard';
 
 interface UploadZoneProps {
     onFilesSelected: (files: File[]) => void;
@@ -96,6 +97,14 @@ export default function UploadZone({ onFilesSelected, maxFiles = 100, eventId, o
 
     return (
         <div className="w-full">
+            {/* Google Drive Active / Connected Sync Card */}
+            {eventId && (
+                <GoogleDriveSyncCard 
+                    eventId={eventId} 
+                    onPhotosUpdated={onSyncComplete} 
+                />
+            )}
+
             {/* Drop Zone */}
             <div
                 {...getRootProps()}
