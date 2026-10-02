@@ -575,7 +575,7 @@ export default function PublicEventPage() {
                                             </div>
                                             <div className="min-w-0 flex-1">
                                                 <dt className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-gray-500">Organizer</dt>
-                                                <dd className="mt-1 text-sm font-medium text-zinc-900 dark:text-white">{event.organizer.name}</dd>
+                                                <dd className="mt-1 text-sm font-medium text-zinc-900 dark:text-white">{event.organizerName || event.organizer.name}</dd>
                                                 <dd className="mt-0.5 break-all text-xs text-zinc-500 dark:text-gray-500">{event.organizer.email}</dd>
                                             </div>
                                         </div>

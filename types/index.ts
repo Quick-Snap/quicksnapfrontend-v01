@@ -22,6 +22,7 @@ export interface Event {
   name: string;
   description: string;
   organizer: User;
+  organizerName?: string;
   startDate: string;
   endDate: string;
   venue: string;

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, Clock, MapPin, Globe, Lock, AlertCircle, Loader2 } from 'lucide-react';
+import { X, Calendar, Clock, MapPin, Globe, Lock, AlertCircle, Loader2, User } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { eventApi } from '@/lib/api';
 
@@ -32,6 +32,7 @@ export default function EditEventModal({
   onEventUpdated,
 }: EditEventModalProps) {
   const [name, setName] = useState('');
+  const [organizerName, setOrganizerName] = useState('');
   const [description, setDescription] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -43,6 +44,7 @@ export default function EditEventModal({
   useEffect(() => {
     if (event) {
       setName(event.name || '');
+      setOrganizerName(event.organizerName || event.organizer?.name || '');
       setDescription(event.description || '');
       setStartDate(toDatetimeLocal(event.startDate));
       setEndDate(toDatetimeLocal(event.endDate));
@@ -94,6 +96,7 @@ export default function EditEventModal({
     try {
       const payload = {
         name: trimmedName,
+        organizerName: organizerName.trim(),
         description: description.trim(),
         startDate: start.toISOString(),
         endDate: end.toISOString(),
@@ -164,6 +167,24 @@ export default function EditEventModal({
               required
               className="w-full rounded-xl border border-zinc-300 bg-zinc-50/50 px-3.5 py-2.5 text-sm text-zinc-900 focus:border-violet-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet-500/20 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-violet-400"
             />
+          </div>
+
+          {/* Organizer / Host Display Name */}
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:text-gray-300 mb-1.5 flex items-center gap-1.5">
+              <User size={13} className="text-emerald-600 dark:text-emerald-400" />
+              Organizer Display Name (Public)
+            </label>
+            <input
+              type="text"
+              value={organizerName}
+              onChange={(e) => setOrganizerName(e.target.value)}
+              placeholder="e.g. GDG Community or Anuraag Kumar Mishra"
+              className="w-full rounded-xl border border-zinc-300 bg-zinc-50/50 px-3.5 py-2.5 text-sm text-zinc-900 focus:border-violet-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet-500/20 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-violet-400"
+            />
+            <p className="mt-1 text-[11px] text-zinc-500 dark:text-gray-400">
+              The public name visible to guests and attendees for this event. Your account email remains unchanged.
+            </p>
           </div>
 
           {/* Description */}

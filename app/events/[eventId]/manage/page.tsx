@@ -22,6 +22,7 @@ import {
     Upload,
     Camera,
     UserPlus,
+    User,
     Mail,
     Eye,
     XCircle
@@ -668,6 +669,19 @@ export default function ManageEventPage() {
                                 <div>
                                     <p className="mb-1 font-medium text-zinc-900 dark:text-white">Venue</p>
                                     <p className="text-sm text-zinc-600 dark:text-gray-300">{event.venue || event.location || 'Not specified'}</p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-start gap-4 rounded-xl border border-zinc-200/90 bg-zinc-50/80 p-4 dark:border-white/10 dark:bg-white/5">
+                                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-100 dark:border-emerald-400/20 dark:bg-emerald-500/15">
+                                    <User className="text-emerald-700 dark:text-emerald-300" size={20} />
+                                </div>
+                                <div>
+                                    <p className="mb-1 font-medium text-zinc-900 dark:text-white">Organizer Name (Public)</p>
+                                    <p className="text-sm font-semibold text-zinc-800 dark:text-gray-200">{event.organizerName || event.organizer?.name || 'Default'}</p>
+                                    {event.organizer?.email && (
+                                        <p className="mt-0.5 text-xs text-zinc-500 dark:text-gray-400">{event.organizer.email}</p>
+                                    )}
                                 </div>
                             </div>
                         </div>

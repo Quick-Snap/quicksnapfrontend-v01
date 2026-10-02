@@ -351,7 +351,7 @@ export default function EventsPage() {
                         </div>
                         <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300/95">
                           <Users className="h-4 w-4 shrink-0 opacity-80" />
-                          <span className="truncate text-sm">{event.organizer?.name || 'Organizer'}</span>
+                          <span className="truncate text-sm">{event.organizerName || event.organizer?.name || 'Organizer'}</span>
                         </div>
                         {(user?.role === 'admin' ||
                           event.organizer?._id === user?.id ||

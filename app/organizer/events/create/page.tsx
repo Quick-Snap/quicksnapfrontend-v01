@@ -14,6 +14,7 @@ import {
     FileText,
     Clock,
     Users,
+    User,
     CheckCircle,
     AlertCircle
 } from 'lucide-react';
@@ -28,6 +29,7 @@ export default function CreateEventPage() {
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
+        organizerName: '',
         description: '',
         venue: '',
         startDate: '',
@@ -151,6 +153,29 @@ export default function CreateEventPage() {
                                                 placeholder="e.g. Annual College Fest 2025"
                                             />
                                         </div>
+                                    </div>
+
+                                    {/* Organizer Display Name */}
+                                    <div>
+                                        <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-gray-300">
+                                            Organizer Display Name <span className="text-xs text-zinc-400 font-normal">(Optional - Publicly visible)</span>
+                                        </label>
+                                        <div className="relative">
+                                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                                <User size={18} className="text-gray-500" />
+                                            </div>
+                                            <input
+                                                type="text"
+                                                name="organizerName"
+                                                value={formData.organizerName}
+                                                onChange={handleChange}
+                                                className="input w-full rounded-xl py-3.5 pl-12 pr-4 transition-all"
+                                                placeholder="e.g. Build with AI Community or John Doe"
+                                            />
+                                        </div>
+                                        <p className="mt-1.5 text-xs text-zinc-500 dark:text-gray-400">
+                                            Custom name attendees and guests will see for this event. Defaults to your account name if left blank.
+                                        </p>
                                     </div>
 
                                     {/* Description */}
