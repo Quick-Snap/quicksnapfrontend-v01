@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQueryClient } from 'react-query';
-import { X, Building2, Mail, Phone, FileText } from 'lucide-react';
+import { X, Building2, Phone, FileText } from 'lucide-react';
 import { organizerRequestApi } from '@/lib/api';
 import { SubmitOrganizerRequestDto } from '@/types';
 import { Button } from '@/app/components/ui/Button';
@@ -18,7 +18,6 @@ interface ApplyOrganizerModalProps {
 const emptyForm: SubmitOrganizerRequestDto = {
   reason: '',
   organizationName: '',
-  organizationEmail: '',
   phone: '',
 };
 
@@ -54,7 +53,6 @@ export default function ApplyOrganizerModal({
       const payload: SubmitOrganizerRequestDto = {
         reason: form.reason.trim(),
         organizationName: form.organizationName?.trim() || undefined,
-        organizationEmail: form.organizationEmail?.trim() || undefined,
         phone: form.phone?.trim() || undefined,
       };
 
@@ -109,21 +107,6 @@ export default function ApplyOrganizerModal({
               placeholder="Snap Studio"
               value={form.organizationName || ''}
               onChange={(e) => handleChange('organizationName', e.target.value)}
-              disabled={loading}
-            />
-          </div>
-
-          <div>
-            <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-zinc-700 dark:text-gray-300">
-              <Mail size={16} className="text-zinc-400" />
-              Organization email
-            </label>
-            <input
-              type="email"
-              className="input"
-              placeholder="studio@example.com"
-              value={form.organizationEmail || ''}
-              onChange={(e) => handleChange('organizationEmail', e.target.value)}
               disabled={loading}
             />
           </div>
