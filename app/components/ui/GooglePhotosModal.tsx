@@ -172,8 +172,8 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
     const [isScrapingLink, setIsScrapingLink] = useState(false);
     const [driveFolderUrl, setDriveFolderUrl] = useState('');
     const [isListingDrive, setIsListingDrive] = useState(false);
-    const [autoSyncEnabled, setAutoSyncEnabled] = useState(true);
-    const [syncDurationDays, setSyncDurationDays] = useState<number>(5);
+    const [autoSyncEnabled, setAutoSyncEnabled] = useState(false);
+    const [syncDurationDays, setSyncDurationDays] = useState<number>(2);
     const [isStartingBackgroundSync, setIsStartingBackgroundSync] = useState(false);
     const [activeTab, setActiveTab] = useState<'picker' | 'link' | 'drive'>('link');
 
@@ -191,6 +191,8 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
             setIsScrapingLink(false);
             setDriveFolderUrl('');
             setIsListingDrive(false);
+            setAutoSyncEnabled(false);
+            setSyncDurationDays(2);
             setShowCancelConfirm(false);
             isCancelledRef.current = false;
             setActiveTab('link');
@@ -857,7 +859,13 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                                                     <input
                                                         type="checkbox"
                                                         checked={autoSyncEnabled}
-                                                        onChange={(e) => setAutoSyncEnabled(e.target.checked)}
+                                                        onChange={(e) => {
+                                                            const checked = e.target.checked;
+                                                            setAutoSyncEnabled(checked);
+                                                            if (checked) {
+                                                                setSyncDurationDays(2);
+                                                            }
+                                                        }}
                                                         className="mt-0.5 w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900"
                                                     />
                                                     <div className="space-y-0.5">
