@@ -33,6 +33,8 @@ import { fetchAllEventPhotos } from '@/lib/photoFetch';
 import { canAccessEventManagePage, canFullManageEvent } from '@/lib/eventPermissions';
 import { enrichPhotosWithDisplayUrls, getPhotoDisplayUrl } from '@/lib/photoUrl';
 import RefreshAttendeeMatchesCard from '@/app/components/events/RefreshAttendeeMatchesCard';
+import EditEventModal from '@/app/components/events/EditEventModal';
+import CustomizeAccessCodeModal from '@/app/components/events/CustomizeAccessCodeModal';
 import { Button } from '@/app/components/ui/Button';
 import Pagination from '@/app/components/ui/Pagination';
 import { useAuth } from '@/contexts/AuthContext';
@@ -130,6 +132,8 @@ export default function ManageEventPage() {
 
     const [isTrashOpen, setIsTrashOpen] = useState(false);
     const [trashCount, setTrashCount] = useState(0);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
 
     const fetchTrashCount = useCallback(async () => {
         if (!eventId) return;
@@ -527,11 +531,23 @@ export default function ManageEventPage() {
                                 <Shield className="h-4 w-4 text-violet-600 dark:text-violet-200" />
                                 <span className="text-xs uppercase tracking-[0.25em] text-violet-800/90 dark:text-gray-200">Event management</span>
                             </div>
-                            <div className="flex flex-wrap items-center gap-3">
-                                <h1 className="text-3xl font-semibold leading-tight text-zinc-900 dark:text-white md:text-4xl">{event.name}</h1>
-                                <span className="rounded-full border border-zinc-200/90 bg-white px-3 py-1 text-xs text-zinc-700 dark:border-white/10 dark:bg-white/5 dark:text-gray-200">
-                                    {displayedPhotoCount} photos
-                                </span>
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                <div className="flex flex-wrap items-center gap-3">
+                                    <h1 className="text-3xl font-semibold leading-tight text-zinc-900 dark:text-white md:text-4xl">{event.name}</h1>
+                                    <span className="rounded-full border border-zinc-200/90 bg-white px-3 py-1 text-xs text-zinc-700 dark:border-white/10 dark:bg-white/5 dark:text-gray-200">
+                                        {displayedPhotoCount} photos
+                                    </span>
+                                </div>
+                                {canFullManage && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsEditModalOpen(true)}
+                                        className="inline-flex items-center gap-1.5 rounded-xl border border-violet-200 bg-white/90 px-3.5 py-2 text-xs font-semibold text-violet-700 shadow-sm transition-all hover:bg-violet-50 dark:border-white/10 dark:bg-white/10 dark:text-violet-200 dark:hover:bg-white/15"
+                                    >
+                                        <Edit size={14} />
+                                        Edit Details
+                                    </button>
+                                )}
                             </div>
                             <p className="text-lg text-zinc-600 dark:text-gray-300">{event.description || 'No description provided'}</p>
                         </div>
@@ -597,10 +613,22 @@ export default function ManageEventPage() {
 
                 {/* Event Details */}
                 <div className={MANAGE_CARD}>
-                    <h2 className="mb-6 flex items-center gap-2 text-xl font-semibold text-zinc-900 dark:text-white">
-                        <Calendar className="text-violet-600 dark:text-violet-300" size={22} />
-                        Event Details
-                    </h2>
+                    <div className="mb-6 flex items-center justify-between">
+                        <h2 className="flex items-center gap-2 text-xl font-semibold text-zinc-900 dark:text-white">
+                            <Calendar className="text-violet-600 dark:text-violet-300" size={22} />
+                            Event Details
+                        </h2>
+                        {canFullManage && (
+                            <button
+                                type="button"
+                                onClick={() => setIsEditModalOpen(true)}
+                                className="inline-flex items-center gap-1.5 rounded-xl border border-violet-200/80 bg-violet-50/80 px-3.5 py-1.5 text-xs font-semibold text-violet-700 transition-colors hover:bg-violet-100 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-300 dark:hover:bg-violet-500/20"
+                            >
+                                <Edit size={13} />
+                                Edit Details
+                            </button>
+                        )}
+                    </div>
 
                     <div className="grid gap-6 md:grid-cols-2">
                         <div className="space-y-4">
@@ -639,7 +667,7 @@ export default function ManageEventPage() {
                                 </div>
                                 <div>
                                     <p className="mb-1 font-medium text-zinc-900 dark:text-white">Venue</p>
-                                    <p className="text-sm text-zinc-600 dark:text-gray-300">{event.venue || 'Not specified'}</p>
+                                    <p className="text-sm text-zinc-600 dark:text-gray-300">{event.venue || event.location || 'Not specified'}</p>
                                 </div>
                             </div>
                         </div>
@@ -650,14 +678,26 @@ export default function ManageEventPage() {
                                 <div className="rounded-xl border border-violet-200/90 bg-gradient-to-r from-violet-50 to-indigo-50 p-4 dark:border-violet-500/30 dark:from-[#181025] dark:to-[#121022]">
                                     <div className="mb-2 flex items-center justify-between">
                                         <p className="font-medium text-zinc-900 dark:text-white">Access Code</p>
-                                        <button
-                                            type="button"
-                                            onClick={handleCopyCode}
-                                            className="flex items-center gap-1 text-xs text-violet-700 transition-colors hover:text-violet-900 dark:text-violet-200 dark:hover:text-violet-100"
-                                        >
-                                            {codeCopied ? <Check size={14} /> : <Copy size={14} />}
-                                            {codeCopied ? 'Copied!' : 'Copy'}
-                                        </button>
+                                        <div className="flex items-center gap-2.5">
+                                            {canFullManage && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setIsCodeModalOpen(true)}
+                                                    className="inline-flex items-center gap-1 text-xs font-semibold text-violet-700 transition-colors hover:text-violet-900 dark:text-violet-300 dark:hover:text-white"
+                                                >
+                                                    <Edit size={12} />
+                                                    Customize
+                                                </button>
+                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={handleCopyCode}
+                                                className="flex items-center gap-1 text-xs text-violet-700 transition-colors hover:text-violet-900 dark:text-violet-200 dark:hover:text-violet-100"
+                                            >
+                                                {codeCopied ? <Check size={14} /> : <Copy size={14} />}
+                                                {codeCopied ? 'Copied!' : 'Copy'}
+                                            </button>
+                                        </div>
                                     </div>
                                     <p className="font-mono text-2xl font-semibold tracking-widest text-violet-800 dark:text-violet-200">{event.accessCode}</p>
                                     <p className="mt-2 text-xs text-zinc-500 dark:text-gray-500">Share this code with guests to let them join</p>
@@ -666,9 +706,25 @@ export default function ManageEventPage() {
 
                             {/* Visibility */}
                             <div className="rounded-xl border border-zinc-200/90 bg-zinc-50/80 p-4 dark:border-white/10 dark:bg-white/5">
-                                <p className="mb-1 font-medium text-zinc-900 dark:text-white">Visibility</p>
-                                <p className={`text-sm ${event.isPublic ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300'}`}>
-                                    {event.isPublic ? '🌐 Public Event' : '🔒 Private Event'}
+                                <div className="flex items-center justify-between mb-1">
+                                    <p className="font-medium text-zinc-900 dark:text-white">Visibility</p>
+                                    {canFullManage && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsEditModalOpen(true)}
+                                            className="text-xs font-semibold text-violet-600 hover:text-violet-800 dark:text-violet-400 dark:hover:text-violet-300 transition-colors"
+                                        >
+                                            Change
+                                        </button>
+                                    )}
+                                </div>
+                                <p className={`text-sm font-semibold ${event.isPublic !== false ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300'}`}>
+                                    {event.isPublic !== false ? '🌐 Public Event (1-Click Join)' : '🔒 Private Event (Code Required)'}
+                                </p>
+                                <p className="mt-1 text-xs text-zinc-500 dark:text-gray-400">
+                                    {event.isPublic !== false 
+                                        ? 'Guests can join and unlock photos without entering an access code.' 
+                                        : 'Guests must enter the access code to join this event.'}
                                 </p>
                             </div>
                         </div>
@@ -1212,6 +1268,28 @@ export default function ManageEventPage() {
                     onRefresh={() => {
                         void refreshEventPhotos({ quiet: true });
                         void fetchTrashCount();
+                    }}
+                />
+
+                {/* Edit Event Details Modal */}
+                <EditEventModal
+                    isOpen={isEditModalOpen}
+                    onClose={() => setIsEditModalOpen(false)}
+                    event={event}
+                    onEventUpdated={(updated) => {
+                        setEvent(updated);
+                        queryClient.invalidateQueries(['event', eventId]);
+                    }}
+                />
+
+                {/* Customize Access Code Modal */}
+                <CustomizeAccessCodeModal
+                    isOpen={isCodeModalOpen}
+                    onClose={() => setIsCodeModalOpen(false)}
+                    event={event}
+                    onCodeUpdated={(newCode) => {
+                        setEvent((prev: any) => prev ? { ...prev, accessCode: newCode } : prev);
+                        queryClient.invalidateQueries(['event', eventId]);
                     }}
                 />
             </div>

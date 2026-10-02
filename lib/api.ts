@@ -460,6 +460,19 @@ export const eventApi = {
     return response.data;
   },
 
+  checkAccessCode: async (code: string, eventId?: string) => {
+    const response = await api.get<ApiResponse<{ available: boolean; message?: string }>>(
+      '/events/check-access-code',
+      {
+        params: {
+          code,
+          eventId
+        }
+      }
+    );
+    return response.data;
+  },
+
   refreshAttendeePhotoMatches: async (eventId: string) => {
     const response = await api.post<
       ApiResponse<{

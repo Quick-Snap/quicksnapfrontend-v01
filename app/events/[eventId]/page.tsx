@@ -16,7 +16,11 @@ import {
     Sparkles,
     Camera,
     Lock,
-    EyeOff
+    EyeOff,
+    Check,
+    UserCheck,
+    Loader2,
+    KeyRound
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { eventApi, photoApi } from '@/lib/api';
@@ -30,9 +34,11 @@ import { getPhotoDisplayUrl } from '@/lib/photoUrl';
 import { Button } from '@/app/components/ui/Button';
 import Pagination from '@/app/components/ui/Pagination';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAuthStore } from '@/stores/authStore';
 import { useQuery, useQueryClient } from 'react-query';
 import { softSurface, softSurfaceHover } from '@/lib/dashboardUi';
 import { PhotoLightbox } from '@/app/components/photos/PhotoLightbox';
+import JoinEventModal from '@/app/components/student/JoinEventModal';
 
 const PHOTOS_PER_PAGE = 12;
 const PREVIEW_PHOTO_COUNT = 4;
@@ -81,6 +87,9 @@ export default function PublicEventPage() {
     const [selectedPhoto, setSelectedPhoto] = useState<any>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [photoViewMode, setPhotoViewMode] = useState<'all' | 'my'>('all');
+    const [joining, setJoining] = useState(false);
+    const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
+    const loadUser = useAuthStore((state) => state.loadUser);
 
     const handleUntag = async (photo: any) => {
         if (!confirm("Remove yourself from this photo?\n\nThis will delete your face tag from this photo, hide it from your personal gallery, and ensure it won't be matched to you again even if matching is refreshed.")) {
@@ -112,6 +121,46 @@ export default function PublicEventPage() {
         { enabled: !!eventId, staleTime: 60 * 1000, retry: reactQueryRetry }
     );
     const event = eventResult?.data;
+
+    // Check if the current user has joined this event
+    const isAttendee = useMemo(() => {
+        if (!currentUser) return false;
+        const currentId = (currentUser.id || (currentUser as any)._id)?.toString();
+        const attendees = Array.isArray(event?.attendees) ? event.attendees : [];
+        const inAttendees = attendees.some((a: any) => {
+            const aId = typeof a === 'string' ? a : a?._id || a?.id;
+            return aId && aId.toString() === currentId;
+        });
+        const inEvents = Array.isArray((currentUser as any).events) && (currentUser as any).events.some((e: any) => e.toString() === eventId);
+        const inJoined = Array.isArray((currentUser as any).joinedEvents) && (currentUser as any).joinedEvents.some((e: any) => e.toString() === eventId);
+        return inAttendees || inEvents || inJoined;
+    }, [currentUser, event, eventId]);
+
+    const handleJoinPublic = async () => {
+        if (!currentUser) {
+            router.push(`/auth/login?redirect=/events/${eventId}`);
+            return;
+        }
+
+        setJoining(true);
+        try {
+            const res = await eventApi.register(eventId);
+            if (res.success) {
+                toast.success(`You've joined ${event?.name || 'the event'}!`);
+                await loadUser({ force: true });
+                queryClient.invalidateQueries(['event', eventId]);
+                queryClient.invalidateQueries(['myPhotos']);
+                queryClient.invalidateQueries(['myEventPhotos']);
+                queryClient.invalidateQueries(['userStats']);
+            } else {
+                toast.error(res.message || 'Failed to join event');
+            }
+        } catch (err: any) {
+            toast.error(err.response?.data?.message || 'Error joining event');
+        } finally {
+            setJoining(false);
+        }
+    };
 
     // Full gallery — authenticated users only (limit aligned with prior behavior)
     const { data: photosResult, isLoading: photosLoading } = useQuery(
@@ -349,9 +398,14 @@ export default function PublicEventPage() {
                                     >
                                         {isActive ? 'Active' : 'Past'}
                                     </span>
-                                    {event.isPublic && (
-                                        <span className="rounded-full border border-zinc-200/90 bg-white/90 px-3 py-1 text-xs font-semibold text-zinc-700 dark:border-white/15 dark:bg-white/10 dark:text-gray-200 sm:text-sm">
+                                    {event.isPublic !== false ? (
+                                        <span className="rounded-full border border-emerald-200/90 bg-emerald-50/90 px-3 py-1 text-xs font-semibold text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-200 sm:text-sm">
                                             Public
+                                        </span>
+                                    ) : (
+                                        <span className="flex items-center gap-1 rounded-full border border-amber-200/90 bg-amber-50/90 px-3 py-1 text-xs font-semibold text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/15 dark:text-amber-200 sm:text-sm">
+                                            <Lock size={12} />
+                                            Private
                                         </span>
                                     )}
                                     <span className="rounded-full bg-zinc-900/[0.06] px-2.5 py-1 text-[11px] font-medium uppercase tracking-wide text-zinc-600 dark:bg-white/10 dark:text-gray-400">
@@ -411,14 +465,66 @@ export default function PublicEventPage() {
                                     </div>
                                 </div>
 
-                                <Button
-                                    onClick={handleShare}
-                                    variant="outline"
-                                    className="h-12 w-full justify-center rounded-2xl border-zinc-300 bg-white/95 font-semibold shadow-sm dark:border-white/15 dark:bg-white/5 sm:h-[3rem] sm:w-auto sm:min-w-[11rem]"
-                                >
-                                    <Share2 size={18} className="mr-2 shrink-0" />
-                                    Share
-                                </Button>
+                                <div className="flex flex-wrap items-center gap-3">
+                                    {event.isPublic !== false ? (
+                                        // Public Event: 1-click Join
+                                        isAttendee ? (
+                                            <div className="inline-flex h-12 items-center gap-2 rounded-2xl border border-emerald-300 bg-emerald-50/90 px-5 text-sm font-semibold text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-200 sm:h-[3rem]">
+                                                <Check size={18} className="text-emerald-600 dark:text-emerald-400" />
+                                                Joined
+                                            </div>
+                                        ) : (
+                                            <Button
+                                                onClick={handleJoinPublic}
+                                                disabled={joining}
+                                                className="h-12 w-full justify-center rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 font-semibold text-white shadow-lg shadow-violet-500/25 hover:from-violet-500 hover:to-indigo-500 sm:h-[3rem] sm:w-auto sm:min-w-[11rem]"
+                                            >
+                                                {joining ? (
+                                                    <>
+                                                        <Loader2 size={18} className="mr-2 animate-spin shrink-0" />
+                                                        Joining...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <UserCheck size={18} className="mr-2 shrink-0" />
+                                                        Join Event
+                                                    </>
+                                                )}
+                                            </Button>
+                                        )
+                                    ) : (
+                                        // Private Event: Join with Code
+                                        isAttendee ? (
+                                            <div className="inline-flex h-12 items-center gap-2 rounded-2xl border border-emerald-300 bg-emerald-50/90 px-5 text-sm font-semibold text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-200 sm:h-[3rem]">
+                                                <Check size={18} className="text-emerald-600 dark:text-emerald-400" />
+                                                Joined
+                                            </div>
+                                        ) : (
+                                            <Button
+                                                onClick={() => {
+                                                    if (!currentUser) {
+                                                        router.push(`/auth/login?redirect=/events/${eventId}`);
+                                                    } else {
+                                                        setIsJoinModalOpen(true);
+                                                    }
+                                                }}
+                                                className="h-12 w-full justify-center rounded-2xl bg-gradient-to-r from-amber-600 to-orange-600 font-semibold text-white shadow-lg shadow-amber-500/25 hover:from-amber-500 hover:to-orange-500 sm:h-[3rem] sm:w-auto sm:min-w-[11rem]"
+                                            >
+                                                <KeyRound size={18} className="mr-2 shrink-0" />
+                                                Enter Code to Join
+                                            </Button>
+                                        )
+                                    )}
+
+                                    <Button
+                                        onClick={handleShare}
+                                        variant="outline"
+                                        className="h-12 w-full justify-center rounded-2xl border-zinc-300 bg-white/95 font-semibold shadow-sm dark:border-white/15 dark:bg-white/5 sm:h-[3rem] sm:w-auto sm:min-w-[10rem]"
+                                    >
+                                        <Share2 size={18} className="mr-2 shrink-0" />
+                                        Share
+                                    </Button>
+                                </div>
                             </div>
 
                             <aside className={`min-w-0 rounded-2xl p-5 sm:p-7 ${softSurface}`}>
@@ -732,6 +838,17 @@ export default function PublicEventPage() {
                     }
                 />
             )}
+
+            {/* Join Event Modal for Private Events */}
+            <JoinEventModal
+                isOpen={isJoinModalOpen}
+                onClose={() => {
+                    setIsJoinModalOpen(false);
+                    queryClient.invalidateQueries(['event', eventId]);
+                    queryClient.invalidateQueries(['myPhotos']);
+                    queryClient.invalidateQueries(['myEventPhotos']);
+                }}
+            />
             </div>
         </div>
     );
