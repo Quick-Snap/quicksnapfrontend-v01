@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -93,18 +93,6 @@ export default function PublicEventPage() {
     const [showPostJoinSelfieModal, setShowPostJoinSelfieModal] = useState(false);
     const loadUser = useAuthStore((state) => state.loadUser);
 
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const searchParams = new URLSearchParams(window.location.search);
-            if (searchParams.get('justJoined') === '1') {
-                if (currentUser && !currentUser.faceRegistered) {
-                    setShowPostJoinSelfieModal(true);
-                }
-                const newUrl = window.location.pathname;
-                window.history.replaceState({}, '', newUrl);
-            }
-        }
-    }, [currentUser]);
 
     const handleUntag = async (photo: any) => {
         if (!confirm("Remove yourself from this photo?\n\nThis will delete your face tag from this photo, hide it from your personal gallery, and ensure it won't be matched to you again even if matching is refreshed.")) {
@@ -151,9 +139,9 @@ export default function PublicEventPage() {
         return inAttendees || inEvents || inJoined;
     }, [currentUser, event, eventId]);
 
-    const handleJoinPublic = async () => {
+    const handleJoinPublic = useCallback(async () => {
         if (!currentUser) {
-            router.push(`/auth/login?redirect=/events/${eventId}`);
+            router.push(`/login?redirect=${encodeURIComponent(`/events/${eventId}?autoJoin=1`)}`);
             return;
         }
 
@@ -178,7 +166,27 @@ export default function PublicEventPage() {
         } finally {
             setJoining(false);
         }
-    };
+    }, [currentUser, eventId, event?.name, loadUser, queryClient, router]);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const searchParams = new URLSearchParams(window.location.search);
+            const justJoined = searchParams.get('justJoined') === '1';
+            const autoJoin = searchParams.get('autoJoin') === '1';
+
+            if (justJoined) {
+                if (currentUser && !currentUser.faceRegistered) {
+                    setShowPostJoinSelfieModal(true);
+                }
+                const newUrl = window.location.pathname;
+                window.history.replaceState({}, '', newUrl);
+            } else if (autoJoin && currentUser && !isAttendee && !joining) {
+                const newUrl = window.location.pathname;
+                window.history.replaceState({}, '', newUrl);
+                handleJoinPublic();
+            }
+        }
+    }, [currentUser, isAttendee, joining, handleJoinPublic]);
 
     // Full gallery — authenticated users only (limit aligned with prior behavior)
     const { data: photosResult, isLoading: photosLoading } = useQuery(
@@ -521,7 +529,7 @@ export default function PublicEventPage() {
                                             <Button
                                                 onClick={() => {
                                                     if (!currentUser) {
-                                                        router.push(`/auth/login?redirect=/events/${eventId}`);
+                                                        router.push(`/login?redirect=${encodeURIComponent(`/events/${eventId}`)}`);
                                                     } else {
                                                         setIsJoinModalOpen(true);
                                                     }

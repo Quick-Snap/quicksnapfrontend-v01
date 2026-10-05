@@ -2,6 +2,20 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  async redirects() {
+    return [
+      {
+        source: '/auth/login',
+        destination: '/login',
+        permanent: false,
+      },
+      {
+        source: '/auth/register',
+        destination: '/register',
+        permanent: false,
+      },
+    ];
+  },
   async rewrites() {
     return [
       /** Browsers request `/favicon.ico` by default; ours is PNG bytes served as `/favicon.png`. */
