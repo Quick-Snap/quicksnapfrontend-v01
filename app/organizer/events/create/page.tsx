@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from 'react-query';
 import { 
@@ -16,12 +16,15 @@ import {
     Users,
     User,
     CheckCircle,
-    AlertCircle
+    AlertCircle,
+    CheckCircle2,
+    Hash
 } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import RoleGuard from '@/app/components/RoleGuard';
 import api from '@/app/api/axios';
+import { eventApi } from '@/lib/api';
 
 export default function CreateEventPage() {
     const router = useRouter();
@@ -36,6 +39,69 @@ export default function CreateEventPage() {
         endDate: '',
         isPublic: true,
     });
+    const [customCode, setCustomCode] = useState('');
+    const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
+    const [validationMsg, setValidationMsg] = useState<string | null>(null);
+    const [checkingCode, setCheckingCode] = useState(false);
+
+    // Debounced live check for custom access code
+    useEffect(() => {
+        if (!customCode.trim()) {
+            setIsAvailable(null);
+            setValidationMsg(null);
+            return;
+        }
+
+        const cleanCode = customCode.trim().toUpperCase();
+        if (cleanCode.length < 3 || cleanCode.length > 16) {
+            setIsAvailable(false);
+            setValidationMsg('Code length must be between 3 and 16 characters.');
+            return;
+        }
+
+        const codeRegex = /^[A-Z0-9]+(-[A-Z0-9]+)*$/;
+        if (!codeRegex.test(cleanCode)) {
+            setIsAvailable(false);
+            setValidationMsg('Only uppercase letters, numbers, and hyphens (cannot start or end with a hyphen).');
+            return;
+        }
+
+        let isMounted = true;
+        setCheckingCode(true);
+        setValidationMsg(null);
+
+        const timer = setTimeout(async () => {
+            try {
+                const res: any = await eventApi.checkAccessCode(cleanCode);
+                if (isMounted) {
+                    const availableVal = res?.data?.available !== undefined ? res.data.available : res?.available;
+                    const msg = res?.data?.message || res?.message;
+
+                    if (res?.success && typeof availableVal === 'boolean') {
+                        setIsAvailable(availableVal);
+                        setValidationMsg(msg || (availableVal ? `Code "${cleanCode}" is available!` : 'Code is taken'));
+                    } else {
+                        setIsAvailable(false);
+                        setValidationMsg(msg || 'Error checking availability');
+                    }
+                }
+            } catch (err: any) {
+                if (isMounted) {
+                    setIsAvailable(false);
+                    setValidationMsg(err.response?.data?.message || 'Error validating code');
+                }
+            } finally {
+                if (isMounted) {
+                    setCheckingCode(false);
+                }
+            }
+        }, 350);
+
+        return () => {
+            isMounted = false;
+            clearTimeout(timer);
+        };
+    }, [customCode]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
@@ -56,11 +122,21 @@ export default function CreateEventPage() {
                 return;
             }
 
-            const payload = {
+            if (customCode.trim() && isAvailable === false) {
+                toast.error(validationMsg || 'Please provide a valid, available access code');
+                setLoading(false);
+                return;
+            }
+
+            const payload: any = {
                 ...formData,
                 startDate: new Date(formData.startDate).toISOString(),
                 endDate: new Date(formData.endDate).toISOString(),
             };
+
+            if (customCode.trim()) {
+                payload.accessCode = customCode.trim().toUpperCase();
+            }
 
             const response = await api.post('/events', payload);
 
@@ -83,7 +159,7 @@ export default function CreateEventPage() {
     };
 
     // Check if form is valid for visual feedback
-    const isFormValid = formData.name && formData.venue && formData.startDate && formData.endDate;
+    const isFormValid = formData.name && formData.venue && formData.startDate && formData.endDate && (customCode.trim() === '' || isAvailable === true);
 
     return (
         <RoleGuard allowedRoles={['organizer', 'admin']}>
@@ -351,6 +427,58 @@ export default function CreateEventPage() {
                                             </div>
                                         </div>
                                     </label>
+                                </div>
+                            </div>
+
+                            {/* Access Code Section */}
+                            <div className="card border-zinc-200/90 shadow-lg shadow-zinc-900/5 dark:bg-[#0d0b14] dark:border-white/5 dark:shadow-[0_16px_60px_rgba(0,0,0,0.45)]">
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center">
+                                        <Hash className="h-5 w-5 text-violet-400" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">Event Access Code</h2>
+                                        <p className="text-sm text-gray-500">Custom code attendees use to join (Optional)</p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            maxLength={16}
+                                            value={customCode}
+                                            onChange={(e) => setCustomCode(e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, ''))}
+                                            placeholder="e.g. BWAI-26 or TANVI-WEDDING"
+                                            className={`input w-full rounded-xl py-3.5 pl-4 pr-12 transition-all font-mono tracking-widest uppercase ${
+                                                isAvailable === true
+                                                    ? 'border-emerald-500/50 bg-emerald-500/5 focus:border-emerald-500 focus:ring-emerald-500/20'
+                                                    : isAvailable === false
+                                                    ? 'border-rose-500/50 bg-rose-500/5 focus:border-rose-500 focus:ring-rose-500/20'
+                                                    : ''
+                                            }`}
+                                        />
+                                        <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                                            {checkingCode ? (
+                                                <div className="w-5 h-5 border-2 border-violet-500/30 border-t-violet-500 rounded-full animate-spin" />
+                                            ) : isAvailable === true ? (
+                                                <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+                                            ) : isAvailable === false ? (
+                                                <AlertCircle className="h-5 w-5 text-rose-400" />
+                                            ) : null}
+                                        </div>
+                                    </div>
+
+                                    {validationMsg ? (
+                                        <p className={`text-xs flex items-center gap-1.5 ${isAvailable ? 'text-emerald-400 font-medium' : 'text-rose-400'}`}>
+                                            {isAvailable ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0" /> : <AlertCircle className="h-3.5 w-3.5 shrink-0" />}
+                                            {validationMsg}
+                                        </p>
+                                    ) : (
+                                        <p className="text-xs text-zinc-500 dark:text-gray-400">
+                                            3–16 letters, numbers, and hyphens (e.g. BWAI-26 or TANVI-WEDDING). Leave blank to auto-generate a random 6-character code.
+                                        </p>
+                                    )}
                                 </div>
                             </div>
 

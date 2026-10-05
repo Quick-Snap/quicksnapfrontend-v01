@@ -81,7 +81,7 @@ export default function JoinEventModal({ isOpen, onClose }: JoinEventModalProps)
                     ) : (
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <p className="text-gray-400 text-sm">
-                                Enter the 6-character access code provided by the event organizer.
+                                Enter the event access code provided by the organizer.
                             </p>
 
                             <div>
@@ -95,10 +95,10 @@ export default function JoinEventModal({ isOpen, onClose }: JoinEventModalProps)
                                     <input
                                         id="accessCode"
                                         type="text"
-                                        maxLength={6}
+                                        maxLength={16}
                                         value={accessCode}
-                                        onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
-                                        placeholder="E.G. A1B2C3"
+                                        onChange={(e) => setAccessCode(e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, ''))}
+                                        placeholder="e.g. BWAI-26 or TANVI-WEDDING"
                                         className="block w-full pl-10 pr-3 py-3 rounded-xl border border-white/10 bg-white/5 focus:border-violet-500/60 focus:ring-2 focus:ring-violet-500/25 transition-all font-mono text-lg tracking-widest uppercase text-white placeholder-gray-500"
                                         required
                                     />
@@ -114,9 +114,9 @@ export default function JoinEventModal({ isOpen, onClose }: JoinEventModalProps)
 
                             <button
                                 type="submit"
-                                disabled={loading || accessCode.length < 6}
+                                disabled={loading || accessCode.trim().length < 3}
                                 className={`w-full py-3 px-4 rounded-xl font-semibold text-white transition-all shadow-lg ${
-                                    loading || accessCode.length < 6
+                                    loading || accessCode.trim().length < 3
                                         ? 'bg-white/10 cursor-not-allowed text-gray-400'
                                         : 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 active:scale-95 shadow-violet-500/25'
                                 }`}

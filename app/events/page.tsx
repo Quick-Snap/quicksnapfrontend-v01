@@ -57,11 +57,12 @@ export default function EventsPage() {
 
   const handleJoinByCode = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!joinCode.trim()) return;
+    const cleanCode = joinCode.trim().toUpperCase();
+    if (!cleanCode) return;
 
     setIsJoining(true);
     try {
-      const response = await eventApi.joinByCode(joinCode.trim());
+      const response = await eventApi.joinByCode(cleanCode);
       if (response.success && response.data) {
         toast.success(`Successfully joined "${response.data.name}"!`);
         setIsJoinModalOpen(false);
@@ -431,9 +432,10 @@ export default function EventsPage() {
             <form onSubmit={handleJoinByCode} className="space-y-4">
               <input
                 type="text"
-                placeholder="e.g. SNAPP01"
+                maxLength={16}
+                placeholder="e.g. BWAI-26 or TANVI-WEDDING"
                 value={joinCode}
-                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                onChange={(e) => setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, ''))}
                 className="input rounded-2xl py-3.5 text-center text-lg font-semibold uppercase tracking-widest"
                 autoFocus
               />
@@ -447,7 +449,7 @@ export default function EventsPage() {
                 >
                   Cancel
                 </Button>
-                <Button type="submit" className="flex-1 rounded-2xl shadow-lg shadow-violet-500/25" disabled={isJoining || !joinCode.trim()}>
+                <Button type="submit" className="flex-1 rounded-2xl shadow-lg shadow-violet-500/25" disabled={isJoining || joinCode.trim().length < 3}>
                   {isJoining ? 'Joining…' : 'Join'}
                 </Button>
               </div>
