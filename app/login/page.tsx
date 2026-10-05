@@ -17,21 +17,31 @@ export default function LoginPage() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [redirectParam, setRedirectParam] = useState<string | null>(null);
   const { login } = useAuth();
   const router = useRouter();
   
   const user = useAuthStore((state) => state.user);
   const initialized = useAuthStore((state) => state.initialized);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const r = new URLSearchParams(window.location.search).get('redirect');
+      if (r && r.startsWith('/') && !r.startsWith('//')) {
+        setRedirectParam(r);
+      }
+    }
+  }, []);
   
   useEffect(() => {
     if (initialized && user) {
-      router.replace('/dashboard');
+      router.replace(redirectParam || '/dashboard');
     }
-  }, [user, initialized, router]);
+  }, [user, initialized, router, redirectParam]);
 
   const handleGoogleSignIn = () => {
     setGoogleLoading(true);
-    signIn('google', { callbackUrl: '/dashboard' }).finally(() => {
+    signIn('google', { callbackUrl: redirectParam || '/dashboard' }).finally(() => {
       setGoogleLoading(false);
     });
   };
@@ -43,7 +53,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await login(email, password);
-      router.push('/dashboard');
+      router.push(redirectParam || '/dashboard');
     } catch (error: any) {
       console.error('Login error:', error);
     } finally {
@@ -133,7 +143,10 @@ export default function LoginPage() {
             <h1 className="font-display text-3xl font-semibold tracking-[-0.02em] text-zinc-900 dark:text-white mb-2">Sign in to your account</h1>
             <p className="text-zinc-600 dark:text-white/50 text-sm font-light tracking-wide">
               Don&apos;t have an account?{' '}
-              <Link href="/register" className="text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300 transition-colors">
+              <Link
+                href={redirectParam ? `/register?redirect=${encodeURIComponent(redirectParam)}` : '/register'}
+                className="text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300 transition-colors"
+              >
                 Create one
               </Link>
             </p>
