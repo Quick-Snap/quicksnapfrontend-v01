@@ -39,6 +39,7 @@ import { useQuery, useQueryClient } from 'react-query';
 import { softSurface, softSurfaceHover } from '@/lib/dashboardUi';
 import { PhotoLightbox } from '@/app/components/photos/PhotoLightbox';
 import JoinEventModal from '@/app/components/student/JoinEventModal';
+import PostJoinSelfieModal from '@/app/components/events/PostJoinSelfieModal';
 
 const PHOTOS_PER_PAGE = 12;
 const PREVIEW_PHOTO_COUNT = 4;
@@ -89,7 +90,21 @@ export default function PublicEventPage() {
     const [photoViewMode, setPhotoViewMode] = useState<'all' | 'my'>('all');
     const [joining, setJoining] = useState(false);
     const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
+    const [showPostJoinSelfieModal, setShowPostJoinSelfieModal] = useState(false);
     const loadUser = useAuthStore((state) => state.loadUser);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const searchParams = new URLSearchParams(window.location.search);
+            if (searchParams.get('justJoined') === '1') {
+                if (currentUser && !currentUser.faceRegistered) {
+                    setShowPostJoinSelfieModal(true);
+                }
+                const newUrl = window.location.pathname;
+                window.history.replaceState({}, '', newUrl);
+            }
+        }
+    }, [currentUser]);
 
     const handleUntag = async (photo: any) => {
         if (!confirm("Remove yourself from this photo?\n\nThis will delete your face tag from this photo, hide it from your personal gallery, and ensure it won't be matched to you again even if matching is refreshed.")) {
@@ -152,6 +167,9 @@ export default function PublicEventPage() {
                 queryClient.invalidateQueries(['myPhotos']);
                 queryClient.invalidateQueries(['myEventPhotos']);
                 queryClient.invalidateQueries(['userStats']);
+                if (!currentUser?.faceRegistered) {
+                    setShowPostJoinSelfieModal(true);
+                }
             } else {
                 toast.error(res.message || 'Failed to join event');
             }
@@ -952,6 +970,15 @@ export default function PublicEventPage() {
                     queryClient.invalidateQueries(['myPhotos']);
                     queryClient.invalidateQueries(['myEventPhotos']);
                 }}
+            />
+
+            {/* Instant Post-Join Selfie Modal */}
+            <PostJoinSelfieModal
+                isOpen={showPostJoinSelfieModal}
+                onClose={() => setShowPostJoinSelfieModal(false)}
+                eventName={event?.name}
+                eventId={eventId}
+                redirectPath={`/events/${eventId}`}
             />
             </div>
         </div>

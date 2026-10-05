@@ -76,7 +76,7 @@ export default function EventsPage() {
         queryClient.invalidateQueries('myPhotos');
         refetch();
         
-        router.push(`/events/${response.data.eventId}`);
+        router.push(`/events/${response.data.eventId}?justJoined=1`);
       }
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to join event');
