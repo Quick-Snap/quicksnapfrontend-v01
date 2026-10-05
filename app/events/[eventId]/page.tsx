@@ -141,7 +141,7 @@ export default function PublicEventPage() {
 
     const handleJoinPublic = useCallback(async () => {
         if (!currentUser) {
-            router.push(`/login?redirect=${encodeURIComponent(`/events/${eventId}?autoJoin=1`)}`);
+            router.push(`/login?redirect=${encodeURIComponent(`/events/${eventId}`)}`);
             return;
         }
 
@@ -172,7 +172,6 @@ export default function PublicEventPage() {
         if (typeof window !== 'undefined') {
             const searchParams = new URLSearchParams(window.location.search);
             const justJoined = searchParams.get('justJoined') === '1';
-            const autoJoin = searchParams.get('autoJoin') === '1';
 
             if (justJoined) {
                 if (currentUser && !currentUser.faceRegistered) {
@@ -180,13 +179,9 @@ export default function PublicEventPage() {
                 }
                 const newUrl = window.location.pathname;
                 window.history.replaceState({}, '', newUrl);
-            } else if (autoJoin && currentUser && !isAttendee && !joining) {
-                const newUrl = window.location.pathname;
-                window.history.replaceState({}, '', newUrl);
-                handleJoinPublic();
             }
         }
-    }, [currentUser, isAttendee, joining, handleJoinPublic]);
+    }, [currentUser]);
 
     // Full gallery — authenticated users only (limit aligned with prior behavior)
     const { data: photosResult, isLoading: photosLoading } = useQuery(
