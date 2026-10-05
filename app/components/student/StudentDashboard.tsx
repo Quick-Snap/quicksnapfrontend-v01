@@ -3,7 +3,7 @@
 import { useQuery } from 'react-query';
 import { userApi, eventApi, photoApi } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
-import { Image as ImageIcon, Calendar, Upload, Plus, Sparkles, ShieldCheck, ChevronRight, Award, Share2 } from 'lucide-react';
+import { Image as ImageIcon, Calendar, Upload, Plus, Sparkles, ShieldCheck, ChevronRight, Award, Share2, Camera } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { useState, useMemo } from 'react';
@@ -63,6 +63,40 @@ export default function StudentDashboard() {
           </div>
         </div>
       </header>
+
+      {/* Face Registration Action Banner if not registered */}
+      {!isFaceReady && (
+        <div className="relative overflow-hidden rounded-2xl border border-amber-300/80 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/5 p-4 sm:p-5 shadow-sm dark:border-amber-500/30 dark:from-amber-950/40 dark:via-orange-950/30 dark:to-transparent">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3.5">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-500 text-white shadow-md shadow-amber-500/25">
+                <Camera className="h-6 w-6" />
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-semibold text-zinc-900 dark:text-white">
+                    Face Not Registered Yet
+                  </h3>
+                  <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:text-amber-300">
+                    Required for AI photos
+                  </span>
+                </div>
+                <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 max-w-xl leading-relaxed">
+                  Take a quick 30-second selfie once. Our AI will automatically find and deliver all photos of you across every event you join!
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/register-face?redirect=/dashboard"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 px-4 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-md shadow-amber-600/25 transition hover:brightness-105 active:scale-95 shrink-0"
+            >
+              <Camera className="h-4 w-4" />
+              Register Face Now
+              <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* 1-Line Spotted Notification Banner */}
       {unregisteredSummary.length > 0 && (

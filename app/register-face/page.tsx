@@ -79,6 +79,17 @@ export default function RegisterFacePage() {
   // Default to non-mirrored preview so on-screen movement matches what the camera will save.
   // Users that prefer the classic mirror selfie can flip it back with the toggle.
   const [mirrorPreview, setMirrorPreview] = useState(false);
+  const [redirectPath, setRedirectPath] = useState<string>('/dashboard');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const redirect = params.get('redirect');
+      if (redirect && redirect.startsWith('/') && !redirect.startsWith('//')) {
+        setRedirectPath(redirect);
+      }
+    }
+  }, []);
 
   const stopMediaStream = useCallback(() => {
     stopDetectionRef.current = true;
@@ -345,7 +356,7 @@ export default function RegisterFacePage() {
           });
         }
         setTimeout(() => {
-          router.push('/dashboard');
+          router.push(redirectPath);
         }, 1000);
       } else {
         throw new Error(registerData.message || 'Failed to register face');
@@ -685,7 +696,7 @@ export default function RegisterFacePage() {
             className={`animate-fade-in delay-300 border-t border-zinc-200/90 pb-safe pt-4 text-center dark:border-white/10 sm:pb-0 sm:pt-4 ${immersiveMobile ? 'max-sm:hidden' : ''}`}
           >
             <Link
-              href="/dashboard"
+              href={redirectPath}
               className="inline-flex min-h-[44px] items-center justify-center px-4 text-sm text-zinc-600 transition-colors hover:text-violet-600 active:text-violet-600 dark:text-gray-500 dark:hover:text-violet-400 dark:active:text-violet-400"
             >
               Skip for now →

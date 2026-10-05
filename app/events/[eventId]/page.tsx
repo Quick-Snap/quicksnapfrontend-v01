@@ -616,6 +616,33 @@ export default function PublicEventPage() {
                     </p>
                 </div>
 
+                {isGuest && currentUser && !currentUser.faceRegistered && (
+                    <div className="mb-6 mx-auto max-w-xl rounded-2xl border border-amber-400/40 bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 p-4 text-left backdrop-blur-md">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div className="flex items-center gap-3 min-w-0">
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-300">
+                                    <Camera size={20} />
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="text-sm font-semibold text-zinc-900 dark:text-white">
+                                        Face selfie not registered
+                                    </p>
+                                    <p className="text-xs text-zinc-600 dark:text-gray-300">
+                                        Add your selfie once to see your photos automatically
+                                    </p>
+                                </div>
+                            </div>
+                            <Button
+                                size="sm"
+                                onClick={() => router.push(`/register-face?redirect=/events/${eventId}`)}
+                                className="shrink-0 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:brightness-105 text-xs px-4 py-2 font-semibold shadow-md shadow-amber-500/25"
+                            >
+                                Register Face
+                            </Button>
+                        </div>
+                    </div>
+                )}
+
                 {isGuest && currentUser && (
                     <div className="mb-8 flex justify-center px-0 sm:px-2">
                         <div className={`flex w-full max-w-md rounded-2xl p-1 ${softSurface}`}>
@@ -633,13 +660,16 @@ export default function PublicEventPage() {
                             <button
                                 type="button"
                                 onClick={() => setPhotoViewMode('my')}
-                                className={`min-h-[48px] flex-1 rounded-xl px-4 py-3 text-sm font-semibold transition-all ${
+                                className={`min-h-[48px] flex-1 rounded-xl px-4 py-3 text-sm font-semibold transition-all flex items-center justify-center gap-1.5 ${
                                     photoViewMode === 'my'
                                         ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/25'
                                         : 'text-zinc-600 hover:bg-zinc-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white'
                                 }`}
                             >
-                                My photos
+                                <span>My photos</span>
+                                {!currentUser.faceRegistered && (
+                                    <span className="inline-block w-2 h-2 rounded-full bg-amber-400" title="Face registration required" />
+                                )}
                             </button>
                         </div>
                     </div>
@@ -778,19 +808,93 @@ export default function PublicEventPage() {
                         )}
                     </>
                 ) : (
-                    <div className={`rounded-[1.65rem] px-6 py-16 text-center ${softSurface}`}>
-                        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-100 dark:bg-violet-500/15">
-                            <ImageIcon className="h-8 w-8 text-violet-600 dark:text-violet-400" />
+                    photoViewMode === 'my' && isGuest ? (
+                        !currentUser?.faceRegistered ? (
+                            <div className={`rounded-[1.65rem] px-6 py-12 sm:py-16 text-center ${softSurface} border border-amber-400/30 bg-gradient-to-b from-amber-500/5 via-transparent to-transparent`}>
+                                <div className="mx-auto mb-5 relative flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-xl shadow-violet-500/25">
+                                    <Camera className="h-9 w-9" />
+                                    <div className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-amber-400 text-black text-xs font-bold ring-2 ring-white dark:ring-[#14121f]">
+                                        !
+                                    </div>
+                                </div>
+                                <h3 className="mb-2 text-xl sm:text-2xl font-bold text-zinc-900 dark:text-white">
+                                    Face Not Registered Yet
+                                </h3>
+                                <p className="mx-auto max-w-md text-sm sm:text-base leading-relaxed text-zinc-600 dark:text-gray-300 mb-6">
+                                    No photos are visible in &quot;My photos&quot; because you haven&apos;t registered your face yet. Take a quick 30-second selfie once so our AI can automatically find you in all event photos!
+                                </p>
+                                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto">
+                                    <Button
+                                        onClick={() => router.push(`/register-face?redirect=/events/${eventId}`)}
+                                        className="w-full sm:w-auto h-12 px-6 rounded-xl font-semibold shadow-lg shadow-violet-500/25 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white flex items-center justify-center gap-2"
+                                    >
+                                        <Camera className="h-5 w-5" />
+                                        Register Face (Take Quick Selfie)
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => setPhotoViewMode('all')}
+                                        className="w-full sm:w-auto h-12 px-5 rounded-xl border-zinc-300 dark:border-white/20"
+                                    >
+                                        Browse All Event Photos
+                                    </Button>
+                                </div>
+                                <div className="mt-8 pt-6 border-t border-zinc-200/80 dark:border-white/10 max-w-md mx-auto grid grid-cols-3 gap-2 text-center text-xs text-zinc-500 dark:text-gray-400">
+                                    <div>
+                                        <p className="font-semibold text-zinc-800 dark:text-zinc-200">1. Take Selfie</p>
+                                        <p className="text-[11px]">Takes ~30 sec</p>
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold text-zinc-800 dark:text-zinc-200">2. AI Matches</p>
+                                        <p className="text-[11px]">Instant scan</p>
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold text-zinc-800 dark:text-zinc-200">3. View Photos</p>
+                                        <p className="text-[11px]">Your shots appear</p>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className={`rounded-[1.65rem] px-6 py-16 text-center ${softSurface}`}>
+                                <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-100 dark:bg-violet-500/15">
+                                    <Sparkles className="h-8 w-8 text-violet-600 dark:text-violet-400" />
+                                </div>
+                                <h3 className="mb-2 text-xl font-bold text-zinc-900 dark:text-white">
+                                    No Photos Matched to You Yet
+                                </h3>
+                                <p className="mx-auto max-w-md text-sm leading-relaxed text-zinc-600 dark:text-gray-400 mb-6">
+                                    Your face is registered and active! Either the photographer hasn&apos;t uploaded photos of you yet, or you weren&apos;t captured in this event&apos;s current uploads.
+                                </p>
+                                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => setPhotoViewMode('all')}
+                                        className="rounded-xl px-5 h-11"
+                                    >
+                                        Browse All Event Photos
+                                    </Button>
+                                    <Link
+                                        href={`/register-face?redirect=/events/${eventId}`}
+                                        className="text-xs text-zinc-500 hover:text-violet-600 dark:text-gray-400 dark:hover:text-violet-400 py-2 inline-flex items-center gap-1"
+                                    >
+                                        Look changed? Update your face selfie →
+                                    </Link>
+                                </div>
+                            </div>
+                        )
+                    ) : (
+                        <div className={`rounded-[1.65rem] px-6 py-16 text-center ${softSurface}`}>
+                            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-zinc-100 dark:bg-white/5">
+                                <ImageIcon className="h-8 w-8 text-zinc-400 dark:text-gray-500" />
+                            </div>
+                            <h3 className="mb-2 text-lg font-semibold text-zinc-900 dark:text-white">
+                                No photos uploaded yet
+                            </h3>
+                            <p className="mx-auto max-w-sm text-sm leading-relaxed text-zinc-600 dark:text-gray-400">
+                                Uploaded photos from organizers and photographers will appear here.
+                            </p>
                         </div>
-                        <h3 className="mb-2 text-lg font-semibold text-zinc-900 dark:text-white">
-                            {photoViewMode === 'my' && isGuest ? 'No photos of you yet' : 'No photos yet'}
-                        </h3>
-                        <p className="mx-auto max-w-sm text-sm leading-relaxed text-zinc-600 dark:text-gray-400">
-                            {photoViewMode === 'my' && isGuest
-                                ? 'When you appear in shots from this event, they’ll show here.'
-                                : 'Uploaded photos from organizers and photographers will appear here.'}
-                        </p>
-                    </div>
+                    )
                 )}
             </section>
 

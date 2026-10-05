@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { AxiosError } from 'axios';
-import { Image as ImageIcon, Download, Calendar, Users, Search, Sparkles, Loader2, EyeOff } from 'lucide-react';
+import { Image as ImageIcon, Download, Calendar, Users, Search, Sparkles, Loader2, EyeOff, Camera } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { photoApi } from '@/lib/api';
 import { ApiResponse } from '@/types';
 import { fetchAllMyPhotos } from '@/lib/photoFetch';
@@ -247,11 +248,26 @@ export default function MyPhotosPage() {
             </div>
             <div className="flex items-center gap-3 text-sm text-zinc-600 dark:text-gray-400">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-zinc-200/90 bg-white dark:border-white/10 dark:bg-white/5">
-                <ImageIcon className="h-5 w-5 text-violet-600 dark:text-violet-300" />
+                {user?.faceRegistered ? (
+                  <Sparkles className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                ) : (
+                  <Camera className="h-5 w-5 text-amber-500 dark:text-amber-400" />
+                )}
               </div>
               <div className="leading-tight">
-                <p className="font-medium text-zinc-900 dark:text-white">Face recognition active</p>
-                <p className="text-xs text-zinc-500 dark:text-gray-500">Matching across your joined events</p>
+                {user?.faceRegistered ? (
+                  <>
+                    <p className="font-medium text-zinc-900 dark:text-white">Face recognition active</p>
+                    <p className="text-xs text-zinc-500 dark:text-gray-500">Matching across your joined events</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-medium text-amber-600 dark:text-amber-400">Face not registered</p>
+                    <Link href="/register-face?redirect=/photos" className="text-xs text-violet-600 hover:underline dark:text-violet-400 font-medium">
+                      Take selfie to enable matching →
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -355,19 +371,91 @@ export default function MyPhotosPage() {
           )}
         </>
       ) : (
-        <div className="card py-16 text-center">
-          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-500/10">
-            <ImageIcon size={32} className="text-violet-600 dark:text-violet-400" />
-          </div>
-          <h3 className="mb-2 text-xl font-bold text-zinc-900 dark:text-white">No Photos Yet</h3>
-          <p className="mx-auto mb-6 max-w-md text-zinc-600 dark:text-gray-400">
-            Photos where you appear will show up here automatically once event organizers upload them.
-            Make sure you&apos;ve registered your face!
-          </p>
-          {!user?.faceRegistered && (
-            <a href="/register-face" className="btn-gradient px-6 py-3 rounded-xl font-semibold inline-flex items-center gap-2">
-              Register Your Face
-            </a>
+        <div className={`card text-center py-14 sm:py-16 ${!user?.faceRegistered ? 'border border-amber-400/30 bg-gradient-to-b from-amber-500/5 via-transparent to-transparent' : ''}`}>
+          {!user?.faceRegistered ? (
+            <>
+              <div className="mx-auto mb-5 relative flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-xl shadow-violet-500/25">
+                <Camera size={36} />
+                <div className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-amber-400 text-black text-xs font-bold ring-2 ring-white dark:ring-[#0f0c18]">
+                  !
+                </div>
+              </div>
+              <h3 className="mb-2 text-2xl font-bold text-zinc-900 dark:text-white">
+                No Photos Yet — Face Not Registered
+              </h3>
+              <p className="mx-auto mb-6 max-w-lg text-sm sm:text-base leading-relaxed text-zinc-600 dark:text-gray-300">
+                Roopixo matches your photos automatically using AI face recognition. Since you haven&apos;t registered your face yet, we can&apos;t find your photos in any events!
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto mb-8">
+                <Link
+                  href="/register-face?redirect=/photos"
+                  className="w-full sm:w-auto px-7 py-3.5 rounded-xl font-semibold text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 shadow-lg shadow-violet-500/25 transition-all inline-flex items-center justify-center gap-2"
+                >
+                  <Camera size={20} />
+                  Register Face (Take Quick Selfie)
+                </Link>
+                <Link
+                  href="/events"
+                  className="w-full sm:w-auto px-6 py-3.5 rounded-xl font-semibold border border-zinc-200 bg-zinc-100 text-zinc-800 hover:bg-zinc-200 dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10 transition-all inline-flex items-center justify-center"
+                >
+                  Browse Events
+                </Link>
+              </div>
+              <div className="pt-6 border-t border-zinc-200/80 dark:border-white/10 max-w-md mx-auto grid grid-cols-3 gap-2 text-center text-xs text-zinc-500 dark:text-gray-400">
+                <div>
+                  <p className="font-semibold text-zinc-800 dark:text-zinc-200">1. Take Selfie</p>
+                  <p className="text-[11px]">Takes ~30 seconds</p>
+                </div>
+                <div>
+                  <p className="font-semibold text-zinc-800 dark:text-zinc-200">2. AI Matches</p>
+                  <p className="text-[11px]">Instant detection</p>
+                </div>
+                <div>
+                  <p className="font-semibold text-zinc-800 dark:text-zinc-200">3. View Photos</p>
+                  <p className="text-[11px]">Delivered here</p>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-100 dark:bg-violet-500/10">
+                <ImageIcon size={32} className="text-violet-600 dark:text-violet-400" />
+              </div>
+              <h3 className="mb-2 text-xl font-bold text-zinc-900 dark:text-white">
+                {isSearching ? 'No Matching Photos Found' : 'No Photos Found Yet'}
+              </h3>
+              <p className="mx-auto mb-6 max-w-md text-zinc-600 dark:text-gray-400 text-sm leading-relaxed">
+                {isSearching
+                  ? `No photos matched your search "${searchTerm}". Try another keyword or clear the search.`
+                  : "Your face is registered and active! Either the photographers haven't uploaded photos of you yet, or you weren't captured in the events you've joined so far."}
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                {isSearching ? (
+                  <button
+                    type="button"
+                    onClick={() => setSearchTerm('')}
+                    className="btn-secondary px-6 py-2.5 rounded-xl font-semibold text-sm"
+                  >
+                    Clear Search
+                  </button>
+                ) : (
+                  <>
+                    <Link
+                      href="/events"
+                      className="btn-primary px-6 py-2.5 rounded-xl font-semibold text-sm"
+                    >
+                      Browse Joined Events
+                    </Link>
+                    <Link
+                      href="/register-face?redirect=/photos"
+                      className="text-xs text-zinc-500 hover:text-violet-600 dark:text-gray-400 dark:hover:text-violet-400 py-2 inline-flex items-center gap-1"
+                    >
+                      Look changed? Update your face selfie →
+                    </Link>
+                  </>
+                )}
+              </div>
+            </>
           )}
         </div>
       )}
