@@ -56,7 +56,364 @@ export default function PrintableEventKitModal({
   if (!isOpen || !event) return null;
 
   const handlePrint = () => {
-    window.print();
+    // Generate an isolated, single-page print frame to eliminate all background page bleed,
+    // prevent multiple pages, and suppress browser URL headers and footers.
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = 'none';
+    iframe.style.visibility = 'hidden';
+    document.body.appendChild(iframe);
+
+    const isStandee = template === 'standee';
+    const pageSize = isStandee ? 'A4 portrait' : 'A5 landscape';
+
+    const doc = iframe.contentWindow?.document;
+    if (!doc) {
+      window.print();
+      return;
+    }
+
+    doc.open();
+    doc.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${eventName} - Event Standee</title>
+          <style>
+            @page {
+              size: ${pageSize};
+              margin: 0mm;
+            }
+            * {
+              box-sizing: border-box;
+              margin: 0;
+              padding: 0;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            html, body {
+              width: 100%;
+              height: 100%;
+              overflow: hidden;
+              background: #ffffff;
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+              color: #0f172a;
+            }
+            .page-container {
+              width: 100vw;
+              height: 100vh;
+              page-break-after: avoid;
+              page-break-inside: avoid;
+              display: flex;
+              flex-direction: column;
+              justify-content: space-between;
+              align-items: center;
+              padding: 38px 44px;
+            }
+            .standee-frame {
+              width: 100%;
+              height: 100%;
+              border: 3.5px solid #6366f1;
+              border-radius: 28px;
+              display: flex;
+              flex-direction: column;
+              justify-content: space-between;
+              align-items: center;
+              text-align: center;
+              padding: 32px 36px;
+              background: linear-gradient(180deg, #fbfaff 0%, #ffffff 40%, #f8faff 100%);
+            }
+            .brand-badge {
+              display: inline-block;
+              background: #6366f1;
+              color: #ffffff;
+              font-size: 13px;
+              font-weight: 800;
+              letter-spacing: 0.18em;
+              text-transform: uppercase;
+              padding: 8px 22px;
+              border-radius: 9999px;
+              margin-bottom: 12px;
+            }
+            .event-title {
+              font-size: 34px;
+              font-weight: 800;
+              line-height: 1.15;
+              color: #0f172a;
+              margin-bottom: 6px;
+              max-width: 90%;
+            }
+            .event-meta {
+              font-size: 14px;
+              color: #64748b;
+              font-weight: 500;
+            }
+            .cta-box {
+              background: #eff6ff;
+              border: 1.5px solid #bfdbfe;
+              border-radius: 14px;
+              padding: 9px 24px;
+              margin: 16px 0 12px 0;
+            }
+            .cta-title {
+              font-size: 17px;
+              font-weight: 700;
+              color: #1e3a8a;
+            }
+            .cta-desc {
+              font-size: 12px;
+              color: #475569;
+              margin-top: 2px;
+            }
+            .qr-wrapper {
+              width: 250px;
+              height: 250px;
+              border: 2px solid #e2e8f0;
+              border-radius: 20px;
+              background: #ffffff;
+              padding: 12px;
+              box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.1);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
+            .qr-wrapper img {
+              width: 100%;
+              height: 100%;
+              object-fit: contain;
+            }
+            .code-pill {
+              background: #f1f5f9;
+              border: 1.5px solid #cbd5e1;
+              border-radius: 12px;
+              padding: 7px 22px;
+              margin-top: 14px;
+              display: inline-block;
+            }
+            .code-pill span.label {
+              font-size: 11px;
+              font-weight: 700;
+              text-transform: uppercase;
+              color: #64748b;
+              letter-spacing: 0.05em;
+              margin-right: 8px;
+            }
+            .code-pill span.code {
+              font-family: monospace;
+              font-size: 20px;
+              font-weight: 800;
+              letter-spacing: 0.15em;
+              color: #312e81;
+            }
+            .steps-grid {
+              width: 100%;
+              display: grid;
+              grid-template-columns: repeat(3, 1fr);
+              gap: 14px;
+              border-top: 1.5px solid #e2e8f0;
+              padding-top: 16px;
+              margin-top: 14px;
+            }
+            .step-card {
+              border: 1px solid #e2e8f0;
+              border-radius: 14px;
+              padding: 10px 8px;
+              background: #ffffff;
+            }
+            .step-num {
+              width: 22px;
+              height: 22px;
+              border-radius: 50%;
+              background: #6366f1;
+              color: #ffffff;
+              font-size: 11px;
+              font-weight: 800;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              margin: 0 auto 5px auto;
+            }
+            .step-title {
+              font-size: 12px;
+              font-weight: 700;
+              color: #0f172a;
+            }
+            .step-desc {
+              font-size: 10px;
+              color: #64748b;
+              margin-top: 2px;
+            }
+            .footer-note {
+              font-size: 10px;
+              color: #94a3b8;
+              margin-top: 10px;
+            }
+            /* Tent card layout */
+            .tent-grid {
+              width: 100%;
+              height: 100%;
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 24px;
+              border: 3px solid #6366f1;
+              border-radius: 24px;
+              padding: 24px;
+              position: relative;
+            }
+            .tent-divider {
+              position: absolute;
+              top: 0;
+              bottom: 0;
+              left: 50%;
+              border-right: 2px dashed #cbd5e1;
+            }
+            .tent-half {
+              display: flex;
+              flex-direction: column;
+              justify-content: space-between;
+              align-items: center;
+              text-align: center;
+              padding: 10px;
+            }
+            .tent-qr {
+              width: 160px;
+              height: 160px;
+              border: 1.5px solid #e2e8f0;
+              border-radius: 14px;
+              padding: 8px;
+              background: #ffffff;
+            }
+            .tent-qr img {
+              width: 100%;
+              height: 100%;
+              object-fit: contain;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="page-container">
+            ${
+              isStandee
+                ? `
+              <div class="standee-frame">
+                <div>
+                  <div class="brand-badge">✨ ROOPIXO LIVE EVENT GALLERY</div>
+                  <h1 class="event-title">${eventName}</h1>
+                  <p class="event-meta">${dateStr ? dateStr + ' • ' : ''}${venue}</p>
+                </div>
+
+                <div style="display:flex; flex-direction:column; align-items:center;">
+                  <div class="cta-box">
+                    <p class="cta-title">Find Your Photos Instantly with AI</p>
+                    <p class="cta-desc">Scan the QR code with your phone camera</p>
+                  </div>
+
+                  <div class="qr-wrapper">
+                    ${qrDataUrl ? `<img src="${qrDataUrl}" alt="QR Code" />` : ''}
+                  </div>
+
+                  ${
+                    accessCode
+                      ? `
+                    <div class="code-pill">
+                      <span class="label">Access Code:</span>
+                      <span class="code">${accessCode}</span>
+                    </div>
+                  `
+                      : ''
+                  }
+                </div>
+
+                <div style="width:100%;">
+                  <div class="steps-grid">
+                    <div class="step-card">
+                      <div class="step-num">1</div>
+                      <div class="step-title">Scan QR</div>
+                      <div class="step-desc">Open phone camera</div>
+                    </div>
+                    <div class="step-card">
+                      <div class="step-num">2</div>
+                      <div class="step-title">Take Selfie</div>
+                      <div class="step-desc">AI scans your face</div>
+                    </div>
+                    <div class="step-card">
+                      <div class="step-num">3</div>
+                      <div class="step-title">Get Photos</div>
+                      <div class="step-desc">Curated in seconds</div>
+                    </div>
+                  </div>
+                  <p class="footer-note">Powered by Roopixo • Real-time AI Face Recognition • roopixo.com</p>
+                </div>
+              </div>
+            `
+                : `
+              <div class="tent-grid">
+                <div class="tent-divider"></div>
+                
+                <!-- Left Side -->
+                <div class="tent-half">
+                  <div>
+                    <div class="brand-badge" style="font-size:11px; padding:4px 14px; margin-bottom:6px;">✨ ROOPIXO</div>
+                    <h2 style="font-size:22px; font-weight:800; color:#0f172a; margin-bottom:4px;">${eventName}</h2>
+                    <p style="font-size:12px; color:#64748b;">Scan to view your photos</p>
+                  </div>
+
+                  <div class="tent-qr">
+                    ${qrDataUrl ? `<img src="${qrDataUrl}" alt="QR Code" />` : ''}
+                  </div>
+
+                  <div>
+                    ${
+                      accessCode
+                        ? `<p style="font-family:monospace; font-size:15px; font-weight:800; color:#312e81; margin-bottom:4px;">CODE: ${accessCode}</p>`
+                        : ''
+                    }
+                    <p style="font-size:11px; color:#475569; font-weight:600;">1. Scan  •  2. Selfie  •  3. Photos</p>
+                  </div>
+                </div>
+
+                <!-- Right Side -->
+                <div class="tent-half">
+                  <div>
+                    <div class="brand-badge" style="font-size:11px; padding:4px 14px; margin-bottom:6px;">✨ ROOPIXO</div>
+                    <h2 style="font-size:22px; font-weight:800; color:#0f172a; margin-bottom:4px;">${eventName}</h2>
+                    <p style="font-size:12px; color:#64748b;">Scan to view your photos</p>
+                  </div>
+
+                  <div class="tent-qr">
+                    ${qrDataUrl ? `<img src="${qrDataUrl}" alt="QR Code" />` : ''}
+                  </div>
+
+                  <div>
+                    ${
+                      accessCode
+                        ? `<p style="font-family:monospace; font-size:15px; font-weight:800; color:#312e81; margin-bottom:4px;">CODE: ${accessCode}</p>`
+                        : ''
+                    }
+                    <p style="font-size:11px; color:#475569; font-weight:600;">1. Scan  •  2. Selfie  •  3. Photos</p>
+                  </div>
+                </div>
+              </div>
+            `
+            }
+          </div>
+        </body>
+      </html>
+    `);
+    doc.close();
+
+    // Trigger print once iframe content loads
+    setTimeout(() => {
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+      }, 3000);
+    }, 450);
   };
 
   const handleCopyLink = () => {
@@ -571,122 +928,6 @@ export default function PrintableEventKitModal({
             )}
           </div>
         </div>
-      </div>
-
-      {/* PRINT-ONLY CSS CONTAINER (Clean 1-page output when user clicks Print / Save as PDF) */}
-      <div className="hidden print:block fixed inset-0 bg-white text-black p-8 z-[9999]">
-        <style
-          dangerouslySetInnerHTML={{
-            __html: `
-          @page {
-            size: ${template === 'standee' ? 'A4 portrait' : 'A5 landscape'};
-            margin: 10mm;
-          }
-          body {
-            background: white !important;
-            color: black !important;
-          }
-        `,
-          }}
-        />
-
-        {template === 'standee' ? (
-          <div className="h-full flex flex-col justify-between items-center text-center p-6 border-4 border-indigo-600 rounded-3xl">
-            <div>
-              <div className="inline-block bg-indigo-600 text-white font-bold text-sm tracking-widest px-6 py-2 rounded-full uppercase mb-4">
-                ✨ ROOPIXO LIVE EVENT GALLERY
-              </div>
-              <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 mb-2">
-                {eventName}
-              </h1>
-              <p className="text-base text-gray-600 font-medium">
-                {dateStr && <span>{dateStr} • </span>}
-                <span>{venue}</span>
-              </p>
-            </div>
-
-            <div className="my-6 flex flex-col items-center">
-              <div className="bg-indigo-50 border border-indigo-200 px-6 py-2 rounded-xl mb-4">
-                <p className="text-lg font-bold text-indigo-900">Find Your Photos Instantly with AI</p>
-                <p className="text-xs text-gray-600">Scan with your phone camera</p>
-              </div>
-
-              <div className="w-72 h-72 border-2 border-gray-300 p-3 rounded-2xl bg-white shadow-md">
-                {qrDataUrl && <img src={qrDataUrl} alt="QR Code" className="w-full h-full object-contain" />}
-              </div>
-
-              {accessCode && (
-                <div className="mt-4 bg-gray-100 border border-gray-300 px-6 py-2 rounded-xl">
-                  <span className="text-xs uppercase font-semibold text-gray-500 mr-2">Access Code:</span>
-                  <span className="font-mono text-2xl font-black text-gray-900 tracking-widest">{accessCode}</span>
-                </div>
-              )}
-            </div>
-
-            <div className="w-full">
-              <div className="grid grid-cols-3 gap-4 border-t-2 border-gray-200 pt-4 mb-4 text-center">
-                <div className="border border-gray-200 rounded-xl p-3">
-                  <div className="w-6 h-6 rounded-full bg-indigo-600 text-white font-bold text-xs mx-auto mb-1 flex items-center justify-center">
-                    1
-                  </div>
-                  <p className="font-bold text-xs">Scan QR</p>
-                  <p className="text-[10px] text-gray-500">Open phone camera</p>
-                </div>
-                <div className="border border-gray-200 rounded-xl p-3">
-                  <div className="w-6 h-6 rounded-full bg-indigo-600 text-white font-bold text-xs mx-auto mb-1 flex items-center justify-center">
-                    2
-                  </div>
-                  <p className="font-bold text-xs">Take Selfie</p>
-                  <p className="text-[10px] text-gray-500">One-time face scan</p>
-                </div>
-                <div className="border border-gray-200 rounded-xl p-3">
-                  <div className="w-6 h-6 rounded-full bg-indigo-600 text-white font-bold text-xs mx-auto mb-1 flex items-center justify-center">
-                    3
-                  </div>
-                  <p className="font-bold text-xs">Get Photos</p>
-                  <p className="text-[10px] text-gray-500">Curated in seconds</p>
-                </div>
-              </div>
-              <p className="text-[10px] text-gray-400">Powered by Roopixo • roopixo.com</p>
-            </div>
-          </div>
-        ) : (
-          <div className="h-full grid grid-cols-2 gap-8 border-4 border-indigo-600 rounded-3xl p-6 relative">
-            <div className="absolute top-0 bottom-0 left-1/2 border-r-2 border-dashed border-gray-300" />
-
-            {/* Left Tent */}
-            <div className="flex flex-col justify-between items-center text-center pr-4">
-              <div>
-                <p className="text-xs font-bold text-indigo-600 tracking-widest uppercase">✨ ROOPIXO</p>
-                <h2 className="text-2xl font-black text-gray-900">{eventName}</h2>
-                <p className="text-xs text-gray-500">Scan to get your photos</p>
-              </div>
-              <div className="w-48 h-48 border border-gray-300 p-2 rounded-xl bg-white my-3">
-                {qrDataUrl && <img src={qrDataUrl} alt="QR" className="w-full h-full object-contain" />}
-              </div>
-              {accessCode && (
-                <p className="font-mono text-sm font-bold text-indigo-900">Code: {accessCode}</p>
-              )}
-              <p className="text-[10px] text-gray-400 mt-2">1. Scan • 2. Selfie • 3. Photos</p>
-            </div>
-
-            {/* Right Tent */}
-            <div className="flex flex-col justify-between items-center text-center pl-4">
-              <div>
-                <p className="text-xs font-bold text-indigo-600 tracking-widest uppercase">✨ ROOPIXO</p>
-                <h2 className="text-2xl font-black text-gray-900">{eventName}</h2>
-                <p className="text-xs text-gray-500">Scan to get your photos</p>
-              </div>
-              <div className="w-48 h-48 border border-gray-300 p-2 rounded-xl bg-white my-3">
-                {qrDataUrl && <img src={qrDataUrl} alt="QR" className="w-full h-full object-contain" />}
-              </div>
-              {accessCode && (
-                <p className="font-mono text-sm font-bold text-indigo-900">Code: {accessCode}</p>
-              )}
-              <p className="text-[10px] text-gray-400 mt-2">1. Scan • 2. Selfie • 3. Photos</p>
-            </div>
-          </div>
-        )}
       </div>
     </>
   );
