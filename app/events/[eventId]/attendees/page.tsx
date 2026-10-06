@@ -25,7 +25,7 @@ import { canAccessEventManagePage } from '@/lib/eventPermissions';
 import RoleGuard from '@/app/components/RoleGuard';
 
 export default function EventAttendeesPage() {
-    const { user } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     const params = useParams();
     const router = useRouter();
     const eventId = params?.eventId as string;
@@ -40,7 +40,8 @@ export default function EventAttendeesPage() {
         if (!eventId) return;
         try {
             setLoading(true);
-            const data = await eventApi.getById(eventId);
+            const res = await eventApi.getById(eventId);
+            const data = (res as any)?.data || res;
             setEvent(data);
         } catch (err: any) {
             console.error('Failed to load event attendees:', err);
@@ -120,9 +121,9 @@ export default function EventAttendeesPage() {
         toast.success(`Exported ${attendees.length} attendees to CSV`);
     };
 
-    if (loading) {
+    if (loading || authLoading) {
         return (
-            <RoleGuard allowedRoles={['admin', 'organizer']}>
+            <RoleGuard allowedRoles={['organizer', 'admin', 'photographer']}>
                 <div className="flex min-h-[60vh] items-center justify-center">
                     <div className="flex flex-col items-center gap-3">
                         <div className="h-10 w-10 animate-spin rounded-full border-4 border-violet-600 border-t-transparent" />
@@ -135,7 +136,7 @@ export default function EventAttendeesPage() {
 
     if (!canAccess) {
         return (
-            <RoleGuard allowedRoles={['admin', 'organizer']}>
+            <RoleGuard allowedRoles={['organizer', 'admin', 'photographer']}>
                 <div className="mx-auto max-w-lg py-16 text-center">
                     <Shield className="mx-auto h-12 w-12 text-zinc-400 dark:text-gray-500 mb-3" />
                     <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Access Denied</h2>
@@ -155,7 +156,7 @@ export default function EventAttendeesPage() {
     }
 
     return (
-        <RoleGuard allowedRoles={['admin', 'organizer']}>
+        <RoleGuard allowedRoles={['organizer', 'admin', 'photographer']}>
             <div className="mx-auto max-w-6xl space-y-6 pb-16">
                 {/* Header & Navigation */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
