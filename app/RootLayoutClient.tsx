@@ -33,6 +33,7 @@ export function RootLayoutClient({ children }: { children: React.ReactNode }) {
     pathname?.startsWith('/reset-password');
   const isRegisterFace = pathname === '/register-face';
   const isDashboard = pathname === '/dashboard';
+  const isLiveWall = pathname?.includes('/live-wall');
 
   return (
     <>
@@ -43,19 +44,23 @@ export function RootLayoutClient({ children }: { children: React.ReactNode }) {
         <AuthSessionProvider>
           <AuthProvider>
             <ThemeProvider>
-              <div className="fixed inset-0 bg-gradient-mesh pointer-events-none opacity-[0.35] dark:opacity-50" />
+              {!isLiveWall && (
+                <div className="fixed inset-0 bg-gradient-mesh pointer-events-none opacity-[0.35] dark:opacity-50" />
+              )}
 
-              <div className="relative min-h-screen">
-                {!isLandingPage && !isAuthPage && <Navbar />}
+              <div className={isLiveWall ? 'w-full h-screen overflow-hidden' : 'relative min-h-screen'}>
+                {!isLandingPage && !isAuthPage && !isLiveWall && <Navbar />}
                 <main
                   className={
-                    isLandingPage || isAuthPage || isRegisterFace
-                      ? isRegisterFace
-                        ? 'min-h-[100dvh] px-0 py-0'
-                        : ''
-                      : isDashboard
-                        ? 'mx-auto w-full max-w-6xl px-4 pb-12 pt-5 sm:px-6 sm:pb-16 sm:pt-8 lg:px-8'
-                        : 'container mx-auto px-4 py-8'
+                    isLiveWall
+                      ? 'w-full h-full p-0 m-0 overflow-hidden'
+                      : isLandingPage || isAuthPage || isRegisterFace
+                        ? isRegisterFace
+                          ? 'min-h-[100dvh] px-0 py-0'
+                          : ''
+                        : isDashboard
+                          ? 'mx-auto w-full max-w-6xl px-4 pb-12 pt-5 sm:px-6 sm:pb-16 sm:pt-8 lg:px-8'
+                          : 'container mx-auto px-4 py-8'
                   }
                 >
                   {children}

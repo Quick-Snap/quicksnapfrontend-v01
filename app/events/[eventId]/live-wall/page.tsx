@@ -25,7 +25,10 @@ import {
   Monitor,
   CheckCircle2,
   Clock,
-  ShieldAlert
+  ShieldAlert,
+  Share2,
+  Copy,
+  Check
 } from 'lucide-react';
 import { eventApi } from '@/lib/api';
 import { fetchAllEventPhotos, normalizePhotosFromGet } from '@/lib/photoFetch';
@@ -66,14 +69,24 @@ export default function LiveMomentsWallPage() {
   const [showSettings, setShowSettings] = useState(false);
   const [hiddenPhotoIds, setHiddenPhotoIds] = useState<Set<string>>(new Set());
   const [emergencyToast, setEmergencyToast] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
 
-  // Organizer Settings
+  // Settings (Public & Organizer)
   const [aspectRatio, setAspectRatio] = useState<AspectRatioMode>('auto');
   const [streamMode, setStreamMode] = useState<StreamMode>('smart-mix');
   const [prioritizeGroups, setPrioritizeGroups] = useState(true);
   const [prioritizeJoined, setPrioritizeJoined] = useState(true);
   const [slideDuration, setSlideDuration] = useState<number>(7); // seconds
   const [showQrCode, setShowQrCode] = useState(true);
+
+  // Copy Public Live Wall Link
+  const handleCopyWallLink = () => {
+    if (typeof window !== 'undefined') {
+      navigator.clipboard.writeText(window.location.href);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    }
+  };
 
   // Motion index for Ken Burns alternation
   const [motionVariation, setMotionVariation] = useState<number>(0);
@@ -101,6 +114,14 @@ export default function LiveMomentsWallPage() {
       .then((url) => setQrCodeUrl(url))
       .catch((err) => console.error('Failed to generate Live Wall QR:', err));
   }, [eventId]);
+
+  // Compute permissions
+  const isOrganizer = useMemo(() => {
+    if (!user || !event) return false;
+    if (user.role === 'admin' || user.roles?.includes('admin')) return true;
+    const orgId = typeof event.organizer === 'string' ? event.organizer : event.organizer?._id;
+    return orgId === user.id || orgId === (user as any)._id;
+  }, [user, event]);
 
   // Load Event and Initial Photos
   const loadData = useCallback(async (isInitial = false) => {
@@ -132,10 +153,10 @@ export default function LiveMomentsWallPage() {
   useEffect(() => {
     loadData(true);
 
-    // Setup 15-second background polling for new photos (zero overhead)
+    // Auto sync new photos every 4 minutes (calm, server-friendly interval)
     pollTimerRef.current = setInterval(() => {
       loadData(false);
-    }, 15000);
+    }, 4 * 60 * 1000);
 
     return () => {
       if (pollTimerRef.current) clearInterval(pollTimerRef.current);
@@ -404,18 +425,18 @@ export default function LiveMomentsWallPage() {
   // Determine stage aspect ratio wrapper styling
   const aspectContainerClasses = useMemo(() => {
     if (aspectRatio === '16-9') {
-      return 'aspect-video w-full max-h-screen';
+      return 'aspect-video w-full max-h-[100dvh] max-w-[177.78vh]';
     }
     if (aspectRatio === '9-16') {
-      return 'aspect-[9/16] h-full max-w-full';
+      return 'aspect-[9/16] h-full max-w-[100vw] max-h-[100dvh]';
     }
-    return 'w-full h-full';
+    return 'w-full h-full max-w-full max-h-[100dvh]';
   }, [aspectRatio]);
 
   return (
     <div
       onMouseMove={handleMouseMove}
-      className="relative w-screen h-screen overflow-hidden bg-black text-white select-none flex items-center justify-center font-sans"
+      className="fixed inset-0 w-full h-[100dvh] overflow-hidden bg-black text-white select-none flex items-center justify-center font-sans touch-none"
     >
       {/* Background Ambience Layer: heavily blurred subtle ambient light */}
       {currentItem && (
@@ -546,10 +567,11 @@ export default function LiveMomentsWallPage() {
         }`}
       >
         <div className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-zinc-950/85 backdrop-blur-xl border border-white/15 shadow-2xl">
+          {/* Back to Event/Dashboard Link */}
           <Link
-            href={`/events/${eventId}/manage`}
+            href={isOrganizer ? `/events/${eventId}/manage` : `/events/${eventId}`}
             className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
-            title="Exit to Event Dashboard"
+            title={isOrganizer ? "Exit to Manage Dashboard" : "Exit to Event Gallery"}
           >
             <ChevronLeft className="w-5 h-5" />
           </Link>
@@ -592,13 +614,24 @@ export default function LiveMomentsWallPage() {
 
           <div className="h-5 w-px bg-white/10 mx-1" />
 
-          {/* Emergency Hide Current Button */}
+          {/* Emergency Hide Current Button (Organizers only) */}
+          {isOrganizer && (
+            <button
+              onClick={handleEmergencyHideCurrent}
+              className="p-2 rounded-xl text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+              title="Emergency Hide Photo (H key)"
+            >
+              <EyeOff className="w-5 h-5" />
+            </button>
+          )}
+
+          {/* Copy Public Live Wall Link */}
           <button
-            onClick={handleEmergencyHideCurrent}
-            className="p-2 rounded-xl text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-            title="Emergency Hide Photo (H key)"
+            onClick={handleCopyWallLink}
+            className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
+            title={linkCopied ? "Link Copied!" : "Share Public Live Wall Link"}
           >
-            <EyeOff className="w-5 h-5" />
+            {linkCopied ? <Check className="w-5 h-5 text-emerald-400" /> : <Share2 className="w-5 h-5" />}
           </button>
 
           {/* Settings Modal Toggle */}
@@ -696,87 +729,94 @@ export default function LiveMomentsWallPage() {
                 </div>
               </div>
 
-              {/* Stream Mode Selection */}
-              <div>
-                <label className="text-xs font-semibold uppercase tracking-wider text-zinc-400 block mb-2">
-                  Photo Stream Preference
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setStreamMode('smart-mix')}
-                    className={`p-3 rounded-2xl border text-center transition-all ${
-                      streamMode === 'smart-mix'
-                        ? 'border-violet-500 bg-violet-500/15 text-white font-semibold'
-                        : 'border-white/10 bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-zinc-200'
-                    }`}
-                  >
-                    <div className="text-xs">Smart Mix</div>
-                    <div className="text-[10px] text-zinc-500 mt-0.5">AI Recommended</div>
-                  </button>
+              {/* Stream Mode Selection (Organizers only) */}
+              {isOrganizer && (
+                <div>
+                  <label className="text-xs font-semibold uppercase tracking-wider text-zinc-400 block mb-2">
+                    Photo Stream Preference
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setStreamMode('smart-mix')}
+                      className={`p-3 rounded-2xl border text-center transition-all ${
+                        streamMode === 'smart-mix'
+                          ? 'border-violet-500 bg-violet-500/15 text-white font-semibold'
+                          : 'border-white/10 bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-zinc-200'
+                      }`}
+                    >
+                      <div className="text-xs">Smart Mix</div>
+                      <div className="text-[10px] text-zinc-500 mt-0.5">AI Recommended</div>
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setStreamMode('official-only')}
-                    className={`p-3 rounded-2xl border text-center transition-all ${
-                      streamMode === 'official-only'
-                        ? 'border-violet-500 bg-violet-500/15 text-white font-semibold'
-                        : 'border-white/10 bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-zinc-200'
-                    }`}
-                  >
-                    <div className="text-xs">Official Only</div>
-                    <div className="text-[10px] text-zinc-500 mt-0.5">Starred Photos</div>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => setStreamMode('official-only')}
+                      className={`p-3 rounded-2xl border text-center transition-all ${
+                        streamMode === 'official-only'
+                          ? 'border-violet-500 bg-violet-500/15 text-white font-semibold'
+                          : 'border-white/10 bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-zinc-200'
+                      }`}
+                    >
+                      <div className="text-xs">Official Only</div>
+                      <div className="text-[10px] text-zinc-500 mt-0.5">Starred Photos</div>
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setStreamMode('all-safe')}
-                    className={`p-3 rounded-2xl border text-center transition-all ${
-                      streamMode === 'all-safe'
-                        ? 'border-violet-500 bg-violet-500/15 text-white font-semibold'
-                        : 'border-white/10 bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-zinc-200'
-                    }`}
-                  >
-                    <div className="text-xs">All Safe</div>
-                    <div className="text-[10px] text-zinc-500 mt-0.5">Chronological</div>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => setStreamMode('all-safe')}
+                      className={`p-3 rounded-2xl border text-center transition-all ${
+                        streamMode === 'all-safe'
+                          ? 'border-violet-500 bg-violet-500/15 text-white font-semibold'
+                          : 'border-white/10 bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-zinc-200'
+                      }`}
+                    >
+                      <div className="text-xs">All Safe</div>
+                      <div className="text-[10px] text-zinc-500 mt-0.5">Chronological</div>
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Toggles */}
               <div className="space-y-3 pt-1 border-t border-white/10">
-                <label className="flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/[0.08] cursor-pointer transition-colors">
-                  <div className="flex items-center gap-3">
-                    <Users className="w-4 h-4 text-violet-400" />
-                    <div>
-                      <p className="text-xs font-semibold text-white">Prioritize Groups (3–15 people)</p>
-                      <p className="text-[11px] text-zinc-400">Emphasize lively group pictures over solo selfies</p>
-                    </div>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={prioritizeGroups}
-                    onChange={(e) => setPrioritizeGroups(e.target.checked)}
-                    className="w-4 h-4 rounded text-violet-600 focus:ring-violet-500 bg-zinc-800 border-white/20"
-                  />
-                </label>
+                {isOrganizer && (
+                  <>
+                    <label className="flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/[0.08] cursor-pointer transition-colors">
+                      <div className="flex items-center gap-3">
+                        <Users className="w-4 h-4 text-violet-400" />
+                        <div>
+                          <p className="text-xs font-semibold text-white">Prioritize Groups (3–15 people)</p>
+                          <p className="text-[11px] text-zinc-400">Emphasize lively group pictures over solo selfies</p>
+                        </div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={prioritizeGroups}
+                        onChange={(e) => setPrioritizeGroups(e.target.checked)}
+                        className="w-4 h-4 rounded text-violet-600 focus:ring-violet-500 bg-zinc-800 border-white/20"
+                      />
+                    </label>
 
-                <label className="flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/[0.08] cursor-pointer transition-colors">
-                  <div className="flex items-center gap-3">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                    <div>
-                      <p className="text-xs font-semibold text-white">Prioritize Joined Guests</p>
-                      <p className="text-[11px] text-zinc-400">Favor moments of guests registered in this event</p>
-                    </div>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={prioritizeJoined}
-                    onChange={(e) => setPrioritizeJoined(e.target.checked)}
-                    className="w-4 h-4 rounded text-violet-600 focus:ring-violet-500 bg-zinc-800 border-white/20"
-                  />
-                </label>
+                    <label className="flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/[0.08] cursor-pointer transition-colors">
+                      <div className="flex items-center gap-3">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                        <div>
+                          <p className="text-xs font-semibold text-white">Prioritize Joined Guests</p>
+                          <p className="text-[11px] text-zinc-400">Favor moments of guests registered in this event</p>
+                        </div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={prioritizeJoined}
+                        onChange={(e) => setPrioritizeJoined(e.target.checked)}
+                        className="w-4 h-4 rounded text-violet-600 focus:ring-violet-500 bg-zinc-800 border-white/20"
+                      />
+                    </label>
+                  </>
+                )}
 
+                {/* Public Display Toggle */}
                 <label className="flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/[0.08] cursor-pointer transition-colors">
                   <div className="flex items-center gap-3">
                     <QrCodeIcon className="w-4 h-4 text-blue-400" />
