@@ -105,81 +105,82 @@ export default function PrintableEventKitModal({
             }
             .page-container {
               width: 100vw;
-              height: 100vh;
+              min-height: 100vh;
               page-break-after: avoid;
               page-break-inside: avoid;
               display: flex;
               flex-direction: column;
-              justify-content: center;
-              align-items: center;
-              padding: 24px 28px;
+              justify-content: stretch;
+              align-items: stretch;
+              padding: 20px 24px;
             }
             .standee-frame {
               width: 100%;
-              max-height: 98vh;
-              border: 3.5px solid #6366f1;
-              border-radius: 28px;
+              flex: 1;
+              min-height: calc(100vh - 40px);
+              border: 4px solid #6366f1;
+              border-radius: 32px;
               display: flex;
               flex-direction: column;
               justify-content: space-between;
               align-items: center;
               text-align: center;
-              padding: 28px 32px;
-              background: linear-gradient(180deg, #fcfaff 0%, #ffffff 45%, #f8faff 100%);
-              box-shadow: inset 0 0 0 1px #e0e7ff;
+              padding: 40px 44px;
+              background: linear-gradient(180deg, #fbfaff 0%, #ffffff 42%, #f8faff 100%);
+              box-shadow: inset 0 0 0 1.5px #e0e7ff;
             }
             .brand-badge {
               display: inline-flex;
               align-items: center;
-              gap: 6px;
+              gap: 8px;
               background: #ede9fe;
               color: #5b21b6;
-              font-size: 12px;
+              font-size: 14px;
               font-weight: 800;
-              letter-spacing: 0.14em;
+              letter-spacing: 0.16em;
               text-transform: uppercase;
-              padding: 6px 18px;
+              padding: 8px 24px;
               border-radius: 9999px;
-              margin-bottom: 12px;
+              margin-bottom: 16px;
             }
             .event-title {
-              font-size: 32px;
-              font-weight: 800;
-              line-height: 1.2;
+              font-size: 40px;
+              font-weight: 900;
+              line-height: 1.18;
               color: #0f172a;
-              margin-bottom: 4px;
+              margin-bottom: 6px;
               max-width: 90%;
             }
             .event-meta {
-              font-size: 13px;
+              font-size: 16px;
               color: #64748b;
               font-weight: 500;
             }
             .cta-box {
               background: #f5f3ff;
               border: 1.5px solid #ddd6fe;
-              border-radius: 14px;
-              padding: 10px 24px;
-              margin: 14px 0 12px 0;
+              border-radius: 16px;
+              padding: 12px 32px;
+              margin: 18px 0 16px 0;
             }
             .cta-title {
-              font-size: 16px;
+              font-size: 19px;
               font-weight: 800;
               color: #4c1d95;
             }
             .cta-desc {
-              font-size: 12px;
+              font-size: 13px;
               color: #52525b;
-              margin-top: 2px;
+              margin-top: 3px;
             }
             .qr-wrapper {
-              width: 220px;
-              height: 220px;
-              border: 2px solid #e0e7ff;
-              border-radius: 20px;
+              width: 320px;
+              height: 320px;
+              border: 2.5px solid #e0e7ff;
+              border-radius: 28px;
               background: #ffffff;
-              padding: 10px;
-              box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.12);
+              padding: 16px;
+              box-shadow: 0 15px 35px -5px rgba(99, 102, 241, 0.15);
               display: flex;
               align-items: center;
               justify-content: center;
@@ -191,71 +192,71 @@ export default function PrintableEventKitModal({
             }
             .code-pill {
               background: #f5f3ff;
-              border: 1.5px solid #c4b5fd;
-              border-radius: 12px;
-              padding: 6px 20px;
-              margin-top: 12px;
+              border: 2px solid #c4b5fd;
+              border-radius: 16px;
+              padding: 10px 32px;
+              margin-top: 18px;
               display: inline-block;
             }
             .code-pill .label {
-              font-size: 10px;
-              font-weight: 700;
+              font-size: 11px;
+              font-weight: 800;
               text-transform: uppercase;
               color: #7c3aed;
-              letter-spacing: 0.08em;
+              letter-spacing: 0.1em;
               display: block;
-              margin-bottom: 2px;
+              margin-bottom: 3px;
             }
             .code-pill .code {
               font-family: monospace;
-              font-size: 21px;
+              font-size: 26px;
               font-weight: 900;
-              letter-spacing: 0.16em;
+              letter-spacing: 0.18em;
               color: #2e1065;
             }
             .steps-grid {
               width: 100%;
               display: grid;
               grid-template-columns: repeat(3, 1fr);
-              gap: 12px;
-              border-top: 1.5px solid #f1f5f9;
-              padding-top: 14px;
-              margin-top: 12px;
+              gap: 16px;
+              border-top: 2px solid #f1f5f9;
+              padding-top: 20px;
+              margin-top: 16px;
             }
             .step-card {
-              border: 1px solid #e2e8f0;
-              border-radius: 14px;
-              padding: 10px 8px;
+              border: 1.5px solid #e2e8f0;
+              border-radius: 18px;
+              padding: 14px 12px;
               background: #ffffff;
-              box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+              box-shadow: 0 2px 5px rgba(0,0,0,0.02);
             }
             .step-num {
-              width: 24px;
-              height: 24px;
+              width: 30px;
+              height: 30px;
               border-radius: 50%;
               background: #7c3aed;
               color: #ffffff;
-              font-size: 11px;
+              font-size: 13px;
               font-weight: 800;
               display: flex;
               align-items: center;
               justify-content: center;
-              margin: 0 auto 5px auto;
+              margin: 0 auto 8px auto;
             }
             .step-title {
-              font-size: 12px;
-              font-weight: 700;
+              font-size: 14px;
+              font-weight: 800;
               color: #0f172a;
             }
             .step-desc {
-              font-size: 10px;
+              font-size: 11px;
               color: #64748b;
-              margin-top: 2px;
+              margin-top: 3px;
             }
             .footer-note {
-              font-size: 10px;
+              font-size: 11px;
               color: #94a3b8;
-              margin-top: 8px;
+              margin-top: 14px;
               letter-spacing: 0.02em;
             }
             /* Tent card layout */
