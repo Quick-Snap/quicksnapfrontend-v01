@@ -48,12 +48,38 @@ export default function GuestUploadModal({
   const [verifyingOtp, setVerifyingOtp] = useState(false);
   const [isPhoneVerified, setIsPhoneVerified] = useState(false);
 
+  // Guest upload allowance & existing photos
+  const [myExistingSubmissions, setMyExistingSubmissions] = useState<any[]>([]);
+  const [loadingMySubmissions, setLoadingMySubmissions] = useState(false);
+  const [remainingAllowance, setRemainingAllowance] = useState(MAX_PHOTOS);
+
   // Photo Selection State
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch past submissions for this phone number
+  const fetchMySubmissions = async (phoneNum: string) => {
+    if (!eventId || !phoneNum) return;
+    try {
+      setLoadingMySubmissions(true);
+      const res = await guestSubmissionsApi.getMySubmissions(eventId, phoneNum);
+      if (res.success && Array.isArray(res.data)) {
+        setMyExistingSubmissions(res.data);
+        const totalUploaded = res.data.reduce(
+          (acc: number, sub: any) => acc + (sub.photos?.length || 0),
+          0
+        );
+        setRemainingAllowance(Math.max(0, MAX_PHOTOS - totalUploaded));
+      }
+    } catch (err) {
+      console.warn('Failed to fetch existing guest submissions:', err);
+    } finally {
+      setLoadingMySubmissions(false);
+    }
+  };
 
   // Auto-fill from localStorage if previously verified
   useEffect(() => {
@@ -64,12 +90,13 @@ export default function GuestUploadModal({
         setPhone(savedPhone);
         setIsPhoneVerified(true);
         setStep(2);
+        fetchMySubmissions(savedPhone);
       }
       if (savedName && !guestName) {
         setGuestName(savedName);
       }
     }
-  }, [guestName]);
+  }, [eventId]);
 
   if (!isOpen) return null;
 
@@ -110,6 +137,7 @@ export default function GuestUploadModal({
       }
       toast.success('Mobile number verified successfully!');
       setStep(2);
+      fetchMySubmissions(phone);
     } catch {
       toast.error('Invalid verification code');
     } finally {
@@ -122,6 +150,11 @@ export default function GuestUploadModal({
     if (!e.target.files) return;
     const filesArray = Array.from(e.target.files);
 
+    if (remainingAllowance <= 0) {
+      toast.error(`You have reached the maximum limit of ${MAX_PHOTOS} photos for this event`);
+      return;
+    }
+
     const validFiles: File[] = [];
     for (const f of filesArray) {
       if (!ALLOWED_TYPES.includes(f.type) && !f.name.toLowerCase().endsWith('.heic')) {
@@ -131,9 +164,10 @@ export default function GuestUploadModal({
       validFiles.push(f);
     }
 
-    if (selectedFiles.length + validFiles.length > MAX_PHOTOS) {
-      toast.error(`You can upload up to ${MAX_PHOTOS} photos at a time`);
-      const allowed = validFiles.slice(0, MAX_PHOTOS - selectedFiles.length);
+    const maxCanAdd = remainingAllowance - selectedFiles.length;
+    if (validFiles.length > maxCanAdd) {
+      toast.error(`You can only add up to ${maxCanAdd} more photo${maxCanAdd === 1 ? '' : 's'} (Max ${MAX_PHOTOS} per guest)`);
+      const allowed = validFiles.slice(0, Math.max(0, maxCanAdd));
       setSelectedFiles((prev) => [...prev, ...allowed]);
     } else {
       setSelectedFiles((prev) => [...prev, ...validFiles]);
@@ -365,25 +399,107 @@ export default function GuestUploadModal({
                 <span>Max {MAX_PHOTOS} photos</span>
               </div>
 
-              {/* Upload Dropzone */}
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="cursor-pointer group flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-200 p-6 text-center transition-all hover:border-violet-400 hover:bg-violet-50/20 dark:border-white/10 dark:hover:border-violet-500/30 dark:hover:bg-violet-500/5"
-              >
-                <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-50 text-violet-600 group-hover:scale-110 transition-transform dark:bg-violet-500/10 dark:text-violet-300">
-                  <ImageIcon size={22} />
+              {/* Guest Quota & Allowance Indicator */}
+              <div className="flex items-center justify-between rounded-xl border border-zinc-100 bg-zinc-50/70 p-3 dark:border-white/5 dark:bg-white/5 text-xs">
+                <div>
+                  <span className="font-semibold text-zinc-800 dark:text-zinc-200">Upload Quota: </span>
+                  <span className="font-bold text-violet-600 dark:text-violet-400">
+                    {MAX_PHOTOS - remainingAllowance} of {MAX_PHOTOS} used
+                  </span>
                 </div>
-                <p className="text-sm font-bold text-zinc-900 dark:text-white">Click to select photos</p>
-                <p className="mt-1 text-xs text-zinc-500 dark:text-gray-400">Supports JPG, PNG, HEIC from mobile camera</p>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  accept="image/jpeg,image/png,image/webp,image/heic,.heic"
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
+                <span className={`font-semibold ${remainingAllowance > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}`}>
+                  {remainingAllowance > 0 ? `${remainingAllowance} remaining` : 'Limit reached'}
+                </span>
               </div>
+
+              {/* Upload Dropzone (disabled if 0 allowance) */}
+              {remainingAllowance > 0 ? (
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="cursor-pointer group flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-200 p-6 text-center transition-all hover:border-violet-400 hover:bg-violet-50/20 dark:border-white/10 dark:hover:border-violet-500/30 dark:hover:bg-violet-500/5"
+                >
+                  <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-50 text-violet-600 group-hover:scale-110 transition-transform dark:bg-violet-500/10 dark:text-violet-300">
+                    <ImageIcon size={22} />
+                  </div>
+                  <p className="text-sm font-bold text-zinc-900 dark:text-white">Click to select photos</p>
+                  <p className="mt-1 text-xs text-zinc-500 dark:text-gray-400">
+                    Supports JPG, PNG, HEIC (up to {remainingAllowance} more)
+                  </p>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    accept="image/jpeg,image/png,image/webp,image/heic,.heic"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-amber-200/60 bg-amber-50/50 p-4 text-center dark:border-amber-500/20 dark:bg-amber-500/5">
+                  <p className="text-xs font-semibold text-amber-800 dark:text-amber-300">
+                    You have uploaded the maximum {MAX_PHOTOS} photos for this event.
+                  </p>
+                  <p className="text-[11px] text-zinc-500 dark:text-gray-400 mt-0.5">
+                    Check the review status of your submitted photos below.
+                  </p>
+                </div>
+              )}
+
+              {/* SECTION: Previously Uploaded Photos Status */}
+              {myExistingSubmissions.length > 0 && (
+                <div className="pt-2 border-t border-zinc-100 dark:border-white/5 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-gray-400">
+                      Your Uploaded Photos Status
+                    </h4>
+                    <span className="text-[11px] text-zinc-400">
+                      {myExistingSubmissions.flatMap((s) => s.photos || []).length} photos submitted
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto pr-1">
+                    {myExistingSubmissions
+                      .flatMap((s) => s.photos || [])
+                      .map((p: any, idx: number) => {
+                        const isApproved = p.status === 'approved';
+                        const isRejected = p.status === 'rejected';
+
+                        return (
+                          <div
+                            key={p._id || idx}
+                            className="relative aspect-square rounded-xl overflow-hidden bg-zinc-100 dark:bg-white/5 border border-zinc-100 dark:border-white/5 group"
+                          >
+                            {p.previewUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={p.previewUrl}
+                                alt="Your upload"
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="h-full w-full flex items-center justify-center text-xs text-zinc-400">
+                                📷
+                              </div>
+                            )}
+
+                            {/* Badge */}
+                            <span
+                              className={`absolute bottom-1 left-1 right-1 rounded-md px-1 py-0.5 text-[9px] font-bold text-center leading-tight shadow ${
+                                isApproved
+                                  ? 'bg-emerald-600 text-white'
+                                  : isRejected
+                                  ? 'bg-red-600 text-white'
+                                  : 'bg-amber-500 text-white'
+                              }`}
+                            >
+                              {isApproved ? 'Approved' : isRejected ? 'Rejected' : 'Pending'}
+                            </span>
+                          </div>
+                        );
+                      })}
+                  </div>
+                </div>
+              )}
 
               {/* Selected Files List */}
               {selectedFiles.length > 0 && (

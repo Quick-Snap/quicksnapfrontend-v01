@@ -57,12 +57,16 @@ export default function EventSubmissionsReviewPage() {
       setEvent(eventData);
 
       if (subsRes.success && subsRes.data) {
-        setSubmissions(subsRes.data.submissions || []);
+        const subs = subsRes.data.submissions || [];
+        setSubmissions(subs);
         setSummary(subsRes.data.summary || {});
+        return subs;
       }
+      return [];
     } catch (err: any) {
       console.error('Failed to load guest submissions:', err);
       toast.error('Failed to load guest submissions desk');
+      return [];
     } finally {
       setLoading(false);
     }
@@ -86,7 +90,7 @@ export default function EventSubmissionsReviewPage() {
 
   // Handle single photo or batch decisions
   const handleReviewDecision = async (
-    submissionId: string,
+    targetSubmissionId: string,
     decisions: Array<{
       photoId: string;
       action: 'approve' | 'reject';
@@ -95,6 +99,8 @@ export default function EventSubmissionsReviewPage() {
   ) => {
     setReviewing(true);
     try {
+      // Find the specific submission that owns the photo, if merged
+      const submissionId = targetSubmissionId;
       const res = await guestSubmissionsApi.reviewPhotos(eventId, submissionId, {
         photoDecisions: decisions,
       });
@@ -105,14 +111,17 @@ export default function EventSubmissionsReviewPage() {
             ? `Photo ${decisions[0].action}d successfully`
             : `Reviewed ${decisions.length} photos successfully`
         );
-        await fetchData();
+        const latestSubs = await fetchData();
 
         // Update active drawer view if open
-        if (activeGuestSubmission && activeGuestSubmission._id === submissionId) {
-          const updated = submissions.find((s) => s._id === submissionId);
+        if (activeGuestSubmission) {
+          const guestPhone = activeGuestSubmission.guest?.phone?.replace(/[^0-9]/g, '').slice(-10);
+          const updated = (latestSubs || submissions).find(
+            (s: any) => s.guest?.phone?.replace(/[^0-9]/g, '').slice(-10) === guestPhone
+          );
           if (updated && updated.pendingCount === 0) {
             setActiveGuestSubmission(null);
-          } else {
+          } else if (updated) {
             setActiveGuestSubmission(updated);
           }
         }
