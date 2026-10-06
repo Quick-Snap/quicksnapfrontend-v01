@@ -34,6 +34,7 @@ import { eventApi } from '@/lib/api';
 import { fetchAllEventPhotos, normalizePhotosFromGet } from '@/lib/photoFetch';
 import { getPhotoDisplayUrl } from '@/lib/photoUrl';
 import { useAuth } from '@/contexts/AuthContext';
+import BrandLogo from '@/components/BrandLogo';
 
 type AspectRatioMode = 'auto' | '16-9' | '9-16';
 type StreamMode = 'smart-mix' | 'official-only' | 'all-safe';
@@ -607,6 +608,26 @@ export default function LiveMomentsWallPage() {
                 </div>
               )}
             </div>
+
+            {/* Top Right: Roopixo Brand Mark */}
+            <div className="absolute top-6 right-6 z-20 pointer-events-none">
+              <div className="px-3 py-1.5 rounded-xl bg-black/60 backdrop-blur-md border border-white/10 shadow-2xl flex items-center gap-2">
+                <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-400">Powered by</span>
+                <BrandLogo href={null} size="sm" tone="light" />
+              </div>
+            </div>
+
+            {/* Bottom Left: Subtle Brand Watermark (Landscape / Standard TV displays) */}
+            {aspectRatio !== '9-16' && (
+              <div className="absolute bottom-6 left-6 z-20 pointer-events-none hidden sm:block">
+                <div className="px-3 py-1.5 rounded-xl bg-black/40 backdrop-blur-md border border-white/5 shadow-lg flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-violet-400 shadow-[0_0_8px_rgba(167,139,250,0.8)]" />
+                  <span className="text-[11px] font-medium tracking-wide text-zinc-300">
+                    Live Event Stream &bull; <span className="font-semibold text-white">roopixo.com</span>
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* Persistent QR Overlay: Positioned according to screen orientation */}
             {showQrCode && qrCodeUrl && (
