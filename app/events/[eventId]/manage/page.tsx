@@ -741,23 +741,7 @@ export default function ManageEventPage() {
                                 <div className="rounded-xl border border-violet-200/90 bg-gradient-to-r from-violet-50 to-indigo-50 p-4 dark:border-violet-500/30 dark:from-[#181025] dark:to-[#121022]">
                                     <div className="mb-2 flex items-center justify-between">
                                         <p className="font-medium text-zinc-900 dark:text-white">Access Code</p>
-                                        <div className="flex items-center gap-2.5">
-                                            <Link
-                                                href={`/events/${eventId}/live-wall`}
-                                                target="_blank"
-                                                className="inline-flex items-center gap-1 text-xs font-semibold text-violet-700 transition-colors hover:text-violet-900 dark:text-violet-300 dark:hover:text-white"
-                                            >
-                                                <Tv size={12} />
-                                                Live Wall
-                                            </Link>
-                                            <button
-                                                type="button"
-                                                onClick={() => setIsPrintKitOpen(true)}
-                                                className="inline-flex items-center gap-1 text-xs font-semibold text-violet-700 transition-colors hover:text-violet-900 dark:text-violet-300 dark:hover:text-white"
-                                            >
-                                                <Printer size={12} />
-                                                Print Standee
-                                            </button>
+                                        <div className="flex items-center gap-2">
                                             {canFullManage && (
                                                 <button
                                                     type="button"
