@@ -583,26 +583,27 @@ export default function LiveMomentsWallPage() {
             <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/60 via-transparent to-black/40" />
 
             {/* Top Left: Event Branding & Moment Badge */}
-            <div className="absolute top-6 left-6 flex items-center gap-3 z-20 pointer-events-none">
-              <div className="px-4 py-2 rounded-xl bg-black/60 backdrop-blur-md border border-white/10 shadow-2xl flex items-center gap-2.5">
-                <span className="relative flex h-2.5 w-2.5">
+            <div className="absolute top-3 left-3 sm:top-6 sm:left-6 flex flex-wrap items-center gap-2 sm:gap-3 z-20 pointer-events-none max-w-[calc(100%-120px)] sm:max-w-none">
+              <div className="px-2.5 py-1 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl bg-black/60 backdrop-blur-md border border-white/10 shadow-2xl flex items-center gap-2">
+                <span className="relative flex h-2 w-2 sm:h-2.5 sm:w-2.5 shrink-0">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 sm:h-2.5 sm:w-2.5 bg-emerald-500"></span>
                 </span>
-                <span className="text-xs font-semibold tracking-wider uppercase text-zinc-200">
+                <span className="text-[11px] sm:text-xs font-semibold tracking-wider uppercase text-zinc-200 truncate max-w-[120px] sm:max-w-[240px]">
                   {event?.name || 'Live Moments'}
                 </span>
               </div>
 
               {currentItem?.isOfficial && (
-                <div className="px-3 py-1.5 rounded-xl bg-amber-500/20 backdrop-blur-md border border-amber-400/30 text-amber-300 text-xs font-semibold flex items-center gap-1.5">
-                  <Star className="w-3.5 h-3.5 fill-amber-300" />
-                  <span>Featured Moment</span>
+                <div className="px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl bg-amber-500/20 backdrop-blur-md border border-amber-400/30 text-amber-300 text-[10px] sm:text-xs font-semibold flex items-center gap-1 sm:gap-1.5">
+                  <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-amber-300 shrink-0" />
+                  <span className="hidden xs:inline sm:inline">Featured Moment</span>
+                  <span className="xs:hidden sm:hidden">Official</span>
                 </div>
               )}
 
               {currentItem && currentItem.groupCount >= 3 && currentItem.groupCount <= 15 && (
-                <div className="px-3 py-1.5 rounded-xl bg-violet-500/20 backdrop-blur-md border border-violet-400/30 text-violet-300 text-xs font-semibold flex items-center gap-1.5">
+                <div className="hidden sm:flex px-3 py-1.5 rounded-xl bg-violet-500/20 backdrop-blur-md border border-violet-400/30 text-violet-300 text-xs font-semibold items-center gap-1.5">
                   <Users className="w-3.5 h-3.5" />
                   <span>{currentItem.groupCount} Guests</span>
                 </div>
@@ -610,16 +611,16 @@ export default function LiveMomentsWallPage() {
             </div>
 
             {/* Top Right: Roopixo Brand Mark */}
-            <div className="absolute top-6 right-6 z-20 pointer-events-none">
-              <div className="px-3 py-1.5 rounded-xl bg-black/60 backdrop-blur-md border border-white/10 shadow-2xl flex items-center gap-2">
-                <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-400">Powered by</span>
+            <div className="absolute top-3 right-3 sm:top-6 sm:right-6 z-20 pointer-events-none">
+              <div className="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl bg-black/60 backdrop-blur-md border border-white/10 shadow-2xl flex items-center gap-1.5 sm:gap-2">
+                <span className="text-[9px] sm:text-[10px] font-medium uppercase tracking-wider text-zinc-400 hidden xs:inline sm:inline">Powered by</span>
                 <BrandLogo href={null} size="sm" tone="light" />
               </div>
             </div>
 
             {/* Bottom Left: Subtle Brand Watermark (Landscape / Standard TV displays) */}
             {aspectRatio !== '9-16' && (
-              <div className="absolute bottom-6 left-6 z-20 pointer-events-none hidden sm:block">
+              <div className="absolute bottom-6 left-6 z-20 pointer-events-none hidden md:block">
                 <div className="px-3 py-1.5 rounded-xl bg-black/40 backdrop-blur-md border border-white/5 shadow-lg flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-violet-400 shadow-[0_0_8px_rgba(167,139,250,0.8)]" />
                   <span className="text-[11px] font-medium tracking-wide text-zinc-300">
@@ -634,26 +635,26 @@ export default function LiveMomentsWallPage() {
               <div
                 className={`absolute z-20 transition-all duration-300 ${
                   aspectRatio === '9-16'
-                    ? 'bottom-8 left-1/2 -translate-x-1/2'
-                    : 'bottom-6 right-6'
+                    ? 'bottom-20 sm:bottom-8 left-1/2 -translate-x-1/2 max-w-[90vw]'
+                    : 'bottom-20 sm:bottom-6 right-3 sm:right-6 max-w-[90vw]'
                 }`}
               >
-                <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-black/75 backdrop-blur-xl border border-white/15 shadow-2xl">
+                <div className="flex items-center gap-2.5 sm:gap-3.5 p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-black/75 backdrop-blur-xl border border-white/15 shadow-2xl">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={qrCodeUrl}
                     alt="Scan for photos"
-                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-white p-1"
+                    className="w-12 h-12 sm:w-20 sm:h-20 rounded-lg sm:rounded-xl bg-white p-0.5 sm:p-1 shrink-0"
                   />
-                  <div className="text-left pr-2">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-violet-300 flex items-center gap-1">
-                      <Sparkles className="w-3 h-3" /> Find Your Photos
+                  <div className="text-left pr-1 sm:pr-2 min-w-0">
+                    <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-violet-300 flex items-center gap-1">
+                      <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" /> Find Your Photos
                     </p>
-                    <p className="text-xs text-zinc-300 mt-0.5 leading-snug">
-                      Scan or join event with code:
+                    <p className="text-[11px] sm:text-xs text-zinc-300 mt-0.5 leading-snug">
+                      Scan or join code:
                     </p>
                     {event?.accessCode ? (
-                      <span className="inline-block mt-1 font-mono text-sm font-bold tracking-widest text-white bg-white/10 px-2 py-0.5 rounded border border-white/15">
+                      <span className="inline-block mt-0.5 sm:mt-1 font-mono text-xs sm:text-sm font-bold tracking-widest text-white bg-white/10 px-1.5 sm:px-2 py-0.5 rounded border border-white/15">
                         {event.accessCode}
                       </span>
                     ) : (
@@ -669,19 +670,19 @@ export default function LiveMomentsWallPage() {
 
       {/* Emergency Hide Alert Toast */}
       {emergencyToast && (
-        <div className="absolute top-8 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-xl bg-red-600/90 text-white font-medium text-sm backdrop-blur-md shadow-2xl flex items-center gap-2 border border-red-400/40">
-          <ShieldAlert className="w-4 h-4" />
+        <div className="absolute top-4 sm:top-8 left-1/2 -translate-x-1/2 z-50 px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl bg-red-600/90 text-white font-medium text-xs sm:text-sm backdrop-blur-md shadow-2xl flex items-center gap-2 border border-red-400/40">
+          <ShieldAlert className="w-4 h-4 shrink-0" />
           <span>{emergencyToast}</span>
         </div>
       )}
 
       {/* HUD Control Bar (Auto-hides on inactivity) */}
       <div
-        className={`absolute bottom-6 left-1/2 -translate-x-1/2 z-40 transition-opacity duration-300 ${
+        className={`absolute bottom-3 sm:bottom-6 left-1/2 -translate-x-1/2 z-40 transition-opacity duration-300 max-w-[95vw] ${
           showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
       >
-        <div className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-zinc-950/85 backdrop-blur-xl border border-white/15 shadow-2xl">
+        <div className="flex items-center gap-1 sm:gap-2 px-2.5 py-1.5 sm:px-4 sm:py-2.5 rounded-xl sm:rounded-2xl bg-zinc-950/90 backdrop-blur-xl border border-white/15 shadow-2xl overflow-x-auto">
           {/* Back to Event/Dashboard Link */}
           <Link
             href={isOrganizer ? `/events/${eventId}/manage` : `/events/${eventId}`}
@@ -773,73 +774,89 @@ export default function LiveMomentsWallPage() {
 
       {/* Floating Settings Drawer / Modal */}
       {showSettings && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="relative w-full max-w-lg rounded-3xl bg-zinc-900 border border-white/15 p-6 shadow-2xl text-left">
-            {/* Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-white/10">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-violet-600/20 text-violet-400 border border-violet-500/30">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-3 sm:p-4 sm:py-6 overflow-y-auto"
+          onClick={() => setShowSettings(false)}
+        >
+          <div 
+            className="relative w-full max-w-lg max-h-[min(90vh,760px)] flex flex-col rounded-2xl sm:rounded-3xl bg-zinc-900 border border-white/15 shadow-2xl text-left my-auto overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header (Sticky top) */}
+            <div className="flex items-center justify-between p-4 sm:p-5 border-b border-white/10 shrink-0 bg-zinc-900/95 backdrop-blur-sm z-10">
+              <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                <div className="p-2 rounded-xl bg-violet-600/20 text-violet-400 border border-violet-500/30 shrink-0">
                   <Sliders className="w-5 h-5" />
                 </div>
-                <div>
-                  <h3 className="text-lg font-bold text-white">Live Wall Settings</h3>
-                  <p className="text-xs text-zinc-400">Tailor presentation for your screen & event</p>
+                <div className="min-w-0">
+                  <h3 className="text-base sm:text-lg font-bold text-white truncate">Live Wall Settings</h3>
+                  <p className="text-[11px] sm:text-xs text-zinc-400 truncate">Tailor presentation for your screen & event</p>
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setShowSettings(false)}
-                className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
+                className="p-2 sm:p-2.5 rounded-xl text-zinc-400 hover:text-white hover:bg-white/10 active:bg-white/20 transition-colors shrink-0"
+                aria-label="Close settings"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="mt-5 space-y-5 text-sm">
+            {/* Scrollable Body Container */}
+            <div className="p-4 sm:p-6 overflow-y-auto overscroll-contain space-y-5 text-sm flex-1 scrollbar-thin scrollbar-thumb-zinc-700">
               {/* Screen Orientation / Ratio */}
               <div>
-                <label className="text-xs font-semibold uppercase tracking-wider text-zinc-400 block mb-2">
+                <label className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-zinc-400 block mb-2">
                   Screen Aspect Ratio & Orientation
                 </label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <button
                     type="button"
                     onClick={() => setAspectRatio('auto')}
-                    className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all ${
+                    className={`flex sm:flex-col items-center justify-start sm:justify-center p-3 rounded-xl sm:rounded-2xl border text-left sm:text-center transition-all ${
                       aspectRatio === 'auto'
-                        ? 'border-violet-500 bg-violet-500/15 text-white font-semibold'
+                        ? 'border-violet-500 bg-violet-500/15 text-white font-semibold shadow-sm'
                         : 'border-white/10 bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-zinc-200'
                     }`}
                   >
-                    <Monitor className="w-5 h-5 mb-1.5" />
-                    <span className="text-xs">Auto Responsive</span>
+                    <Monitor className="w-5 h-5 mr-2.5 sm:mr-0 sm:mb-1.5 shrink-0" />
+                    <div>
+                      <span className="text-xs block">Auto Responsive</span>
+                      <span className="text-[10px] text-zinc-500 sm:hidden">Adapts to window shape</span>
+                    </div>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setAspectRatio('16-9')}
-                    className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all ${
+                    className={`flex sm:flex-col items-center justify-start sm:justify-center p-3 rounded-xl sm:rounded-2xl border text-left sm:text-center transition-all ${
                       aspectRatio === '16-9'
-                        ? 'border-violet-500 bg-violet-500/15 text-white font-semibold'
+                        ? 'border-violet-500 bg-violet-500/15 text-white font-semibold shadow-sm'
                         : 'border-white/10 bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-zinc-200'
                     }`}
                   >
-                    <Tv className="w-5 h-5 mb-1.5" />
-                    <span className="text-xs">16:9 Landscape</span>
-                    <span className="text-[10px] text-zinc-500">Projector / TV</span>
+                    <Tv className="w-5 h-5 mr-2.5 sm:mr-0 sm:mb-1.5 shrink-0" />
+                    <div>
+                      <span className="text-xs block">16:9 Landscape</span>
+                      <span className="text-[10px] text-zinc-500 block">Projector / TV</span>
+                    </div>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setAspectRatio('9-16')}
-                    className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all ${
+                    className={`flex sm:flex-col items-center justify-start sm:justify-center p-3 rounded-xl sm:rounded-2xl border text-left sm:text-center transition-all ${
                       aspectRatio === '9-16'
-                        ? 'border-violet-500 bg-violet-500/15 text-white font-semibold'
+                        ? 'border-violet-500 bg-violet-500/15 text-white font-semibold shadow-sm'
                         : 'border-white/10 bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-zinc-200'
                     }`}
                   >
-                    <Smartphone className="w-5 h-5 mb-1.5" />
-                    <span className="text-xs">9:16 Portrait</span>
-                    <span className="text-[10px] text-zinc-500">Vertical Totem</span>
+                    <Smartphone className="w-5 h-5 mr-2.5 sm:mr-0 sm:mb-1.5 shrink-0" />
+                    <div>
+                      <span className="text-xs block">9:16 Portrait</span>
+                      <span className="text-[10px] text-zinc-500 block">Vertical Totem</span>
+                    </div>
                   </button>
                 </div>
               </div>
@@ -847,112 +864,112 @@ export default function LiveMomentsWallPage() {
               {/* Stream Mode Selection (Organizers only) */}
               {isOrganizer && (
                 <div>
-                  <label className="text-xs font-semibold uppercase tracking-wider text-zinc-400 block mb-2">
+                  <label className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-zinc-400 block mb-2">
                     Photo Stream Preference
                   </label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <button
                       type="button"
                       onClick={() => setStreamMode('smart-mix')}
-                      className={`p-3 rounded-2xl border text-center transition-all ${
+                      className={`p-3 rounded-xl sm:rounded-2xl border text-left sm:text-center transition-all ${
                         streamMode === 'smart-mix'
-                          ? 'border-violet-500 bg-violet-500/15 text-white font-semibold'
+                          ? 'border-violet-500 bg-violet-500/15 text-white font-semibold shadow-sm'
                           : 'border-white/10 bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-zinc-200'
                       }`}
                     >
-                      <div className="text-xs">Smart Mix</div>
-                      <div className="text-[10px] text-zinc-500 mt-0.5">AI Recommended</div>
+                      <div className="text-xs font-medium">Smart Mix</div>
+                      <div className="text-[10px] text-zinc-400 mt-0.5">AI Recommended &bull; Best Photos</div>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => setStreamMode('official-only')}
-                      className={`p-3 rounded-2xl border text-center transition-all ${
+                      className={`p-3 rounded-xl sm:rounded-2xl border text-left sm:text-center transition-all ${
                         streamMode === 'official-only'
-                          ? 'border-violet-500 bg-violet-500/15 text-white font-semibold'
+                          ? 'border-violet-500 bg-violet-500/15 text-white font-semibold shadow-sm'
                           : 'border-white/10 bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-zinc-200'
                       }`}
                     >
-                      <div className="text-xs">Official Only</div>
-                      <div className="text-[10px] text-zinc-500 mt-0.5">Starred Photos</div>
+                      <div className="text-xs font-medium">Official Only</div>
+                      <div className="text-[10px] text-zinc-400 mt-0.5">Starred Photos Only</div>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => setStreamMode('all-safe')}
-                      className={`p-3 rounded-2xl border text-center transition-all ${
+                      className={`p-3 rounded-xl sm:rounded-2xl border text-left sm:text-center transition-all ${
                         streamMode === 'all-safe'
-                          ? 'border-violet-500 bg-violet-500/15 text-white font-semibold'
+                          ? 'border-violet-500 bg-violet-500/15 text-white font-semibold shadow-sm'
                           : 'border-white/10 bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-zinc-200'
                       }`}
                     >
-                      <div className="text-xs">All Safe</div>
-                      <div className="text-[10px] text-zinc-500 mt-0.5">Chronological</div>
+                      <div className="text-xs font-medium">All Safe</div>
+                      <div className="text-[10px] text-zinc-400 mt-0.5">All Approved Candid Photos</div>
                     </button>
                   </div>
                 </div>
               )}
 
               {/* Toggles */}
-              <div className="space-y-3 pt-1 border-t border-white/10">
+              <div className="space-y-2.5 pt-2 border-t border-white/10">
                 {isOrganizer && (
                   <>
-                    <label className="flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/[0.08] cursor-pointer transition-colors">
-                      <div className="flex items-center gap-3">
-                        <Users className="w-4 h-4 text-violet-400" />
-                        <div>
+                    <label className="flex items-center justify-between p-3 rounded-xl sm:rounded-2xl bg-white/5 hover:bg-white/[0.08] cursor-pointer transition-colors gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <Users className="w-4 h-4 text-violet-400 shrink-0" />
+                        <div className="min-w-0">
                           <p className="text-xs font-semibold text-white">Prioritize Groups (3–15 people)</p>
-                          <p className="text-[11px] text-zinc-400">Emphasize lively group pictures over solo selfies</p>
+                          <p className="text-[11px] text-zinc-400 truncate sm:whitespace-normal">Emphasize lively group pictures over solo selfies</p>
                         </div>
                       </div>
                       <input
                         type="checkbox"
                         checked={prioritizeGroups}
                         onChange={(e) => setPrioritizeGroups(e.target.checked)}
-                        className="w-4 h-4 rounded text-violet-600 focus:ring-violet-500 bg-zinc-800 border-white/20"
+                        className="w-4 h-4 rounded text-violet-600 focus:ring-violet-500 bg-zinc-800 border-white/20 shrink-0"
                       />
                     </label>
 
-                    <label className="flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/[0.08] cursor-pointer transition-colors">
-                      <div className="flex items-center gap-3">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                        <div>
+                    <label className="flex items-center justify-between p-3 rounded-xl sm:rounded-2xl bg-white/5 hover:bg-white/[0.08] cursor-pointer transition-colors gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <div className="min-w-0">
                           <p className="text-xs font-semibold text-white">Prioritize Joined Guests</p>
-                          <p className="text-[11px] text-zinc-400">Favor moments of guests registered in this event</p>
+                          <p className="text-[11px] text-zinc-400 truncate sm:whitespace-normal">Favor moments of guests registered in this event</p>
                         </div>
                       </div>
                       <input
                         type="checkbox"
                         checked={prioritizeJoined}
                         onChange={(e) => setPrioritizeJoined(e.target.checked)}
-                        className="w-4 h-4 rounded text-violet-600 focus:ring-violet-500 bg-zinc-800 border-white/20"
+                        className="w-4 h-4 rounded text-violet-600 focus:ring-violet-500 bg-zinc-800 border-white/20 shrink-0"
                       />
                     </label>
                   </>
                 )}
 
                 {/* Public Display Toggle */}
-                <label className="flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/[0.08] cursor-pointer transition-colors">
-                  <div className="flex items-center gap-3">
-                    <QrCodeIcon className="w-4 h-4 text-blue-400" />
-                    <div>
+                <label className="flex items-center justify-between p-3 rounded-xl sm:rounded-2xl bg-white/5 hover:bg-white/[0.08] cursor-pointer transition-colors gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <QrCodeIcon className="w-4 h-4 text-blue-400 shrink-0" />
+                    <div className="min-w-0">
                       <p className="text-xs font-semibold text-white">Show QR Code Overlay</p>
-                      <p className="text-[11px] text-zinc-400">Display corner QR badge for guest scanning</p>
+                      <p className="text-[11px] text-zinc-400 truncate sm:whitespace-normal">Display corner QR badge for guest scanning</p>
                     </div>
                   </div>
                   <input
                     type="checkbox"
                     checked={showQrCode}
                     onChange={(e) => setShowQrCode(e.target.checked)}
-                    className="w-4 h-4 rounded text-violet-600 focus:ring-violet-500 bg-zinc-800 border-white/20"
+                    className="w-4 h-4 rounded text-violet-600 focus:ring-violet-500 bg-zinc-800 border-white/20 shrink-0"
                   />
                 </label>
               </div>
 
               {/* Slide Duration */}
-              <div className="pt-1 border-t border-white/10">
+              <div className="pt-2 border-t border-white/10">
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                  <label className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-zinc-400">
                     Slide Duration
                   </label>
                   <span className="text-xs font-mono text-violet-300 font-bold">{slideDuration} seconds</span>
@@ -975,8 +992,8 @@ export default function LiveMomentsWallPage() {
                 </div>
               </div>
 
-              {/* Keyboard Shortcuts Guide */}
-              <div className="p-3 rounded-2xl bg-white/5 border border-white/10 text-xs text-zinc-400 space-y-1">
+              {/* Keyboard Shortcuts Guide (Hidden on touch devices, visible on desktop) */}
+              <div className="hidden sm:block p-3 rounded-2xl bg-white/5 border border-white/10 text-xs text-zinc-400 space-y-1">
                 <p className="font-semibold text-zinc-300">Quick Keyboard Shortcuts:</p>
                 <div className="grid grid-cols-2 gap-1 text-[11px]">
                   <span><kbd className="px-1.5 py-0.5 rounded bg-white/10 text-zinc-200">Space</kbd> Play / Pause</span>
@@ -989,13 +1006,20 @@ export default function LiveMomentsWallPage() {
               </div>
             </div>
 
-            {/* Footer */}
-            <div className="mt-6 flex justify-end">
+            {/* Footer (Sticky bottom) */}
+            <div className="p-4 sm:p-5 border-t border-white/10 bg-zinc-900/95 backdrop-blur-sm shrink-0 flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => setShowSettings(false)}
+                className="px-4 py-2.5 rounded-xl text-zinc-400 hover:text-white hover:bg-white/10 text-xs font-medium transition-colors"
+              >
+                Cancel
+              </button>
               <button
                 type="button"
                 onClick={handleApplySettings}
                 disabled={savingSettings}
-                className="px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold text-xs shadow-lg transition-colors disabled:opacity-50"
+                className="px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white font-semibold text-xs shadow-lg transition-colors disabled:opacity-50"
               >
                 {savingSettings ? 'Saving...' : 'Apply & Return to Slideshow'}
               </button>
