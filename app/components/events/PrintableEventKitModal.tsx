@@ -110,13 +110,13 @@ export default function PrintableEventKitModal({
               page-break-inside: avoid;
               display: flex;
               flex-direction: column;
-              justify-content: space-between;
+              justify-content: center;
               align-items: center;
-              padding: 38px 44px;
+              padding: 24px 28px;
             }
             .standee-frame {
               width: 100%;
-              height: 100%;
+              max-height: 98vh;
               border: 3.5px solid #6366f1;
               border-radius: 28px;
               display: flex;
@@ -124,59 +124,62 @@ export default function PrintableEventKitModal({
               justify-content: space-between;
               align-items: center;
               text-align: center;
-              padding: 32px 36px;
-              background: linear-gradient(180deg, #fbfaff 0%, #ffffff 40%, #f8faff 100%);
+              padding: 28px 32px;
+              background: linear-gradient(180deg, #fcfaff 0%, #ffffff 45%, #f8faff 100%);
+              box-shadow: inset 0 0 0 1px #e0e7ff;
             }
             .brand-badge {
-              display: inline-block;
-              background: #6366f1;
-              color: #ffffff;
-              font-size: 13px;
+              display: inline-flex;
+              align-items: center;
+              gap: 6px;
+              background: #ede9fe;
+              color: #5b21b6;
+              font-size: 12px;
               font-weight: 800;
-              letter-spacing: 0.18em;
+              letter-spacing: 0.14em;
               text-transform: uppercase;
-              padding: 8px 22px;
+              padding: 6px 18px;
               border-radius: 9999px;
               margin-bottom: 12px;
             }
             .event-title {
-              font-size: 34px;
+              font-size: 32px;
               font-weight: 800;
-              line-height: 1.15;
+              line-height: 1.2;
               color: #0f172a;
-              margin-bottom: 6px;
+              margin-bottom: 4px;
               max-width: 90%;
             }
             .event-meta {
-              font-size: 14px;
+              font-size: 13px;
               color: #64748b;
               font-weight: 500;
             }
             .cta-box {
-              background: #eff6ff;
-              border: 1.5px solid #bfdbfe;
+              background: #f5f3ff;
+              border: 1.5px solid #ddd6fe;
               border-radius: 14px;
-              padding: 9px 24px;
-              margin: 16px 0 12px 0;
+              padding: 10px 24px;
+              margin: 14px 0 12px 0;
             }
             .cta-title {
-              font-size: 17px;
-              font-weight: 700;
-              color: #1e3a8a;
+              font-size: 16px;
+              font-weight: 800;
+              color: #4c1d95;
             }
             .cta-desc {
               font-size: 12px;
-              color: #475569;
+              color: #52525b;
               margin-top: 2px;
             }
             .qr-wrapper {
-              width: 250px;
-              height: 250px;
-              border: 2px solid #e2e8f0;
+              width: 220px;
+              height: 220px;
+              border: 2px solid #e0e7ff;
               border-radius: 20px;
               background: #ffffff;
-              padding: 12px;
-              box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.1);
+              padding: 10px;
+              box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.12);
               display: flex;
               align-items: center;
               justify-content: center;
@@ -187,48 +190,50 @@ export default function PrintableEventKitModal({
               object-fit: contain;
             }
             .code-pill {
-              background: #f1f5f9;
-              border: 1.5px solid #cbd5e1;
+              background: #f5f3ff;
+              border: 1.5px solid #c4b5fd;
               border-radius: 12px;
-              padding: 7px 22px;
-              margin-top: 14px;
+              padding: 6px 20px;
+              margin-top: 12px;
               display: inline-block;
             }
-            .code-pill span.label {
-              font-size: 11px;
+            .code-pill .label {
+              font-size: 10px;
               font-weight: 700;
               text-transform: uppercase;
-              color: #64748b;
-              letter-spacing: 0.05em;
-              margin-right: 8px;
+              color: #7c3aed;
+              letter-spacing: 0.08em;
+              display: block;
+              margin-bottom: 2px;
             }
-            .code-pill span.code {
+            .code-pill .code {
               font-family: monospace;
-              font-size: 20px;
-              font-weight: 800;
-              letter-spacing: 0.15em;
-              color: #312e81;
+              font-size: 21px;
+              font-weight: 900;
+              letter-spacing: 0.16em;
+              color: #2e1065;
             }
             .steps-grid {
               width: 100%;
               display: grid;
               grid-template-columns: repeat(3, 1fr);
-              gap: 14px;
-              border-top: 1.5px solid #e2e8f0;
-              padding-top: 16px;
-              margin-top: 14px;
+              gap: 12px;
+              border-top: 1.5px solid #f1f5f9;
+              padding-top: 14px;
+              margin-top: 12px;
             }
             .step-card {
               border: 1px solid #e2e8f0;
               border-radius: 14px;
               padding: 10px 8px;
               background: #ffffff;
+              box-shadow: 0 1px 3px rgba(0,0,0,0.02);
             }
             .step-num {
-              width: 22px;
-              height: 22px;
+              width: 24px;
+              height: 24px;
               border-radius: 50%;
-              background: #6366f1;
+              background: #7c3aed;
               color: #ffffff;
               font-size: 11px;
               font-weight: 800;
@@ -250,7 +255,8 @@ export default function PrintableEventKitModal({
             .footer-note {
               font-size: 10px;
               color: #94a3b8;
-              margin-top: 10px;
+              margin-top: 8px;
+              letter-spacing: 0.02em;
             }
             /* Tent card layout */
             .tent-grid {
@@ -263,6 +269,7 @@ export default function PrintableEventKitModal({
               border-radius: 24px;
               padding: 24px;
               position: relative;
+              background: #ffffff;
             }
             .tent-divider {
               position: absolute;
@@ -280,8 +287,8 @@ export default function PrintableEventKitModal({
               padding: 10px;
             }
             .tent-qr {
-              width: 160px;
-              height: 160px;
+              width: 155px;
+              height: 155px;
               border: 1.5px solid #e2e8f0;
               border-radius: 14px;
               padding: 8px;
@@ -309,7 +316,7 @@ export default function PrintableEventKitModal({
                 <div style="display:flex; flex-direction:column; align-items:center;">
                   <div class="cta-box">
                     <p class="cta-title">Find Your Photos Instantly with AI</p>
-                    <p class="cta-desc">Scan the QR code with your phone camera</p>
+                    <p class="cta-desc">Scan the QR code below using your phone camera</p>
                   </div>
 
                   <div class="qr-wrapper">
@@ -320,7 +327,7 @@ export default function PrintableEventKitModal({
                     accessCode
                       ? `
                     <div class="code-pill">
-                      <span class="label">Access Code:</span>
+                      <span class="label">JOIN / ACCESS CODE</span>
                       <span class="code">${accessCode}</span>
                     </div>
                   `
@@ -333,20 +340,20 @@ export default function PrintableEventKitModal({
                     <div class="step-card">
                       <div class="step-num">1</div>
                       <div class="step-title">Scan QR</div>
-                      <div class="step-desc">Open phone camera</div>
+                      <div class="step-desc">With phone camera</div>
                     </div>
                     <div class="step-card">
                       <div class="step-num">2</div>
                       <div class="step-title">Take Selfie</div>
-                      <div class="step-desc">AI scans your face</div>
+                      <div class="step-desc">AI learns face</div>
                     </div>
                     <div class="step-card">
                       <div class="step-num">3</div>
                       <div class="step-title">Get Photos</div>
-                      <div class="step-desc">Curated in seconds</div>
+                      <div class="step-desc">Instantly curated</div>
                     </div>
                   </div>
-                  <p class="footer-note">Powered by Roopixo • Real-time AI Face Recognition • roopixo.com</p>
+                  <p class="footer-note">Powered by Roopixo • Real-time AI Face Recognition</p>
                 </div>
               </div>
             `
@@ -358,8 +365,8 @@ export default function PrintableEventKitModal({
                 <div class="tent-half">
                   <div>
                     <div class="brand-badge" style="font-size:11px; padding:4px 14px; margin-bottom:6px;">✨ ROOPIXO</div>
-                    <h2 style="font-size:22px; font-weight:800; color:#0f172a; margin-bottom:4px;">${eventName}</h2>
-                    <p style="font-size:12px; color:#64748b;">Scan to view your photos</p>
+                    <h2 style="font-size:20px; font-weight:800; color:#0f172a; margin-bottom:4px;">${eventName}</h2>
+                    <p style="font-size:11px; color:#64748b;">Scan to get your photos</p>
                   </div>
 
                   <div class="tent-qr">
@@ -369,10 +376,10 @@ export default function PrintableEventKitModal({
                   <div>
                     ${
                       accessCode
-                        ? `<p style="font-family:monospace; font-size:15px; font-weight:800; color:#312e81; margin-bottom:4px;">CODE: ${accessCode}</p>`
+                        ? `<p style="font-family:monospace; font-size:14px; font-weight:800; color:#312e81; margin-bottom:4px;">Code: ${accessCode}</p>`
                         : ''
                     }
-                    <p style="font-size:11px; color:#475569; font-weight:600;">1. Scan  •  2. Selfie  •  3. Photos</p>
+                    <p style="font-size:10px; color:#475569; font-weight:600;">1. Scan  •  2. Selfie  •  3. Photos</p>
                   </div>
                 </div>
 
@@ -380,8 +387,8 @@ export default function PrintableEventKitModal({
                 <div class="tent-half">
                   <div>
                     <div class="brand-badge" style="font-size:11px; padding:4px 14px; margin-bottom:6px;">✨ ROOPIXO</div>
-                    <h2 style="font-size:22px; font-weight:800; color:#0f172a; margin-bottom:4px;">${eventName}</h2>
-                    <p style="font-size:12px; color:#64748b;">Scan to view your photos</p>
+                    <h2 style="font-size:20px; font-weight:800; color:#0f172a; margin-bottom:4px;">${eventName}</h2>
+                    <p style="font-size:11px; color:#64748b;">Scan to get your photos</p>
                   </div>
 
                   <div class="tent-qr">
@@ -391,10 +398,10 @@ export default function PrintableEventKitModal({
                   <div>
                     ${
                       accessCode
-                        ? `<p style="font-family:monospace; font-size:15px; font-weight:800; color:#312e81; margin-bottom:4px;">CODE: ${accessCode}</p>`
+                        ? `<p style="font-family:monospace; font-size:14px; font-weight:800; color:#312e81; margin-bottom:4px;">Code: ${accessCode}</p>`
                         : ''
                     }
-                    <p style="font-size:11px; color:#475569; font-weight:600;">1. Scan  •  2. Selfie  •  3. Photos</p>
+                    <p style="font-size:10px; color:#475569; font-weight:600;">1. Scan  •  2. Selfie  •  3. Photos</p>
                   </div>
                 </div>
               </div>
