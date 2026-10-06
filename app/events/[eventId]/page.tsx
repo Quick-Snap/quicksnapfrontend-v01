@@ -42,6 +42,7 @@ import { softSurface, softSurfaceHover } from '@/lib/dashboardUi';
 import { PhotoLightbox } from '@/app/components/photos/PhotoLightbox';
 import JoinEventModal from '@/app/components/student/JoinEventModal';
 import PostJoinSelfieModal from '@/app/components/events/PostJoinSelfieModal';
+import GuestUploadModal from '@/app/components/events/GuestUploadModal';
 import { formatEventSchedule } from '@/lib/eventDateUtils';
 
 const PHOTOS_PER_PAGE = 12;
@@ -93,6 +94,7 @@ export default function PublicEventPage() {
     const [photoViewMode, setPhotoViewMode] = useState<'all' | 'my'>('all');
     const [joining, setJoining] = useState(false);
     const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
+    const [isGuestUploadModalOpen, setIsGuestUploadModalOpen] = useState(false);
     const [showPostJoinSelfieModal, setShowPostJoinSelfieModal] = useState(false);
     const [isScanningUpdatedSelfie, setIsScanningUpdatedSelfie] = useState(false);
     const loadUser = useAuthStore((state) => state.loadUser);
@@ -592,6 +594,15 @@ export default function PublicEventPage() {
                                     )}
 
                                     <Button
+                                        onClick={() => setIsGuestUploadModalOpen(true)}
+                                        variant="outline"
+                                        className="h-12 w-full justify-center rounded-2xl border-violet-300/80 bg-violet-50/70 font-semibold text-violet-700 shadow-sm hover:bg-violet-100 hover:text-violet-800 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-200 dark:hover:bg-violet-500/20 sm:h-[3rem] sm:w-auto sm:min-w-[10rem]"
+                                    >
+                                        <Camera size={18} className="mr-2 shrink-0 text-violet-600 dark:text-violet-400" />
+                                        Share Photos
+                                    </Button>
+
+                                    <Button
                                         onClick={handleShare}
                                         variant="outline"
                                         className="h-12 w-full justify-center rounded-2xl border-zinc-300 bg-white/95 font-semibold shadow-sm dark:border-white/15 dark:bg-white/5 sm:h-[3rem] sm:w-auto sm:min-w-[10rem]"
@@ -1088,6 +1099,18 @@ export default function PublicEventPage() {
                 eventName={event?.name}
                 eventId={eventId}
                 redirectPath={`/events/${eventId}`}
+            />
+
+            {/* Guest Photo Upload Modal */}
+            <GuestUploadModal
+                isOpen={isGuestUploadModalOpen}
+                onClose={() => setIsGuestUploadModalOpen(false)}
+                eventId={eventId}
+                eventName={event?.name || 'Event'}
+                onSuccess={() => {
+                    toast.success('Photos submitted for organizer review!');
+                    queryClient.invalidateQueries(['event', eventId]);
+                }}
             />
             </div>
         </div>

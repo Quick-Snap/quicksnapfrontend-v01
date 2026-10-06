@@ -624,5 +624,75 @@ export const adminOrganizerRequestApi = {
   },
 };
 
+export const guestSubmissionsApi = {
+  getUploadUrls: async (
+    eventId: string,
+    data: { phone: string; guestName?: string; files: Array<{ fileName: string; fileType: string }> }
+  ) => {
+    const response = await api.post<ApiResponse<{ uploadTargets: any[]; maxAllowed: number }>>(
+      `/events/${eventId}/guest-submissions/presign`,
+      data
+    );
+    return response.data;
+  },
+
+  createSubmission: async (
+    eventId: string,
+    data: {
+      guestName: string;
+      phone: string;
+      avatar?: string;
+      photos: Array<{
+        s3Key: string;
+        originalName: string;
+        fileSize: number;
+        mimeType: string;
+        width?: number;
+        height?: number;
+      }>;
+    }
+  ) => {
+    const response = await api.post<ApiResponse<{ submissionId: string; totalPhotos: number; status: string }>>(
+      `/events/${eventId}/guest-submissions`,
+      data
+    );
+    return response.data;
+  },
+
+  getEventSubmissions: async (eventId: string) => {
+    const response = await api.get<ApiResponse<{ submissions: any[]; summary: any }>>(
+      `/events/${eventId}/guest-submissions`
+    );
+    return response.data;
+  },
+
+  reviewPhotos: async (
+    eventId: string,
+    submissionId: string,
+    data: {
+      photoDecisions: Array<{
+        photoId: string;
+        action: 'approve' | 'reject';
+        featureOnLiveWall?: boolean;
+        rejectionReason?: string;
+      }>;
+    }
+  ) => {
+    const response = await api.patch<ApiResponse<any>>(
+      `/events/${eventId}/guest-submissions/${submissionId}/review`,
+      data
+    );
+    return response.data;
+  },
+
+  getMySubmissions: async (eventId: string, phone?: string) => {
+    const response = await api.get<ApiResponse<any[]>>(
+      `/events/${eventId}/guest-submissions/my`,
+      { params: phone ? { phone } : undefined }
+    );
+    return response.data;
+  },
+};
+
 export default api;
 

@@ -679,6 +679,26 @@ export default function ManageEventPage() {
                         <div className="mt-4 h-1 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500"></div>
                     </button>
 
+                    <Link
+                        href={`/events/${eventId}/submissions`}
+                        className={`${MANAGE_STAT} block transition-transform hover:-translate-y-0.5 hover:shadow-md cursor-pointer`}
+                        title="Review guest submitted photos"
+                    >
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <div className="flex items-center gap-1.5 mb-1">
+                                    <p className="text-sm font-medium text-zinc-500 dark:text-gray-400">Guest Photos</p>
+                                    <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">Review &rarr;</span>
+                                </div>
+                                <p className="text-2xl font-semibold text-zinc-900 dark:text-white">Review Desk</p>
+                            </div>
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 transition-colors group-hover:bg-amber-200/80 dark:bg-amber-500/10 dark:group-hover:bg-amber-500/20">
+                                <Sparkles className="h-5 w-5 text-amber-700 dark:text-amber-300" />
+                            </div>
+                        </div>
+                        <div className="mt-4 h-1 rounded-full bg-gradient-to-r from-amber-500 to-orange-400"></div>
+                    </Link>
+
                     <div className={`${MANAGE_STAT}`}>
                         <div className="flex items-center justify-between">
                             <div>
