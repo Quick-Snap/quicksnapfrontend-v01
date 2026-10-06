@@ -611,10 +611,17 @@ export default function ManageEventPage() {
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                    <div className={`${MANAGE_STAT}`}>
+                    <Link 
+                        href={`/events/${eventId}/attendees`} 
+                        className={`${MANAGE_STAT} block transition-transform hover:-translate-y-0.5 hover:shadow-md cursor-pointer`}
+                        title="View attendee roster"
+                    >
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="mb-1 text-sm text-zinc-500 dark:text-gray-400">Attendees</p>
+                                <div className="flex items-center gap-1.5 mb-1">
+                                    <p className="text-sm font-medium text-zinc-500 dark:text-gray-400">Attendees</p>
+                                    <span className="text-[10px] text-violet-600 dark:text-violet-400 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">View &rarr;</span>
+                                </div>
                                 <p className="text-2xl font-semibold text-zinc-900 dark:text-white">{event.attendees?.length || 0}</p>
                             </div>
                             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 transition-colors group-hover:bg-emerald-200/80 dark:bg-emerald-500/10 dark:group-hover:bg-emerald-500/20">
@@ -622,7 +629,7 @@ export default function ManageEventPage() {
                             </div>
                         </div>
                         <div className="mt-4 h-1 rounded-full bg-gradient-to-r from-emerald-500 to-green-400"></div>
-                    </div>
+                    </Link>
 
                     <div className={`${MANAGE_STAT}`}>
                         <div className="flex items-center justify-between">
@@ -900,178 +907,6 @@ export default function ManageEventPage() {
                             <p className="text-sm text-zinc-500 dark:text-gray-500">Add photographers using the form above</p>
                         </div>
                     )}
-                </div>
-                )}
-
-                {/* Joined Guests & Attendees Section */}
-                {canFullManage && (
-                <div className={MANAGE_CARD}>
-                    <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-100 to-violet-100 dark:from-indigo-500/20 dark:to-violet-500/20">
-                                <Users className="h-6 w-6 text-indigo-700 dark:text-indigo-400" />
-                            </div>
-                            <div>
-                                <div className="flex items-center gap-2">
-                                    <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Joined Attendees</h2>
-                                    <span className="rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-semibold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">
-                                        {Array.isArray(event.attendees) ? event.attendees.length : 0}
-                                    </span>
-                                </div>
-                                <p className="text-sm text-zinc-500 dark:text-gray-400">Guests registered and joined this event</p>
-                            </div>
-                        </div>
-
-                        {/* Search & Export Buttons */}
-                        {Array.isArray(event.attendees) && event.attendees.length > 0 && (
-                            <div className="flex flex-wrap items-center gap-2.5">
-                                <div className="relative min-w-[200px] flex-1 sm:w-64">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 dark:text-gray-500" />
-                                    <input
-                                        type="text"
-                                        placeholder="Search guests..."
-                                        value={attendeeSearch}
-                                        onChange={(e) => setAttendeeSearch(e.target.value)}
-                                        className="w-full rounded-xl border border-zinc-200/90 bg-zinc-50/80 py-2 pl-9 pr-3 text-xs text-zinc-900 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 dark:border-white/10 dark:bg-white/5 dark:text-white"
-                                    />
-                                    {attendeeSearch && (
-                                        <button
-                                            type="button"
-                                            onClick={() => setAttendeeSearch('')}
-                                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
-                                        >
-                                            <X size={12} />
-                                        </button>
-                                    )}
-                                </div>
-
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        const attendees = Array.isArray(event.attendees) ? event.attendees : [];
-                                        const csvRows = [
-                                            ['Name', 'Email', 'Role'].join(','),
-                                            ...attendees.map((a: any) => [
-                                                `"${(a.name || 'Anonymous Guest').replace(/"/g, '""')}"`,
-                                                `"${(a.email || '').replace(/"/g, '""')}"`,
-                                                `"${(a.role || 'attendee').replace(/"/g, '""')}"`
-                                            ].join(','))
-                                        ];
-                                        const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
-                                        const url = URL.createObjectURL(blob);
-                                        const link = document.createElement('a');
-                                        link.setAttribute('href', url);
-                                        link.setAttribute('download', `${(event.name || 'event').replace(/[^a-z0-9]/gi, '_')}_attendees.csv`);
-                                        document.body.appendChild(link);
-                                        link.click();
-                                        document.body.removeChild(link);
-                                        toast.success('Attendee list downloaded');
-                                    }}
-                                    className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200/90 bg-white px-3 py-2 text-xs font-semibold text-zinc-700 shadow-sm transition-colors hover:bg-zinc-50 dark:border-white/10 dark:bg-white/5 dark:text-zinc-200 dark:hover:bg-white/10"
-                                    title="Export attendee list as CSV"
-                                >
-                                    <Download size={13} />
-                                    <span>Export CSV</span>
-                                </button>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Attendee Grid / List */}
-                    {(() => {
-                        const allAttendees = Array.isArray(event.attendees) ? event.attendees : [];
-                        const filteredAttendees = allAttendees.filter((a: any) => {
-                            if (!attendeeSearch.trim()) return true;
-                            const query = attendeeSearch.toLowerCase();
-                            const name = (a.name || '').toLowerCase();
-                            const email = (a.email || '').toLowerCase();
-                            return name.includes(query) || email.includes(query);
-                        });
-
-                        if (allAttendees.length === 0) {
-                            return (
-                                <div className="rounded-2xl border border-dashed border-zinc-200 p-8 text-center dark:border-white/10">
-                                    <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-100 dark:bg-white/5">
-                                        <Users className="h-6 w-6 text-zinc-400 dark:text-gray-500" />
-                                    </div>
-                                    <p className="font-semibold text-zinc-800 dark:text-gray-200">No guests have joined yet</p>
-                                    <p className="mt-1 text-xs text-zinc-500 dark:text-gray-400 max-w-sm mx-auto">
-                                        When attendees scan the event QR code or enter your access code, their profile will appear here.
-                                    </p>
-                                    {event.accessCode && (
-                                        <button
-                                            type="button"
-                                            onClick={handleCopyCode}
-                                            className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-violet-500 transition-colors"
-                                        >
-                                            <Copy size={13} />
-                                            <span>Copy Event Code: {event.accessCode}</span>
-                                        </button>
-                                    )}
-                                </div>
-                            );
-                        }
-
-                        if (filteredAttendees.length === 0) {
-                            return (
-                                <div className="py-8 text-center text-zinc-500 dark:text-gray-400">
-                                    <p className="text-sm">No attendees match &quot;{attendeeSearch}&quot;</p>
-                                    <button
-                                        type="button"
-                                        onClick={() => setAttendeeSearch('')}
-                                        className="mt-2 text-xs font-semibold text-violet-600 hover:underline dark:text-violet-400"
-                                    >
-                                        Clear filter
-                                    </button>
-                                </div>
-                            );
-                        }
-
-                        return (
-                            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                                {filteredAttendees.map((attendee: any, idx: number) => {
-                                    const id = attendee._id || attendee.id || idx;
-                                    const name = attendee.name || 'Guest User';
-                                    const email = attendee.email || 'No email provided';
-                                    const initial = name.charAt(0).toUpperCase();
-
-                                    return (
-                                        <div
-                                            key={id}
-                                            className="flex items-center gap-3.5 rounded-xl border border-zinc-200/90 bg-white p-3.5 shadow-sm transition-all hover:border-violet-300 dark:border-white/5 dark:bg-white/5 dark:hover:border-violet-500/20"
-                                        >
-                                            {attendee.avatar ? (
-                                                // eslint-disable-next-line @next/next/no-img-element
-                                                <img
-                                                    src={attendee.avatar}
-                                                    alt={name}
-                                                    className="h-10 w-10 shrink-0 rounded-full object-cover ring-1 ring-zinc-200 dark:ring-white/10"
-                                                />
-                                            ) : (
-                                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 font-bold text-white shadow-sm text-sm">
-                                                    {initial}
-                                                </div>
-                                            )}
-                                            <div className="min-w-0 flex-1">
-                                                <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white" title={name}>
-                                                    {name}
-                                                </p>
-                                                <p className="truncate text-xs text-zinc-500 dark:text-gray-400" title={email}>
-                                                    {email}
-                                                </p>
-                                            </div>
-                                            <div className="shrink-0">
-                                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
-                                                    <UserCheck size={10} />
-                                                    Joined
-                                                </span>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        );
-                    })()}
                 </div>
                 )}
 
