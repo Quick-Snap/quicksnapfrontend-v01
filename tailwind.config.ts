@@ -39,6 +39,10 @@ const config: Config = {
         'slide-down': 'slide-down 0.6s ease-out forwards',
         'fade-in': 'fade-in 0.6s ease-out forwards',
         'marquee': 'marquee 28s linear infinite',
+        'kenburns-zoom-in': 'kenburns-zoom-in 7s ease-out forwards',
+        'kenburns-zoom-out': 'kenburns-zoom-out 7s ease-out forwards',
+        'kenburns-pan-left': 'kenburns-pan-left 7s ease-out forwards',
+        'kenburns-pan-right': 'kenburns-pan-right 7s ease-out forwards',
       },
       keyframes: {
         float: {
@@ -64,6 +68,22 @@ const config: Config = {
         marquee: {
           from: { transform: 'translateX(0)' },
           to: { transform: 'translateX(-100%)' },
+        },
+        'kenburns-zoom-in': {
+          '0%': { transform: 'scale(1) translate(0, 0)' },
+          '100%': { transform: 'scale(1.08) translate(-1%, -1%)' },
+        },
+        'kenburns-zoom-out': {
+          '0%': { transform: 'scale(1.08) translate(1%, 1%)' },
+          '100%': { transform: 'scale(1) translate(0, 0)' },
+        },
+        'kenburns-pan-left': {
+          '0%': { transform: 'scale(1.05) translate(2%, 0)' },
+          '100%': { transform: 'scale(1.05) translate(-2%, -1%)' },
+        },
+        'kenburns-pan-right': {
+          '0%': { transform: 'scale(1.05) translate(-2%, 0)' },
+          '100%': { transform: 'scale(1.05) translate(2%, 1%)' },
         },
       },
     },

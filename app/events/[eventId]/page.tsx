@@ -21,7 +21,8 @@ import {
     UserCheck,
     Loader2,
     KeyRound,
-    X
+    X,
+    Tv
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { eventApi, photoApi } from '@/lib/api';
@@ -420,13 +421,36 @@ export default function PublicEventPage() {
                     <div className="pointer-events-none absolute -right-10 -top-16 h-56 w-56 rounded-full bg-indigo-400/15 blur-3xl dark:bg-indigo-500/10" />
 
                     <div className="relative min-w-0">
-                        <Link
-                            href="/events"
-                            className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/85 px-3.5 py-2 text-sm font-medium text-zinc-700 shadow-sm ring-1 ring-zinc-900/[0.06] transition-colors hover:bg-white hover:text-zinc-900 dark:bg-white/[0.07] dark:text-gray-200 dark:ring-white/10 dark:hover:bg-white/10"
-                        >
-                            <ChevronLeft size={18} />
-                            Events
-                        </Link>
+                        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+                            <Link
+                                href="/events"
+                                className="inline-flex items-center gap-2 rounded-full bg-white/85 px-3.5 py-2 text-sm font-medium text-zinc-700 shadow-sm ring-1 ring-zinc-900/[0.06] transition-colors hover:bg-white hover:text-zinc-900 dark:bg-white/[0.07] dark:text-gray-200 dark:ring-white/10 dark:hover:bg-white/10"
+                            >
+                                <ChevronLeft size={18} />
+                                Events
+                            </Link>
+
+                            {(currentUser?.role === 'admin' ||
+                                event.organizer?._id === currentUser?.id ||
+                                event.organizer === currentUser?.id) && (
+                                <div className="flex items-center gap-2">
+                                    <Link
+                                        href={`/events/${eventId}/live-wall`}
+                                        target="_blank"
+                                        className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/40 bg-gradient-to-r from-violet-600 to-indigo-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm shadow-violet-500/25 transition-all hover:from-violet-500 hover:to-indigo-500"
+                                    >
+                                        <Tv size={14} />
+                                        Live Moments Wall
+                                    </Link>
+                                    <Link
+                                        href={`/events/${eventId}/manage`}
+                                        className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white/85 px-3.5 py-2 text-xs font-semibold text-zinc-800 shadow-sm transition-colors hover:bg-white dark:border-white/15 dark:bg-white/10 dark:text-gray-200 dark:hover:bg-white/15"
+                                    >
+                                        Manage Event
+                                    </Link>
+                                </div>
+                            )}
+                        </div>
 
                         <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-2 lg:gap-10 xl:gap-12">
                             <div className="min-w-0 space-y-5 sm:space-y-6">

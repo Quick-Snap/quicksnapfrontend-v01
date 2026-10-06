@@ -27,7 +27,8 @@ import {
     Eye,
     XCircle,
     QrCode,
-    Printer
+    Printer,
+    Tv
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { eventApi } from '@/lib/api';
@@ -545,6 +546,14 @@ export default function ManageEventPage() {
                                 </div>
                                 {canFullManage && (
                                     <div className="flex items-center gap-2">
+                                        <Link
+                                            href={`/events/${eventId}/live-wall`}
+                                            target="_blank"
+                                            className="inline-flex items-center gap-1.5 rounded-xl border border-violet-500/40 bg-gradient-to-r from-violet-600 to-indigo-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm shadow-violet-500/25 transition-all hover:from-violet-500 hover:to-indigo-500"
+                                        >
+                                            <Tv size={14} />
+                                            Live Photo Wall
+                                        </Link>
                                         <button
                                             type="button"
                                             onClick={() => setIsPrintKitOpen(true)}
@@ -707,6 +716,14 @@ export default function ManageEventPage() {
                                     <div className="mb-2 flex items-center justify-between">
                                         <p className="font-medium text-zinc-900 dark:text-white">Access Code</p>
                                         <div className="flex items-center gap-2.5">
+                                            <Link
+                                                href={`/events/${eventId}/live-wall`}
+                                                target="_blank"
+                                                className="inline-flex items-center gap-1 text-xs font-semibold text-violet-700 transition-colors hover:text-violet-900 dark:text-violet-300 dark:hover:text-white"
+                                            >
+                                                <Tv size={12} />
+                                                Live Wall
+                                            </Link>
                                             <button
                                                 type="button"
                                                 onClick={() => setIsPrintKitOpen(true)}
