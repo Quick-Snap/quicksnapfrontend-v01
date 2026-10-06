@@ -28,7 +28,9 @@ import {
     XCircle,
     QrCode,
     Printer,
-    Tv
+    Tv,
+    CheckSquare,
+    Square
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { eventApi } from '@/lib/api';
@@ -140,6 +142,8 @@ export default function ManageEventPage() {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
     const [isPrintKitOpen, setIsPrintKitOpen] = useState(false);
+    const [showSelectAllModal, setShowSelectAllModal] = useState(false);
+    const [selectAllStep, setSelectAllStep] = useState<1 | 2>(1);
 
     const fetchTrashCount = useCallback(async () => {
         if (!eventId) return;
@@ -322,6 +326,28 @@ export default function ManageEventPage() {
             else next.add(id);
             return next;
         });
+    };
+
+    const handleSelectAllPoolPhotos = () => {
+        const next = new Set(selectedOfficialIds);
+        photosNotOnDashboard.forEach((p) => {
+            const id = getPhotoId(p);
+            if (id) next.add(id);
+        });
+        setSelectedOfficialIds(next);
+        setShowSelectAllModal(false);
+        setSelectAllStep(1);
+        toast.success(`Marked all ${photosNotOnDashboard.length} pool photos for gallery. Click "Update dashboard" to save.`);
+    };
+
+    const handleDeselectAllPoolPhotos = () => {
+        const next = new Set(selectedOfficialIds);
+        photosNotOnDashboard.forEach((p) => {
+            const id = getPhotoId(p);
+            if (id) next.delete(id);
+        });
+        setSelectedOfficialIds(next);
+        toast.success('Deselected all pool photos.');
     };
 
     const handleDeletePhoto = async (photoId: string) => {
@@ -1081,10 +1107,37 @@ export default function ManageEventPage() {
                             )}
 
                             <div id="organizer-pool-photos">
-                                <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-violet-800 dark:text-violet-300/90">
-                                    <span className="inline-block h-2 w-2 rounded-full bg-violet-600 dark:bg-violet-400" />
-                                    Pool — not on public gallery yet
-                                </h3>
+                                <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                                    <h3 className="flex items-center gap-2 text-sm font-semibold text-violet-800 dark:text-violet-300/90">
+                                        <span className="inline-block h-2 w-2 rounded-full bg-violet-600 dark:bg-violet-400" />
+                                        Pool — not on public gallery yet
+                                        <span className="text-xs font-normal text-zinc-500 dark:text-gray-400">({photosNotOnDashboard.length} available)</span>
+                                    </h3>
+                                    {photosNotOnDashboard.length > 0 && (
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setSelectAllStep(1);
+                                                    setShowSelectAllModal(true);
+                                                }}
+                                                className="inline-flex items-center gap-1.5 rounded-lg border border-violet-200 bg-violet-50/80 px-3 py-1.5 text-xs font-semibold text-violet-700 shadow-sm transition-all hover:bg-violet-100 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-300 dark:hover:bg-violet-500/20"
+                                            >
+                                                <CheckSquare size={13} />
+                                                Select All ({photosNotOnDashboard.length})
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={handleDeselectAllPoolPhotos}
+                                                className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white/80 px-2.5 py-1.5 text-xs font-medium text-zinc-600 transition-all hover:bg-zinc-100 dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10"
+                                                title="Clear selection for pool photos"
+                                            >
+                                                <Square size={13} />
+                                                Clear
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                                 {photosNotOnDashboard.length === 0 ? (
                                     <p className="rounded-xl border border-dashed border-zinc-200/90 py-6 text-center text-sm text-zinc-500 dark:border-white/5 dark:text-gray-500">
                                         All uploaded photos are on the public gallery. Remove some from the section above if you want them back in the pool.
@@ -1352,6 +1405,77 @@ export default function ManageEventPage() {
                     onClose={() => setIsPrintKitOpen(false)}
                     event={event}
                 />
+
+                {/* Double-Confirmation Modal: Make All Pool Photos Official */}
+                {showSelectAllModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                        <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 animate-in fade-in zoom-in-95 duration-200">
+                            {selectAllStep === 1 ? (
+                                <>
+                                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300 mb-4">
+                                        <CheckSquare className="h-6 w-6" />
+                                    </div>
+                                    <h3 className="text-lg font-bold text-zinc-900 dark:text-white mb-2">
+                                        Select All {photosNotOnDashboard.length} Photos?
+                                    </h3>
+                                    <p className="text-sm text-zinc-600 dark:text-gray-300 mb-5 leading-relaxed">
+                                        You are about to select all <strong>{photosNotOnDashboard.length}</strong> pool photos to be published to the public event gallery.
+                                    </p>
+                                    <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-3.5 text-xs text-amber-800 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200 mb-5">
+                                        💡 <strong>Tip:</strong> You will still have a chance to review the selection and click &quot;Update dashboard&quot; before changes go live.
+                                    </div>
+                                    <div className="flex items-center justify-end gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowSelectAllModal(false)}
+                                            className="px-4 py-2 text-xs font-semibold rounded-xl text-zinc-700 bg-zinc-100 hover:bg-zinc-200 dark:text-gray-300 dark:bg-white/10 dark:hover:bg-white/15 transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setSelectAllStep(2)}
+                                            className="px-4 py-2 text-xs font-semibold rounded-xl bg-violet-600 hover:bg-violet-700 text-white transition-colors shadow-sm"
+                                        >
+                                            Proceed to Confirmation →
+                                        </button>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300 mb-4">
+                                        <AlertTriangle className="h-6 w-6" />
+                                    </div>
+                                    <h3 className="text-lg font-bold text-zinc-900 dark:text-white mb-2">
+                                        Are you definitely sure?
+                                    </h3>
+                                    <p className="text-sm text-zinc-600 dark:text-gray-300 mb-4 leading-relaxed">
+                                        This will make all <strong className="text-violet-600 dark:text-violet-400">{photosNotOnDashboard.length} pool photos</strong> eligible for public viewing by all guests attending this event.
+                                    </p>
+                                    <div className="rounded-xl border border-red-200 bg-red-50/80 p-3 text-xs text-red-800 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-200 mb-5">
+                                        ⚠️ Please verify that no personal or uncurated photographer drafts are included before making all photos live for everyone.
+                                    </div>
+                                    <div className="flex items-center justify-end gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => setSelectAllStep(1)}
+                                            className="px-4 py-2 text-xs font-semibold rounded-xl text-zinc-700 bg-zinc-100 hover:bg-zinc-200 dark:text-gray-300 dark:bg-white/10 dark:hover:bg-white/15 transition-colors"
+                                        >
+                                            Back
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={handleSelectAllPoolPhotos}
+                                            className="px-4 py-2 text-xs font-semibold rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-md transition-all"
+                                        >
+                                            Yes, Select All for Gallery
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
         </RoleGuard>
     );
