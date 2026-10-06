@@ -25,7 +25,9 @@ import {
     User,
     Mail,
     Eye,
-    XCircle
+    XCircle,
+    QrCode,
+    Printer
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { eventApi } from '@/lib/api';
@@ -36,6 +38,7 @@ import { enrichPhotosWithDisplayUrls, getPhotoDisplayUrl } from '@/lib/photoUrl'
 import RefreshAttendeeMatchesCard from '@/app/components/events/RefreshAttendeeMatchesCard';
 import EditEventModal from '@/app/components/events/EditEventModal';
 import CustomizeAccessCodeModal from '@/app/components/events/CustomizeAccessCodeModal';
+import PrintableEventKitModal from '@/app/components/events/PrintableEventKitModal';
 import { Button } from '@/app/components/ui/Button';
 import Pagination from '@/app/components/ui/Pagination';
 import { useAuth } from '@/contexts/AuthContext';
@@ -135,6 +138,7 @@ export default function ManageEventPage() {
     const [trashCount, setTrashCount] = useState(0);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
+    const [isPrintKitOpen, setIsPrintKitOpen] = useState(false);
 
     const fetchTrashCount = useCallback(async () => {
         if (!eventId) return;
@@ -540,14 +544,24 @@ export default function ManageEventPage() {
                                     </span>
                                 </div>
                                 {canFullManage && (
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsEditModalOpen(true)}
-                                        className="inline-flex items-center gap-1.5 rounded-xl border border-violet-200 bg-white/90 px-3.5 py-2 text-xs font-semibold text-violet-700 shadow-sm transition-all hover:bg-violet-50 dark:border-white/10 dark:bg-white/10 dark:text-violet-200 dark:hover:bg-white/15"
-                                    >
-                                        <Edit size={14} />
-                                        Edit Details
-                                    </button>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsPrintKitOpen(true)}
+                                            className="inline-flex items-center gap-1.5 rounded-xl border border-violet-200 bg-white/90 px-3.5 py-2 text-xs font-semibold text-violet-700 shadow-sm transition-all hover:bg-violet-50 dark:border-white/10 dark:bg-white/10 dark:text-violet-200 dark:hover:bg-white/15"
+                                        >
+                                            <Printer size={14} />
+                                            Print Event Kit
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsEditModalOpen(true)}
+                                            className="inline-flex items-center gap-1.5 rounded-xl border border-violet-200 bg-white/90 px-3.5 py-2 text-xs font-semibold text-violet-700 shadow-sm transition-all hover:bg-violet-50 dark:border-white/10 dark:bg-white/10 dark:text-violet-200 dark:hover:bg-white/15"
+                                        >
+                                            <Edit size={14} />
+                                            Edit Details
+                                        </button>
+                                    </div>
                                 )}
                             </div>
                             <p className="text-lg text-zinc-600 dark:text-gray-300">{event.description || 'No description provided'}</p>
@@ -693,6 +707,14 @@ export default function ManageEventPage() {
                                     <div className="mb-2 flex items-center justify-between">
                                         <p className="font-medium text-zinc-900 dark:text-white">Access Code</p>
                                         <div className="flex items-center gap-2.5">
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsPrintKitOpen(true)}
+                                                className="inline-flex items-center gap-1 text-xs font-semibold text-violet-700 transition-colors hover:text-violet-900 dark:text-violet-300 dark:hover:text-white"
+                                            >
+                                                <Printer size={12} />
+                                                Print Standee
+                                            </button>
                                             {canFullManage && (
                                                 <button
                                                     type="button"
@@ -1305,6 +1327,13 @@ export default function ManageEventPage() {
                         setEvent((prev: any) => prev ? { ...prev, accessCode: newCode } : prev);
                         queryClient.invalidateQueries(['event', eventId]);
                     }}
+                />
+
+                {/* Printable Event Kit & Standee Modal */}
+                <PrintableEventKitModal
+                    isOpen={isPrintKitOpen}
+                    onClose={() => setIsPrintKitOpen(false)}
+                    event={event}
                 />
             </div>
         </RoleGuard>
