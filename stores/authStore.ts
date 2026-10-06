@@ -108,9 +108,16 @@ export const useAuthStore = create<AuthStore>()(
                 faceRegistered: !!userData.faceId || !!userData.faceRegistered,
                 createdAt: userData.createdAt,
                 settings: userData.settings,
-                events: userData.events?.map((e: { _id?: string } | string) =>
-                  typeof e === 'string' ? e : e._id
-                ),
+                events: (userData.events || userData.joinedEvents || [])
+                  .map((e: { _id?: string } | string) =>
+                    typeof e === 'string' ? e : e?._id
+                  )
+                  .filter(Boolean),
+                joinedEvents: (userData.joinedEvents || userData.events || [])
+                  .map((e: { _id?: string } | string) =>
+                    typeof e === 'string' ? e : e?._id
+                  )
+                  .filter(Boolean),
               };
 
               const savedRole = localStorage.getItem('activeRole') as UserRole | null;

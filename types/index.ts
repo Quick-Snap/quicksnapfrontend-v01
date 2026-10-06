@@ -15,6 +15,7 @@ export interface User {
     privacy: 'public' | 'friends' | 'private';
   };
   events?: string[]; // IDs of joined/organized events
+  joinedEvents?: string[]; // IDs of joined events
 }
 
 export interface Event {

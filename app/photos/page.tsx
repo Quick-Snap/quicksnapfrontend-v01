@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { AxiosError } from 'axios';
-import { Image as ImageIcon, Download, Calendar, Users, Search, Sparkles, Loader2, EyeOff, Camera } from 'lucide-react';
+import { Image as ImageIcon, Download, Calendar, Users, Search, Sparkles, Loader2, EyeOff, Camera, Ticket, Plus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -12,6 +12,7 @@ import { fetchAllMyPhotos } from '@/lib/photoFetch';
 import Pagination from '@/app/components/ui/Pagination';
 import { PhotoLightbox } from '@/app/components/photos/PhotoLightbox';
 import { DownloadProgressModal } from '@/app/components/photos/DownloadProgressModal';
+import JoinEventModal from '@/app/components/student/JoinEventModal';
 import toast from 'react-hot-toast';
 import { useQuery, useQueryClient } from 'react-query';
 
@@ -30,6 +31,12 @@ export default function MyPhotosPage() {
   const [selectedPhoto, setSelectedPhoto] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
+
+  const hasJoinedEvents = useMemo(() => {
+    const evts = user?.events || user?.joinedEvents || [];
+    return Array.isArray(evts) && evts.length > 0;
+  }, [user?.events, user?.joinedEvents]);
 
   const handleUntag = async (photo: any) => {
     if (!confirm("Remove yourself from this photo?\n\nThis will delete your face tag from this photo, hide it from your personal gallery, and ensure it won't be matched to you again even if matching is refreshed.")) {
@@ -77,8 +84,8 @@ export default function MyPhotosPage() {
   // });
 
   // Search + pagination calculations
-    // Get photos already filtered by the backend (only from joined events)
-  const allPhotos = queryData?.data?.photos || [];
+  // Get photos already filtered by the backend (only from joined events)
+  const allPhotos = useMemo(() => queryData?.data?.photos || [], [queryData?.data?.photos]);
 
   // Search calculations (on the pre-filtered list)
   const filteredPhotos = useMemo(() => {
@@ -417,20 +424,18 @@ export default function MyPhotosPage() {
               </div>
             </>
           ) : (
-            <>
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-100 dark:bg-violet-500/10">
-                <ImageIcon size={32} className="text-violet-600 dark:text-violet-400" />
-              </div>
-              <h3 className="mb-2 text-xl font-bold text-zinc-900 dark:text-white">
-                {isSearching ? 'No Matching Photos Found' : 'No Photos Found Yet'}
-              </h3>
-              <p className="mx-auto mb-6 max-w-md text-zinc-600 dark:text-gray-400 text-sm leading-relaxed">
-                {isSearching
-                  ? `No photos matched your search "${searchTerm}". Try another keyword or clear the search.`
-                  : "Your face is registered and active! Either the photographers haven't uploaded photos of you yet, or you weren't captured in the events you've joined so far."}
-              </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                {isSearching ? (
+            isSearching ? (
+              <>
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-100 dark:bg-violet-500/10">
+                  <ImageIcon size={32} className="text-violet-600 dark:text-violet-400" />
+                </div>
+                <h3 className="mb-2 text-xl font-bold text-zinc-900 dark:text-white">
+                  No Matching Photos Found
+                </h3>
+                <p className="mx-auto mb-6 max-w-md text-zinc-600 dark:text-gray-400 text-sm leading-relaxed">
+                  No photos matched your search &quot;{searchTerm}&quot;. Try another keyword or clear the search.
+                </p>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                   <button
                     type="button"
                     onClick={() => setSearchTerm('')}
@@ -438,24 +443,90 @@ export default function MyPhotosPage() {
                   >
                     Clear Search
                   </button>
-                ) : (
-                  <>
-                    <Link
-                      href="/events"
-                      className="btn-primary px-6 py-2.5 rounded-xl font-semibold text-sm"
-                    >
-                      Browse Joined Events
-                    </Link>
-                    <Link
-                      href="/register-face?redirect=/photos"
-                      className="text-xs text-zinc-500 hover:text-violet-600 dark:text-gray-400 dark:hover:text-violet-400 py-2 inline-flex items-center gap-1"
-                    >
-                      Look changed? Update your face selfie →
-                    </Link>
-                  </>
-                )}
-              </div>
-            </>
+                </div>
+              </>
+            ) : !hasJoinedEvents ? (
+              <>
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500/20 to-indigo-500/20 border border-violet-500/30">
+                  <Ticket size={32} className="text-violet-600 dark:text-violet-400" />
+                </div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold mb-3">
+                  <span>Face Registered ✓</span>
+                  <span className="text-zinc-400">•</span>
+                  <span>Step 2: Join an Event</span>
+                </div>
+                <h3 className="mb-2 text-xl font-bold text-zinc-900 dark:text-white">
+                  You Haven&apos;t Joined Any Events Yet
+                </h3>
+                <p className="mx-auto mb-6 max-w-md text-zinc-600 dark:text-gray-400 text-sm leading-relaxed">
+                  Your face is registered and ready! To view your photos, join an event using the access code from your host or explore public events.
+                </p>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsJoinModalOpen(true)}
+                    className="btn-primary px-6 py-2.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2"
+                  >
+                    <Plus size={16} />
+                    Join Event with Code
+                  </button>
+                  <Link
+                    href="/events"
+                    className="btn-secondary px-6 py-2.5 rounded-xl font-semibold text-sm"
+                  >
+                    Explore Public Events
+                  </Link>
+                </div>
+                <div className="mt-8 pt-6 border-t border-zinc-200/80 dark:border-white/10 max-w-md mx-auto grid grid-cols-3 gap-2 text-center text-xs text-zinc-500 dark:text-gray-400">
+                  <div className="text-emerald-600 dark:text-emerald-400 font-medium">
+                    <p className="font-semibold">1. Face Ready ✓</p>
+                    <p className="text-[11px] text-zinc-400">Selfie saved</p>
+                  </div>
+                  <div className="text-violet-600 dark:text-violet-400 font-medium">
+                    <p className="font-semibold">2. Join Event</p>
+                    <p className="text-[11px] text-zinc-400">Next step</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-zinc-800 dark:text-zinc-200">3. View Photos</p>
+                    <p className="text-[11px]">Instant delivery</p>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-100 dark:bg-violet-500/10">
+                  <Sparkles size={32} className="text-violet-600 dark:text-violet-400" />
+                </div>
+                <h3 className="mb-2 text-xl font-bold text-zinc-900 dark:text-white">
+                  No Photos Matched to You Yet
+                </h3>
+                <p className="mx-auto mb-6 max-w-md text-zinc-600 dark:text-gray-400 text-sm leading-relaxed">
+                  Your face is registered and active! Either the photographers haven&apos;t uploaded photos yet, or you weren&apos;t captured in the events you&apos;ve joined so far.
+                </p>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <Link
+                    href="/events"
+                    className="btn-primary px-6 py-2.5 rounded-xl font-semibold text-sm"
+                  >
+                    Browse Joined Events
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setIsJoinModalOpen(true)}
+                    className="btn-secondary px-6 py-2.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-1.5"
+                  >
+                    <Plus size={16} />
+                    Join Another Event
+                  </button>
+                  <Link
+                    href="/register-face?redirect=/photos"
+                    className="text-xs text-zinc-500 hover:text-violet-600 dark:text-gray-400 dark:hover:text-violet-400 py-2 inline-flex items-center gap-1"
+                  >
+                    Look changed? Update your face selfie →
+                  </Link>
+                </div>
+              </>
+            )
           )}
         </div>
       )}
@@ -512,6 +583,11 @@ export default function MyPhotosPage() {
           setDownloadModalOpen(false);
           setDownloadJobId(null);
         }}
+      />
+
+      <JoinEventModal
+        isOpen={isJoinModalOpen}
+        onClose={() => setIsJoinModalOpen(false)}
       />
     </div>
   );

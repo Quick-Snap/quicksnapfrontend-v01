@@ -494,6 +494,10 @@ export default function PublicEventPage() {
                                                 <Check size={18} className="text-emerald-600 dark:text-emerald-400" />
                                                 Joined
                                             </div>
+                                        ) : !isActive ? (
+                                            <div className="inline-flex h-12 items-center gap-2 rounded-2xl border border-zinc-200/90 bg-zinc-100 px-5 text-sm font-semibold text-zinc-600 dark:border-white/10 dark:bg-white/10 dark:text-gray-300 sm:h-[3rem]">
+                                                Event Concluded
+                                            </div>
                                         ) : (
                                             <Button
                                                 onClick={handleJoinPublic}
@@ -519,6 +523,10 @@ export default function PublicEventPage() {
                                             <div className="inline-flex h-12 items-center gap-2 rounded-2xl border border-emerald-300 bg-emerald-50/90 px-5 text-sm font-semibold text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-200 sm:h-[3rem]">
                                                 <Check size={18} className="text-emerald-600 dark:text-emerald-400" />
                                                 Joined
+                                            </div>
+                                        ) : !isActive ? (
+                                            <div className="inline-flex h-12 items-center gap-2 rounded-2xl border border-zinc-200/90 bg-zinc-100 px-5 text-sm font-semibold text-zinc-600 dark:border-white/10 dark:bg-white/10 dark:text-gray-300 sm:h-[3rem]">
+                                                Event Concluded
                                             </div>
                                         ) : (
                                             <Button
@@ -875,6 +883,31 @@ export default function PublicEventPage() {
                                     </div>
                                 </div>
                             </div>
+                        ) : allPhotos.length === 0 ? (
+                            <div className={`rounded-[1.65rem] px-6 py-16 text-center ${softSurface}`}>
+                                <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-100 dark:bg-violet-500/15">
+                                    <ImageIcon className="h-8 w-8 text-violet-600 dark:text-violet-400" />
+                                </div>
+                                <h3 className="mb-2 text-xl font-bold text-zinc-900 dark:text-white">
+                                    No Photos in This Event Yet
+                                </h3>
+                                <p className="mx-auto max-w-md text-sm leading-relaxed text-zinc-600 dark:text-gray-400 mb-6">
+                                    Your face is registered and ready! The photographer is still capturing moments or hasn&apos;t uploaded photos to this event yet. As soon as photos are uploaded, our AI will automatically find and deliver your shots here.
+                                </p>
+                                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => {
+                                            queryClient.invalidateQueries(['eventPhotos', eventId]);
+                                            queryClient.invalidateQueries(['myEventPhotos', eventId]);
+                                            toast.success('Gallery refreshed');
+                                        }}
+                                        className="rounded-xl px-5 h-11"
+                                    >
+                                        Refresh Gallery
+                                    </Button>
+                                </div>
+                            </div>
                         ) : (
                             <div className={`rounded-[1.65rem] px-6 py-16 text-center ${softSurface}`}>
                                 <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-100 dark:bg-violet-500/15">
@@ -884,7 +917,7 @@ export default function PublicEventPage() {
                                     No Photos Matched to You Yet
                                 </h3>
                                 <p className="mx-auto max-w-md text-sm leading-relaxed text-zinc-600 dark:text-gray-400 mb-6">
-                                    Your face is registered and active! Either the photographer hasn&apos;t uploaded photos of you yet, or you weren&apos;t captured in this event&apos;s current uploads.
+                                    Your face is registered and active! We scanned {allPhotos.length} uploaded event photos, but didn&apos;t detect your face in them yet. Either the photographer hasn&apos;t uploaded photos of you yet, or you weren&apos;t captured in this event&apos;s current uploads.
                                 </p>
                                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                                     <Button
@@ -892,7 +925,7 @@ export default function PublicEventPage() {
                                         onClick={() => setPhotoViewMode('all')}
                                         className="rounded-xl px-5 h-11"
                                     >
-                                        Browse All Event Photos
+                                        Browse All Event Photos ({allPhotos.length})
                                     </Button>
                                     <Link
                                         href={`/register-face?redirect=/events/${eventId}`}
