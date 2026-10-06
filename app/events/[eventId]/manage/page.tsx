@@ -201,7 +201,7 @@ export default function ManageEventPage() {
             try {
                 const [eventOutcome, photosOutcome] = await Promise.allSettled([
                     eventApi.getById(eventId),
-                    fetchAllEventPhotos(eventId),
+                    fetchAllEventPhotos(eventId, { all: true }),
                 ]);
 
                 const latestEvent =
@@ -403,7 +403,7 @@ export default function ManageEventPage() {
                 );
                 const [eventRes, photosRes] = await Promise.allSettled([
                     eventApi.getById(eventId),
-                    fetchAllEventPhotos(eventId),
+                    fetchAllEventPhotos(eventId, { all: true }),
                 ]);
                 const latestEvent =
                     eventRes.status === 'fulfilled' ? (eventRes.value as any)?.data : undefined;

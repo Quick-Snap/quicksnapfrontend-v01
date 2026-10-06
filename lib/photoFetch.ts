@@ -162,7 +162,10 @@ export async function fetchAllMyPhotos(params?: {
 }
 
 /** Fetch every event photo (no cap) by paging until the API reports no more. */
-export async function fetchAllEventPhotos(eventId: string): Promise<unknown> {
+export async function fetchAllEventPhotos(
+  eventId: string,
+  options?: { all?: boolean; isLiveWall?: boolean }
+): Promise<unknown> {
   let page = 1;
   let cursor: string | undefined;
   let prevCursor: string | undefined;
@@ -171,7 +174,8 @@ export async function fetchAllEventPhotos(eventId: string): Promise<unknown> {
 
   for (;;) {
     const response = await eventApi.getPhotos(eventId, {
-      all: false,
+      all: options?.all ?? false,
+      isLiveWall: options?.isLiveWall ?? false,
       limit: PAGE_SIZE,
       ...(cursor ? { lastKey: cursor } : { page }),
     });

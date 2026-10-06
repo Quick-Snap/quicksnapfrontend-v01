@@ -91,6 +91,33 @@ export default function LiveMomentsWallPage() {
   // Motion index for Ken Burns alternation
   const [motionVariation, setMotionVariation] = useState<number>(0);
 
+  // Save and apply settings
+  const [savingSettings, setSavingSettings] = useState(false);
+  const handleApplySettings = async () => {
+    setShowSettings(false);
+    if (!isOrganizer || !eventId) return;
+
+    try {
+      setSavingSettings(true);
+      await eventApi.update(eventId, {
+        liveWallSettings: {
+          streamMode,
+          prioritizeGroups,
+          prioritizeJoined,
+          slideDuration,
+          showQrCode,
+          aspectRatio,
+        }
+      });
+      setEmergencyToast('Live Wall settings saved successfully');
+      setTimeout(() => setEmergencyToast(null), 3000);
+    } catch (err) {
+      console.error('Failed to persist live wall settings:', err);
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
   // Inactivity timer for fading UI controls
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const slideTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -131,11 +158,22 @@ export default function LiveMomentsWallPage() {
 
       const [eventRes, photosRes] = await Promise.allSettled([
         eventApi.getById(eventId),
-        fetchAllEventPhotos(eventId)
+        fetchAllEventPhotos(eventId, { all: true, isLiveWall: true })
       ]);
 
       if (eventRes.status === 'fulfilled' && (eventRes.value as any)?.data) {
-        setEvent((eventRes.value as any).data);
+        const ev = (eventRes.value as any).data;
+        setEvent(ev);
+
+        // Sync persistent Live Wall settings from event
+        if (ev.liveWallSettings) {
+          if (ev.liveWallSettings.streamMode) setStreamMode(ev.liveWallSettings.streamMode);
+          if (ev.liveWallSettings.prioritizeGroups !== undefined) setPrioritizeGroups(ev.liveWallSettings.prioritizeGroups);
+          if (ev.liveWallSettings.prioritizeJoined !== undefined) setPrioritizeJoined(ev.liveWallSettings.prioritizeJoined);
+          if (ev.liveWallSettings.slideDuration) setSlideDuration(ev.liveWallSettings.slideDuration);
+          if (ev.liveWallSettings.showQrCode !== undefined) setShowQrCode(ev.liveWallSettings.showQrCode);
+          if (ev.liveWallSettings.aspectRatio) setAspectRatio(ev.liveWallSettings.aspectRatio);
+        }
       }
 
       if (photosRes.status === 'fulfilled') {
@@ -878,10 +916,11 @@ export default function LiveMomentsWallPage() {
             <div className="mt-6 flex justify-end">
               <button
                 type="button"
-                onClick={() => setShowSettings(false)}
-                className="px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold text-xs shadow-lg transition-colors"
+                onClick={handleApplySettings}
+                disabled={savingSettings}
+                className="px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold text-xs shadow-lg transition-colors disabled:opacity-50"
               >
-                Apply & Return to Slideshow
+                {savingSettings ? 'Saving...' : 'Apply & Return to Slideshow'}
               </button>
             </div>
           </div>

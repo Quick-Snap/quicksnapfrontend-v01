@@ -421,13 +421,14 @@ export const eventApi = {
 
   getPhotos: async (
     eventId: string,
-    params?: { page?: number; limit?: number; lastKey?: string; all?: boolean }
+    params?: { page?: number; limit?: number; lastKey?: string; all?: boolean; isLiveWall?: boolean }
   ) => {
     const query: Record<string, string | number | undefined> = {};
     if (params?.limit != null) query.limit = params.limit;
     if (params?.page != null) query.page = params.page;
     if (params?.lastKey != null) query.lastKey = params.lastKey;
     if (params?.all === true) query.all = 'true';
+    if (params?.isLiveWall === true) query.isLiveWall = 'true';
     const response = await api.get<ApiResponse<any>>(`/events/${eventId}/photos`, {
       params: query,
     });
