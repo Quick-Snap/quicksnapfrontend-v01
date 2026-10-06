@@ -631,10 +631,21 @@ export default function ManageEventPage() {
                         <div className="mt-4 h-1 rounded-full bg-gradient-to-r from-emerald-500 to-green-400"></div>
                     </Link>
 
-                    <div className={`${MANAGE_STAT}`}>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            const el = document.getElementById('photos-section');
+                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }}
+                        className={`${MANAGE_STAT} text-left w-full transition-transform hover:-translate-y-0.5 hover:shadow-md cursor-pointer`}
+                        title="Scroll to photos & gallery management"
+                    >
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="mb-1 text-sm text-zinc-500 dark:text-gray-400">Photos</p>
+                                <div className="flex items-center gap-1.5 mb-1">
+                                    <p className="text-sm font-medium text-zinc-500 dark:text-gray-400">Photos</p>
+                                    <span className="text-[10px] text-violet-600 dark:text-violet-400 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">Jump &darr;</span>
+                                </div>
                                 <p className="text-2xl font-semibold text-zinc-900 dark:text-white">{displayedPhotoCount}</p>
                             </div>
                             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 transition-colors group-hover:bg-violet-200/80 dark:bg-violet-500/10 dark:group-hover:bg-violet-500/20">
@@ -642,12 +653,23 @@ export default function ManageEventPage() {
                             </div>
                         </div>
                         <div className="mt-4 h-1 rounded-full bg-gradient-to-r from-violet-500 to-indigo-500"></div>
-                    </div>
+                    </button>
 
-                    <div className={`${MANAGE_STAT}`}>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            const el = document.getElementById('photographers-section');
+                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }}
+                        className={`${MANAGE_STAT} text-left w-full transition-transform hover:-translate-y-0.5 hover:shadow-md cursor-pointer`}
+                        title="Scroll to photographers assignment"
+                    >
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="mb-1 text-sm text-zinc-500 dark:text-gray-400">Photographers</p>
+                                <div className="flex items-center gap-1.5 mb-1">
+                                    <p className="text-sm font-medium text-zinc-500 dark:text-gray-400">Photographers</p>
+                                    <span className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">Jump &darr;</span>
+                                </div>
                                 <p className="text-2xl font-semibold text-zinc-900 dark:text-white">{event.photographers?.length || 0}</p>
                             </div>
                             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 transition-colors group-hover:bg-blue-200/80 dark:bg-blue-500/10 dark:group-hover:bg-blue-500/20">
@@ -655,7 +677,7 @@ export default function ManageEventPage() {
                             </div>
                         </div>
                         <div className="mt-4 h-1 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500"></div>
-                    </div>
+                    </button>
 
                     <div className={`${MANAGE_STAT}`}>
                         <div className="flex items-center justify-between">
@@ -814,7 +836,7 @@ export default function ManageEventPage() {
 
                 {/* Assign Photographer Section */}
                 {canFullManage && (
-                <div className={MANAGE_CARD}>
+                <div id="photographers-section" className={`${MANAGE_CARD} scroll-mt-6`}>
                     <div className="mb-6 flex items-center gap-3">
                         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-emerald-500/20 dark:to-teal-500/20">
                             <Camera className="h-6 w-6 text-emerald-700 dark:text-emerald-400" />
@@ -940,7 +962,7 @@ export default function ManageEventPage() {
 
                 {/* Select photos for dashboard (official gallery) */}
                 {canFullManage && (
-                <div className={MANAGE_CARD}>
+                <div id="photos-section" className={`${MANAGE_CARD} scroll-mt-6`}>
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-zinc-100 pb-6 dark:border-white/5">
                         <div className="flex items-center gap-3">
                             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-violet-100 to-indigo-100 dark:from-violet-500/20 dark:to-indigo-500/20">
