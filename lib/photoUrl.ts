@@ -138,3 +138,88 @@ export async function enrichPhotosWithDisplayUrls(
         return mergedById.get(id) ?? p;
     });
 }
+
+/**
+ * Resizes camera photos (often 5-15MB) down to max 1920px and ~0.82 JPEG quality
+ * before direct S3 upload. Prevents slow progressive loading and blank rectangles.
+ */
+export async function optimizeImageForUpload(file: File, maxDimension = 1920, quality = 0.82): Promise<File> {
+    if (typeof window === 'undefined') return file;
+
+    let sourceBlob: Blob = file;
+    let fileName = file.name;
+    if (fileName.toLowerCase().endsWith('.heic') || fileName.toLowerCase().endsWith('.heif')) {
+        try {
+            const heic2any = (await import('heic2any')).default;
+            const converted = await heic2any({
+                blob: file,
+                toType: 'image/jpeg',
+                quality: 0.85,
+            });
+            sourceBlob = Array.isArray(converted) ? converted[0] : converted;
+            fileName = fileName.replace(/\.[^/.]+$/, '') + '.jpg';
+        } catch (err) {
+            console.warn('HEIC conversion fallback:', err);
+        }
+    }
+
+    return new Promise((resolve) => {
+        const img = new Image();
+        const objectUrl = URL.createObjectURL(sourceBlob);
+
+        img.onload = () => {
+            URL.revokeObjectURL(objectUrl);
+
+            let { width, height } = img;
+
+            // Only downscale if larger than maxDimension
+            if (width > maxDimension || height > maxDimension) {
+                if (width > height) {
+                    height = Math.round((height * maxDimension) / width);
+                    width = maxDimension;
+                } else {
+                    width = Math.round((width * maxDimension) / height);
+                    height = maxDimension;
+                }
+            } else if (file.size < 1024 * 1024 && file.type === 'image/jpeg') {
+                return resolve(file);
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                return resolve(file);
+            }
+
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(img, 0, 0, width, height);
+
+            canvas.toBlob(
+                (blob) => {
+                    if (!blob) {
+                        return resolve(file);
+                    }
+                    const optimizedFile = new File([blob], fileName.replace(/\.[^/.]+$/, '') + '.jpg', {
+                        type: 'image/jpeg',
+                        lastModified: Date.now(),
+                    });
+                    resolve(optimizedFile);
+                },
+                'image/jpeg',
+                quality
+            );
+        };
+
+        img.onerror = () => {
+            URL.revokeObjectURL(objectUrl);
+            resolve(file);
+        };
+
+        img.src = objectUrl;
+    });
+}
+

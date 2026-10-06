@@ -17,7 +17,8 @@ import {
   Shield,
   Eye,
   Calendar,
-  AlertTriangle
+  AlertTriangle,
+  Trash2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { eventApi, guestSubmissionsApi } from '@/lib/api';
@@ -88,7 +89,7 @@ export default function EventSubmissionsReviewPage() {
     return submissions;
   }, [submissions, filter]);
 
-  // Handle single photo or batch decisions
+  // Handle single photo or batch decisions with optimistic updates (no jarring reload)
   const handleReviewDecision = async (
     targetSubmissionId: string,
     decisions: Array<{
@@ -98,8 +99,56 @@ export default function EventSubmissionsReviewPage() {
     }>
   ) => {
     setReviewing(true);
+
+    // 1. Optimistic instant local state update to prevent photo flickering/reloading
+    const decisionMap = new Map(decisions.map((d) => [d.photoId, d]));
+
+    const updatePhotosList = (photos: any[]) =>
+      photos.map((p) => {
+        const d = decisionMap.get(p._id);
+        if (!d) return p;
+        return {
+          ...p,
+          status: d.action === 'approve' ? 'approved' : 'rejected',
+          isLiveWallFeatured: d.featureOnLiveWall ?? p.isLiveWallFeatured ?? false,
+          previewUrl: d.action === 'reject' ? '' : p.previewUrl,
+        };
+      });
+
+    setSubmissions((prev) =>
+      prev.map((sub) => {
+        const hasMatch = sub.photos.some((p: any) => decisionMap.has(p._id));
+        if (!hasMatch) return sub;
+
+        const updatedPhotos = updatePhotosList(sub.photos);
+        const pendingCount = updatedPhotos.filter((p: any) => p.status === 'pending').length;
+        const approvedCount = updatedPhotos.filter((p: any) => p.status === 'approved').length;
+        const rejectedCount = updatedPhotos.filter((p: any) => p.status === 'rejected').length;
+
+        return {
+          ...sub,
+          photos: updatedPhotos,
+          pendingCount,
+          approvedCount,
+          rejectedCount,
+        };
+      })
+    );
+
+    if (activeGuestSubmission) {
+      setActiveGuestSubmission((prev: any) => {
+        if (!prev) return null;
+        const updatedPhotos = updatePhotosList(prev.photos);
+        const pendingCount = updatedPhotos.filter((p: any) => p.status === 'pending').length;
+        return {
+          ...prev,
+          photos: updatedPhotos,
+          pendingCount,
+        };
+      });
+    }
+
     try {
-      // Find the specific submission that owns the photo, if merged
       const submissionId = targetSubmissionId;
       const res = await guestSubmissionsApi.reviewPhotos(eventId, submissionId, {
         photoDecisions: decisions,
@@ -111,26 +160,14 @@ export default function EventSubmissionsReviewPage() {
             ? `Photo ${decisions[0].action}d successfully`
             : `Reviewed ${decisions.length} photos successfully`
         );
-        const latestSubs = await fetchData();
-
-        // Update active drawer view if open
-        if (activeGuestSubmission) {
-          const guestPhone = activeGuestSubmission.guest?.phone?.replace(/[^0-9]/g, '').slice(-10);
-          const updated = (latestSubs || submissions).find(
-            (s: any) => s.guest?.phone?.replace(/[^0-9]/g, '').slice(-10) === guestPhone
-          );
-          if (updated && updated.pendingCount === 0) {
-            setActiveGuestSubmission(null);
-          } else if (updated) {
-            setActiveGuestSubmission(updated);
-          }
-        }
       } else {
         toast.error(res.message || 'Failed to apply review decision');
+        await fetchData();
       }
     } catch (err: any) {
       console.error('Review action failed:', err);
       toast.error(err.response?.data?.message || 'Error updating photo status');
+      await fetchData();
     } finally {
       setReviewing(false);
     }
@@ -313,30 +350,44 @@ export default function EventSubmissionsReviewPage() {
 
                     {/* Photo Thumbnails Preview */}
                     <div className="grid grid-cols-4 gap-2 mb-4">
-                      {sub.photos.slice(0, 4).map((p: any, idx: number) => (
-                        <div
-                          key={p._id || idx}
-                          className="relative aspect-square rounded-xl overflow-hidden bg-zinc-100 dark:bg-white/5 border border-zinc-100 dark:border-white/5"
-                        >
-                          {p.previewUrl ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={p.previewUrl}
-                              alt="Thumbnail"
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <div className="h-full w-full flex items-center justify-center text-xs text-zinc-400">
-                              📷
-                            </div>
-                          )}
-                          {p.status === 'approved' && (
-                            <span className="absolute bottom-1 right-1 rounded-full bg-emerald-500 p-0.5 text-white shadow">
-                              <Check size={8} />
-                            </span>
-                          )}
-                        </div>
-                      ))}
+                      {sub.photos.slice(0, 4).map((p: any, idx: number) => {
+                        const isRejected = p.status === 'rejected';
+                        return (
+                          <div
+                            key={p._id || idx}
+                            className={`relative aspect-square rounded-xl overflow-hidden border ${
+                              isRejected
+                                ? 'border-red-200/60 bg-red-50/50 dark:border-red-500/20 dark:bg-red-500/5'
+                                : 'bg-zinc-100 dark:bg-white/5 border-zinc-100 dark:border-white/5'
+                            }`}
+                          >
+                            {isRejected ? (
+                              <div className="h-full w-full flex flex-col items-center justify-center p-1 text-center bg-gradient-to-br from-red-50 to-zinc-100 dark:from-red-950/20 dark:to-zinc-900/40">
+                                <Trash2 size={14} className="text-red-500 mb-0.5" />
+                                <span className="text-[9px] font-bold text-red-600 dark:text-red-400 uppercase tracking-wider">
+                                  Deleted
+                                </span>
+                              </div>
+                            ) : p.previewUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={p.previewUrl}
+                                alt="Thumbnail"
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="h-full w-full flex items-center justify-center text-xs text-zinc-400">
+                                📷
+                              </div>
+                            )}
+                            {p.status === 'approved' && (
+                              <span className="absolute bottom-1 right-1 rounded-full bg-emerald-500 p-0.5 text-white shadow">
+                                <Check size={8} />
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -406,7 +457,17 @@ export default function EventSubmissionsReviewPage() {
                         }`}
                       >
                         <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-zinc-200 dark:bg-white/10 mb-3">
-                          {photo.previewUrl ? (
+                          {isRejected ? (
+                            <div className="h-full w-full flex flex-col items-center justify-center p-4 text-center bg-gradient-to-br from-red-50 to-zinc-100 dark:from-red-950/20 dark:to-zinc-900/40">
+                              <Trash2 size={24} className="text-red-500 mb-1.5" />
+                              <span className="text-xs font-bold text-red-600 dark:text-red-400 uppercase tracking-wider">
+                                Deleted from S3
+                              </span>
+                              <span className="text-[10px] text-zinc-400 dark:text-gray-500 mt-0.5">
+                                Storage purged immediately
+                              </span>
+                            </div>
+                          ) : photo.previewUrl ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
                               src={photo.previewUrl}
