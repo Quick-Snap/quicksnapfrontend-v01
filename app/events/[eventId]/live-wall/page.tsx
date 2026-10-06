@@ -235,7 +235,8 @@ export default function LiveMomentsWallPage() {
       const url = getPhotoDisplayUrl(p) || p.url || p.s3Url || p.imageUrl || '';
       const isOfficial = !!(p.isOfficial ?? p.is_official);
       const faceMatches: any[] = Array.isArray(p.faceMatches) ? p.faceMatches : [];
-      const groupCount = faceMatches.length;
+      const matchedUsers: any[] = Array.isArray(p.matchedUsers) ? p.matchedUsers : [];
+      const groupCount = Math.max(faceMatches.length, matchedUsers.length);
 
       let hasJoinedAttendee = false;
       let highestConfidence = 0;
@@ -250,22 +251,29 @@ export default function LiveMomentsWallPage() {
         }
       }
 
+      for (const u of matchedUsers) {
+        const uid = typeof u === 'string' ? u.trim() : (u?._id ? String(u._id).trim() : '');
+        if (uid && attendeeIdSet.has(uid)) {
+          hasJoinedAttendee = true;
+        }
+      }
+
       // Base Score
       let score = 10;
 
-      // Rule 1: Official Photos
+      // Rule 1: Official Photos get top priority
       if (isOfficial) {
         score += 50;
       }
 
-      // Rule 2: Group Dynamics (3 to 15 people Goldilocks zone)
+      // Rule 2: Group Dynamics (social sweet spot)
       if (prioritizeGroups) {
         if (groupCount >= 3 && groupCount <= 15) {
           score += 35; // Ideal social sweet spot
         } else if (groupCount === 1 || groupCount === 2) {
-          score += 15; // Good portrait / duo
+          score += 20; // Good portrait / duo
         } else if (groupCount > 15) {
-          score += 8; // Very large crowd
+          score += 10; // Very large crowd
         }
       }
 
@@ -274,11 +282,14 @@ export default function LiveMomentsWallPage() {
         score += 30;
       }
 
-      // Rule 4: High confidence facial clarity
+      // Rule 4: Facial clarity (if confidence score is present)
       if (highestConfidence >= 90) {
-        score += 10;
+        score += 15;
       } else if (highestConfidence >= 80) {
-        score += 5;
+        score += 10;
+      } else if (groupCount > 0) {
+        // Detected faces present even without confidence float
+        score += 10;
       }
 
       return {
@@ -304,51 +315,45 @@ export default function LiveMomentsWallPage() {
       // 1. All Official photos are always included (guaranteed priority)
       const officialItems = scored.filter((item) => item.isOfficial);
 
-      // 2. Filter Pool / Candid photos for high clarity and relevance:
-      // - Must have at least 1 detected face or high confidence match (>= 80%)
-      // - Or must include a joined attendee
-      // - Skip low-clarity / blurred / low-confidence unvetted shots
-      const candidatePoolItems = scored.filter((item) => {
-        if (item.isOfficial) return false;
-        // Require recognized clarity or recognized attendee
-        return item.hasJoinedAttendee || item.confidence >= 80 || (item.groupCount >= 2 && item.confidence >= 75);
-      });
+      // 2. Candidate pool: all safe non-official photos
+      const candidatePoolItems = scored.filter((item) => !item.isOfficial);
 
-      // Sort candidate pool by score descending
+      // Sort candidate pool by score descending (group photos, attendee photos first)
       candidatePoolItems.sort((a, b) => b.score - a.score);
 
       // 3. Deduplication / Anti-repetition:
-      // Prevent rapid consecutive burst shots of the same person/scene
+      // Prevent consecutive/burst shots of the exact same subject/timeframe
       const selectedPool: PhotoScoreItem[] = [];
-      const seenUserSignatures = new Set<string>();
+      const seenSignatures = new Set<string>();
 
       for (const item of candidatePoolItems) {
-        // Build a signature of matched users or file name prefix (burst detection)
         const faceMatches: any[] = Array.isArray(item.photo.faceMatches) ? item.photo.faceMatches : [];
-        const userIds = faceMatches
-          .map((m) => String(m.userId?._id || m.userId || '').trim())
-          .filter(Boolean)
-          .sort()
-          .join(':');
+        const matchedUsers: any[] = Array.isArray(item.photo.matchedUsers) ? item.photo.matchedUsers : [];
 
-        const fileNameBase = (item.photo.fileName || '').replace(/\.[^/.]+$/, '').slice(0, 10);
-        const burstSignature = userIds ? `${userIds}` : fileNameBase;
+        const userIds = [
+          ...faceMatches.map((m) => String(m.userId?._id || m.userId || '').trim()),
+          ...matchedUsers.map((u) => (typeof u === 'string' ? u.trim() : String(u?._id || '').trim()))
+        ].filter(Boolean).sort().join(':');
 
-        if (burstSignature && seenUserSignatures.has(burstSignature)) {
-          // Already have a higher-scoring photo of this exact group/subject — skip duplicate pose
+        // Burst signature: filename prefix (e.g. IMG_1024 without trailing sequence or extension)
+        const fileNameBase = (item.photo.fileName || '').replace(/[-_]?\d+\.[^/.]+$/, '').slice(0, 15);
+        const burstSignature = userIds ? `users:${userIds}` : (fileNameBase ? `file:${fileNameBase}` : '');
+
+        if (burstSignature && seenSignatures.has(burstSignature)) {
+          // Skip redundant burst photo to keep stream fresh and unique
           continue;
         }
 
         if (burstSignature) {
-          seenUserSignatures.add(burstSignature);
+          seenSignatures.add(burstSignature);
         }
 
         selectedPool.push(item);
-        // Curate a balanced ratio: limit pool candid additions to top 25 high-energy unique moments
-        if (selectedPool.length >= 25) break;
+        // Smart Mix: curate top 20 best unique candid shots to mix with official photos
+        if (selectedPool.length >= 20) break;
       }
 
-      // 4. Combine all official photos + the unique curated pool moments, sorted by score
+      // 4. Combine all official photos + top curated unique candid moments
       const combined = [...officialItems, ...selectedPool];
       filtered = combined.sort((a, b) => b.score - a.score);
 
