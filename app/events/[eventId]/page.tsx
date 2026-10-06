@@ -42,6 +42,7 @@ import { softSurface, softSurfaceHover } from '@/lib/dashboardUi';
 import { PhotoLightbox } from '@/app/components/photos/PhotoLightbox';
 import JoinEventModal from '@/app/components/student/JoinEventModal';
 import PostJoinSelfieModal from '@/app/components/events/PostJoinSelfieModal';
+import { formatEventSchedule } from '@/lib/eventDateUtils';
 
 const PHOTOS_PER_PAGE = 12;
 const PREVIEW_PHOTO_COUNT = 4;
@@ -614,19 +615,20 @@ export default function PublicEventPage() {
                                         </div>
                                         <div className="min-w-0 flex-1">
                                             <dt className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-gray-500">When</dt>
-                                            <dd className="mt-1 text-sm font-medium text-zinc-900 dark:text-white">
-                                                {startDate.toLocaleDateString('en-US', {
-                                                    weekday: 'long',
-                                                    month: 'long',
-                                                    day: 'numeric',
-                                                    year: 'numeric',
-                                                })}
-                                            </dd>
-                                            <dd className="mt-1 flex items-center gap-1.5 text-sm text-zinc-600 dark:text-gray-400">
-                                                <Clock size={14} className="shrink-0 text-violet-600 dark:text-violet-400" />
-                                                {startDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} –{' '}
-                                                {endDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-                                            </dd>
+                                            {(() => {
+                                                const schedule = formatEventSchedule(event.startDate, event.endDate);
+                                                return (
+                                                    <>
+                                                        <dd className="mt-1 text-sm font-medium text-zinc-900 dark:text-white">
+                                                            {schedule.dateLabel}
+                                                        </dd>
+                                                        <dd className="mt-1 flex items-center gap-1.5 text-sm text-zinc-600 dark:text-gray-400">
+                                                            <Clock size={14} className="shrink-0 text-violet-600 dark:text-violet-400" />
+                                                            <span>{schedule.timeLabel}</span>
+                                                        </dd>
+                                                    </>
+                                                );
+                                            })()}
                                         </div>
                                     </div>
 

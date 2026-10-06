@@ -42,6 +42,7 @@ import RefreshAttendeeMatchesCard from '@/app/components/events/RefreshAttendeeM
 import EditEventModal from '@/app/components/events/EditEventModal';
 import CustomizeAccessCodeModal from '@/app/components/events/CustomizeAccessCodeModal';
 import PrintableEventKitModal from '@/app/components/events/PrintableEventKitModal';
+import { formatEventSchedule } from '@/lib/eventDateUtils';
 import { Button } from '@/app/components/ui/Button';
 import Pagination from '@/app/components/ui/Pagination';
 import { useAuth } from '@/contexts/AuthContext';
@@ -682,34 +683,40 @@ export default function ManageEventPage() {
 
                     <div className="grid gap-6 md:grid-cols-2">
                         <div className="space-y-4">
-                            <div className="flex items-start gap-4 rounded-xl border border-zinc-200/90 bg-zinc-50/80 p-4 dark:border-white/10 dark:bg-white/5">
-                                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-violet-200 bg-violet-100 dark:border-violet-400/20 dark:bg-violet-500/15">
-                                    <Calendar className="text-violet-700 dark:text-violet-300" size={20} />
-                                </div>
-                                <div>
-                                    <p className="mb-1 font-medium text-zinc-900 dark:text-white">Date</p>
-                                    <p className="text-sm text-zinc-600 dark:text-gray-300">
-                                        {startDate.toLocaleDateString('en-US', {
-                                            weekday: 'long',
-                                            year: 'numeric',
-                                            month: 'long',
-                                            day: 'numeric'
-                                        })}
-                                    </p>
-                                </div>
-                            </div>
+                            {(() => {
+                                const schedule = formatEventSchedule(event.startDate, event.endDate);
+                                return (
+                                    <>
+                                        <div className="flex items-start gap-4 rounded-xl border border-zinc-200/90 bg-zinc-50/80 p-4 dark:border-white/10 dark:bg-white/5">
+                                            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-violet-200 bg-violet-100 dark:border-violet-400/20 dark:bg-violet-500/15">
+                                                <Calendar className="text-violet-700 dark:text-violet-300" size={20} />
+                                            </div>
+                                            <div>
+                                                <p className="mb-1 font-medium text-zinc-900 dark:text-white">
+                                                    {schedule.isMultiDay ? 'Dates' : 'Date'}
+                                                </p>
+                                                <p className="text-sm text-zinc-600 dark:text-gray-300">
+                                                    {schedule.dateLabel}
+                                                </p>
+                                            </div>
+                                        </div>
 
-                            <div className="flex items-start gap-4 rounded-xl border border-zinc-200/90 bg-zinc-50/80 p-4 dark:border-white/10 dark:bg-white/5">
-                                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-blue-200 bg-blue-100 dark:border-blue-400/20 dark:bg-blue-500/15">
-                                    <Clock className="text-blue-700 dark:text-blue-300" size={20} />
-                                </div>
-                                <div>
-                                    <p className="mb-1 font-medium text-zinc-900 dark:text-white">Time</p>
-                                    <p className="text-sm text-zinc-600 dark:text-gray-300">
-                                        {startDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} - {endDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-                                    </p>
-                                </div>
-                            </div>
+                                        <div className="flex items-start gap-4 rounded-xl border border-zinc-200/90 bg-zinc-50/80 p-4 dark:border-white/10 dark:bg-white/5">
+                                            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-blue-200 bg-blue-100 dark:border-blue-400/20 dark:bg-blue-500/15">
+                                                <Clock className="text-blue-700 dark:text-blue-300" size={20} />
+                                            </div>
+                                            <div>
+                                                <p className="mb-1 font-medium text-zinc-900 dark:text-white">
+                                                    {schedule.isMultiDay ? 'Schedule' : 'Time'}
+                                                </p>
+                                                <p className="text-sm text-zinc-600 dark:text-gray-300">
+                                                    {schedule.timeLabel}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </>
+                                );
+                            })()}
 
                             <div className="flex items-start gap-4 rounded-xl border border-zinc-200/90 bg-zinc-50/80 p-4 dark:border-white/10 dark:bg-white/5">
                                 <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-pink-200 bg-pink-100 dark:border-pink-400/20 dark:bg-pink-500/15">

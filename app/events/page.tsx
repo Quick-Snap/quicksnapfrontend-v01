@@ -25,6 +25,7 @@ import { useRole } from '@/hooks/useRole';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
 import { softSurface, softSurfaceHover } from '@/lib/dashboardUi';
+import { formatEventSchedule } from '@/lib/eventDateUtils';
 
 type FilterType = 'all' | 'today' | 'week' | 'upcoming' | 'my';
 
@@ -342,8 +343,7 @@ export default function EventsPage() {
                         <div className="flex items-start gap-2">
                           <Clock className="mt-0.5 h-4 w-4 shrink-0 text-violet-600 dark:text-violet-400" />
                           <span className="leading-snug">
-                            {format(new Date(event.startDate), 'EEE, MMM d • h:mm a')} –{' '}
-                            {format(new Date(event.endDate), 'h:mm a')}
+                            {formatEventSchedule(event.startDate, event.endDate).fullScheduleLabel}
                           </span>
                         </div>
                         <div className="flex items-start gap-2">

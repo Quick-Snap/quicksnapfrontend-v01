@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Calendar, MapPin, Users, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { Event } from '@/types';
+import { formatEventSchedule } from '@/lib/eventDateUtils';
 
 interface EventCardProps {
   event: Event;
@@ -28,16 +29,21 @@ export default function EventCard({ event }: EventCardProps) {
         <h3 className="text-xl font-semibold mb-2 line-clamp-1">{event.name}</h3>
         <p className="text-gray-600 text-sm mb-4 line-clamp-2">{event.description}</p>
         <div className="space-y-2 text-sm text-gray-500">
-          <div className="flex items-center">
-            <Calendar className="h-4 w-4 mr-2 flex-shrink-0" />
-            <span className="truncate">{format(new Date(event.startDate), 'MMM dd, yyyy')}</span>
-          </div>
-          <div className="flex items-center">
-            <Clock className="h-4 w-4 mr-2 flex-shrink-0" />
-            <span className="truncate">
-              {format(new Date(event.startDate), 'h:mm a')} - {format(new Date(event.endDate), 'h:mm a')}
-            </span>
-          </div>
+          {(() => {
+            const schedule = formatEventSchedule(event.startDate, event.endDate);
+            return (
+              <>
+                <div className="flex items-center">
+                  <Calendar className="h-4 w-4 mr-2 flex-shrink-0" />
+                  <span className="truncate">{schedule.dateLabel}</span>
+                </div>
+                <div className="flex items-center">
+                  <Clock className="h-4 w-4 mr-2 flex-shrink-0" />
+                  <span className="truncate">{schedule.timeLabel}</span>
+                </div>
+              </>
+            );
+          })()}
           <div className="flex items-center">
             <MapPin className="h-4 w-4 mr-2 flex-shrink-0" />
             <span className="truncate">{event.venue}</span>
