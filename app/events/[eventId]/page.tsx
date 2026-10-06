@@ -20,7 +20,8 @@ import {
     Check,
     UserCheck,
     Loader2,
-    KeyRound
+    KeyRound,
+    X
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { eventApi, photoApi } from '@/lib/api';
@@ -91,7 +92,27 @@ export default function PublicEventPage() {
     const [joining, setJoining] = useState(false);
     const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
     const [showPostJoinSelfieModal, setShowPostJoinSelfieModal] = useState(false);
+    const [isScanningUpdatedSelfie, setIsScanningUpdatedSelfie] = useState(false);
     const loadUser = useAuthStore((state) => state.loadUser);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const raw = sessionStorage.getItem('justUpdatedSelfie');
+            if (raw) {
+                const elapsed = Date.now() - parseInt(raw, 10);
+                if (elapsed < 45000) {
+                    setIsScanningUpdatedSelfie(true);
+                    const timer = setTimeout(() => {
+                        setIsScanningUpdatedSelfie(false);
+                        sessionStorage.removeItem('justUpdatedSelfie');
+                    }, 45000 - elapsed);
+                    return () => clearTimeout(timer);
+                } else {
+                    sessionStorage.removeItem('justUpdatedSelfie');
+                }
+            }
+        }
+    }, []);
 
 
     const handleUntag = async (photo: any) => {
@@ -701,6 +722,32 @@ export default function PublicEventPage() {
                                 )}
                             </button>
                         </div>
+                    </div>
+                )}
+
+                {isScanningUpdatedSelfie && photoViewMode === 'my' && (
+                    <div className="mb-6 mx-auto max-w-xl flex items-center justify-between gap-3 rounded-2xl border border-violet-400/30 bg-gradient-to-r from-violet-600/10 via-indigo-600/10 to-violet-600/5 p-4 text-violet-900 dark:text-violet-200 shadow-sm animate-pulse">
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-600 text-white shadow-md shadow-violet-500/25">
+                                <Sparkles className="h-5 w-5 animate-spin" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold">Updating Gallery with Your New Selfie</p>
+                                <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                                    Our AI is re-scanning this event's photos in the background. Matched photos will appear automatically in ~30 seconds.
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setIsScanningUpdatedSelfie(false);
+                                sessionStorage.removeItem('justUpdatedSelfie');
+                            }}
+                            className="text-xs text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white p-1.5 rounded-lg hover:bg-zinc-200/50 dark:hover:bg-white/10"
+                        >
+                            <X size={16} />
+                        </button>
                     </div>
                 )}
 

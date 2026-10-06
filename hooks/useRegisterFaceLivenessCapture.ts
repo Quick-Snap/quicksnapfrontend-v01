@@ -161,6 +161,21 @@ export function useRegisterFaceLivenessCapture({
         return;
       }
 
+      if (faces.length > 1) {
+        stableMsRef.current = 0;
+        setStableElapsedMs(0);
+        setProgressPercentage(0);
+        setIsFaceValid(false);
+        setStatusMessage('Multiple people detected. Only you should be in frame');
+        phaseRef.current = 'framing';
+        setPhase('framing');
+        challengesRef.current = null;
+        challengeIdxRef.current = 0;
+        setChallengeStep(0);
+        setChallengeTotal(0);
+        return;
+      }
+
       const landmarks = faces[0];
       const blendClassification = result.faceBlendshapes?.[0];
       const blendMap = blendshapesToMap(blendClassification);

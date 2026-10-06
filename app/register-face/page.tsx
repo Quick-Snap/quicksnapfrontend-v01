@@ -347,7 +347,11 @@ export default function RegisterFacePage() {
 
       if (registerData.success) {
         setUploadProgress(100);
-        toast.success('Face registered successfully!');
+        const wasReRegistering = Boolean(user?.faceRegistered);
+        toast.success(wasReRegistering ? 'Selfie updated successfully!' : 'Face registered successfully!');
+        if (typeof window !== 'undefined' && wasReRegistering) {
+          sessionStorage.setItem('justUpdatedSelfie', Date.now().toString());
+        }
         if (user) {
           updateUser({
             ...user,
