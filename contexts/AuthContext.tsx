@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, ReactNode } from 'react';
+import React, { useEffect, useMemo, ReactNode } from 'react';
 import { useQueryClient } from 'react-query';
 import { useAuthStore } from '@/stores/authStore';
 import { User, UserRole } from '@/types';
@@ -57,14 +57,17 @@ export function useAuth(): AuthContextType {
   const updateUser = useAuthStore((state) => state.updateUser);
   const switchRole = useAuthStore((state) => state.switchRole);
 
-  return {
-    user,
-    loading,
-    activeRole,
-    login,
-    register,
-    logout,
-    updateUser,
-    switchRole,
-  };
+  return useMemo(
+    () => ({
+      user,
+      loading,
+      activeRole,
+      login,
+      register,
+      logout,
+      updateUser,
+      switchRole,
+    }),
+    [user, loading, activeRole, login, register, logout, updateUser, switchRole]
+  );
 }
