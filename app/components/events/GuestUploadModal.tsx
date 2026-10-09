@@ -270,10 +270,10 @@ export default function GuestUploadModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-zinc-200/90 bg-white shadow-2xl dark:border-white/10 dark:bg-[#0f0c18]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-fade-in overflow-y-auto">
+      <div className="relative w-full max-w-lg my-auto flex flex-col max-h-[92vh] sm:max-h-[88vh] rounded-3xl border border-zinc-200/90 bg-white shadow-2xl dark:border-white/10 dark:bg-[#0f0c18] overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-zinc-100 p-5 dark:border-white/5">
+        <div className="shrink-0 flex items-center justify-between border-b border-zinc-100 px-5 py-4 dark:border-white/5 bg-white dark:bg-[#0f0c18] z-10">
           <div className="flex items-center gap-2.5">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300">
               <Upload size={18} />
@@ -293,7 +293,7 @@ export default function GuestUploadModal({
         </div>
 
         {/* Content Body */}
-        <div className="p-6">
+        <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4 sm:space-y-5">
           {/* STEP 1: Phone Verification */}
           {step === 1 && (
             <div className="space-y-5">
@@ -427,13 +427,13 @@ export default function GuestUploadModal({
               {remainingAllowance > 0 ? (
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="cursor-pointer group flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-200 p-6 text-center transition-all hover:border-violet-400 hover:bg-violet-50/20 dark:border-white/10 dark:hover:border-violet-500/30 dark:hover:bg-violet-500/5"
+                  className="cursor-pointer group flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-200 p-4 sm:p-5 text-center transition-all hover:border-violet-400 hover:bg-violet-50/20 dark:border-white/10 dark:hover:border-violet-500/30 dark:hover:bg-violet-500/5"
                 >
-                  <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-50 text-violet-600 group-hover:scale-110 transition-transform dark:bg-violet-500/10 dark:text-violet-300">
-                    <ImageIcon size={22} />
+                  <div className="mb-1.5 flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-600 group-hover:scale-110 transition-transform dark:bg-violet-500/10 dark:text-violet-300">
+                    <ImageIcon size={20} />
                   </div>
                   <p className="text-sm font-bold text-zinc-900 dark:text-white">Click to select photos</p>
-                  <p className="mt-1 text-xs text-zinc-500 dark:text-gray-400">
+                  <p className="mt-0.5 text-xs text-zinc-500 dark:text-gray-400">
                     Supports JPG, PNG, HEIC (up to {remainingAllowance} more)
                   </p>
                   <input
@@ -458,7 +458,7 @@ export default function GuestUploadModal({
 
               {/* SECTION: Previously Uploaded Photos Status */}
               {myExistingSubmissions.length > 0 && (
-                <div className="pt-2 border-t border-zinc-100 dark:border-white/5 space-y-2.5">
+                <div className="pt-2 border-t border-zinc-100 dark:border-white/5 space-y-2">
                   <div className="flex items-center justify-between">
                     <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-gray-400">
                       Your Uploaded Photos Status
@@ -468,7 +468,7 @@ export default function GuestUploadModal({
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto pr-1">
+                  <div className="grid grid-cols-4 gap-2 max-h-40 overflow-y-auto pr-1">
                     {myExistingSubmissions
                       .flatMap((s) => s.photos || [])
                       .map((p: any, idx: number) => {
@@ -525,7 +525,7 @@ export default function GuestUploadModal({
 
               {/* Selected Files List */}
               {selectedFiles.length > 0 && (
-                <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
                   <p className="text-xs font-semibold text-zinc-600 dark:text-gray-300">
                     Selected ({selectedFiles.length}/{MAX_PHOTOS})
                   </p>
@@ -556,42 +556,6 @@ export default function GuestUploadModal({
                   </div>
                 </div>
               )}
-
-              {/* Upload Progress */}
-              {uploading && (
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-xs font-semibold text-zinc-600 dark:text-gray-300">
-                    <span>Uploading photos...</span>
-                    <span>{uploadProgress}%</span>
-                  </div>
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-white/10">
-                    <div
-                      className="h-full bg-gradient-to-r from-violet-600 to-indigo-600 transition-all duration-300"
-                      style={{ width: `${uploadProgress}%` }}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Upload Button */}
-              <button
-                type="button"
-                onClick={handleUpload}
-                disabled={uploading || selectedFiles.length === 0}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-violet-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {uploading ? (
-                  <>
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                    <span>Uploading ({selectedFiles.length} photos)...</span>
-                  </>
-                ) : (
-                  <>
-                    <Upload size={16} />
-                    <span>Submit {selectedFiles.length > 0 ? `${selectedFiles.length} Photos` : ''} for Review</span>
-                  </>
-                )}
-              </button>
             </div>
           )}
 
@@ -627,6 +591,45 @@ export default function GuestUploadModal({
             </div>
           )}
         </div>
+
+        {/* STEP 2: Sticky Bottom Footer for Upload Button */}
+        {step === 2 && (
+          <div className="shrink-0 border-t border-zinc-100 p-4 sm:p-5 bg-white/95 dark:bg-[#0f0c18]/95 backdrop-blur-sm dark:border-white/5 z-10">
+            {uploading && (
+              <div className="mb-3 space-y-1.5">
+                <div className="flex justify-between text-xs font-semibold text-zinc-600 dark:text-gray-300">
+                  <span>Uploading photos...</span>
+                  <span>{uploadProgress}%</span>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-white/10">
+                  <div
+                    className="h-full bg-gradient-to-r from-violet-600 to-indigo-600 transition-all duration-300"
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={handleUpload}
+              disabled={uploading || selectedFiles.length === 0}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-semibold text-white shadow-md shadow-violet-500/20 hover:bg-violet-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99]"
+            >
+              {uploading ? (
+                <>
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                  <span>Uploading ({selectedFiles.length} photos)...</span>
+                </>
+              ) : (
+                <>
+                  <Upload size={16} />
+                  <span>Submit {selectedFiles.length > 0 ? `${selectedFiles.length} Photos` : ''} for Review</span>
+                </>
+              )}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
