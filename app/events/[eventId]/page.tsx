@@ -29,6 +29,10 @@ import { eventApi, photoApi } from '@/lib/api';
 import {
     fetchAllEventPhotos,
     fetchAllMyPhotos,
+    fetchEventPhotosProgressive,
+    fetchMyPhotosProgressive,
+    extractEventPhotosTotal,
+    extractMyPhotosTotal,
     normalizeEventPhotosPayload,
 } from '@/lib/photoFetch';
 import { buildEventShareText } from '@/lib/eventShareText';
@@ -208,10 +212,26 @@ export default function PublicEventPage() {
         }
     }, [currentUser]);
 
-    // Full gallery — authenticated users only (limit aligned with prior behavior)
+    // Full gallery — authenticated users only (hybrid progressive loading: instant initial paint, background stream)
     const { data: photosResult, isLoading: photosLoading } = useQuery(
         ['eventPhotos', eventId],
-        () => fetchAllEventPhotos(eventId),
+        () => fetchEventPhotosProgressive(eventId, {
+            initialLimit: 24,
+            batchLimit: 48,
+            onBatch: ({ photos, total, isInitial }) => {
+                if (!isInitial) {
+                    queryClient.setQueryData(['eventPhotos', eventId], (prev: any) => ({
+                        ...(prev && typeof prev === 'object' ? prev : {}),
+                        success: true,
+                        data: {
+                            photos,
+                            total,
+                            pagination: { total, pages: 1, page: 1, limit: photos.length },
+                        },
+                    }));
+                }
+            },
+        }),
         {
             enabled: !!eventId && !!currentUser,
             staleTime: 5 * 60 * 1000,
@@ -255,10 +275,50 @@ export default function PublicEventPage() {
         return n > 0 ? n : undefined;
     }, [event, previewResult]);
 
-    // Fetch My Photos (filtered by eventId) - only for guest users
+    /** Real total count for authenticated visitors: server total first, event stats, then loaded count. */
+    const authenticatedPhotoTotal = useMemo(() => {
+        const fromApi = extractEventPhotosTotal(photosResult);
+        if (fromApi !== undefined && fromApi > 0) return fromApi;
+
+        const e = event as Record<string, unknown> | undefined;
+        if (!e) return allPhotos.length;
+
+        const fromField =
+            typeof e.photoCount === 'number' && !Number.isNaN(e.photoCount)
+                ? e.photoCount
+                : 0;
+        const stats = e.stats as Record<string, unknown> | undefined;
+        const fromStats =
+            stats && typeof stats.totalPhotos === 'number' && !Number.isNaN(stats.totalPhotos)
+                ? stats.totalPhotos
+                : 0;
+        const fromArr = Array.isArray(e.photos) ? e.photos.length : 0;
+
+        const n = Math.max(fromField, fromStats, fromArr, allPhotos.length);
+        return n > 0 ? n : allPhotos.length;
+    }, [event, photosResult, allPhotos.length]);
+
+    // Fetch My Photos (filtered by eventId) - only for guest users (hybrid progressive loading)
     const { data: myPhotosResult, isLoading: myPhotosLoading } = useQuery(
         ['myEventPhotos', eventId],
-        () => fetchAllMyPhotos({ eventId }),
+        () => fetchMyPhotosProgressive(
+            { eventId },
+            {
+                initialLimit: 24,
+                batchLimit: 48,
+                onBatch: ({ photos, total, isInitial }) => {
+                    if (!isInitial) {
+                        queryClient.setQueryData(['myEventPhotos', eventId], (prev: any) => ({
+                            success: true,
+                            data: {
+                                photos,
+                                pagination: { total },
+                            },
+                        }));
+                    }
+                },
+            }
+        ),
         {
             enabled: !!eventId && !!currentUser && !!isGuest,
             staleTime: 5 * 60 * 1000,
@@ -486,7 +546,7 @@ export default function PublicEventPage() {
                                                   : 'Gallery'
                                             : photoViewMode === 'my' && isGuest
                                               ? `${totalPhotos} yours`
-                                              : `${allPhotos.length} photos`}
+                                              : `${authenticatedPhotoTotal} photos`}
                                     </span>
                                 </div>
 
@@ -522,7 +582,7 @@ export default function PublicEventPage() {
                                                 <p className="text-xs font-medium text-zinc-500 dark:text-gray-500">Photos</p>
                                                 <p className="text-xl font-semibold tabular-nums text-zinc-900 dark:text-white sm:text-2xl">
                                                     {currentUser
-                                                        ? allPhotos.length
+                                                        ? authenticatedPhotoTotal
                                                         : anonymousPhotoTotal != null
                                                           ? anonymousPhotoTotal
                                                           : previewPhotos.length > 0
@@ -1001,7 +1061,7 @@ export default function PublicEventPage() {
                                     No Photos Matched to You Yet
                                 </h3>
                                 <p className="mx-auto max-w-md text-sm leading-relaxed text-zinc-600 dark:text-gray-400 mb-6">
-                                    Your face is registered and active! We scanned {allPhotos.length} uploaded event photos, but didn&apos;t detect your face in them yet. Either the photographer hasn&apos;t uploaded photos of you yet, or you weren&apos;t captured in this event&apos;s current uploads.
+                                    Your face is registered and active! We scanned {authenticatedPhotoTotal} uploaded event photos, but didn&apos;t detect your face in them yet. Either the photographer hasn&apos;t uploaded photos of you yet, or you weren&apos;t captured in this event&apos;s current uploads.
                                 </p>
                                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                                     <Button
@@ -1009,7 +1069,7 @@ export default function PublicEventPage() {
                                         onClick={() => setPhotoViewMode('all')}
                                         className="rounded-xl px-5 h-11"
                                     >
-                                        Browse All Event Photos ({allPhotos.length})
+                                        Browse All Event Photos ({authenticatedPhotoTotal})
                                     </Button>
                                     <Link
                                         href={`/register-face?redirect=/events/${eventId}`}

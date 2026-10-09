@@ -37,7 +37,7 @@ export function normalizeEventPhotosPayload(res: unknown): any[] {
   return flattenGroupedPhotos(normalizePhotosFromGet(res));
 }
 
-function extractMyPhotosTotal(res: ApiResponse<any> | undefined): number | undefined {
+export function extractMyPhotosTotal(res: ApiResponse<any> | undefined): number | undefined {
   const total = res?.data?.pagination?.total;
   return typeof total === 'number' && !Number.isNaN(total) ? total : undefined;
 }
@@ -47,7 +47,7 @@ function getPhotoUniqueId(photo: { _id?: string; imageId?: string }): string | u
   return id != null ? String(id) : undefined;
 }
 
-function mergePhotosDeduped(existing: any[], batch: any[]): any[] {
+export function mergePhotosDeduped(existing: any[], batch: any[]): any[] {
   const seen = new Set(existing.map((p) => getPhotoUniqueId(p)).filter(Boolean) as string[]);
   const merged = [...existing];
   for (const photo of batch) {
@@ -69,12 +69,12 @@ function serializeLastKey(lastKey: unknown): string | undefined {
   }
 }
 
-function extractNextLastKey(pagination: { lastKey?: unknown } | undefined): string | undefined {
+export function extractNextLastKey(pagination: { lastKey?: unknown } | undefined): string | undefined {
   if (!pagination || !('lastKey' in pagination)) return undefined;
   return serializeLastKey(pagination.lastKey);
 }
 
-function extractEventPhotosTotal(res: unknown): number | undefined {
+export function extractEventPhotosTotal(res: unknown): number | undefined {
   if (!res || typeof res !== 'object') return undefined;
   const r = res as Record<string, unknown>;
   const tryNum = (v: unknown) =>
@@ -101,6 +101,213 @@ function extractEventPhotosTotal(res: unknown): number | undefined {
     if (n !== undefined) return n;
   }
   return undefined;
+}
+
+export interface ProgressiveBatchEvent<T = any> {
+  photos: T[];
+  total: number;
+  hasMore: boolean;
+  isInitial: boolean;
+}
+
+export interface ProgressiveFetchOptions {
+  all?: boolean;
+  isLiveWall?: boolean;
+  initialLimit?: number;
+  batchLimit?: number;
+  onBatch?: (data: ProgressiveBatchEvent) => void;
+}
+
+/**
+ * Hybrid Progressive Event Photo Fetching:
+ * 1. Fetches an initial batch (e.g. 24 or 36 photos) immediately for sub-100ms first paint.
+ * 2. If onBatch callback is provided and more photos exist, continues fetching subsequent batches
+ *    in the background and streaming them without blocking the UI.
+ */
+export async function fetchEventPhotosProgressive(
+  eventId: string,
+  options?: ProgressiveFetchOptions
+): Promise<any> {
+  const initialLimit = options?.initialLimit ?? 24;
+  const batchLimit = options?.batchLimit ?? 48;
+
+  // 1. Initial fast fetch
+  const initialRes = await eventApi.getPhotos(eventId, {
+    all: options?.all ?? false,
+    isLiveWall: options?.isLiveWall ?? false,
+    limit: initialLimit,
+  });
+
+  const initialBatch = normalizeEventPhotosPayload(initialRes);
+  const total = extractEventPhotosTotal(initialRes) ?? initialBatch.length;
+
+  const responseRecord = initialRes as unknown as Record<string, unknown> | undefined;
+  const dataBlock = responseRecord?.data as Record<string, unknown> | undefined;
+  const pagination =
+    (dataBlock?.pagination as { pages?: number; lastKey?: unknown } | undefined) ??
+    (responseRecord?.pagination as { pages?: number; lastKey?: unknown } | undefined);
+
+  let cursor = extractNextLastKey(pagination);
+  let hasMore = Boolean(cursor && (total == null || initialBatch.length < total));
+
+  if (options?.onBatch) {
+    options.onBatch({
+      photos: initialBatch,
+      total,
+      hasMore,
+      isInitial: true,
+    });
+  }
+
+  // 2. Background streaming if hasMore and callback provided
+  if (hasMore && options?.onBatch && cursor) {
+    (async () => {
+      let allPhotos = [...initialBatch];
+      let prevCursor: string | undefined;
+
+      while (cursor && (total == null || allPhotos.length < total)) {
+        if (cursor === prevCursor) break;
+        prevCursor = cursor;
+
+        // Yield slightly so browser UI remains completely responsive
+        await new Promise((r) => setTimeout(r, 120));
+
+        try {
+          const nextRes = await eventApi.getPhotos(eventId, {
+            all: options?.all ?? false,
+            isLiveWall: options?.isLiveWall ?? false,
+            limit: batchLimit,
+            lastKey: cursor,
+          });
+
+          const nextBatch = normalizeEventPhotosPayload(nextRes);
+          if (!nextBatch.length) break;
+
+          allPhotos = mergePhotosDeduped(allPhotos, nextBatch);
+
+          const nextRec = nextRes as unknown as Record<string, unknown> | undefined;
+          const nextData = nextRec?.data as Record<string, unknown> | undefined;
+          const nextPag =
+            (nextData?.pagination as { lastKey?: unknown } | undefined) ??
+            (nextRec?.pagination as { lastKey?: unknown } | undefined);
+
+          cursor = extractNextLastKey(nextPag);
+          const more = Boolean(cursor && (total == null || allPhotos.length < total));
+
+          options.onBatch!({
+            photos: allPhotos,
+            total,
+            hasMore: more,
+            isInitial: false,
+          });
+
+          if (!more) break;
+        } catch (err) {
+          console.warn('Progressive background photo fetch interrupted:', err);
+          break;
+        }
+      }
+    })().catch((err) => console.error('Background fetch runner error:', err));
+  }
+
+  return {
+    ...(initialRes && typeof initialRes === 'object' ? initialRes : {}),
+    success: (initialRes as ApiResponse<unknown> | undefined)?.success ?? true,
+    data: {
+      photos: initialBatch,
+      total,
+      pagination: { total, hasMore, limit: initialLimit },
+    },
+  };
+}
+
+/**
+ * Hybrid Progressive My-Photos Fetching:
+ * Fetches initial 24 photos immediately, then streams remaining photos in the background.
+ */
+export async function fetchMyPhotosProgressive(
+  params?: { eventId?: string },
+  options?: {
+    initialLimit?: number;
+    batchLimit?: number;
+    onBatch?: (data: ProgressiveBatchEvent) => void;
+  }
+): Promise<ApiResponse<{ photos: any[]; pagination: { total: number } }>> {
+  const initialLimit = options?.initialLimit ?? 24;
+  const batchLimit = options?.batchLimit ?? 48;
+
+  const initialRes = await photoApi.getMyPhotos({
+    ...params,
+    limit: initialLimit,
+    all: true,
+  });
+
+  const initialBatch: any[] = initialRes.data?.photos ?? [];
+  const pagination = initialRes.data?.pagination;
+  const total = extractMyPhotosTotal(initialRes) ?? initialBatch.length;
+
+  let cursor = extractNextLastKey(pagination);
+  let hasMore = Boolean(cursor && (total == null || initialBatch.length < total));
+
+  if (options?.onBatch) {
+    options.onBatch({
+      photos: initialBatch,
+      total,
+      hasMore,
+      isInitial: true,
+    });
+  }
+
+  if (hasMore && options?.onBatch && cursor) {
+    (async () => {
+      let allPhotos = [...initialBatch];
+      let prevCursor: string | undefined;
+
+      while (cursor && (total == null || allPhotos.length < total)) {
+        if (cursor === prevCursor) break;
+        prevCursor = cursor;
+
+        await new Promise((r) => setTimeout(r, 120));
+
+        try {
+          const nextRes = await photoApi.getMyPhotos({
+            ...params,
+            limit: batchLimit,
+            all: true,
+            lastKey: cursor,
+          });
+
+          const nextBatch: any[] = nextRes.data?.photos ?? [];
+          if (!nextBatch.length) break;
+
+          allPhotos = mergePhotosDeduped(allPhotos, nextBatch);
+          const nextPagination = nextRes.data?.pagination;
+          cursor = extractNextLastKey(nextPagination);
+          const more = Boolean(cursor && (total == null || allPhotos.length < total));
+
+          options.onBatch!({
+            photos: allPhotos,
+            total,
+            hasMore: more,
+            isInitial: false,
+          });
+
+          if (!more) break;
+        } catch (err) {
+          console.warn('Progressive background my-photos fetch interrupted:', err);
+          break;
+        }
+      }
+    })().catch((err) => console.error('Background my-photos runner error:', err));
+  }
+
+  return {
+    success: initialRes?.success ?? true,
+    data: {
+      photos: initialBatch,
+      pagination: { total },
+    },
+  };
 }
 
 /** Fetch every my-photo (no cap) by paging until the API reports no more. */
@@ -140,7 +347,6 @@ export async function fetchAllMyPhotos(params?: {
       continue;
     }
 
-    // Break if the endpoint is cursor-paginated (no pages property) and the cursor has ended
     if (pagination && pagination.pages === undefined) {
       break;
     }
@@ -201,7 +407,6 @@ export async function fetchAllEventPhotos(
       continue;
     }
 
-    // Break if the endpoint is cursor-paginated (no pages property) and the cursor has ended
     if (pagination && (pagination as { pages?: number }).pages === undefined) {
       break;
     }

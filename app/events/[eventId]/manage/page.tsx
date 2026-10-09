@@ -38,7 +38,7 @@ import {
 import toast from 'react-hot-toast';
 import { eventApi } from '@/lib/api';
 import api from '@/app/api/axios';
-import { fetchAllEventPhotos } from '@/lib/photoFetch';
+import { fetchAllEventPhotos, fetchEventPhotosProgressive } from '@/lib/photoFetch';
 import { canAccessEventManagePage, canFullManageEvent } from '@/lib/eventPermissions';
 import { enrichPhotosWithDisplayUrls, getPhotoDisplayUrl } from '@/lib/photoUrl';
 import RefreshAttendeeMatchesCard from '@/app/components/events/RefreshAttendeeMatchesCard';
@@ -206,7 +206,18 @@ export default function ManageEventPage() {
             try {
                 const [eventOutcome, photosOutcome] = await Promise.allSettled([
                     eventApi.getById(eventId),
-                    fetchAllEventPhotos(eventId, { all: true }),
+                    fetchEventPhotosProgressive(eventId, {
+                        all: true,
+                        initialLimit: 36,
+                        batchLimit: 48,
+                        onBatch: async ({ photos, isInitial }) => {
+                            if (!isInitial) {
+                                let updated = photos;
+                                updated = await enrichPhotosWithDisplayUrls(updated, photoRowId);
+                                applyPhotosAndOfficialState(updated);
+                            }
+                        },
+                    }),
                 ]);
 
                 const latestEvent =
@@ -406,20 +417,7 @@ export default function ManageEventPage() {
                 toast.success(
                     `Gallery updated: ${toPromote.length} added${toDemote.length ? `, ${toDemote.length} removed` : ''}`
                 );
-                const [eventRes, photosRes] = await Promise.allSettled([
-                    eventApi.getById(eventId),
-                    fetchAllEventPhotos(eventId, { all: true }),
-                ]);
-                const latestEvent =
-                    eventRes.status === 'fulfilled' ? (eventRes.value as any)?.data : undefined;
-                if (latestEvent) setEvent(latestEvent);
-                let photos =
-                    photosRes.status === 'fulfilled' ? normalizePhotosFromGet(photosRes.value) : [];
-                if (latestEvent?.photos?.length) {
-                    photos = mergeMissingPhotosFromEvent(photos, latestEvent.photos);
-                }
-                photos = await enrichPhotosWithDisplayUrls(photos, photoRowId);
-                applyPhotosAndOfficialState(photos);
+                await refreshEventPhotos({ quiet: true });
             } else {
                 toast('No changes to save', { icon: 'ℹ️' });
             }
