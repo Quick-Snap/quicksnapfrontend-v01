@@ -519,7 +519,7 @@ export default function EventSubmissionsReviewPage() {
                                 type="button"
                                 disabled={reviewing}
                                 onClick={() =>
-                                  handleReviewDecision(activeGuestSubmission._id, [
+                                  handleReviewDecision(photo.submissionId || activeGuestSubmission._id, [
                                     {
                                       photoId: photo._id,
                                       action: 'approve',
@@ -536,7 +536,7 @@ export default function EventSubmissionsReviewPage() {
                                 type="button"
                                 disabled={reviewing}
                                 onClick={() =>
-                                  handleReviewDecision(activeGuestSubmission._id, [
+                                  handleReviewDecision(photo.submissionId || activeGuestSubmission._id, [
                                     { photoId: photo._id, action: 'reject' },
                                   ])
                                 }
