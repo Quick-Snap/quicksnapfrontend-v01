@@ -38,7 +38,7 @@ export default function RoleApplicationsPage() {
             avatar: userData.avatar,
             role: normalizedRoles[0] || 'user',
             roles: normalizedRoles,
-            faceRegistered: !!userData.faceId,
+            faceRegistered: Boolean(userData.faceId || userData.faceRegistered || user?.faceRegistered),
             settings: userData.settings,
           });
           

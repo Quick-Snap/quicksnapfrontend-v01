@@ -86,7 +86,7 @@ function extractTotalFromPhotosApi(res: any): number | undefined {
 }
 
 export default function PublicEventPage() {
-    const { user: currentUser } = useAuth();
+    const { user: currentUser, activeRole, updateUser } = useAuth();
     const params = useParams();
     const router = useRouter();
     const queryClient = useQueryClient();
@@ -143,9 +143,6 @@ export default function PublicEventPage() {
         }
     };
 
-    // Allow any logged-in user to see their matched photos under 'My Photos'
-    const isGuest = !!currentUser;
-
     // Fetch Event details
     const { data: eventResult, isLoading: loading } = useQuery(
         ['event', eventId],
@@ -153,6 +150,21 @@ export default function PublicEventPage() {
         { enabled: !!eventId, staleTime: 60 * 1000, retry: reactQueryRetry }
     );
     const event = eventResult?.data;
+
+    // Determine if the current viewer is an organizer or staff of this event
+    const isOrganizer = useMemo(() => {
+        if (!currentUser) return false;
+        const currentId = (currentUser.id || (currentUser as any)._id)?.toString();
+        const organizerId = (event?.organizer?._id || event?.organizer)?.toString();
+        return (
+            activeRole === 'organizer' ||
+            activeRole === 'admin' ||
+            (Boolean(organizerId) && currentId === organizerId)
+        );
+    }, [currentUser, event, activeRole]);
+
+    // Regular attendee/guest who is viewing this event
+    const isGuest = Boolean(currentUser && !isOrganizer);
 
     // Check if the current user has joined this event
     const isAttendee = useMemo(() => {
@@ -184,7 +196,7 @@ export default function PublicEventPage() {
                 queryClient.invalidateQueries(['myPhotos']);
                 queryClient.invalidateQueries(['myEventPhotos']);
                 queryClient.invalidateQueries(['userStats']);
-                if (!currentUser?.faceRegistered) {
+                if (isGuest && !isOrganizer && !currentUser?.faceRegistered) {
                     setShowPostJoinSelfieModal(true);
                 }
             } else {
@@ -195,7 +207,7 @@ export default function PublicEventPage() {
         } finally {
             setJoining(false);
         }
-    }, [currentUser, eventId, event?.name, loadUser, queryClient, router]);
+    }, [currentUser, eventId, event?.name, isGuest, isOrganizer, loadUser, queryClient, router]);
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -203,14 +215,14 @@ export default function PublicEventPage() {
             const justJoined = searchParams.get('justJoined') === '1';
 
             if (justJoined) {
-                if (currentUser && !currentUser.faceRegistered) {
+                if (isGuest && !isOrganizer && currentUser && !currentUser.faceRegistered) {
                     setShowPostJoinSelfieModal(true);
                 }
                 const newUrl = window.location.pathname;
                 window.history.replaceState({}, '', newUrl);
             }
         }
-    }, [currentUser]);
+    }, [currentUser, isGuest, isOrganizer]);
 
     // Full gallery — authenticated users only (hybrid progressive loading: instant initial paint, background stream)
     const { data: photosResult, isLoading: photosLoading } = useQuery(
@@ -305,20 +317,27 @@ export default function PublicEventPage() {
             }
         ),
         {
-            enabled: !!eventId && !!currentUser && !!isGuest,
+            enabled: !!eventId && !!currentUser,
             staleTime: 5 * 60 * 1000,
             retry: reactQueryRetry,
         }
     );
     const myPhotos = myPhotosResult?.data?.photos || [];
 
+    // Self-healing: If user has matched photos, their face is definitively registered
+    useEffect(() => {
+        if (myPhotos.length > 0 && currentUser && !currentUser.faceRegistered) {
+            updateUser({ ...currentUser, faceRegistered: true });
+        }
+    }, [myPhotos.length, currentUser, updateUser]);
+
     // Determine which photos to display based on view mode
-    const displayPhotos = photoViewMode === 'my' && isGuest ? myPhotos : allPhotos;
+    const displayPhotos = photoViewMode === 'my' && !!currentUser ? myPhotos : allPhotos;
 
     /** Real total count for authenticated visitors: server total first while streaming, then exact loaded count. */
     const authenticatedPhotoTotal = useMemo(() => {
         // In "my photos" mode, match the visible personal photos count
-        if (photoViewMode === 'my' && isGuest) {
+        if (photoViewMode === 'my' && !!currentUser) {
             return myPhotos.length;
         }
 
@@ -349,7 +368,7 @@ export default function PublicEventPage() {
 
         const knownTotal = Math.max(apiTotal, fromField, fromStats, fromArr);
         return Math.max(knownTotal, allPhotos.length);
-    }, [event, photosResult, photosLoading, allPhotos.length, photoViewMode, isGuest, myPhotos.length]);
+    }, [event, photosResult, photosLoading, allPhotos.length, photoViewMode, isGuest, myPhotos.length, currentUser]);
 
     const currentIndex = useMemo(() => {
         if (!selectedPhoto) return -1;
@@ -372,7 +391,7 @@ export default function PublicEventPage() {
     const isLoadingPhotos =
         !currentUser
             ? previewLoading
-            : photoViewMode === 'my' && isGuest
+            : photoViewMode === 'my' && !!currentUser
               ? myPhotosLoading
               : photosLoading;
 
@@ -565,7 +584,7 @@ export default function PublicEventPage() {
                                                 : previewPhotos.length > 0
                                                   ? `${previewPhotos.length}+ preview`
                                                   : 'Gallery'
-                                            : photoViewMode === 'my' && isGuest
+                                            : photoViewMode === 'my' && !!currentUser
                                               ? `${totalPhotos} yours`
                                               : `${authenticatedPhotoTotal} photos`}
                                     </span>
@@ -784,7 +803,7 @@ export default function PublicEventPage() {
                     </p>
                 </div>
 
-                {isGuest && currentUser && !currentUser.faceRegistered && (
+                {isGuest && !isOrganizer && currentUser && !currentUser.faceRegistered && myPhotos.length === 0 && (
                     <div className="mb-6 mx-auto max-w-xl rounded-2xl border border-amber-400/40 bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 p-4 text-left backdrop-blur-md">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             <div className="flex items-center gap-3 min-w-0">
@@ -811,7 +830,7 @@ export default function PublicEventPage() {
                     </div>
                 )}
 
-                {isGuest && currentUser && (
+                {currentUser && (
                     <div className="mb-8 flex justify-center px-0 sm:px-2">
                         <div className={`flex w-full max-w-md rounded-2xl p-1 ${softSurface}`}>
                             <button
@@ -835,7 +854,7 @@ export default function PublicEventPage() {
                                 }`}
                             >
                                 <span>My photos</span>
-                                {!currentUser.faceRegistered && (
+                                {isGuest && !isOrganizer && !currentUser.faceRegistered && myPhotos.length === 0 && (
                                     <span className="inline-block w-2 h-2 rounded-full bg-amber-400" title="Face registration required" />
                                 )}
                             </button>
@@ -1002,8 +1021,8 @@ export default function PublicEventPage() {
                         )}
                     </>
                 ) : (
-                    photoViewMode === 'my' && isGuest ? (
-                        !currentUser?.faceRegistered ? (
+                    photoViewMode === 'my' && !!currentUser ? (
+                        isGuest && !isOrganizer && !currentUser?.faceRegistered && myPhotos.length === 0 ? (
                             <div className={`rounded-[1.65rem] px-6 py-12 sm:py-16 text-center ${softSurface} border border-amber-400/30 bg-gradient-to-b from-amber-500/5 via-transparent to-transparent`}>
                                 <div className="mx-auto mb-5 relative flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-xl shadow-violet-500/25">
                                     <Camera className="h-9 w-9" />
@@ -1046,6 +1065,27 @@ export default function PublicEventPage() {
                                         <p className="font-semibold text-zinc-800 dark:text-zinc-200">3. View Photos</p>
                                         <p className="text-[11px]">Your shots appear</p>
                                     </div>
+                                </div>
+                            </div>
+                        ) : isOrganizer && myPhotos.length === 0 ? (
+                            <div className={`rounded-[1.65rem] px-6 py-16 text-center ${softSurface}`}>
+                                <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-100 dark:bg-violet-500/15">
+                                    <Sparkles className="h-8 w-8 text-violet-600 dark:text-violet-400" />
+                                </div>
+                                <h3 className="mb-2 text-xl font-bold text-zinc-900 dark:text-white">
+                                    Personal Photos
+                                </h3>
+                                <p className="mx-auto max-w-md text-sm leading-relaxed text-zinc-600 dark:text-gray-400 mb-6">
+                                    You are viewing this event as an organizer. Switch to &quot;All&quot; to view and manage all official photos.
+                                </p>
+                                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => setPhotoViewMode('all')}
+                                        className="rounded-xl px-5 h-11"
+                                    >
+                                        Browse All Event Photos ({authenticatedPhotoTotal})
+                                    </Button>
                                 </div>
                             </div>
                         ) : allPhotos.length === 0 ? (

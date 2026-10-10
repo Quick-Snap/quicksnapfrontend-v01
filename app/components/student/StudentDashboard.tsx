@@ -21,7 +21,7 @@ export default function StudentDashboard() {
     () => eventApi.getAll({ isActive: true, page: 1, limit: 6 }),
     { enabled: !!user }
   );
-  const isFaceReady = !!stats?.data?.faceRegistered;
+  const isFaceReady = Boolean(stats?.data?.faceRegistered || user?.faceRegistered);
 
   const myEvents = useMemo(() => {
     if (!eventsData?.data?.events || !user?.events) return [];
@@ -233,7 +233,7 @@ export default function StudentDashboard() {
             <ChevronRight className="h-5 w-5 shrink-0 text-zinc-400 dark:text-gray-600" />
           </Link>
 
-          {!stats?.data?.faceRegistered && (
+          {!isFaceReady && (
             <Link
               href="/register-face"
               className={`flex items-center gap-4 rounded-2xl p-4 ${softSurface} ${softSurfaceHover}`}

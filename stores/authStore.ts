@@ -220,10 +220,22 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       updateUser: (updatedUser: User) => {
+        const currentUser = get().user;
         const uniqueRoles = Array.from(
           new Set((updatedUser.roles || [updatedUser.role || 'user']).map(normalizeRole).filter(Boolean))
         ) as UserRole[];
-        set({ user: { ...updatedUser, roles: uniqueRoles.length > 0 ? uniqueRoles : ['user'] } });
+        const faceRegistered =
+          updatedUser.faceRegistered !== undefined
+            ? Boolean(updatedUser.faceRegistered)
+            : Boolean(currentUser?.faceRegistered);
+
+        set({
+          user: {
+            ...updatedUser,
+            faceRegistered,
+            roles: uniqueRoles.length > 0 ? uniqueRoles : ['user']
+          }
+        });
       },
 
       switchRole: (role: UserRole) => {
