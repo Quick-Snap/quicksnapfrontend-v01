@@ -95,8 +95,11 @@ export const useAuthStore = create<AuthStore>()(
             if (response.success && response.data) {
               const userData = response.data;
 
-              const roles = userData.roles || [userData.role || 'guest'];
-              const normalizedRoles = roles.map(normalizeRole);
+              const roles = userData.roles && userData.roles.length ? userData.roles : [userData.role || 'guest'];
+              const normalizedRoles = Array.from(new Set(roles.map(normalizeRole).filter(Boolean))) as UserRole[];
+              if (normalizedRoles.length === 0) {
+                normalizedRoles.push('user');
+              }
 
               const user: User = {
                 id: userData._id || userData.id || '',
@@ -217,7 +220,10 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       updateUser: (updatedUser: User) => {
-        set({ user: updatedUser });
+        const uniqueRoles = Array.from(
+          new Set((updatedUser.roles || [updatedUser.role || 'user']).map(normalizeRole).filter(Boolean))
+        ) as UserRole[];
+        set({ user: { ...updatedUser, roles: uniqueRoles.length > 0 ? uniqueRoles : ['user'] } });
       },
 
       switchRole: (role: UserRole) => {

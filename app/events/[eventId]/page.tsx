@@ -278,24 +278,22 @@ export default function PublicEventPage() {
     /** Real total count for authenticated visitors: server total first, event stats, then loaded count. */
     const authenticatedPhotoTotal = useMemo(() => {
         const fromApi = extractEventPhotosTotal(photosResult);
-        if (fromApi !== undefined && fromApi > 0) return fromApi;
+        const apiTotal = fromApi !== undefined && fromApi > 0 ? fromApi : 0;
 
         const e = event as Record<string, unknown> | undefined;
-        if (!e) return allPhotos.length;
-
         const fromField =
-            typeof e.photoCount === 'number' && !Number.isNaN(e.photoCount)
+            typeof e?.photoCount === 'number' && !Number.isNaN(e.photoCount)
                 ? e.photoCount
                 : 0;
-        const stats = e.stats as Record<string, unknown> | undefined;
+        const stats = e?.stats as Record<string, unknown> | undefined;
         const fromStats =
             stats && typeof stats.totalPhotos === 'number' && !Number.isNaN(stats.totalPhotos)
                 ? stats.totalPhotos
                 : 0;
-        const fromArr = Array.isArray(e.photos) ? e.photos.length : 0;
+        const fromArr = Array.isArray(e?.photos) ? e.photos.length : 0;
 
-        const n = Math.max(fromField, fromStats, fromArr, allPhotos.length);
-        return n > 0 ? n : allPhotos.length;
+        const knownTotal = Math.max(apiTotal, fromField, fromStats, fromArr);
+        return Math.max(knownTotal, allPhotos.length);
     }, [event, photosResult, allPhotos.length]);
 
     // Fetch My Photos (filtered by eventId) - only for guest users (hybrid progressive loading)

@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRole } from '@/hooks/useRole';
 import { Menu, X, User, LogOut, Home, Image as ImageIcon, Calendar, Shield, Settings, Upload, ChevronDown } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useQuery } from 'react-query';
 import { UserRole } from '@/types';
 import { adminOrganizerRequestApi } from '@/lib/api';
@@ -23,6 +23,7 @@ export default function Navbar() {
   const { user, logout, switchRole, activeRole } = useAuth();
   const isLoggedIn = !!user;
   const { role, roles, isAdmin, isOrganizer, isPhotographer } = useRole();
+  const uniqueRoles = useMemo(() => Array.from(new Set(roles.filter(Boolean))), [roles]);
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
@@ -156,7 +157,7 @@ export default function Navbar() {
             {user ? (
               <>
                 {/* Role Switcher Dropdown */}
-                {roles.length > 1 && (
+                {uniqueRoles.length > 1 && (
                   <div className="relative" ref={dropdownRef}>
                     <button
                       onClick={() => setRoleDropdownOpen(!roleDropdownOpen)}
@@ -173,7 +174,7 @@ export default function Navbar() {
                         <div className="border-b border-zinc-100 px-3 py-2 dark:border-white/10">
                           <p className="text-xs uppercase tracking-wide text-zinc-500 dark:text-gray-500">Switch Role</p>
                         </div>
-                        {roles.map((r) => (
+                        {uniqueRoles.map((r) => (
                           <button
                             key={r}
                             onClick={() => {
@@ -350,11 +351,11 @@ export default function Navbar() {
           <div className="animate-slide-down border-t border-zinc-200/90 py-4 dark:border-white/5 md:hidden">
             <div className="flex flex-col space-y-1">
               {/* Mobile Role Switcher */}
-              {user && roles.length > 1 && (
+              {user && uniqueRoles.length > 1 && (
                 <div className="mb-2 border-b border-zinc-100 px-4 py-3 dark:border-white/5">
                   <p className="mb-2 text-xs uppercase tracking-wide text-zinc-500 dark:text-gray-500">Active Role</p>
                   <div className="flex flex-wrap gap-2">
-                    {roles.map((r) => (
+                    {uniqueRoles.map((r) => (
                       <button
                         key={r}
                         onClick={() => {

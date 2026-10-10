@@ -139,7 +139,7 @@ export async function fetchEventPhotosProgressive(
   });
 
   const initialBatch = normalizeEventPhotosPayload(initialRes);
-  const total = extractEventPhotosTotal(initialRes) ?? initialBatch.length;
+  const explicitTotal = extractEventPhotosTotal(initialRes);
 
   const responseRecord = initialRes as unknown as Record<string, unknown> | undefined;
   const dataBlock = responseRecord?.data as Record<string, unknown> | undefined;
@@ -148,12 +148,12 @@ export async function fetchEventPhotosProgressive(
     (responseRecord?.pagination as { pages?: number; lastKey?: unknown } | undefined);
 
   let cursor = extractNextLastKey(pagination);
-  let hasMore = Boolean(cursor && (total == null || initialBatch.length < total));
+  let hasMore = Boolean(cursor);
 
   if (options?.onBatch) {
     options.onBatch({
       photos: initialBatch,
-      total,
+      total: explicitTotal ?? initialBatch.length,
       hasMore,
       isInitial: true,
     });
@@ -165,12 +165,12 @@ export async function fetchEventPhotosProgressive(
       let allPhotos = [...initialBatch];
       let prevCursor: string | undefined;
 
-      while (cursor && (total == null || allPhotos.length < total)) {
+      while (cursor) {
         if (cursor === prevCursor) break;
         prevCursor = cursor;
 
         // Yield slightly so browser UI remains completely responsive
-        await new Promise((r) => setTimeout(r, 120));
+        await new Promise((r) => setTimeout(r, 60));
 
         try {
           const nextRes = await eventApi.getPhotos(eventId, {
@@ -192,11 +192,11 @@ export async function fetchEventPhotosProgressive(
             (nextRec?.pagination as { lastKey?: unknown } | undefined);
 
           cursor = extractNextLastKey(nextPag);
-          const more = Boolean(cursor && (total == null || allPhotos.length < total));
+          const more = Boolean(cursor);
 
           options.onBatch!({
             photos: allPhotos,
-            total,
+            total: explicitTotal ?? allPhotos.length,
             hasMore: more,
             isInitial: false,
           });
@@ -215,8 +215,8 @@ export async function fetchEventPhotosProgressive(
     success: (initialRes as ApiResponse<unknown> | undefined)?.success ?? true,
     data: {
       photos: initialBatch,
-      total,
-      pagination: { total, hasMore, limit: initialLimit },
+      total: explicitTotal,
+      pagination: { total: explicitTotal, hasMore, limit: initialLimit, lastKey: cursor },
     },
   };
 }
@@ -244,15 +244,15 @@ export async function fetchMyPhotosProgressive(
 
   const initialBatch: any[] = initialRes.data?.photos ?? [];
   const pagination = initialRes.data?.pagination;
-  const total = extractMyPhotosTotal(initialRes) ?? initialBatch.length;
+  const explicitTotal = extractMyPhotosTotal(initialRes);
 
   let cursor = extractNextLastKey(pagination);
-  let hasMore = Boolean(cursor && (total == null || initialBatch.length < total));
+  let hasMore = Boolean(cursor);
 
   if (options?.onBatch) {
     options.onBatch({
       photos: initialBatch,
-      total,
+      total: explicitTotal ?? initialBatch.length,
       hasMore,
       isInitial: true,
     });
@@ -263,11 +263,11 @@ export async function fetchMyPhotosProgressive(
       let allPhotos = [...initialBatch];
       let prevCursor: string | undefined;
 
-      while (cursor && (total == null || allPhotos.length < total)) {
+      while (cursor) {
         if (cursor === prevCursor) break;
         prevCursor = cursor;
 
-        await new Promise((r) => setTimeout(r, 120));
+        await new Promise((r) => setTimeout(r, 60));
 
         try {
           const nextRes = await photoApi.getMyPhotos({
@@ -283,11 +283,11 @@ export async function fetchMyPhotosProgressive(
           allPhotos = mergePhotosDeduped(allPhotos, nextBatch);
           const nextPagination = nextRes.data?.pagination;
           cursor = extractNextLastKey(nextPagination);
-          const more = Boolean(cursor && (total == null || allPhotos.length < total));
+          const more = Boolean(cursor);
 
           options.onBatch!({
             photos: allPhotos,
-            total,
+            total: explicitTotal ?? allPhotos.length,
             hasMore: more,
             isInitial: false,
           });
@@ -305,7 +305,7 @@ export async function fetchMyPhotosProgressive(
     success: initialRes?.success ?? true,
     data: {
       photos: initialBatch,
-      pagination: { total },
+      pagination: { total: explicitTotal ?? initialBatch.length },
     },
   };
 }
