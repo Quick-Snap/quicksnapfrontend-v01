@@ -217,8 +217,7 @@ export default function PublicEventPage() {
         ['eventPhotos', eventId],
         () => fetchEventPhotosProgressive(eventId, {
             initialLimit: 24,
-            batchLimit: 48,
-            onBatch: ({ photos, total, isInitial }) => {
+            onBatch: ({ photos, total, hasMore, isInitial }) => {
                 if (!isInitial) {
                     queryClient.setQueryData(['eventPhotos', eventId], (prev: any) => ({
                         ...(prev && typeof prev === 'object' ? prev : {}),
@@ -226,7 +225,7 @@ export default function PublicEventPage() {
                         data: {
                             photos,
                             total,
-                            pagination: { total, pages: 1, page: 1, limit: photos.length },
+                            pagination: { total, pages: 1, page: 1, limit: photos.length, hasMore },
                         },
                     }));
                 }
@@ -257,6 +256,15 @@ export default function PublicEventPage() {
         const fromApi = extractTotalFromPhotosApi(previewResult);
         if (fromApi !== undefined) return fromApi;
 
+        const responseData = (previewResult as any)?.data;
+        const pagination = responseData?.pagination;
+        const hasMore = Boolean(pagination?.hasMore || pagination?.lastKey);
+
+        // If preview query returned photos and hasMore is false, the real total is previewPhotos.length
+        if (!previewLoading && previewResult && !hasMore) {
+            return previewPhotos.length;
+        }
+
         const e = event as Record<string, unknown> | undefined;
         if (!e) return undefined;
 
@@ -273,28 +281,7 @@ export default function PublicEventPage() {
 
         const n = Math.max(fromField, fromStats, fromArr);
         return n > 0 ? n : undefined;
-    }, [event, previewResult]);
-
-    /** Real total count for authenticated visitors: server total first, event stats, then loaded count. */
-    const authenticatedPhotoTotal = useMemo(() => {
-        const fromApi = extractEventPhotosTotal(photosResult);
-        const apiTotal = fromApi !== undefined && fromApi > 0 ? fromApi : 0;
-
-        const e = event as Record<string, unknown> | undefined;
-        const fromField =
-            typeof e?.photoCount === 'number' && !Number.isNaN(e.photoCount)
-                ? e.photoCount
-                : 0;
-        const stats = e?.stats as Record<string, unknown> | undefined;
-        const fromStats =
-            stats && typeof stats.totalPhotos === 'number' && !Number.isNaN(stats.totalPhotos)
-                ? stats.totalPhotos
-                : 0;
-        const fromArr = Array.isArray(e?.photos) ? e.photos.length : 0;
-
-        const knownTotal = Math.max(apiTotal, fromField, fromStats, fromArr);
-        return Math.max(knownTotal, allPhotos.length);
-    }, [event, photosResult, allPhotos.length]);
+    }, [event, previewResult, previewLoading, previewPhotos.length]);
 
     // Fetch My Photos (filtered by eventId) - only for guest users (hybrid progressive loading)
     const { data: myPhotosResult, isLoading: myPhotosLoading } = useQuery(
@@ -327,6 +314,42 @@ export default function PublicEventPage() {
 
     // Determine which photos to display based on view mode
     const displayPhotos = photoViewMode === 'my' && isGuest ? myPhotos : allPhotos;
+
+    /** Real total count for authenticated visitors: server total first while streaming, then exact loaded count. */
+    const authenticatedPhotoTotal = useMemo(() => {
+        // In "my photos" mode, match the visible personal photos count
+        if (photoViewMode === 'my' && isGuest) {
+            return myPhotos.length;
+        }
+
+        const responseData = (photosResult as any)?.data;
+        const pagination = responseData?.pagination;
+        const hasMore = Boolean(pagination?.hasMore || pagination?.lastKey);
+
+        // When gallery photos have finished streaming and there are no more pages:
+        // The real total count visible to the user is allPhotos.length.
+        if (!photosLoading && photosResult && !hasMore) {
+            return allPhotos.length;
+        }
+
+        const fromApi = extractEventPhotosTotal(photosResult);
+        const apiTotal = fromApi !== undefined && fromApi > 0 ? fromApi : 0;
+
+        const e = event as Record<string, unknown> | undefined;
+        const fromField =
+            typeof e?.photoCount === 'number' && !Number.isNaN(e.photoCount)
+                ? e.photoCount
+                : 0;
+        const stats = e?.stats as Record<string, unknown> | undefined;
+        const fromStats =
+            stats && typeof stats.totalPhotos === 'number' && !Number.isNaN(stats.totalPhotos)
+                ? stats.totalPhotos
+                : 0;
+        const fromArr = Array.isArray(e?.photos) ? e.photos.length : 0;
+
+        const knownTotal = Math.max(apiTotal, fromField, fromStats, fromArr);
+        return Math.max(knownTotal, allPhotos.length);
+    }, [event, photosResult, photosLoading, allPhotos.length, photoViewMode, isGuest, myPhotos.length]);
 
     const currentIndex = useMemo(() => {
         if (!selectedPhoto) return -1;
