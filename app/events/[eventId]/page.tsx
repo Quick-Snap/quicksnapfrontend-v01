@@ -41,6 +41,7 @@ import { Button } from '@/app/components/ui/Button';
 import Pagination from '@/app/components/ui/Pagination';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthStore } from '@/stores/authStore';
+import { useRole } from '@/hooks/useRole';
 import { useQuery, useQueryClient } from 'react-query';
 import { softSurface, softSurfaceHover } from '@/lib/dashboardUi';
 import { PhotoLightbox } from '@/app/components/photos/PhotoLightbox';
@@ -87,6 +88,7 @@ function extractTotalFromPhotosApi(res: any): number | undefined {
 
 export default function PublicEventPage() {
     const { user: currentUser, activeRole, updateUser } = useAuth();
+    const { isUser: isViewingAsUser, isOrganizer: isRoleOrganizer, isAdmin: isRoleAdmin } = useRole();
     const params = useParams();
     const router = useRouter();
     const queryClient = useQueryClient();
@@ -151,20 +153,25 @@ export default function PublicEventPage() {
     );
     const event = eventResult?.data;
 
-    // Determine if the current viewer is an organizer or staff of this event
+    // The viewer is acting as an organizer for this event ONLY IF their active role is organizer or admin,
+    // and they have event ownership or admin permissions.
+    // If they switched to Guest/User in the role switcher, they are strictly in Guest view.
     const isOrganizer = useMemo(() => {
-        if (!currentUser) return false;
-        const currentId = (currentUser.id || (currentUser as any)._id)?.toString();
-        const organizerId = (event?.organizer?._id || event?.organizer)?.toString();
-        return (
-            activeRole === 'organizer' ||
-            activeRole === 'admin' ||
-            (Boolean(organizerId) && currentId === organizerId)
-        );
-    }, [currentUser, event, activeRole]);
+        if (!currentUser || isViewingAsUser) return false;
+        if (isRoleAdmin) return true;
+        if (isRoleOrganizer) {
+            const currentId = (currentUser.id || (currentUser as any)._id)?.toString();
+            const organizerId = (event?.organizer?._id || event?.organizer)?.toString();
+            return Boolean(organizerId) && currentId === organizerId;
+        }
+        return false;
+    }, [currentUser, event, isViewingAsUser, isRoleAdmin, isRoleOrganizer]);
 
     // Regular attendee/guest who is viewing this event
     const isGuest = Boolean(currentUser && !isOrganizer);
+
+    // Can only manage if actively viewing as an organizer/admin and have event management rights
+    const canManageEvent = isOrganizer;
 
     // Check if the current user has joined this event
     const isAttendee = useMemo(() => {
@@ -196,7 +203,7 @@ export default function PublicEventPage() {
                 queryClient.invalidateQueries(['myPhotos']);
                 queryClient.invalidateQueries(['myEventPhotos']);
                 queryClient.invalidateQueries(['userStats']);
-                if (isGuest && !isOrganizer && !currentUser?.faceRegistered) {
+                if (isGuest && !currentUser?.faceRegistered) {
                     setShowPostJoinSelfieModal(true);
                 }
             } else {
@@ -207,7 +214,7 @@ export default function PublicEventPage() {
         } finally {
             setJoining(false);
         }
-    }, [currentUser, eventId, event?.name, isGuest, isOrganizer, loadUser, queryClient, router]);
+    }, [currentUser, eventId, event?.name, isGuest, loadUser, queryClient, router]);
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -215,7 +222,7 @@ export default function PublicEventPage() {
             const justJoined = searchParams.get('justJoined') === '1';
 
             if (justJoined) {
-                if (isGuest && !isOrganizer && currentUser && !currentUser.faceRegistered) {
+                if (isGuest && currentUser && !currentUser.faceRegistered) {
                     setShowPostJoinSelfieModal(true);
                 }
                 const newUrl = window.location.pathname;
@@ -533,9 +540,7 @@ export default function PublicEventPage() {
                                 Events
                             </Link>
 
-                            {(currentUser?.role === 'admin' ||
-                                event.organizer?._id === currentUser?.id ||
-                                event.organizer === currentUser?.id) && (
+                            {canManageEvent && (
                                 <div className="flex items-center gap-2">
                                     <Link
                                         href={`/events/${eventId}/live-wall`}
@@ -803,7 +808,7 @@ export default function PublicEventPage() {
                     </p>
                 </div>
 
-                {isGuest && !isOrganizer && currentUser && !currentUser.faceRegistered && myPhotos.length === 0 && (
+                {isGuest && currentUser && !currentUser.faceRegistered && myPhotos.length === 0 && (
                     <div className="mb-6 mx-auto max-w-xl rounded-2xl border border-amber-400/40 bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 p-4 text-left backdrop-blur-md">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             <div className="flex items-center gap-3 min-w-0">
@@ -854,7 +859,7 @@ export default function PublicEventPage() {
                                 }`}
                             >
                                 <span>My photos</span>
-                                {isGuest && !isOrganizer && !currentUser.faceRegistered && myPhotos.length === 0 && (
+                                {isGuest && !currentUser.faceRegistered && myPhotos.length === 0 && (
                                     <span className="inline-block w-2 h-2 rounded-full bg-amber-400" title="Face registration required" />
                                 )}
                             </button>
@@ -1022,7 +1027,7 @@ export default function PublicEventPage() {
                     </>
                 ) : (
                     photoViewMode === 'my' && !!currentUser ? (
-                        isGuest && !isOrganizer && !currentUser?.faceRegistered && myPhotos.length === 0 ? (
+                        isGuest && !currentUser?.faceRegistered && myPhotos.length === 0 ? (
                             <div className={`rounded-[1.65rem] px-6 py-12 sm:py-16 text-center ${softSurface} border border-amber-400/30 bg-gradient-to-b from-amber-500/5 via-transparent to-transparent`}>
                                 <div className="mx-auto mb-5 relative flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-xl shadow-violet-500/25">
                                     <Camera className="h-9 w-9" />
@@ -1084,7 +1089,7 @@ export default function PublicEventPage() {
                                         onClick={() => setPhotoViewMode('all')}
                                         className="rounded-xl px-5 h-11"
                                     >
-                                        Browse All Event Photos ({authenticatedPhotoTotal})
+                                        Browse All Event Photos{authenticatedPhotoTotal > 0 ? ` (${authenticatedPhotoTotal})` : ''}
                                     </Button>
                                 </div>
                             </div>
