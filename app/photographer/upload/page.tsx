@@ -74,10 +74,10 @@ function PhotographerUploadContent() {
   // Trash toggle state
   const [showTrash, setShowTrash] = useState(false);
 
-  // Fetch active photographer events
+  // Fetch active photographer events (strictly assigned events)
   const { data: eventsData, isLoading: eventsLoading } = useQuery(
-    ['photographer-events'],
-    () => eventApi.getAll({ isActive: true, limit: 50 }),
+    ['photographer-assigned-events'],
+    () => eventApi.getMyAssignedEvents(),
     { enabled: !!user }
   );
 
@@ -122,24 +122,41 @@ function PhotographerUploadContent() {
     };
   }, [uploading]);
 
-  // Handle both array response and paginated response { events: [], ... }
+  // Handle assigned events data
   const rawData = eventsData?.data;
-  const allEvents = Array.isArray(rawData)
-    ? rawData
-    : (Array.isArray(rawData?.events) ? rawData.events : []);
+  const allEvents = useMemo(() => {
+    return Array.isArray(rawData)
+      ? rawData
+      : Array.isArray(rawData?.events)
+      ? rawData.events
+      : [];
+  }, [rawData]);
 
-  // Filter events based on user assignment
-  const events = allEvents.filter((event: any) => {
-    // Admin can see everything
-    if (user?.roles?.includes('admin')) return true;
+  // Filter events strictly based on photographer assignment
+  const events = useMemo(() => {
+    return allEvents.filter((event: any) => {
+      // Admin can see everything
+      if (user?.roles?.includes('admin')) return true;
 
-    const isOrganizer = event.organizer === user?.id || event.organizer?._id === user?.id;
-    const isPhotographer = event.photographers?.some((p: any) =>
-      (typeof p === 'string' ? p === user?.id : p._id === user?.id)
-    );
+      // In photographer workspace, user must be explicitly assigned as photographer
+      const isPhotographer = event.photographers?.some((p: any) => {
+        const pid = typeof p === 'string' ? p : p?._id || p?.id;
+        return pid === user?.id;
+      });
 
-    return isOrganizer || isPhotographer;
-  });
+      return isPhotographer;
+    });
+  }, [allEvents, user]);
+
+  // Reset selectedEvent if it's no longer in the assigned events list
+  useEffect(() => {
+    if (selectedEvent && !eventsLoading) {
+      const isValid = events.some((ev: any) => ev._id === selectedEvent);
+      if (!isValid) {
+        setSelectedEvent('');
+      }
+    }
+  }, [events, eventsLoading, selectedEvent]);
 
   const selectedEventData =
     selectedEvent && events.length > 0
@@ -178,6 +195,17 @@ function PhotographerUploadContent() {
   );
 
   const handleUpload = async () => {
+    if (!selectedEvent) {
+      toast.error('Please select an assigned event destination first');
+      return;
+    }
+
+    const isAssigned = events.some((ev: any) => ev._id === selectedEvent);
+    if (!isAssigned && !user?.roles?.includes('admin')) {
+      toast.error('You are not assigned as a photographer for this event');
+      return;
+    }
+
     if (files.length === 0) {
       toast.error('Please select files to upload');
       return;

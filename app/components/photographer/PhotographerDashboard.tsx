@@ -50,12 +50,24 @@ export default function PhotographerDashboard() {
                 Bulk upload
               </Button>
             </Link>
-            <Link href="/admin/moderate" className="w-full sm:w-auto">
-              <Button variant="outline" className="w-full border-zinc-300 text-zinc-800 hover:bg-zinc-50 dark:border-white/20 dark:text-white dark:hover:bg-white/10 sm:w-auto">
+            {events.length > 0 ? (
+              <Link href={`/events/${events[0]._id}/submissions`} className="w-full sm:w-auto">
+                <Button variant="outline" className="w-full border-zinc-300 text-zinc-800 hover:bg-zinc-50 dark:border-white/20 dark:text-white dark:hover:bg-white/10 sm:w-auto">
+                  <Eye className="mr-2 h-4 w-4" />
+                  Review queue
+                </Button>
+              </Link>
+            ) : (
+              <Button
+                variant="outline"
+                disabled
+                className="w-full border-zinc-200 text-zinc-400 opacity-60 cursor-not-allowed sm:w-auto dark:border-white/10 dark:text-zinc-500"
+                title="No active assigned events to review"
+              >
                 <Eye className="mr-2 h-4 w-4" />
                 Review queue
               </Button>
-            </Link>
+            )}
           </div>
         </div>
       </header>
@@ -156,13 +168,22 @@ export default function PhotographerDashboard() {
                     <span className="text-zinc-600 dark:text-gray-400">{format(new Date(event.startDate), 'MMM dd, yyyy')}</span>
                   </p>
                 </div>
-                <Link
-                  href={`/photographer/upload?eventId=${event._id}`}
-                  className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-violet-600 transition-colors hover:text-violet-500 dark:text-violet-400 dark:hover:text-violet-300"
-                >
-                  <Upload className="h-4 w-4" />
-                  Upload to this event
-                </Link>
+                <div className="mt-4 flex items-center justify-between border-t border-zinc-100 pt-3 dark:border-white/5">
+                  <Link
+                    href={`/photographer/upload?eventId=${event._id}`}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-violet-600 transition-colors hover:text-violet-500 dark:text-violet-400 dark:hover:text-violet-300"
+                  >
+                    <Upload className="h-3.5 w-3.5" />
+                    Upload
+                  </Link>
+                  <Link
+                    href={`/events/${event._id}/submissions`}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-600 transition-colors hover:text-zinc-900 dark:text-gray-400 dark:hover:text-white"
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                    Review queue
+                  </Link>
+                </div>
               </div>
             ))}
           </div>
