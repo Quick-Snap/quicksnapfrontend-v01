@@ -220,16 +220,17 @@ export default function Navbar() {
 
                   {/* Profile Dropdown Menu */}
                   {profileDropdownOpen && (
-                      <div className="absolute right-0 mt-3 w-72 origin-top-right animate-dropdown-in">
-                      <div className="overflow-hidden rounded-2xl border border-zinc-200/90 bg-white/95 shadow-2xl shadow-zinc-900/15 backdrop-blur-xl dark:border-white/10 dark:bg-[#1a1a1a]/95 dark:shadow-black/50">
-                        {/* User Info Header */}
-                        <div className="border-b border-zinc-100 bg-gradient-to-br from-violet-600/[0.08] to-indigo-600/[0.08] p-4 dark:border-white/5 dark:from-violet-600/10 dark:to-indigo-600/10">
-                          <div className="flex items-center space-x-3">
+                    <div className="absolute right-0 mt-3 w-72 origin-top-right animate-dropdown-in z-50">
+                      <div className="overflow-hidden rounded-2xl border border-zinc-200/90 bg-white shadow-2xl shadow-zinc-900/20 dark:border-white/10 dark:bg-[#1a1a1a] dark:shadow-black/60">
+                        {/* User Info Header with solid base to prevent any background bleed */}
+                        <div className="relative border-b border-zinc-100 bg-white p-4 dark:border-white/5 dark:bg-[#1a1a1a]">
+                          <div className="absolute inset-0 bg-gradient-to-br from-violet-500/[0.07] to-indigo-500/[0.07] pointer-events-none dark:from-violet-500/10 dark:to-indigo-500/10" />
+                          <div className="relative flex items-center space-x-3">
                             {user.avatar ? (
                               <img
                                 src={user.avatar}
                                 alt={user.name}
-                                className="h-12 w-12 rounded-xl ring-2 ring-violet-500/30"
+                                className="h-12 w-12 rounded-xl ring-2 ring-violet-500/30 object-cover"
                               />
                             ) : (
                               <div className={`h-12 w-12 rounded-xl flex items-center justify-center text-white font-bold text-lg ${isAdmin ? 'bg-gradient-to-br from-violet-600 to-purple-600' : isOrganizer ? 'bg-gradient-to-br from-blue-600 to-indigo-600' : 'bg-gradient-to-br from-emerald-500 to-teal-600'
@@ -242,9 +243,9 @@ export default function Navbar() {
                               <p className="truncate text-sm text-zinc-500 dark:text-gray-400">{user.email}</p>
                               {role && (
                                 <span className={`inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full ${
-                                  isAdmin ? 'bg-purple-500/20 text-purple-400' : 
-                                  isOrganizer ? 'bg-blue-500/20 text-blue-400' : 
-                                  'bg-emerald-500/20 text-emerald-400'
+                                  isAdmin ? 'bg-purple-500/20 text-purple-600 dark:text-purple-400' : 
+                                  isOrganizer ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400' : 
+                                  'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400'
                                 }`}>
                                   {roleLabels[role] || role}
                                 </span>
