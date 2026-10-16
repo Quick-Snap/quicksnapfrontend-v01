@@ -132,6 +132,7 @@ export default function ManageEventPage() {
     const [codeCopied, setCodeCopied] = useState(false);
     const [photographerEmail, setPhotographerEmail] = useState('');
     const [assigningPhotographer, setAssigningPhotographer] = useState(false);
+    const [removingPhotographerId, setRemovingPhotographerId] = useState<string | null>(null);
     // Select photos for dashboard (official)
     const [allEventPhotos, setAllEventPhotos] = useState<any[]>([]);
     const [photosLoading, setPhotosLoading] = useState(false);
@@ -457,6 +458,45 @@ export default function ManageEventPage() {
             toast.error(error.response?.data?.message || 'Failed to assign photographer');
         } finally {
             setAssigningPhotographer(false);
+        }
+    };
+
+    const handleRemovePhotographer = async (photographer: any) => {
+        const id = photographer._id || photographer.id;
+        const name = photographer.name || photographer.email || 'this photographer';
+        if (!id) return;
+
+        if (!confirm(`Are you sure you want to remove ${name} from this event? They will no longer have access to upload photos.`)) {
+            return;
+        }
+
+        setRemovingPhotographerId(id);
+        try {
+            await eventApi.removePhotographer(eventId, id);
+            toast.success(`${name} removed successfully`);
+
+            // Optimistic update of local state
+            setEvent((prev: any) => {
+                if (!prev) return prev;
+                return {
+                    ...prev,
+                    photographers: (prev.photographers || []).filter(
+                        (p: any) => (p._id || p.id) !== id
+                    ),
+                };
+            });
+
+            // Refresh event data & invalidate queries
+            const data = await eventApi.getById(eventId);
+            if (data?.data) {
+                setEvent(data.data);
+            }
+            await queryClient.invalidateQueries(['event', eventId]);
+        } catch (error: any) {
+            console.error('Error removing photographer:', error);
+            toast.error(error.response?.data?.message || 'Failed to remove photographer');
+        } finally {
+            setRemovingPhotographerId(null);
         }
     };
 
@@ -932,6 +972,22 @@ export default function ManageEventPage() {
                                             <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400">
                                                 Active
                                             </span>
+                                            {canFullManage && (
+                                                <button
+                                                    type="button"
+                                                    disabled={removingPhotographerId === (photographer._id || photographer.id)}
+                                                    onClick={() => handleRemovePhotographer(photographer)}
+                                                    className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50/70 px-2.5 py-1 text-xs font-semibold text-red-600 transition-colors hover:bg-red-100 hover:text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20 disabled:opacity-50"
+                                                    title="Remove Photographer"
+                                                >
+                                                    {removingPhotographerId === (photographer._id || photographer.id) ? (
+                                                        <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-red-600 border-t-transparent" />
+                                                    ) : (
+                                                        <Trash2 size={13} />
+                                                    )}
+                                                    <span>Remove</span>
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 ))}

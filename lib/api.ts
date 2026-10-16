@@ -419,6 +419,11 @@ export const eventApi = {
     return response.data;
   },
 
+  removePhotographer: async (eventId: string, userId: string) => {
+    const response = await api.delete<ApiResponse<any>>(`/events/${eventId}/photographers/${userId}`);
+    return response.data;
+  },
+
   getPhotos: async (
     eventId: string,
     params?: { page?: number; limit?: number; lastKey?: string; all?: boolean; isLiveWall?: boolean }
