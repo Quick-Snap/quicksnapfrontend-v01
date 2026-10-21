@@ -131,6 +131,7 @@ export default function ManageEventPage() {
     const [canDelete, setCanDelete] = useState(false);
     const [codeCopied, setCodeCopied] = useState(false);
     const [photographerEmail, setPhotographerEmail] = useState('');
+    const [isTrustedUploader, setIsTrustedUploader] = useState(false);
     const [assigningPhotographer, setAssigningPhotographer] = useState(false);
     const [removingPhotographerId, setRemovingPhotographerId] = useState<string | null>(null);
     // Select photos for dashboard (official)
@@ -447,9 +448,10 @@ export default function ManageEventPage() {
         
         setAssigningPhotographer(true);
         try {
-            await eventApi.assignPhotographer(eventId, photographerEmail);
+            await eventApi.assignPhotographer(eventId, photographerEmail, isTrustedUploader);
             toast.success('Photographer assigned successfully!');
             setPhotographerEmail('');
+            setIsTrustedUploader(false);
             // Refresh event data
             const data = await eventApi.getById(eventId);
             setEvent(data.data);
@@ -939,6 +941,22 @@ export default function ManageEventPage() {
                                 )}
                             </button>
                         </div>
+                        <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-lg border border-emerald-200/60 bg-white/50 p-3 dark:border-emerald-500/20 dark:bg-white/5">
+                            <input
+                                type="checkbox"
+                                checked={isTrustedUploader}
+                                onChange={(e) => setIsTrustedUploader(e.target.checked)}
+                                className="mt-0.5 rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500"
+                            />
+                            <div>
+                                <p className="text-sm font-medium text-zinc-900 dark:text-white">
+                                    Grant Trusted Uploader
+                                </p>
+                                <p className="text-xs text-zinc-500 dark:text-gray-400">
+                                    Bypasses Rekognition moderation checks on uploads to optimize AWS costs
+                                </p>
+                            </div>
+                        </label>
                         <p className="mt-3 flex items-center gap-1 text-xs text-zinc-500 dark:text-gray-500">
                             <Sparkles className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
                             The photographer will receive access to upload photos for this event

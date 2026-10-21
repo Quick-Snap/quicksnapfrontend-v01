@@ -68,7 +68,7 @@ function StatusBadge({ status }: { status: OrganizerRequestStatus }) {
 interface ApproveModalProps {
   request: OrganizerRequest;
   onClose: () => void;
-  onConfirm: (reviewNote: string, createOrganization: boolean) => Promise<void>;
+  onConfirm: (reviewNote: string, createOrganization: boolean, isTrustedUploader: boolean) => Promise<void>;
   loading: boolean;
 }
 
@@ -77,6 +77,7 @@ function ApproveModal({ request, onClose, onConfirm, loading }: ApproveModalProp
   const [createOrganization, setCreateOrganization] = useState(
     !!(request.organizationName && request.organizationEmail)
   );
+  const [isTrustedUploader, setIsTrustedUploader] = useState(false);
   const user = getRequestUser(request);
 
   return (
@@ -127,6 +128,23 @@ function ApproveModal({ request, onClose, onConfirm, loading }: ApproveModalProp
             </label>
           )}
 
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-zinc-200 p-3 dark:border-white/10">
+            <input
+              type="checkbox"
+              checked={isTrustedUploader}
+              onChange={(e) => setIsTrustedUploader(e.target.checked)}
+              className="mt-0.5 rounded border-zinc-300"
+            />
+            <div>
+              <p className="text-sm font-medium text-zinc-900 dark:text-white">
+                Grant Trusted Uploader
+              </p>
+              <p className="text-xs text-zinc-500 dark:text-gray-400">
+                Bypasses Rekognition moderation checks on uploads to optimize AWS costs
+              </p>
+            </div>
+          </label>
+
           <div className="flex gap-3 pt-2">
             <Button variant="outline" className="flex-1" onClick={onClose} disabled={loading}>
               Cancel
@@ -134,7 +152,7 @@ function ApproveModal({ request, onClose, onConfirm, loading }: ApproveModalProp
             <Button
               className="flex-1"
               loading={loading}
-              onClick={() => onConfirm(reviewNote, createOrganization)}
+              onClick={() => onConfirm(reviewNote, createOrganization, isTrustedUploader)}
             >
               Approve
             </Button>
@@ -411,13 +429,14 @@ export default function OrganizerRequestsPanel() {
     ]);
   };
 
-  const handleApprove = async (reviewNote: string, createOrganization: boolean) => {
+  const handleApprove = async (reviewNote: string, createOrganization: boolean, isTrustedUploader: boolean) => {
     if (!approveTarget) return;
     setActionLoading(true);
     try {
       await adminOrganizerRequestApi.approve(approveTarget._id, {
         reviewNote: reviewNote || undefined,
         createOrganization,
+        isTrustedUploader,
       });
       toast.success('Organizer request approved. User can now create events.');
       setApproveTarget(null);

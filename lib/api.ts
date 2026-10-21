@@ -366,6 +366,13 @@ export const photoApi = {
     const response = await api.get<ApiResponse<any>>('/photos/co-occurring');
     return response.data;
   },
+
+  reportPhoto: async (photoId: string) => {
+    const response = await api.post<ApiResponse<{ reportCount: number; flagged: boolean }>>(
+      `/photos/${photoId}/report`
+    );
+    return response.data;
+  },
 };
 
 // Event API
@@ -414,8 +421,11 @@ export const eventApi = {
     return response.data;
   },
 
-  assignPhotographer: async (eventId: string, email: string) => {
-    const response = await api.post<ApiResponse<any>>(`/events/${eventId}/photographers`, { email });
+  assignPhotographer: async (eventId: string, email: string, isTrustedUploader?: boolean) => {
+    const response = await api.post<ApiResponse<any>>(`/events/${eventId}/photographers`, {
+      email,
+      ...(typeof isTrustedUploader === 'boolean' ? { isTrustedUploader } : {}),
+    });
     return response.data;
   },
 
@@ -611,7 +621,7 @@ export const adminOrganizerRequestApi = {
 
   approve: async (
     id: string,
-    body?: { reviewNote?: string; createOrganization?: boolean }
+    body?: { reviewNote?: string; createOrganization?: boolean; isTrustedUploader?: boolean }
   ) => {
     const response = await api.patch<ApiResponse<OrganizerRequest>>(
       `/organizer-requests/admin/${id}/approve`,

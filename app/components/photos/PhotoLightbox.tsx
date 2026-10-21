@@ -1,6 +1,6 @@
 'use client';
 
-import { X, EyeOff } from 'lucide-react';
+import { X, EyeOff, Flag } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import dynamic from 'next/dynamic';
@@ -25,6 +25,7 @@ type PhotoLightboxProps = {
   onClose: () => void;
   footer: ReactNode;
   onUntag?: () => void;
+  onReport?: () => void;
 };
 
 /**
@@ -38,6 +39,7 @@ export function PhotoLightbox({
   onClose,
   footer,
   onUntag,
+  onReport,
 }: PhotoLightboxProps) {
   // Freeze the opening slide list + index for the whole lightbox session.
   // Live parent updates (signed URLs, selection sync) must not remount WebGL mid-tween.
@@ -74,6 +76,16 @@ export function PhotoLightbox({
     };
   }, [onClose]);
 
+  const handleReportClick = () => {
+    if (!onReport) return;
+    const confirmed = window.confirm(
+      'Are you sure you want to report this photo as inappropriate? Photos with multiple reports are automatically hidden for moderation.'
+    );
+    if (confirmed) {
+      onReport();
+    }
+  };
+
   if (typeof document === 'undefined') {
     return null;
   }
@@ -89,22 +101,37 @@ export function PhotoLightbox({
         className="flex shrink-0 items-center justify-between border-b border-white/10 bg-black/40 px-3 pb-3 pt-[max(12px,calc(env(safe-area-inset-top,0px)+8px))] backdrop-blur-md sm:px-4 sm:pb-3 sm:pt-[max(14px,calc(env(safe-area-inset-top,0px)+10px))]"
         onClick={(e) => e.stopPropagation()}
       >
-        {onUntag ? (
-          <button
-            type="button"
-            className="flex h-11 min-h-[44px] w-11 min-w-[44px] shrink-0 items-center justify-center rounded-full border border-red-500/25 bg-red-950/40 text-red-400 shadow-lg shadow-black/40 transition-colors hover:bg-red-900/60 active:scale-[0.98]"
-            onClick={(e) => {
-              e.stopPropagation();
-              onUntag();
-            }}
-            title="Untag me from this photo"
-            aria-label="Untag me"
-          >
-            <EyeOff className="h-5 w-5 shrink-0" strokeWidth={2} aria-hidden />
-          </button>
-        ) : (
-          <div className="w-11" />
-        )}
+        <div className="flex items-center gap-2">
+          {onUntag && (
+            <button
+              type="button"
+              className="flex h-11 min-h-[44px] w-11 min-w-[44px] shrink-0 items-center justify-center rounded-full border border-red-500/25 bg-red-950/40 text-red-400 shadow-lg shadow-black/40 transition-colors hover:bg-red-900/60 active:scale-[0.98]"
+              onClick={(e) => {
+                e.stopPropagation();
+                onUntag();
+              }}
+              title="Untag me from this photo"
+              aria-label="Untag me"
+            >
+              <EyeOff className="h-5 w-5 shrink-0" strokeWidth={2} aria-hidden />
+            </button>
+          )}
+          {onReport && (
+            <button
+              type="button"
+              className="flex h-11 min-h-[44px] w-11 min-w-[44px] shrink-0 items-center justify-center rounded-full border border-amber-500/25 bg-amber-950/40 text-amber-400 shadow-lg shadow-black/40 transition-colors hover:bg-amber-900/60 active:scale-[0.98]"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleReportClick();
+              }}
+              title="Report this photo"
+              aria-label="Report photo"
+            >
+              <Flag className="h-5 w-5 shrink-0" strokeWidth={2} aria-hidden />
+            </button>
+          )}
+          {!onUntag && !onReport && <div className="w-11" />}
+        </div>
         <button
           type="button"
           className="flex h-11 min-h-[44px] w-11 min-w-[44px] shrink-0 items-center justify-center rounded-full border border-white/25 bg-zinc-900/90 text-white shadow-lg shadow-black/40 transition-colors hover:bg-zinc-800 active:scale-[0.98]"

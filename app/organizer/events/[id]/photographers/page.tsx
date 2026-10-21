@@ -16,6 +16,7 @@ export default function AssignPhotographerPage() {
     const [eventData, setEventData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [email, setEmail] = useState('');
+    const [isTrustedUploader, setIsTrustedUploader] = useState(false);
     const [assigning, setAssigning] = useState(false);
 
     useEffect(() => {
@@ -48,12 +49,14 @@ export default function AssignPhotographerPage() {
 
         try {
             const response = await api.post(`/events/${eventId}/photographers`, {
-                email: email.trim()
+                email: email.trim(),
+                isTrustedUploader,
             });
 
             if (response.data.success) {
                 toast.success('Photographer assigned successfully!');
                 setEmail('');
+                setIsTrustedUploader(false);
                 // Refresh event data to show updated photographers list
                 const res = await api.get(`/events/${eventId}`);
                 setEventData(res.data.data);
@@ -137,6 +140,23 @@ export default function AssignPhotographerPage() {
                                 The user must already be registered in the system
                             </p>
                         </div>
+
+                        <label className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 dark:border-white/10 dark:hover:bg-white/5">
+                            <input
+                                type="checkbox"
+                                checked={isTrustedUploader}
+                                onChange={(e) => setIsTrustedUploader(e.target.checked)}
+                                className="mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                            <div>
+                                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                    Grant Trusted Uploader
+                                </p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                    Bypasses Rekognition moderation checks on uploads to optimize AWS costs
+                                </p>
+                            </div>
+                        </label>
 
                         <button
                             type="submit"

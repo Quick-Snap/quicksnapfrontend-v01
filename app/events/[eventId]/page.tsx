@@ -145,6 +145,24 @@ export default function PublicEventPage() {
         }
     };
 
+    const handleReportPhoto = async (photo: any) => {
+        if (!currentUser) {
+            toast.error('Please log in to report photos');
+            router.push('/login');
+            return;
+        }
+        const photoId = photo._id || photo.imageId;
+        if (!photoId) return;
+        try {
+            const res = await photoApi.reportPhoto(photoId);
+            toast.success(res.message || 'Photo reported successfully');
+            setSelectedPhoto(null);
+        } catch (err: any) {
+            console.error('Failed to report photo:', err);
+            toast.error(err.response?.data?.message || 'Failed to report photo');
+        }
+    };
+
     // Fetch Event details
     const { data: eventResult, isLoading: loading } = useQuery(
         ['event', eventId],
@@ -1169,6 +1187,7 @@ export default function PublicEventPage() {
                     onIndexChange={(i) => setSelectedPhoto(displayPhotos[i])}
                     onClose={() => setSelectedPhoto(null)}
                     onUntag={photoViewMode === 'my' ? () => handleUntag(selectedPhoto) : undefined}
+                    onReport={() => handleReportPhoto(selectedPhoto)}
                     footer={
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                             <div className="min-w-0 flex-1">

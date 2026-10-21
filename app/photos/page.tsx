@@ -78,6 +78,19 @@ export default function MyPhotosPage() {
     }
   };
 
+  const handleReportPhoto = async (photo: any) => {
+    const photoId = photo._id || photo.imageId;
+    if (!photoId) return;
+    try {
+      const res = await photoApi.reportPhoto(photoId);
+      toast.success(res.message || 'Photo reported successfully');
+      setSelectedPhoto(null);
+    } catch (err: any) {
+      console.error('Failed to report photo:', err);
+      toast.error(err.response?.data?.message || 'Failed to report photo');
+    }
+  };
+
   const { data: queryData, isLoading: loading } = useQuery(
     ['myPhotos'],
     () => fetchAllMyPhotos(),
@@ -584,6 +597,7 @@ export default function MyPhotosPage() {
           onIndexChange={(i) => setSelectedPhoto(filteredPhotos[i])}
           onClose={() => setSelectedPhoto(null)}
           onUntag={() => handleUntag(selectedPhoto)}
+          onReport={() => handleReportPhoto(selectedPhoto)}
           footer={
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
               <div className="min-w-0 flex-1 space-y-1.5">
