@@ -22,7 +22,7 @@ function hrefForAuth(href: string, isLoggedIn: boolean) {
 export default function Navbar() {
   const { user, logout, switchRole, activeRole } = useAuth();
   const isLoggedIn = !!user;
-  const { role, roles, isAdmin, isOrganizer, isPhotographer } = useRole();
+  const { role, roles, isAdmin, isOrganizer, isPhotographer, hasRole } = useRole();
   const uniqueRoles = useMemo(() => Array.from(new Set(roles.filter(Boolean))), [roles]);
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -93,7 +93,7 @@ export default function Navbar() {
       // Organizers only see My Events (no Events, My Photos, or Photographer Upload)
       nav.push({ name: 'My Events', href: '/organizer/events', icon: Calendar });
     } else if (isPhotographer) {
-      nav.push({ name: 'Upload Photos', href: '/photographer/upload', icon: Upload });
+      nav.push({ name: 'Studio Upload', href: '/studio/upload', icon: Upload });
     } else {
       // Regular users (guests)
       nav.push({ name: 'Events', href: '/events', icon: Calendar });
@@ -156,7 +156,7 @@ export default function Navbar() {
             <div className="hidden md:flex md:items-center md:space-x-3">
             {user ? (
               <>
-                {(isOrganizer || isPhotographer || isAdmin) && (
+                {(hasRole('organizer') || hasRole('photographer') || hasRole('admin') || isOrganizer || isPhotographer || isAdmin) && (
                   <Link
                     href="/studio"
                     className="inline-flex items-center gap-1.5 rounded-xl border border-violet-500/30 bg-gradient-to-r from-violet-600/15 via-indigo-600/15 to-violet-600/10 px-3 py-1.5 text-xs font-semibold text-violet-700 hover:border-violet-500/60 dark:text-violet-300 dark:hover:text-white transition-all shadow-sm"

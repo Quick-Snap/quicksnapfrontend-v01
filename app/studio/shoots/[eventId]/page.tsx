@@ -136,7 +136,7 @@ export default function ShootProofingPage() {
               <ExternalLink size={14} />
               <span>Open Client Gallery</span>
             </Link>
-            <Link href={`/photographer/upload?eventId=${eventId}`}>
+            <Link href={`/studio/shoots/${eventId}/upload`}>
               <Button className="rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold px-3.5 py-1.5">
                 <Upload size={14} className="mr-1.5" />
                 Upload More
@@ -147,39 +147,39 @@ export default function ShootProofingPage() {
       </div>
 
       {/* Shoot Header Summary */}
-      <div className="rounded-3xl border border-white/[0.08] bg-[#10131d]/90 p-6 sm:p-8 backdrop-blur-md">
+      <div className="rounded-3xl border border-zinc-200 bg-white p-6 sm:p-8 backdrop-blur-md shadow-sm dark:border-white/[0.08] dark:bg-[#10131d]/90 dark:shadow-none transition-colors duration-200">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <span className="rounded-full border border-violet-500/20 bg-violet-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-violet-300">
+              <span className="rounded-full border border-violet-500/30 bg-violet-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-violet-700 dark:text-violet-300">
                 Shoot Management
               </span>
               {shoot?.accessCode && (
-                <span className="font-mono text-xs text-zinc-400">
-                  Access Code: <strong className="text-zinc-200">{shoot.accessCode}</strong>
+                <span className="font-mono text-xs text-zinc-500 dark:text-zinc-400">
+                  Access Code: <strong className="text-zinc-800 dark:text-zinc-200">{shoot.accessCode}</strong>
                 </span>
               )}
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
               {shoot?.name || 'Loading Shoot...'}
             </h1>
-            <p className="text-sm text-zinc-400 max-w-2xl leading-relaxed">
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 max-w-2xl leading-relaxed">
               {shoot?.description || 'Track your client’s live album shortlists and export them for Lightroom in 1 click.'}
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 bg-black/40 border border-white/10 rounded-2xl p-4">
-            <div className="px-3 border-r border-white/10">
-              <p className="text-[11px] text-zinc-400 font-medium uppercase tracking-wider">❤️ Album</p>
-              <p className="text-2xl font-bold text-rose-400">{albumCount}</p>
+          <div className="flex flex-wrap items-center gap-3 bg-zinc-50 border border-zinc-200 rounded-2xl p-4 dark:bg-black/40 dark:border-white/10">
+            <div className="px-3 border-r border-zinc-200 dark:border-white/10">
+              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 font-medium uppercase tracking-wider">❤️ Album</p>
+              <p className="text-2xl font-bold text-rose-600 dark:text-rose-400">{albumCount}</p>
             </div>
-            <div className="px-3 border-r border-white/10">
-              <p className="text-[11px] text-zinc-400 font-medium uppercase tracking-wider">🔖 Keepers</p>
-              <p className="text-2xl font-bold text-amber-400">{originalCount}</p>
+            <div className="px-3 border-r border-zinc-200 dark:border-white/10">
+              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 font-medium uppercase tracking-wider">🔖 Keepers</p>
+              <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{originalCount}</p>
             </div>
             <div className="px-3">
-              <p className="text-[11px] text-zinc-400 font-medium uppercase tracking-wider">📦 Unique Total</p>
-              <p className="text-2xl font-bold text-violet-400">{combinedCount}</p>
+              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 font-medium uppercase tracking-wider">📦 Unique Total</p>
+              <p className="text-2xl font-bold text-violet-600 dark:text-violet-400">{combinedCount}</p>
             </div>
           </div>
         </div>
@@ -187,33 +187,33 @@ export default function ShootProofingPage() {
 
       {/* The 3 Dedicated Export Tools */}
       <div>
-        <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-violet-400" />
+        <h2 className="text-xl font-bold text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
+          <Sparkles className="h-5 w-5 text-violet-600 dark:text-violet-400" />
           <span>Export Filenames &amp; Selections</span>
         </h2>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {/* 1. Album Selection (❤️) */}
-          <div className="flex flex-col justify-between rounded-2xl border border-rose-500/20 bg-gradient-to-b from-rose-950/20 via-[#13111f] to-[#0f111a] p-5 shadow-lg">
+          <div className="flex flex-col justify-between rounded-2xl border border-rose-200 bg-gradient-to-b from-rose-50/70 via-white to-rose-50/30 p-5 shadow-sm dark:border-rose-500/20 dark:bg-gradient-to-b dark:from-rose-950/20 dark:via-[#13111f] dark:to-[#0f111a] dark:shadow-lg transition-colors duration-200">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-500/30 bg-rose-500/10 px-2.5 py-1 text-xs font-semibold text-rose-300">
-                  <Heart size={13} className="fill-current text-rose-400" />
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-300/60 bg-rose-500/10 px-2.5 py-1 text-xs font-semibold text-rose-700 dark:text-rose-300">
+                  <Heart size={13} className="fill-current text-rose-500 dark:text-rose-400" />
                   <span>Album Print List</span>
                 </span>
-                <span className="text-xl font-bold text-white">{albumCount}</span>
+                <span className="text-xl font-bold text-zinc-900 dark:text-white">{albumCount}</span>
               </div>
-              <h3 className="font-bold text-white text-base">Physical Album Design</h3>
-              <p className="text-xs text-zinc-400 leading-relaxed">
+              <h3 className="font-bold text-zinc-900 dark:text-white text-base">Physical Album Design</h3>
+              <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
                 Client’s chosen photos for their leather-bound album. Use this list for SmartAlbums, Fundy Designer, or print labs. Zero bookmarks mixed in.
               </p>
             </div>
 
-            <div className="mt-6 flex flex-col gap-2 pt-4 border-t border-rose-500/15">
+            <div className="mt-6 flex flex-col gap-2 pt-4 border-t border-rose-200/60 dark:border-rose-500/15">
               <Button
                 onClick={() => handleCopyFilenames(albumFavorites, 'Album')}
                 disabled={albumCount === 0}
-                className="w-full rounded-xl bg-rose-600/20 border border-rose-500/30 text-rose-200 hover:bg-rose-600 hover:text-white text-xs font-semibold py-2"
+                className="w-full rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold py-2 shadow-sm"
               >
                 {copiedType === 'Album' ? <Check size={14} className="mr-1.5" /> : <Copy size={14} className="mr-1.5" />}
                 {copiedType === 'Album' ? 'Copied to Clipboard!' : 'Copy Album Filenames'}
@@ -222,7 +222,7 @@ export default function ShootProofingPage() {
                 type="button"
                 onClick={() => handleDownloadTxt(albumFavorites, `Album_Selection_${shoot?.name || 'Shoot'}.txt`)}
                 disabled={albumCount === 0}
-                className="w-full inline-flex items-center justify-center gap-1.5 text-xs text-zinc-400 hover:text-white py-1.5 rounded-lg hover:bg-white/5 transition disabled:opacity-40"
+                className="w-full inline-flex items-center justify-center gap-1.5 text-xs text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white py-1.5 rounded-lg hover:bg-rose-500/5 transition disabled:opacity-40"
               >
                 <Download size={13} />
                 <span>Download .txt file</span>
@@ -231,26 +231,26 @@ export default function ShootProofingPage() {
           </div>
 
           {/* 2. Bookmarked Keepers (🔖) */}
-          <div className="flex flex-col justify-between rounded-2xl border border-amber-500/20 bg-gradient-to-b from-amber-950/20 via-[#14121b] to-[#0f111a] p-5 shadow-lg">
+          <div className="flex flex-col justify-between rounded-2xl border border-amber-200 bg-gradient-to-b from-amber-50/70 via-white to-amber-50/30 p-5 shadow-sm dark:border-amber-500/20 dark:bg-gradient-to-b dark:from-amber-950/20 dark:via-[#14121b] dark:to-[#0f111a] dark:shadow-lg transition-colors duration-200">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-300">
-                  <Bookmark size={13} className="fill-current text-amber-400" />
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300/60 bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-700 dark:text-amber-300">
+                  <Bookmark size={13} className="fill-current text-amber-500 dark:text-amber-400" />
                   <span>Digital Keepers</span>
                 </span>
-                <span className="text-xl font-bold text-white">{originalCount}</span>
+                <span className="text-xl font-bold text-zinc-900 dark:text-white">{originalCount}</span>
               </div>
-              <h3 className="font-bold text-white text-base">Client High-Res Requests</h3>
-              <p className="text-xs text-zinc-400 leading-relaxed">
+              <h3 className="font-bold text-zinc-900 dark:text-white text-base">Client High-Res Requests</h3>
+              <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
                 Extra personal favorites the client bookmarked for social media sharing, prints, or digital archiving.
               </p>
             </div>
 
-            <div className="mt-6 flex flex-col gap-2 pt-4 border-t border-amber-500/15">
+            <div className="mt-6 flex flex-col gap-2 pt-4 border-t border-amber-200/60 dark:border-amber-500/15">
               <Button
                 onClick={() => handleCopyFilenames(originalRequests, 'Keepers')}
                 disabled={originalCount === 0}
-                className="w-full rounded-xl bg-amber-600/20 border border-amber-500/30 text-amber-200 hover:bg-amber-600 hover:text-white text-xs font-semibold py-2"
+                className="w-full rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold py-2 shadow-sm"
               >
                 {copiedType === 'Keepers' ? <Check size={14} className="mr-1.5" /> : <Copy size={14} className="mr-1.5" />}
                 {copiedType === 'Keepers' ? 'Copied to Clipboard!' : 'Copy Keepers Filenames'}
@@ -259,7 +259,7 @@ export default function ShootProofingPage() {
                 type="button"
                 onClick={() => handleDownloadTxt(originalRequests, `Keepers_Selection_${shoot?.name || 'Shoot'}.txt`)}
                 disabled={originalCount === 0}
-                className="w-full inline-flex items-center justify-center gap-1.5 text-xs text-zinc-400 hover:text-white py-1.5 rounded-lg hover:bg-white/5 transition disabled:opacity-40"
+                className="w-full inline-flex items-center justify-center gap-1.5 text-xs text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white py-1.5 rounded-lg hover:bg-amber-500/5 transition disabled:opacity-40"
               >
                 <Download size={13} />
                 <span>Download .txt file</span>
@@ -268,28 +268,28 @@ export default function ShootProofingPage() {
           </div>
 
           {/* 3. Combined Lightroom Master Batch (Unique ❤️ + 🔖) */}
-          <div className="flex flex-col justify-between rounded-2xl border border-violet-500/30 bg-gradient-to-b from-violet-950/30 via-[#151227] to-[#0f111a] p-5 shadow-lg relative overflow-hidden">
-            <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-violet-600/20 blur-2xl" />
+          <div className="flex flex-col justify-between rounded-2xl border border-violet-200 bg-gradient-to-b from-violet-50/70 via-white to-violet-50/30 p-5 shadow-sm dark:border-violet-500/30 dark:bg-gradient-to-b dark:from-violet-950/30 dark:via-[#151227] dark:to-[#0f111a] dark:shadow-lg relative overflow-hidden transition-colors duration-200">
+            <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-violet-600/10 dark:bg-violet-600/20 blur-2xl" />
 
             <div className="space-y-3 relative">
               <div className="flex items-center justify-between">
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-400/30 bg-violet-500/15 px-2.5 py-1 text-xs font-semibold text-violet-300">
-                  <Sparkles size={13} className="text-violet-400" />
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-300/60 bg-violet-500/10 px-2.5 py-1 text-xs font-semibold text-violet-700 dark:text-violet-300">
+                  <Sparkles size={13} className="text-violet-600 dark:text-violet-400" />
                   <span>Adobe Lightroom Classic</span>
                 </span>
-                <span className="text-xl font-bold text-violet-300">{combinedCount}</span>
+                <span className="text-xl font-bold text-violet-700 dark:text-violet-300">{combinedCount}</span>
               </div>
-              <h3 className="font-bold text-white text-base">Combined Master Batch</h3>
-              <p className="text-xs text-zinc-400 leading-relaxed">
+              <h3 className="font-bold text-zinc-900 dark:text-white text-base">Combined Master Batch</h3>
+              <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
                 Union of both lists. Paste directly into Lightroom (Ctrl+F → Filename Contains) to filter all {combinedCount} edited RAW files in 2 seconds.
               </p>
             </div>
 
-            <div className="mt-6 flex flex-col gap-2 pt-4 border-t border-violet-500/20 relative">
+            <div className="mt-6 flex flex-col gap-2 pt-4 border-t border-violet-200/60 dark:border-violet-500/20 relative">
               <Button
                 onClick={() => handleCopyFilenames(combinedPhotos, 'Lightroom')}
                 disabled={combinedCount === 0}
-                className="w-full rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold py-2 shadow-md shadow-violet-600/30"
+                className="w-full rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold py-2 shadow-md shadow-violet-600/25"
               >
                 {copiedType === 'Lightroom' ? <Check size={14} className="mr-1.5" /> : <Copy size={14} className="mr-1.5" />}
                 {copiedType === 'Lightroom' ? 'Copied Lightroom String!' : 'Copy Lightroom Search String'}
@@ -298,7 +298,7 @@ export default function ShootProofingPage() {
                 type="button"
                 onClick={() => handleDownloadTxt(combinedPhotos, `Combined_Master_List_${shoot?.name || 'Shoot'}.txt`)}
                 disabled={combinedCount === 0}
-                className="w-full inline-flex items-center justify-center gap-1.5 text-xs text-zinc-400 hover:text-white py-1.5 rounded-lg hover:bg-white/5 transition disabled:opacity-40"
+                className="w-full inline-flex items-center justify-center gap-1.5 text-xs text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white py-1.5 rounded-lg hover:bg-violet-500/5 transition disabled:opacity-40"
               >
                 <Download size={13} />
                 <span>Download Combined .txt</span>
@@ -309,17 +309,17 @@ export default function ShootProofingPage() {
       </div>
 
       {/* Lightroom Quick Instruction Banner */}
-      <div className="rounded-2xl border border-white/[0.08] bg-[#0c0e17] p-5 text-xs text-zinc-400">
+      <div className="rounded-2xl border border-zinc-200 bg-white p-5 text-xs text-zinc-600 dark:border-white/[0.08] dark:bg-[#0c0e17] dark:text-zinc-400 transition-colors duration-200">
         <div className="flex items-start gap-3">
-          <HelpCircle size={18} className="text-violet-400 shrink-0 mt-0.5" />
+          <HelpCircle size={18} className="text-violet-600 dark:text-violet-400 shrink-0 mt-0.5" />
           <div className="space-y-1">
-            <p className="font-semibold text-white">How to use with Adobe Lightroom Classic:</p>
+            <p className="font-semibold text-zinc-900 dark:text-white">How to use with Adobe Lightroom Classic:</p>
             <p className="leading-relaxed">
-              1. Click <strong className="text-violet-300">&quot;Copy Lightroom Search String&quot;</strong> above.
+              1. Click <strong className="text-violet-700 dark:text-violet-300">&quot;Copy Lightroom Search String&quot;</strong> above.
               <br />
-              2. Open <strong>Lightroom Classic</strong> → Library Module (press <code className="bg-white/10 px-1 py-0.5 rounded text-white">G</code>).
+              2. Open <strong>Lightroom Classic</strong> → Library Module (press <code className="bg-zinc-100 text-zinc-900 dark:bg-white/10 dark:text-white px-1 py-0.5 rounded">G</code>).
               <br />
-              3. Press <code className="bg-white/10 px-1 py-0.5 rounded text-white">Ctrl + F</code> (or <code className="bg-white/10 px-1 py-0.5 rounded text-white">Cmd + F</code>), select <strong>Filename → Contains</strong>, and paste.
+              3. Press <code className="bg-zinc-100 text-zinc-900 dark:bg-white/10 dark:text-white px-1 py-0.5 rounded">Ctrl + F</code> (or <code className="bg-zinc-100 text-zinc-900 dark:bg-white/10 dark:text-white px-1 py-0.5 rounded">Cmd + F</code>), select <strong>Filename → Contains</strong>, and paste.
               All matching photos will instantly appear on your screen!
             </p>
           </div>
@@ -328,7 +328,7 @@ export default function ShootProofingPage() {
 
       {/* Interactive Visual Gallery */}
       <div className="space-y-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-white/10 pb-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-zinc-200 dark:border-white/10 pb-4">
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -336,7 +336,7 @@ export default function ShootProofingPage() {
               className={`rounded-xl px-4 py-2 text-xs font-semibold transition ${
                 activeTab === 'combined'
                   ? 'bg-violet-600 text-white shadow-md shadow-violet-600/25'
-                  : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                  : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-white/5'
               }`}
             >
               All Selections ({combinedCount})
@@ -347,7 +347,7 @@ export default function ShootProofingPage() {
               className={`rounded-xl px-4 py-2 text-xs font-semibold transition flex items-center gap-1.5 ${
                 activeTab === 'album'
                   ? 'bg-rose-600 text-white shadow-md shadow-rose-600/25'
-                  : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                  : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-white/5'
               }`}
             >
               <Heart size={13} className="fill-current" />
@@ -359,7 +359,7 @@ export default function ShootProofingPage() {
               className={`rounded-xl px-4 py-2 text-xs font-semibold transition flex items-center gap-1.5 ${
                 activeTab === 'bookmark'
                   ? 'bg-amber-600 text-white shadow-md shadow-amber-600/25'
-                  : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                  : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-white/5'
               }`}
             >
               <Bookmark size={13} className="fill-current" />

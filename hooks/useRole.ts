@@ -17,8 +17,18 @@ export function useRole() {
   const isOrganizer = currentRole === 'organizer';
   const isPhotographer = currentRole === 'photographer';
   const isAdmin = currentRole === 'admin';
-  const isOrganizerOrAdmin = isOrganizer || isAdmin;
-  const isPhotographerOrOrganizer = isPhotographer || isOrganizer || isAdmin;
+  const isOrganizerOrAdmin =
+    isOrganizer ||
+    isAdmin ||
+    uniqueRoles.includes('organizer') ||
+    uniqueRoles.includes('admin');
+  const isPhotographerOrOrganizer =
+    isPhotographer ||
+    isOrganizer ||
+    isAdmin ||
+    uniqueRoles.includes('photographer') ||
+    uniqueRoles.includes('organizer') ||
+    uniqueRoles.includes('admin');
 
   // Check if user HAS a role (not just active)
   const hasRole = (role: UserRole) => uniqueRoles.includes(role);
