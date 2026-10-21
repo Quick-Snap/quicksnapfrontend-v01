@@ -35,7 +35,7 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
 
   if (authLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#0b0d13] text-white">
+      <div className="flex min-h-screen items-center justify-center bg-zinc-50 text-zinc-900 dark:bg-[#0b0d13] dark:text-white">
         <div className="h-10 w-10 animate-spin rounded-full border-2 border-violet-500/20 border-t-violet-500" />
       </div>
     );

@@ -120,7 +120,7 @@ export default function ShootProofingPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <Link
           href="/studio"
-          className="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition"
+          className="inline-flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition"
         >
           <ArrowLeft size={16} />
           <span>Back to All Shoots</span>
@@ -131,7 +131,7 @@ export default function ShootProofingPage() {
             <Link
               href={`/events/${eventId}`}
               target="_blank"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-1.5 text-xs font-semibold text-zinc-300 hover:text-white hover:bg-white/[0.08] transition"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white text-zinc-700 hover:text-zinc-900 hover:bg-zinc-100 shadow-sm dark:shadow-none dark:border-white/10 dark:bg-white/[0.04] dark:text-zinc-300 dark:hover:text-white dark:hover:bg-white/[0.08] px-3.5 py-1.5 text-xs font-semibold transition"
             >
               <ExternalLink size={14} />
               <span>Open Client Gallery</span>
@@ -420,10 +420,10 @@ export default function ShootProofingPage() {
             })}
           </div>
         ) : (
-          <div className="rounded-2xl border border-white/[0.08] bg-[#0c0e17]/80 py-16 text-center">
-            <Heart size={36} className="mx-auto mb-3 text-zinc-600" />
-            <p className="text-sm font-semibold text-white">No photos in this category yet</p>
-            <p className="text-xs text-zinc-500 max-w-xs mx-auto mt-1">
+          <div className="rounded-2xl border border-zinc-200 bg-white dark:border-white/[0.08] dark:bg-[#0c0e17]/80 py-16 text-center shadow-sm dark:shadow-none transition-colors duration-200">
+            <Heart size={36} className="mx-auto mb-3 text-zinc-400 dark:text-zinc-600" />
+            <p className="text-sm font-semibold text-zinc-900 dark:text-white">No photos in this category yet</p>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-xs mx-auto mt-1">
               When your client hearts photos in the gallery, they will show up here automatically.
             </p>
           </div>

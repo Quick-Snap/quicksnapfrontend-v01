@@ -525,7 +525,7 @@ export default function StudioUploader({ presetEventId }: StudioUploaderProps) {
 
           {/* Photos Grid */}
           {photosLoading || trashLoading ? (
-            <div className="flex items-center justify-center py-12 text-zinc-400 text-xs">
+            <div className="flex items-center justify-center py-12 text-zinc-500 dark:text-zinc-400 text-xs">
               <div className="h-6 w-6 animate-spin rounded-full border-2 border-violet-500/20 border-t-violet-500 mr-2.5" />
               Loading photos...
             </div>
