@@ -16,6 +16,11 @@ export default function StudentDashboard() {
   const { data: stats } = useQuery('userStats', () => userApi.getStats(), {
     enabled: !!user,
   });
+  const { data: userEventsRes } = useQuery(
+    ['userJoinedEvents', user?.id],
+    () => userApi.getEvents(user!.id),
+    { enabled: !!user?.id }
+  );
   const { data: eventsData } = useQuery(
     ['upcomingEvents', user?.id],
     () => eventApi.getAll({ isActive: true, page: 1, limit: 6 }),
@@ -24,9 +29,22 @@ export default function StudentDashboard() {
   const isFaceReady = Boolean(stats?.data?.faceRegistered || user?.faceRegistered);
 
   const myEvents = useMemo(() => {
-    if (!eventsData?.data?.events || !user?.events) return [];
-    return eventsData.data.events.filter((e: any) => user.events?.includes(e._id));
-  }, [eventsData?.data?.events, user?.events]);
+    // 1. Direct user events from userApi.getEvents
+    if (userEventsRes?.data && Array.isArray(userEventsRes.data) && userEventsRes.data.length > 0) {
+      return userEventsRes.data;
+    }
+    // 2. Resilient fallback: match against eventsData using all ID sets & attendees
+    if (!eventsData?.data?.events) return [];
+    const userEventIds = new Set([
+      ...(user?.events || []).map((e: any) => (e?._id || e)?.toString()),
+      ...(user?.joinedEvents || []).map((e: any) => (e?._id || e)?.toString()),
+    ]);
+    return eventsData.data.events.filter((e: any) => {
+      const eventId = e._id?.toString();
+      const isAttendee = e.attendees?.some((a: any) => (a?._id || a)?.toString() === user?.id?.toString());
+      return userEventIds.has(eventId) || isAttendee;
+    });
+  }, [userEventsRes?.data, eventsData?.data?.events, user?.events, user?.joinedEvents, user?.id]);
 
   const { data: coOccurringRes } = useQuery(
     ['coOccurringPhotos', user?.id],
@@ -148,7 +166,7 @@ export default function StudentDashboard() {
             <div>
               <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-gray-500">Events joined</p>
               <p className="mt-1.5 text-3xl font-semibold tabular-nums text-zinc-900 dark:text-white">
-                {stats?.data?.events || myEvents.length || 0}
+                {myEvents.length > 0 ? myEvents.length : (stats?.data?.events || 0)}
               </p>
             </div>
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-indigo-100 dark:bg-indigo-500/15">

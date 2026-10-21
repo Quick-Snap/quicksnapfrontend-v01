@@ -107,14 +107,21 @@ export default function EventsPage() {
           return isThisWeek(eventDate);
         case 'upcoming':
           return isFuture(eventDate);
-        case 'my':
-          return user?.events?.includes(event._id) || false;
+        case 'my': {
+          const userEventIds = new Set([
+            ...(user?.events || []).map((e: any) => (e?._id || e)?.toString()),
+            ...(user?.joinedEvents || []).map((e: any) => (e?._id || e)?.toString()),
+          ]);
+          const eventId = event._id?.toString();
+          const isAttendee = event.attendees?.some((a: any) => (a?._id || a)?.toString() === user?.id?.toString());
+          return userEventIds.has(eventId) || isAttendee;
+        }
         case 'all':
         default:
           return true;
       }
     });
-  }, [events, searchQuery, filterType, user?.events]);
+  }, [events, searchQuery, filterType, user?.events, user?.joinedEvents, user?.id]);
 
   if (authLoading) {
     return (
