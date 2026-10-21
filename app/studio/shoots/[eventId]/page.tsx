@@ -274,7 +274,7 @@ export default function ShootProofingPage() {
               </div>
               <h3 className="font-bold text-white text-base">Combined Master Batch</h3>
               <p className="text-xs text-zinc-400 leading-relaxed">
-                Union of both lists. Paste directly into Lightroom (Ctrl+F $\rightarrow$ Filename Contains) to filter all {combinedCount} edited RAW files in 2 seconds.
+                Union of both lists. Paste directly into Lightroom (Ctrl+F → Filename Contains) to filter all {combinedCount} edited RAW files in 2 seconds.
               </p>
             </div>
 
@@ -310,9 +310,9 @@ export default function ShootProofingPage() {
             <p className="leading-relaxed">
               1. Click <strong className="text-violet-300">&quot;Copy Lightroom Search String&quot;</strong> above.
               <br />
-              2. Open <strong>Lightroom Classic</strong> $\rightarrow$ Library Module (press <code className="bg-white/10 px-1 py-0.5 rounded text-white">G</code>).
+              2. Open <strong>Lightroom Classic</strong> → Library Module (press <code className="bg-white/10 px-1 py-0.5 rounded text-white">G</code>).
               <br />
-              3. Press <code className="bg-white/10 px-1 py-0.5 rounded text-white">Ctrl + F</code> (or <code className="bg-white/10 px-1 py-0.5 rounded text-white">Cmd + F</code>), select <strong>Filename $\rightarrow$ Contains</strong>, and paste.
+              3. Press <code className="bg-white/10 px-1 py-0.5 rounded text-white">Ctrl + F</code> (or <code className="bg-white/10 px-1 py-0.5 rounded text-white">Cmd + F</code>), select <strong>Filename → Contains</strong>, and paste.
               All matching photos will instantly appear on your screen!
             </p>
           </div>
