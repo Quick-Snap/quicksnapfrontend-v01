@@ -70,9 +70,16 @@ export default function ShootProofingPage() {
       toast.error(`No photos in ${label} to copy`);
       return;
     }
-    // Clean base filenames (e.g. without path)
+    // Clean base filenames
     const list = photos
-      .map((p) => p.fileName || p.imageId || '')
+      .map((p) => {
+        const name = p.fileName || p.imageId || '';
+        if (label === 'Lightroom') {
+          // Strip extension so Lightroom "Filename Contains" matches RAW (.CR3, .ARW, .NEF) and JPEG alike
+          return name.replace(/\.[^/.]+$/, '');
+        }
+        return name;
+      })
       .filter(Boolean)
       .join(', ');
 
