@@ -34,6 +34,7 @@ export function RootLayoutClient({ children }: { children: React.ReactNode }) {
   const isRegisterFace = pathname === '/register-face';
   const isDashboard = pathname === '/dashboard';
   const isLiveWall = pathname?.includes('/live-wall');
+  const isStudio = pathname?.startsWith('/studio');
 
   return (
     <>
@@ -49,11 +50,11 @@ export function RootLayoutClient({ children }: { children: React.ReactNode }) {
               )}
 
               <div className={isLiveWall ? 'w-full h-screen overflow-hidden' : 'relative min-h-screen'}>
-                {!isLandingPage && !isAuthPage && !isLiveWall && <Navbar />}
+                {!isLandingPage && !isAuthPage && !isLiveWall && !isStudio && <Navbar />}
                 <main
                   className={
-                    isLiveWall
-                      ? 'w-full h-full p-0 m-0 overflow-hidden'
+                    isLiveWall || isStudio
+                      ? 'w-full min-h-screen p-0 m-0'
                       : isLandingPage || isAuthPage || isRegisterFace
                         ? isRegisterFace
                           ? 'min-h-[100dvh] px-0 py-0'

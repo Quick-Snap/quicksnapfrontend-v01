@@ -12,6 +12,8 @@ export default function PhotographerPage() {
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
+    } else if (!loading && user) {
+      router.replace('/studio');
     }
   }, [user, loading, router]);
 

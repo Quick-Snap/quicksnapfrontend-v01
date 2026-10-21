@@ -44,7 +44,8 @@ export default function DashboardPage() {
   }
 
   if (role === 'photographer') {
-    return <PhotographerDashboard />;
+    router.replace('/studio');
+    return null;
   }
 
   return <StudentDashboard />;

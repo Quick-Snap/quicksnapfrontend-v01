@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRole } from '@/hooks/useRole';
-import { Menu, X, User, LogOut, Home, Image as ImageIcon, Calendar, Shield, Settings, Upload, ChevronDown } from 'lucide-react';
+import { Menu, X, User, LogOut, Home, Image as ImageIcon, Calendar, Shield, Settings, Upload, ChevronDown, Sparkles } from 'lucide-react';
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useQuery } from 'react-query';
 import { UserRole } from '@/types';
@@ -156,6 +156,17 @@ export default function Navbar() {
             <div className="hidden md:flex md:items-center md:space-x-3">
             {user ? (
               <>
+                {(isOrganizer || isPhotographer || isAdmin) && (
+                  <Link
+                    href="/studio"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-violet-500/30 bg-gradient-to-r from-violet-600/15 via-indigo-600/15 to-violet-600/10 px-3 py-1.5 text-xs font-semibold text-violet-700 hover:border-violet-500/60 dark:text-violet-300 dark:hover:text-white transition-all shadow-sm"
+                    title="Open Roopixo Studio Suite"
+                  >
+                    <Sparkles className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400" />
+                    <span>Studio Suite</span>
+                  </Link>
+                )}
+
                 {/* Role Switcher Dropdown */}
                 {uniqueRoles.length > 1 && (
                   <div className="relative" ref={dropdownRef}>
