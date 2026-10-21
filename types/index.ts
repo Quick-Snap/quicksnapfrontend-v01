@@ -72,6 +72,8 @@ export interface Photo {
   viewCount: number;
   downloadCount: number;
   url?: string;
+  isAlbumFavorite?: boolean;
+  isOriginalRequested?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }

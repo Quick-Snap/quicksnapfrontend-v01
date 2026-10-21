@@ -1,6 +1,6 @@
 'use client';
 
-import { X, EyeOff, Flag } from 'lucide-react';
+import { X, EyeOff, Flag, Heart, Bookmark } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import dynamic from 'next/dynamic';
@@ -26,6 +26,10 @@ type PhotoLightboxProps = {
   footer: ReactNode;
   onUntag?: () => void;
   onReport?: () => void;
+  isAlbumFavorite?: boolean;
+  isOriginalRequested?: boolean;
+  onToggleAlbum?: () => void;
+  onToggleOriginal?: () => void;
 };
 
 /**
@@ -40,6 +44,10 @@ export function PhotoLightbox({
   footer,
   onUntag,
   onReport,
+  isAlbumFavorite = false,
+  isOriginalRequested = false,
+  onToggleAlbum,
+  onToggleOriginal,
 }: PhotoLightboxProps) {
   // Freeze the opening slide list + index for the whole lightbox session.
   // Live parent updates (signed URLs, selection sync) must not remount WebGL mid-tween.
@@ -130,7 +138,51 @@ export function PhotoLightbox({
               <Flag className="h-5 w-5 shrink-0" strokeWidth={2} aria-hidden />
             </button>
           )}
-          {!onUntag && !onReport && <div className="w-11" />}
+          {onToggleAlbum && (
+            <button
+              type="button"
+              className={`flex h-11 min-h-[44px] w-11 min-w-[44px] shrink-0 items-center justify-center rounded-full border shadow-lg shadow-black/40 transition-all active:scale-[0.95] ${
+                isAlbumFavorite
+                  ? 'border-rose-500/50 bg-rose-950/60 text-rose-400'
+                  : 'border-white/20 bg-zinc-900/90 text-zinc-300 hover:text-rose-400 hover:border-rose-400/40'
+              }`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleAlbum();
+              }}
+              title={isAlbumFavorite ? "Remove from Album selection" : "Select for Album (❤️)"}
+              aria-label="Toggle album selection"
+            >
+              <Heart
+                className={`h-5 w-5 shrink-0 transition-transform ${isAlbumFavorite ? 'fill-rose-500 text-rose-500 scale-110' : ''}`}
+                strokeWidth={2}
+                aria-hidden
+              />
+            </button>
+          )}
+          {onToggleOriginal && (
+            <button
+              type="button"
+              className={`flex h-11 min-h-[44px] w-11 min-w-[44px] shrink-0 items-center justify-center rounded-full border shadow-lg shadow-black/40 transition-all active:scale-[0.95] ${
+                isOriginalRequested
+                  ? 'border-amber-500/50 bg-amber-950/60 text-amber-400'
+                  : 'border-white/20 bg-zinc-900/90 text-zinc-300 hover:text-amber-400 hover:border-amber-400/40'
+              }`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleOriginal();
+              }}
+              title={isOriginalRequested ? "Remove from High-Res requests" : "Save for High-Res Master (🔖)"}
+              aria-label="Toggle high-res bookmark"
+            >
+              <Bookmark
+                className={`h-5 w-5 shrink-0 transition-transform ${isOriginalRequested ? 'fill-amber-500 text-amber-500 scale-110' : ''}`}
+                strokeWidth={2}
+                aria-hidden
+              />
+            </button>
+          )}
+          {!onUntag && !onReport && !onToggleAlbum && !onToggleOriginal && <div className="w-11" />}
         </div>
         <button
           type="button"

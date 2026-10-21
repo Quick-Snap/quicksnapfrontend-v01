@@ -12,5 +12,15 @@ Sentry.init({
   // Only capture session replays on actual uncaught errors
   replaysOnErrorSampleRate: 0.1,
 
+  // Ignore benign browser navigation / fetch interruptions & DOM observer noise
+  ignoreErrors: [
+    "Failed to fetch",
+    "Load failed",
+    "NetworkError when attempting to fetch resource",
+    "AbortError",
+    "ResizeObserver loop limit exceeded",
+    "ResizeObserver loop completed with undelivered notifications",
+  ],
+
   debug: false,
 });

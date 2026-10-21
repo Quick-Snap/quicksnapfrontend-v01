@@ -373,6 +373,14 @@ export const photoApi = {
     );
     return response.data;
   },
+
+  toggleSelection: async (photoId: string, data: { type: 'album' | 'original'; status: boolean }) => {
+    const response = await api.post<ApiResponse<{ imageId: string; type: string; status: boolean; isAlbumFavorite?: boolean; isOriginalRequested?: boolean }>>(
+      `/photos/${photoId}/selection`,
+      data
+    );
+    return response.data;
+  },
 };
 
 // Event API
@@ -528,6 +536,33 @@ export const eventApi = {
 
   resetAttendeePhotoMatchesRefreshStatus: async (eventId: string) => {
     const response = await api.post<ApiResponse<any>>(`/events/${eventId}/reset-refresh-status`);
+    return response.data;
+  },
+
+  getSelections: async (eventId: string) => {
+    const response = await api.get<
+      ApiResponse<{
+        counts: {
+          albumCount: number;
+          originalCount: number;
+          combinedCount: number;
+        };
+        albumFavorites: any[];
+        originalRequests: any[];
+        combined: any[];
+      }>
+    >(`/events/${eventId}/selections`);
+    return response.data;
+  },
+
+  notifySelectionReady: async (eventId: string) => {
+    const response = await api.post<
+      ApiResponse<{
+        albumCount: number;
+        originalCount: number;
+        combinedCount: number;
+      }>
+    >(`/events/${eventId}/selections/notify`);
     return response.data;
   },
 };
