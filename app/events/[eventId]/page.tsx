@@ -359,16 +359,104 @@ export default function PublicEventPage() {
         }
     }, [myPhotos.length, currentUser, updateUser]);
 
-    const albumCount = useMemo(() => allPhotos.filter((p: any) => p.isAlbumFavorite === true).length, [allPhotos]);
-    const bookmarkCount = useMemo(() => allPhotos.filter((p: any) => p.isOriginalRequested === true).length, [allPhotos]);
+    // Fetch Event Selections (❤️ Album and 🔖 Keepers) directly from backend (same as Studio)
+    const { data: selectionsResult } = useQuery(
+        ['eventSelections', eventId],
+        () => eventApi.getSelections(eventId),
+        {
+            enabled: !!eventId && !!currentUser,
+            staleTime: 30 * 1000,
+            retry: reactQueryRetry,
+        }
+    );
+
+    // Build unified map of all known event photos (official, personal matched, and selections)
+    const allKnownPhotosMap = useMemo(() => {
+        const map = new Map<string, any>();
+
+        // 1. Populate with any selections from backend (ensures all selected photos from DB exist)
+        for (const p of selectionsResult?.data?.combined || selectionsResult?.data?.albumFavorites || []) {
+            const id = p.imageId || p._id;
+            if (id) {
+                map.set(id, { ...p, _id: id, imageId: id });
+            }
+        }
+        for (const p of selectionsResult?.data?.originalRequests || []) {
+            const id = p.imageId || p._id;
+            if (id) {
+                const existing = map.get(id);
+                map.set(id, {
+                    ...(existing || {}),
+                    ...p,
+                    _id: id,
+                    imageId: id,
+                    isOriginalRequested: true,
+                });
+            }
+        }
+
+        // 2. Overlay allPhotos (official event photos)
+        for (const p of allPhotos || []) {
+            const id = p.imageId || p._id;
+            if (id) {
+                const existing = map.get(id);
+                map.set(id, {
+                    ...(existing || {}),
+                    ...p,
+                    _id: id,
+                    imageId: id,
+                    isAlbumFavorite: p.isAlbumFavorite !== undefined ? p.isAlbumFavorite : (existing?.isAlbumFavorite ?? false),
+                    isOriginalRequested: p.isOriginalRequested !== undefined ? p.isOriginalRequested : (existing?.isOriginalRequested ?? false),
+                });
+            }
+        }
+
+        // 3. Overlay myPhotos (user's personal matched photos)
+        for (const p of myPhotos || []) {
+            const id = p.imageId || p._id;
+            if (id) {
+                const existing = map.get(id);
+                map.set(id, {
+                    ...(existing || {}),
+                    ...p,
+                    _id: id,
+                    imageId: id,
+                    isAlbumFavorite: p.isAlbumFavorite !== undefined ? p.isAlbumFavorite : (existing?.isAlbumFavorite ?? false),
+                    isOriginalRequested: p.isOriginalRequested !== undefined ? p.isOriginalRequested : (existing?.isOriginalRequested ?? false),
+                });
+            }
+        }
+
+        return map;
+    }, [allPhotos, myPhotos, selectionsResult]);
+
+    const allKnownPhotosList = useMemo(() => Array.from(allKnownPhotosMap.values()), [allKnownPhotosMap]);
+
+    const albumPhotos = useMemo(
+        () => allKnownPhotosList.filter((p: any) => p.isAlbumFavorite === true),
+        [allKnownPhotosList]
+    );
+
+    const bookmarkPhotos = useMemo(
+        () => allKnownPhotosList.filter((p: any) => p.isOriginalRequested === true),
+        [allKnownPhotosList]
+    );
+
+    const albumCount = albumPhotos.length;
+    const bookmarkCount = bookmarkPhotos.length;
 
     // Determine which photos to display based on view mode
     const displayPhotos = useMemo(() => {
         if (photoViewMode === 'my' && !!currentUser) return myPhotos;
-        if (photoViewMode === 'album') return allPhotos.filter((p: any) => p.isAlbumFavorite === true);
-        if (photoViewMode === 'bookmark') return allPhotos.filter((p: any) => p.isOriginalRequested === true);
+        if (photoViewMode === 'album') return albumPhotos;
+        if (photoViewMode === 'bookmark') return bookmarkPhotos;
         return allPhotos;
-    }, [photoViewMode, currentUser, myPhotos, allPhotos]);
+    }, [photoViewMode, currentUser, myPhotos, albumPhotos, bookmarkPhotos, allPhotos]);
+
+    const handleSwitchViewMode = useCallback((mode: 'all' | 'my' | 'album' | 'bookmark') => {
+        setPhotoViewMode(mode);
+        setCurrentPage(1);
+    }, []);
 
     const handleToggleSelection = useCallback(async (photo: any, type: 'album' | 'original') => {
         if (!photo?._id && !photo?.imageId) return;
@@ -377,7 +465,7 @@ export default function PublicEventPage() {
         const nextStatus = !currentStatus;
 
         const updateList = (list: any[]) =>
-            list.map((p) => {
+            (list || []).map((p) => {
                 if (p.imageId === photoId || p._id === photoId) {
                     return {
                         ...p,
@@ -422,8 +510,65 @@ export default function PublicEventPage() {
             };
         });
 
+        // Optimistically update eventSelections query cache
+        queryClient.setQueryData(['eventSelections', eventId], (prev: any) => {
+            if (!prev?.data) return prev;
+            const data = prev.data;
+            let albumFavs = [...(data.albumFavorites || [])];
+            let origReqs = [...(data.originalRequests || [])];
+
+            const updatedPhoto = {
+                ...photo,
+                _id: photoId,
+                imageId: photoId,
+                [type === 'album' ? 'isAlbumFavorite' : 'isOriginalRequested']: nextStatus,
+            };
+
+            if (type === 'album') {
+                if (nextStatus) {
+                    const idx = albumFavs.findIndex((p: any) => (p.imageId || p._id) === photoId);
+                    if (idx >= 0) albumFavs[idx] = { ...albumFavs[idx], ...updatedPhoto };
+                    else albumFavs.unshift(updatedPhoto);
+                } else {
+                    albumFavs = albumFavs.filter((p: any) => (p.imageId || p._id) !== photoId);
+                }
+            } else {
+                if (nextStatus) {
+                    const idx = origReqs.findIndex((p: any) => (p.imageId || p._id) === photoId);
+                    if (idx >= 0) origReqs[idx] = { ...origReqs[idx], ...updatedPhoto };
+                    else origReqs.unshift(updatedPhoto);
+                } else {
+                    origReqs = origReqs.filter((p: any) => (p.imageId || p._id) !== photoId);
+                }
+            }
+
+            const combinedMap = new Map<string, any>();
+            albumFavs.forEach((p: any) => combinedMap.set(p.imageId || p._id, p));
+            origReqs.forEach((p: any) => {
+                const id = p.imageId || p._id;
+                const existing = combinedMap.get(id);
+                combinedMap.set(id, { ...existing, ...p });
+            });
+
+            return {
+                ...prev,
+                data: {
+                    ...data,
+                    albumFavorites: albumFavs,
+                    originalRequests: origReqs,
+                    combined: Array.from(combinedMap.values()),
+                    counts: {
+                        albumCount: albumFavs.length,
+                        originalCount: origReqs.length,
+                        combinedCount: combinedMap.size,
+                    },
+                },
+            };
+        });
+
         try {
             await photoApi.toggleSelection(photoId, { type, status: nextStatus });
+            queryClient.invalidateQueries(['eventSelections', eventId]);
             toast.success(
                 type === 'album'
                     ? (nextStatus ? 'Added to Album selection (❤️)' : 'Removed from Album')
@@ -434,6 +579,7 @@ export default function PublicEventPage() {
             toast.error(err.response?.data?.message || 'Failed to update selection');
             queryClient.invalidateQueries(['eventPhotos', eventId]);
             queryClient.invalidateQueries(['myEventPhotos', eventId]);
+            queryClient.invalidateQueries(['eventSelections', eventId]);
         }
     }, [eventId, queryClient]);
 
@@ -449,19 +595,8 @@ export default function PublicEventPage() {
         }
     }, [eventId]);
 
-    /** Real total count for authenticated visitors: server total first while streaming, then exact loaded count. */
+    /** Real total count of all event photos for authenticated visitors: server total first while streaming, then exact loaded count. */
     const authenticatedPhotoTotal = useMemo(() => {
-        // In "my photos" mode, match the visible personal photos count
-        if (photoViewMode === 'my' && !!currentUser) {
-            return myPhotos.length;
-        }
-        if (photoViewMode === 'album') {
-            return albumCount;
-        }
-        if (photoViewMode === 'bookmark') {
-            return bookmarkCount;
-        }
-
         const responseData = (photosResult as any)?.data;
         const pagination = responseData?.pagination;
         const hasMore = Boolean(pagination?.hasMore || pagination?.lastKey);
@@ -489,11 +624,12 @@ export default function PublicEventPage() {
 
         const knownTotal = Math.max(apiTotal, fromField, fromStats, fromArr);
         return Math.max(knownTotal, allPhotos.length);
-    }, [event, photosResult, photosLoading, allPhotos.length, photoViewMode, isGuest, myPhotos.length, currentUser, albumCount, bookmarkCount]);
+    }, [event, photosResult, photosLoading, allPhotos.length]);
 
     const currentIndex = useMemo(() => {
         if (!selectedPhoto) return -1;
-        return displayPhotos.findIndex((p: any) => p._id === selectedPhoto._id);
+        const selId = selectedPhoto.imageId || selectedPhoto._id;
+        return displayPhotos.findIndex((p: any) => (p.imageId || p._id) === selId);
     }, [selectedPhoto, displayPhotos]);
 
     const lightboxItems = useMemo(
@@ -514,7 +650,9 @@ export default function PublicEventPage() {
             ? previewLoading
             : photoViewMode === 'my' && !!currentUser
               ? myPhotosLoading
-              : photosLoading;
+              : photoViewMode === 'all'
+                ? photosLoading
+                : false;
 
     // Pagination calculations
     const totalPhotos = displayPhotos.length;
