@@ -538,11 +538,13 @@ export default function StudioUploader({ presetEventId }: StudioUploaderProps) {
               {currentPhotos.map((photo: any) => (
                 <div
                   key={photo._id || photo.imageId}
-                  className="group relative aspect-square overflow-hidden rounded-xl border border-white/10 bg-white/[0.02]"
+                  className="group relative aspect-square overflow-hidden rounded-xl border border-zinc-200 bg-zinc-100 dark:border-white/10 dark:bg-white/[0.04]"
                 >
                   <img
                     src={photo.thumbnailUrl || photo.url}
                     alt={photo.fileName || 'Photo'}
+                    loading="lazy"
+                    decoding="async"
                     className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                   />
 
