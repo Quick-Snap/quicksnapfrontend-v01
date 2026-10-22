@@ -44,29 +44,25 @@ export default function PhotographerDashboard() {
             </p>
           </div>
           <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-            <Link href="/photographer/upload" className="w-full sm:w-auto">
+            <Link href="/studio" className="w-full sm:w-auto">
               <Button className="w-full border-violet-600 bg-violet-600 text-white shadow-lg shadow-violet-500/20 hover:bg-violet-500 sm:w-auto">
+                <Sparkles className="mr-2 h-4 w-4" />
+                Open Studio
+              </Button>
+            </Link>
+            <Link href="/studio/upload" className="w-full sm:w-auto">
+              <Button variant="outline" className="w-full border-zinc-300 text-zinc-800 hover:bg-zinc-50 dark:border-white/20 dark:text-white dark:hover:bg-white/10 sm:w-auto">
                 <Upload className="mr-2 h-4 w-4" />
                 Bulk upload
               </Button>
             </Link>
-            {events.length > 0 ? (
+            {events.length > 0 && (
               <Link href={`/events/${events[0]._id}/submissions`} className="w-full sm:w-auto">
                 <Button variant="outline" className="w-full border-zinc-300 text-zinc-800 hover:bg-zinc-50 dark:border-white/20 dark:text-white dark:hover:bg-white/10 sm:w-auto">
                   <Eye className="mr-2 h-4 w-4" />
                   Review queue
                 </Button>
               </Link>
-            ) : (
-              <Button
-                variant="outline"
-                disabled
-                className="w-full border-zinc-200 text-zinc-400 opacity-60 cursor-not-allowed sm:w-auto dark:border-white/10 dark:text-zinc-500"
-                title="No active assigned events to review"
-              >
-                <Eye className="mr-2 h-4 w-4" />
-                Review queue
-              </Button>
             )}
           </div>
         </div>
@@ -170,7 +166,7 @@ export default function PhotographerDashboard() {
                 </div>
                 <div className="mt-4 flex items-center justify-between border-t border-zinc-100 pt-3 dark:border-white/5">
                   <Link
-                    href={`/photographer/upload?eventId=${event._id}`}
+                    href={`/studio/shoots/${event._id}/upload`}
                     className="inline-flex items-center gap-1.5 text-xs font-semibold text-violet-600 transition-colors hover:text-violet-500 dark:text-violet-400 dark:hover:text-violet-300"
                   >
                     <Upload className="h-3.5 w-3.5" />

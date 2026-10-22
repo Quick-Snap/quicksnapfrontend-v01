@@ -21,11 +21,22 @@ import {
 import { ThemeToggle } from '@/app/components/ui/ThemeToggle';
 
 export default function StudioLayout({ children }: { children: React.ReactNode }) {
-  const { user, loading: authLoading, logout } = useAuth();
-  const { role, isPhotographer, isOrganizer, isAdmin } = useRole();
+  const { user, loading: authLoading, logout, switchRole } = useAuth();
+  const { role, isPhotographer, isOrganizer, isAdmin, isOrganizerOrAdmin } = useRole();
   const router = useRouter();
   const pathname = usePathname();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  const exitHref = isOrganizerOrAdmin ? '/organizer' : '/dashboard';
+  const handleExitStudio = () => {
+    if (isOrganizerOrAdmin && user?.roles?.includes('organizer')) {
+      try {
+        localStorage.setItem('activeRole', 'organizer');
+      } catch {
+        /* ignore */
+      }
+    }
+  };
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -78,7 +89,8 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
 
           <div className="flex items-center gap-2 sm:gap-4">
             <Link
-              href="/dashboard"
+              href={exitHref}
+              onClick={handleExitStudio}
               className="hidden sm:inline-flex items-center gap-1.5 text-xs text-zinc-600 hover:text-zinc-900 px-3 py-1.5 rounded-lg hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-white/5 transition"
             >
               <ArrowLeft size={14} />
@@ -176,11 +188,15 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
               </nav>
               <div className="mt-auto pt-4 border-t border-zinc-200 dark:border-white/10">
                 <Link
-                  href="/dashboard"
+                  href={exitHref}
+                  onClick={() => {
+                    handleExitStudio();
+                    setMobileNavOpen(false);
+                  }}
                   className="flex items-center gap-2 text-xs text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white py-2"
                 >
                   <ArrowLeft size={14} />
-                  <span>Exit to Main Site</span>
+                  <span>Exit Studio</span>
                 </Link>
               </div>
             </div>

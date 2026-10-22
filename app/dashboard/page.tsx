@@ -11,7 +11,7 @@ import PhotographerDashboard from '../components/photographer/PhotographerDashbo
 
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
-  const { role } = useRole();
+  const { role, isOrganizerOrAdmin } = useRole();
   const router = useRouter();
 
   useEffect(() => {
@@ -44,8 +44,10 @@ export default function DashboardPage() {
   }
 
   if (role === 'photographer') {
-    router.replace('/studio');
-    return null;
+    if (isOrganizerOrAdmin) {
+      return <OrganizerDashboard />;
+    }
+    return <PhotographerDashboard />;
   }
 
   return <StudentDashboard />;

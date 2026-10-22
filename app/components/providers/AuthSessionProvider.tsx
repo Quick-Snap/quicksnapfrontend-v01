@@ -5,7 +5,7 @@ import { GoogleSessionSync } from '@/app/components/auth/GoogleSessionSync';
 
 export function AuthSessionProvider({ children }: { children: React.ReactNode }) {
   return (
-    <SessionProvider refetchOnWindowFocus>
+    <SessionProvider refetchOnWindowFocus={false}>
       <GoogleSessionSync />
       {children}
     </SessionProvider>

@@ -11,9 +11,11 @@ interface RoleGuardProps {
 }
 
 export default function RoleGuard({ children, allowedRoles, fallback = null }: RoleGuardProps) {
-  const { role } = useRole();
+  const { role, hasRole } = useRole();
 
-  if (!role || !allowedRoles.includes(role)) {
+  const isAllowed = Boolean(role && (allowedRoles.includes(role) || allowedRoles.some((r) => hasRole(r))));
+
+  if (!isAllowed) {
     return <>{fallback}</>;
   }
 
