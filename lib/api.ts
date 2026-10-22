@@ -145,10 +145,8 @@ export const photoApi = {
       });
 
       xhr.open('PUT', uploadUrl);
-      xhr.setRequestHeader('Content-Type', file.type);
-      if (imageId) {
-        xhr.setRequestHeader('x-amz-meta-imageid', imageId);
-      }
+      const mimeType = file.type || 'application/octet-stream';
+      xhr.setRequestHeader('Content-Type', mimeType);
       xhr.send(file);
     });
   },
