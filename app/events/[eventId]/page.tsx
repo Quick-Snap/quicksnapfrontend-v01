@@ -420,10 +420,10 @@ export default function PublicEventPage() {
                     imageId: id,
                     isAlbumFavorite: p.isAlbumFavorite !== undefined ? p.isAlbumFavorite : (existing?.isAlbumFavorite ?? false),
                     isOriginalRequested: p.isOriginalRequested !== undefined ? p.isOriginalRequested : (existing?.isOriginalRequested ?? false),
-                    albumFavoritedCount: existing?.albumFavoritedCount ?? p.albumFavoritedCount,
-                    originalRequestedCount: existing?.originalRequestedCount ?? p.originalRequestedCount,
-                    albumFavoritedBy: existing?.albumFavoritedBy ?? p.albumFavoritedBy,
-                    originalRequestedBy: existing?.originalRequestedBy ?? p.originalRequestedBy,
+                    albumFavoritedCount: existing?.albumFavoritedCount ?? p.albumFavoritedCount ?? (existing?.isAlbumFavorite || p.isAlbumFavorite ? 1 : 0),
+                    originalRequestedCount: existing?.originalRequestedCount ?? p.originalRequestedCount ?? (existing?.isOriginalRequested || p.isOriginalRequested ? 1 : 0),
+                    albumFavoritedBy: existing?.albumFavoritedBy ?? p.albumFavoritedBy ?? [],
+                    originalRequestedBy: existing?.originalRequestedBy ?? p.originalRequestedBy ?? [],
                 });
             }
         }
@@ -440,10 +440,10 @@ export default function PublicEventPage() {
                     imageId: id,
                     isAlbumFavorite: p.isAlbumFavorite !== undefined ? p.isAlbumFavorite : (existing?.isAlbumFavorite ?? false),
                     isOriginalRequested: p.isOriginalRequested !== undefined ? p.isOriginalRequested : (existing?.isOriginalRequested ?? false),
-                    albumFavoritedCount: existing?.albumFavoritedCount ?? p.albumFavoritedCount,
-                    originalRequestedCount: existing?.originalRequestedCount ?? p.originalRequestedCount,
-                    albumFavoritedBy: existing?.albumFavoritedBy ?? p.albumFavoritedBy,
-                    originalRequestedBy: existing?.originalRequestedBy ?? p.originalRequestedBy,
+                    albumFavoritedCount: existing?.albumFavoritedCount ?? p.albumFavoritedCount ?? (existing?.isAlbumFavorite || p.isAlbumFavorite ? 1 : 0),
+                    originalRequestedCount: existing?.originalRequestedCount ?? p.originalRequestedCount ?? (existing?.isOriginalRequested || p.isOriginalRequested ? 1 : 0),
+                    albumFavoritedBy: existing?.albumFavoritedBy ?? p.albumFavoritedBy ?? [],
+                    originalRequestedBy: existing?.originalRequestedBy ?? p.originalRequestedBy ?? [],
                 });
             }
         }
@@ -455,13 +455,13 @@ export default function PublicEventPage() {
         if (!currentUser || !photo) return false;
         const myId = (currentUser.id || (currentUser as any)._id)?.toString();
         const list = type === 'album' ? photo.albumFavoritedBy : photo.originalRequestedBy;
-        if (Array.isArray(list) && list.length > 0) {
+        if (Array.isArray(list)) {
             return list.some((u: any) => {
                 const uid = typeof u === 'string' ? u : (u?._id || u?.id)?.toString();
                 return uid === myId;
             });
         }
-        return type === 'album' ? Boolean(photo.isAlbumFavorite) : Boolean(photo.isOriginalRequested);
+        return false;
     }, [currentUser]);
 
     const allKnownPhotosList = useMemo(() => Array.from(allKnownPhotosMap.values()), [allKnownPhotosMap]);
@@ -1494,50 +1494,72 @@ export default function PublicEventPage() {
                                         alt={`Event photo ${startIndex + index + 1}`}
                                         className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                                     />
-                                    {/* Quick Selection Heart ❤️ and Bookmark 🔖 Buttons */}
-                                    {(currentUser || isProofingMode) && (
-                                        <div
-                                            className="absolute top-2 right-2 z-10 flex items-center gap-1.5"
-                                            onClick={(e) => e.stopPropagation()}
-                                        >
-                                            <button
-                                                type="button"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleToggleSelection(photo, 'album');
-                                                }}
-                                                className={`p-1.5 rounded-full backdrop-blur-md transition-all ${
-                                                    isSelectedByCurrentUser(photo, 'album')
-                                                        ? 'bg-rose-500 text-white shadow-md shadow-rose-500/30 opacity-100 scale-105'
-                                                        : photo.isAlbumFavorite
-                                                        ? 'bg-rose-500/80 text-white border border-rose-300 opacity-90 group-hover:opacity-100 hover:scale-110'
-                                                        : 'bg-black/50 text-white/80 hover:text-rose-400 opacity-0 group-hover:opacity-100 hover:scale-110'
-                                                }`}
-                                                title={getSelectionTooltip(photo, 'album')}
-                                                aria-label="Toggle album selection"
+                                    {/* Quick Selection Heart ❤️ and Bookmark 🔖 Buttons (Instagram-style counts) */}
+                                    {(currentUser || isProofingMode) && (() => {
+                                        const isMyAlbumPick = isSelectedByCurrentUser(photo, 'album');
+                                        const albumCount = typeof photo.albumFavoritedCount === 'number'
+                                            ? photo.albumFavoritedCount
+                                            : Array.isArray(photo.albumFavoritedBy)
+                                            ? photo.albumFavoritedBy.length
+                                            : ((isMyAlbumPick || photo.isAlbumFavorite) ? 1 : 0);
+
+                                        const isMyOriginalPick = isSelectedByCurrentUser(photo, 'original');
+                                        const originalCount = typeof photo.originalRequestedCount === 'number'
+                                            ? photo.originalRequestedCount
+                                            : Array.isArray(photo.originalRequestedBy)
+                                            ? photo.originalRequestedBy.length
+                                            : ((isMyOriginalPick || photo.isOriginalRequested) ? 1 : 0);
+
+                                        return (
+                                            <div
+                                                className="absolute top-2 right-2 z-10 flex items-center gap-1.5"
+                                                onClick={(e) => e.stopPropagation()}
                                             >
-                                                <Heart className={`h-3.5 w-3.5 ${isSelectedByCurrentUser(photo, 'album') || photo.isAlbumFavorite ? 'fill-current' : ''}`} />
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleToggleSelection(photo, 'original');
-                                                }}
-                                                className={`p-1.5 rounded-full backdrop-blur-md transition-all ${
-                                                    isSelectedByCurrentUser(photo, 'original')
-                                                        ? 'bg-amber-500 text-white shadow-md shadow-amber-500/30 opacity-100 scale-105'
-                                                        : photo.isOriginalRequested
-                                                        ? 'bg-amber-500/80 text-white border border-amber-300 opacity-90 group-hover:opacity-100 hover:scale-110'
-                                                        : 'bg-black/50 text-white/80 hover:text-amber-400 opacity-0 group-hover:opacity-100 hover:scale-110'
-                                                }`}
-                                                title={getSelectionTooltip(photo, 'original')}
-                                                aria-label="Toggle high-res bookmark"
-                                            >
-                                                <Bookmark className={`h-3.5 w-3.5 ${isSelectedByCurrentUser(photo, 'original') || photo.isOriginalRequested ? 'fill-current' : ''}`} />
-                                            </button>
-                                        </div>
-                                    )}
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleToggleSelection(photo, 'album');
+                                                    }}
+                                                    className={`backdrop-blur-md transition-all ${
+                                                        isMyAlbumPick
+                                                            ? 'flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-500 text-white shadow-md shadow-rose-500/30 opacity-100 scale-100 hover:scale-105 active:scale-95'
+                                                            : albumCount > 0
+                                                            ? 'flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 text-white/90 border border-white/25 opacity-100 hover:border-rose-400 hover:text-rose-400 active:scale-95'
+                                                            : 'flex items-center justify-center p-1.5 rounded-full bg-black/50 text-white/80 hover:text-rose-400 opacity-0 group-hover:opacity-100 hover:scale-110 active:scale-95'
+                                                    }`}
+                                                    title={getSelectionTooltip(photo, 'album')}
+                                                    aria-label="Toggle album selection"
+                                                >
+                                                    <Heart className={`h-3.5 w-3.5 ${isMyAlbumPick ? 'fill-current text-white' : ''}`} />
+                                                    {albumCount > 0 && (
+                                                        <span className="text-[11px] font-bold leading-none">{albumCount}</span>
+                                                    )}
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleToggleSelection(photo, 'original');
+                                                    }}
+                                                    className={`backdrop-blur-md transition-all ${
+                                                        isMyOriginalPick
+                                                            ? 'flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500 text-white shadow-md shadow-amber-500/30 opacity-100 scale-100 hover:scale-105 active:scale-95'
+                                                            : originalCount > 0
+                                                            ? 'flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 text-white/90 border border-white/25 opacity-100 hover:border-amber-400 hover:text-amber-400 active:scale-95'
+                                                            : 'flex items-center justify-center p-1.5 rounded-full bg-black/50 text-white/80 hover:text-amber-400 opacity-0 group-hover:opacity-100 hover:scale-110 active:scale-95'
+                                                    }`}
+                                                    title={getSelectionTooltip(photo, 'original')}
+                                                    aria-label="Toggle high-res bookmark"
+                                                >
+                                                    <Bookmark className={`h-3.5 w-3.5 ${isMyOriginalPick ? 'fill-current text-white' : ''}`} />
+                                                    {originalCount > 0 && (
+                                                        <span className="text-[11px] font-bold leading-none">{originalCount}</span>
+                                                    )}
+                                                </button>
+                                            </div>
+                                        );
+                                    })()}
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 md:opacity-0">
                                         <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
                                             <div className="flex items-center justify-between text-xs text-white sm:text-sm">
@@ -1836,8 +1858,22 @@ export default function PublicEventPage() {
                     onClose={() => setSelectedPhoto(null)}
                     onUntag={photoViewMode === 'my' ? () => handleUntag(selectedPhoto) : undefined}
                     onReport={() => handleReportPhoto(selectedPhoto)}
-                    isAlbumFavorite={isSelectedByCurrentUser(selectedPhoto, 'album') || Boolean(selectedPhoto?.isAlbumFavorite)}
-                    isOriginalRequested={isSelectedByCurrentUser(selectedPhoto, 'original') || Boolean(selectedPhoto?.isOriginalRequested)}
+                    isAlbumFavorite={isSelectedByCurrentUser(selectedPhoto, 'album')}
+                    isOriginalRequested={isSelectedByCurrentUser(selectedPhoto, 'original')}
+                    albumCount={
+                        typeof selectedPhoto?.albumFavoritedCount === 'number'
+                            ? selectedPhoto.albumFavoritedCount
+                            : Array.isArray(selectedPhoto?.albumFavoritedBy)
+                            ? selectedPhoto.albumFavoritedBy.length
+                            : (isSelectedByCurrentUser(selectedPhoto, 'album') || selectedPhoto?.isAlbumFavorite ? 1 : 0)
+                    }
+                    originalCount={
+                        typeof selectedPhoto?.originalRequestedCount === 'number'
+                            ? selectedPhoto.originalRequestedCount
+                            : Array.isArray(selectedPhoto?.originalRequestedBy)
+                            ? selectedPhoto.originalRequestedBy.length
+                            : (isSelectedByCurrentUser(selectedPhoto, 'original') || selectedPhoto?.isOriginalRequested ? 1 : 0)
+                    }
                     albumTooltip={selectedPhoto ? getSelectionTooltip(selectedPhoto, 'album') : undefined}
                     originalTooltip={selectedPhoto ? getSelectionTooltip(selectedPhoto, 'original') : undefined}
                     onToggleAlbum={(currentUser || isProofingMode) ? () => handleToggleSelection(selectedPhoto, 'album') : undefined}

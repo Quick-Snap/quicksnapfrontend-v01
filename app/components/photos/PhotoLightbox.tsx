@@ -28,6 +28,8 @@ type PhotoLightboxProps = {
   onReport?: () => void;
   isAlbumFavorite?: boolean;
   isOriginalRequested?: boolean;
+  albumCount?: number;
+  originalCount?: number;
   albumTooltip?: string;
   originalTooltip?: string;
   onToggleAlbum?: () => void;
@@ -48,6 +50,8 @@ export function PhotoLightbox({
   onReport,
   isAlbumFavorite = false,
   isOriginalRequested = false,
+  albumCount = 0,
+  originalCount = 0,
   albumTooltip,
   originalTooltip,
   onToggleAlbum,
@@ -145,9 +149,11 @@ export function PhotoLightbox({
           {onToggleAlbum && (
             <button
               type="button"
-              className={`flex h-11 min-h-[44px] w-11 min-w-[44px] shrink-0 items-center justify-center rounded-full border shadow-lg shadow-black/40 transition-all active:scale-[0.95] ${
+              className={`flex h-11 min-h-[44px] ${albumCount > 0 ? 'px-3.5' : 'w-11 min-w-[44px]'} shrink-0 items-center justify-center gap-1.5 rounded-full border shadow-lg shadow-black/40 transition-all active:scale-[0.95] ${
                 isAlbumFavorite
-                  ? 'border-rose-500/50 bg-rose-950/60 text-rose-400'
+                  ? 'border-rose-500/60 bg-rose-600 text-white shadow-rose-500/30'
+                  : albumCount > 0
+                  ? 'border-white/25 bg-zinc-900/90 text-white/90 hover:text-rose-400 hover:border-rose-400/40'
                   : 'border-white/20 bg-zinc-900/90 text-zinc-300 hover:text-rose-400 hover:border-rose-400/40'
               }`}
               onClick={(e) => {
@@ -158,18 +164,23 @@ export function PhotoLightbox({
               aria-label="Toggle album selection"
             >
               <Heart
-                className={`h-5 w-5 shrink-0 transition-transform ${isAlbumFavorite ? 'fill-rose-500 text-rose-500 scale-110' : ''}`}
+                className={`h-5 w-5 shrink-0 transition-transform ${isAlbumFavorite ? 'fill-current text-white scale-110' : ''}`}
                 strokeWidth={2}
                 aria-hidden
               />
+              {albumCount > 0 && (
+                <span className="text-xs font-bold leading-none">{albumCount}</span>
+              )}
             </button>
           )}
           {onToggleOriginal && (
             <button
               type="button"
-              className={`flex h-11 min-h-[44px] w-11 min-w-[44px] shrink-0 items-center justify-center rounded-full border shadow-lg shadow-black/40 transition-all active:scale-[0.95] ${
+              className={`flex h-11 min-h-[44px] ${originalCount > 0 ? 'px-3.5' : 'w-11 min-w-[44px]'} shrink-0 items-center justify-center gap-1.5 rounded-full border shadow-lg shadow-black/40 transition-all active:scale-[0.95] ${
                 isOriginalRequested
-                  ? 'border-amber-500/50 bg-amber-950/60 text-amber-400'
+                  ? 'border-amber-500/60 bg-amber-600 text-white shadow-amber-500/30'
+                  : originalCount > 0
+                  ? 'border-white/25 bg-zinc-900/90 text-white/90 hover:text-amber-400 hover:border-amber-400/40'
                   : 'border-white/20 bg-zinc-900/90 text-zinc-300 hover:text-amber-400 hover:border-amber-400/40'
               }`}
               onClick={(e) => {
@@ -180,10 +191,13 @@ export function PhotoLightbox({
               aria-label="Toggle high-res bookmark"
             >
               <Bookmark
-                className={`h-5 w-5 shrink-0 transition-transform ${isOriginalRequested ? 'fill-amber-500 text-amber-500 scale-110' : ''}`}
+                className={`h-5 w-5 shrink-0 transition-transform ${isOriginalRequested ? 'fill-current text-white scale-110' : ''}`}
                 strokeWidth={2}
                 aria-hidden
               />
+              {originalCount > 0 && (
+                <span className="text-xs font-bold leading-none">{originalCount}</span>
+              )}
             </button>
           )}
           {!onUntag && !onReport && !onToggleAlbum && !onToggleOriginal && <div className="w-11" />}
