@@ -468,7 +468,10 @@ export default function PublicEventPage() {
 
     // Determine which photos to display based on view mode
     const displayPhotos = useMemo(() => {
-        if (photoViewMode === 'my' && !!currentUser) return myPhotos;
+        if (photoViewMode === 'my') {
+            if (!currentUser) return [];
+            return myPhotos;
+        }
         if (photoViewMode === 'album') return albumPhotos;
         if (photoViewMode === 'bookmark') return bookmarkPhotos;
         return allPhotos;
@@ -1204,9 +1207,19 @@ export default function PublicEventPage() {
                     <p className="mx-auto mt-2 max-w-lg px-2 text-sm leading-relaxed text-zinc-600 sm:text-base dark:text-gray-400">
                         {!currentUser && !isProofingMode
                             ? 'Preview below — sign in for the full set and downloads.'
-                            : totalPhotos > 0
-                              ? `${totalPhotos} moment${totalPhotos === 1 ? '' : 's'} from this event`
-                              : 'Photos will show here after upload'}
+                            : photoViewMode === 'my'
+                              ? !currentUser
+                                ? 'Sign in to match your face and find your photos.'
+                                : myPhotos.length > 0
+                                  ? `${myPhotos.length} photo${myPhotos.length === 1 ? '' : 's'} with you`
+                                  : 'No photos found with your face yet'
+                              : photoViewMode === 'album'
+                                ? `${albumCount} photo${albumCount === 1 ? '' : 's'} selected for album`
+                                : photoViewMode === 'bookmark'
+                                  ? `${bookmarkCount} keeper${bookmarkCount === 1 ? '' : 's'} saved`
+                                  : (authenticatedPhotoTotal || totalPhotos) > 0
+                                    ? `${authenticatedPhotoTotal || totalPhotos} moments from this event`
+                                    : 'Photos will show here after upload'}
                     </p>
                 </div>
 
@@ -1535,7 +1548,7 @@ export default function PublicEventPage() {
                                     Find Your Photos with Face Match
                                 </h3>
                                 <p className="mx-auto max-w-md text-sm sm:text-base leading-relaxed text-zinc-600 dark:text-gray-300 mb-6">
-                                    Please sign in or create an account to match your face once. Our smart AI will register your profile and find your photos across all visits!
+                                    Sign in or create a quick account to register your face. Our AI will automatically scan this gallery and isolate only your photos!
                                 </p>
                                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto">
                                     <Button
@@ -1543,14 +1556,14 @@ export default function PublicEventPage() {
                                         className="w-full sm:w-auto h-12 px-6 rounded-xl font-semibold shadow-lg shadow-violet-500/25 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white flex items-center justify-center gap-2"
                                     >
                                         <Camera className="h-5 w-5" />
-                                        Sign In to Match Face
+                                        Sign In to Find Photos
                                     </Button>
                                     <Button
                                         variant="outline"
-                                        onClick={() => setPhotoViewMode('all')}
-                                        className="w-full sm:w-auto h-12 px-5 rounded-xl border-zinc-300 dark:border-white/20"
+                                        onClick={() => router.push(`/register?redirect=${encodeURIComponent(`/register-face?redirect=/events/${eventId}${proofTokenParam ? `?proofToken=${proofTokenParam}` : ''}`)}`)}
+                                        className="w-full sm:w-auto h-12 px-5 rounded-xl border-zinc-300 dark:border-white/20 font-semibold"
                                     >
-                                        Browse All Photos
+                                        Create Free Account
                                     </Button>
                                 </div>
                             </div>
