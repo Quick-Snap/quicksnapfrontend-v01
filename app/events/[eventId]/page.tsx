@@ -1658,35 +1658,35 @@ export default function PublicEventPage() {
 
                                 {/* Contextual 1-Tap Download Button: Matched vs Favorites */}
                                 {myPhotosFilter === 'all' && myPhotos.length > 0 && (
-                                    <Button
-                                        size="sm"
+                                    <button
+                                        type="button"
                                         onClick={() => handleBatchDownloadFavorites(myPhotos, 'Matched_Photos')}
                                         disabled={batchDownloading}
-                                        className="h-8 px-2.5 sm:px-3 text-xs rounded-lg bg-violet-600 hover:bg-violet-500 text-white font-medium shadow-sm flex items-center gap-1.5 shrink-0"
+                                        className="inline-flex h-7 items-center gap-1 rounded-lg bg-violet-600 px-2 sm:px-2.5 text-[11px] font-medium text-white shadow-sm transition-all hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
                                     >
                                         {batchDownloading ? (
-                                            <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                            <div className="h-2.5 w-2.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
                                         ) : (
-                                            <Download size={12} />
+                                            <Download size={11} />
                                         )}
                                         <span>Download Matched ({myPhotos.length})</span>
-                                    </Button>
+                                    </button>
                                 )}
 
                                 {myPhotosFilter === 'favorites' && myLikedPhotos.length > 0 && (
-                                    <Button
-                                        size="sm"
+                                    <button
+                                        type="button"
                                         onClick={() => handleBatchDownloadFavorites(myLikedPhotos, 'Favorites')}
                                         disabled={batchDownloading}
-                                        className="h-8 px-2.5 sm:px-3 text-xs rounded-lg bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white font-medium shadow-sm shadow-rose-500/20 flex items-center gap-1.5 shrink-0"
+                                        className="inline-flex h-7 items-center gap-1 rounded-lg bg-gradient-to-r from-rose-600 to-pink-600 px-2 sm:px-2.5 text-[11px] font-medium text-white shadow-sm shadow-rose-500/20 transition-all hover:from-rose-500 hover:to-pink-500 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
                                     >
                                         {batchDownloading ? (
-                                            <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                            <div className="h-2.5 w-2.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
                                         ) : (
-                                            <Download size={12} />
+                                            <Download size={11} />
                                         )}
                                         <span>Download Favorites ({myLikedPhotos.length})</span>
-                                    </Button>
+                                    </button>
                                 )}
                             </div>
                         )}
@@ -1697,19 +1697,19 @@ export default function PublicEventPage() {
                                 <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
                                     Showing your {myAlbumCount} shortlisted album picks
                                 </span>
-                                <Button
-                                    size="sm"
+                                <button
+                                    type="button"
                                     onClick={() => handleBatchDownloadFavorites(myAlbumPhotos, 'Album')}
                                     disabled={batchDownloading}
-                                    className="h-8 px-2.5 sm:px-3 text-xs rounded-lg bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white font-medium shadow-sm shadow-rose-500/20 flex items-center gap-1.5 shrink-0"
+                                    className="inline-flex h-7 items-center gap-1 rounded-lg bg-gradient-to-r from-rose-600 to-pink-600 px-2 sm:px-2.5 text-[11px] font-medium text-white shadow-sm shadow-rose-500/20 transition-all hover:from-rose-500 hover:to-pink-500 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
                                 >
                                     {batchDownloading ? (
-                                        <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                        <div className="h-2.5 w-2.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
                                     ) : (
-                                        <Download size={12} />
+                                        <Download size={11} />
                                     )}
                                     <span>Download All ({myAlbumCount})</span>
-                                </Button>
+                                </button>
                             </div>
                         )}
 
