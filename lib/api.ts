@@ -597,13 +597,37 @@ export const userApi = {
   updateStudioSettings: async (settings: {
     businessName?: string;
     phone?: string;
+    watermarkType?: 'text' | 'logo';
     watermarkText?: string;
+    watermarkSize?: 'small' | 'medium' | 'large';
+    logoUrl?: string;
+    logoKey?: string;
     watermarkPosition?: 'bottom-right' | 'bottom-left' | 'center';
     watermarkOpacity?: number;
     brandColor?: string;
     defaultProofingDays?: number;
   }) => {
     const response = await api.put<ApiResponse<any>>('/users/studio-settings', settings);
+    return response.data;
+  },
+
+  uploadStudioLogo: async (file: File) => {
+    const formData = new FormData();
+    formData.append('logo', file);
+    const response = await api.post<ApiResponse<{ logoUrl: string; logoKey: string; user: any }>>(
+      '/users/studio-logo',
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return response.data;
+  },
+
+  deleteStudioLogo: async () => {
+    const response = await api.delete<ApiResponse<{ user: any }>>('/users/studio-logo');
     return response.data;
   },
 

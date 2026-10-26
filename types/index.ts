@@ -18,7 +18,11 @@ export interface User {
   studioSettings?: {
     businessName?: string;
     phone?: string;
+    watermarkType?: 'text' | 'logo';
     watermarkText?: string;
+    watermarkSize?: 'small' | 'medium' | 'large';
+    logoUrl?: string;
+    logoKey?: string;
     watermarkPosition?: 'bottom-right' | 'bottom-left' | 'center';
     watermarkOpacity?: number;
     brandColor?: string;
