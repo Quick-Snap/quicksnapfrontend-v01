@@ -17,3 +17,28 @@ export function buildEventShareText(params: {
   lines.push(url);
   return lines.join('\n\n');
 }
+
+/**
+ * Formatted message text when client notifies photographer that their photo selection is ready.
+ */
+export function buildSelectionShareText(params: {
+  eventName: string;
+  clientName?: string | null;
+  albumCount: number;
+  keeperCount: number;
+  url: string;
+}): string {
+  const { eventName, clientName, albumCount, keeperCount, url } = params;
+  const greeting = clientName ? `Hey, this is ${clientName}!` : 'Hey!';
+  const lines: string[] = [
+    `${greeting} We have selected the photos for "${eventName}". 📸`,
+    '',
+    '✨ Our Selections:',
+    `• ❤️ ${albumCount} Album ${albumCount === 1 ? 'pick' : 'picks'}`,
+    `• 🔖 ${keeperCount} High-Res ${keeperCount === 1 ? 'Keeper' : 'Keepers'}`,
+    '',
+    'You can view our selections here:',
+    url
+  ];
+  return lines.join('\n');
+}

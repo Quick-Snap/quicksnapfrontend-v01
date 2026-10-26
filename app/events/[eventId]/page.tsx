@@ -38,7 +38,7 @@ import {
     extractMyPhotosTotal,
     normalizeEventPhotosPayload,
 } from '@/lib/photoFetch';
-import { buildEventShareText } from '@/lib/eventShareText';
+import { buildEventShareText, buildSelectionShareText } from '@/lib/eventShareText';
 import { getPhotoDisplayUrl } from '@/lib/photoUrl';
 import { Button } from '@/app/components/ui/Button';
 import Pagination from '@/app/components/ui/Pagination';
@@ -794,14 +794,73 @@ export default function PublicEventPage() {
 
         setNotifying(true);
         try {
-            const res = await eventApi.notifySelectionReady(eventId, { clientName });
-            toast.success(res.message || 'Photographer has been notified of your selections!', { duration: 4000 });
+            await eventApi.notifySelectionReady(eventId, { clientName });
+
+            const shareUrl = typeof window !== 'undefined' ? window.location.href : `https://roopixo.com/events/${eventId}`;
+            const shareText = buildSelectionShareText({
+                eventName: event?.name || 'our event',
+                clientName,
+                albumCount: myAlbumCount,
+                keeperCount: myBookmarkCount,
+                url: shareUrl,
+            });
+
+            // 1. Copy text directly to clipboard
+            try {
+                await navigator.clipboard.writeText(shareText);
+            } catch (clipErr) {
+                console.warn('Clipboard write fallback error:', clipErr);
+            }
+
+            // 2. Open Native Share Sheet if available (iOS / Android: WhatsApp, Instagram, Messages, etc.)
+            if (typeof navigator !== 'undefined' && navigator.share) {
+                try {
+                    await navigator.share({
+                        title: `Photo Selection - ${event?.name || 'Event'}`,
+                        text: shareText,
+                        url: shareUrl,
+                    });
+                    toast.success('Selection shared & photographer notified! 🚀');
+                } catch (shareErr: any) {
+                    if (shareErr?.name !== 'AbortError') {
+                        console.error('Share error:', shareErr);
+                    }
+                    toast.success(
+                        'Selection copied to clipboard! 📋 Share via WhatsApp, Instagram or Messages.',
+                        { duration: 4500 }
+                    );
+                }
+            } else {
+                // 3. Desktop / Fallback: Toast with 1-tap WhatsApp Web action
+                toast.success(
+                    (t) => (
+                        <div className="flex flex-col gap-1.5 py-0.5">
+                            <span className="font-semibold text-zinc-900 dark:text-white">
+                                Selection text copied to clipboard! 📋
+                            </span>
+                            <span className="text-xs text-zinc-600 dark:text-zinc-300">
+                                Ready to share via WhatsApp, Instagram, or Messages.
+                            </span>
+                            <a
+                                href={`https://wa.me/?text=${encodeURIComponent(shareText)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={() => toast.dismiss(t.id)}
+                                className="mt-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1 text-xs font-semibold text-white shadow-sm hover:bg-emerald-500 transition"
+                            >
+                                Share via WhatsApp 💬
+                            </a>
+                        </div>
+                    ),
+                    { duration: 6500 }
+                );
+            }
         } catch (err: any) {
             toast.error(err.response?.data?.message || 'Failed to notify photographer');
         } finally {
             setNotifying(false);
         }
-    }, [eventId, currentUser]);
+    }, [eventId, currentUser, event?.name, myAlbumCount, myBookmarkCount]);
 
     /** Real total count of all event photos for authenticated visitors: server total first while streaming, then exact loaded count. */
     const authenticatedPhotoTotal = useMemo(() => {
