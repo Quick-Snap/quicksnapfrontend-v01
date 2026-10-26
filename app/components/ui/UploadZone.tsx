@@ -109,7 +109,7 @@ export default function UploadZone({ onFilesSelected, maxFiles = 100, eventId, o
             <div
                 {...getRootProps()}
                 className={`
-                    relative overflow-hidden border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all duration-300
+                    relative overflow-hidden border-2 border-dashed rounded-2xl p-6 sm:p-10 text-center cursor-pointer transition-all duration-300
                     ${isDragActive 
                         ? 'border-violet-500 bg-violet-500/10 scale-[1.02]' 
                         : 'border-zinc-200 hover:border-violet-500/50 hover:bg-zinc-50 dark:border-white/20 dark:hover:bg-white/5'
@@ -126,22 +126,22 @@ export default function UploadZone({ onFilesSelected, maxFiles = 100, eventId, o
                 <div className="relative flex flex-col items-center gap-4">
                     {/* Icon Container */}
                     <div className={`
-                        p-5 rounded-2xl transition-all duration-300
+                        p-4 sm:p-5 rounded-2xl transition-all duration-300
                         ${isDragActive 
                             ? 'bg-violet-500/20 scale-110' 
                             : 'bg-gradient-to-br from-violet-500/10 to-indigo-500/10'
                         }
                     `}>
                         <Upload 
-                            size={36} 
+                            size={32} 
                             className={`transition-colors duration-300 ${isDragActive ? 'text-violet-500 dark:text-violet-400' : 'text-violet-600 dark:text-violet-500'}`} 
                         />
                     </div>
                     
                     {/* Text Content */}
-                    <div className="space-y-2">
-                        <p className="font-semibold text-lg text-zinc-900 dark:text-white">
-                            {isDragActive ? 'Drop your photos here' : 'Drag & drop photos here'}
+                    <div className="space-y-1 sm:space-y-2">
+                        <p className="font-semibold text-base sm:text-lg text-zinc-900 dark:text-white">
+                            {isDragActive ? 'Drop your photos here' : 'Tap to select photos or drag & drop'}
                         </p>
                         {!isDragActive && (
                             <p className="text-xs text-zinc-400 dark:text-zinc-500">
@@ -152,7 +152,7 @@ export default function UploadZone({ onFilesSelected, maxFiles = 100, eventId, o
 
                     {/* Action Buttons */}
                     {!isDragActive && (
-                        <div className="mt-1 flex flex-col sm:flex-row gap-3">
+                        <div className="mt-1 flex flex-col sm:flex-row gap-2.5 sm:gap-3 w-full sm:w-auto px-4 sm:px-0">
                             <button
                                 type="button"
                                 className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-xs transition-all bg-white border border-zinc-200 hover:bg-zinc-50 dark:bg-zinc-800 dark:border-zinc-700 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 shadow-sm"
@@ -178,9 +178,9 @@ export default function UploadZone({ onFilesSelected, maxFiles = 100, eventId, o
                     )}
  
                     {/* File Types Badge */}
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-50 border border-zinc-200 dark:bg-white/5 dark:border-white/10">
-                        <ImageIcon size={14} className="text-zinc-500 dark:text-gray-400" />
-                        <span className="text-xs text-zinc-500 dark:text-gray-400">JPG, PNG, WEBP, HEIC up to 20MB each</span>
+                    <div className="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-zinc-50 border border-zinc-200 dark:bg-white/5 dark:border-white/10 max-w-full">
+                        <ImageIcon size={14} className="text-zinc-500 dark:text-gray-400 shrink-0" />
+                        <span className="text-[11px] sm:text-xs text-zinc-500 dark:text-gray-400 truncate">JPG, PNG, WEBP, HEIC up to 20MB each</span>
                     </div>
                 </div>
             </div>
@@ -253,7 +253,8 @@ export default function UploadZone({ onFilesSelected, maxFiles = 100, eventId, o
                                         e.stopPropagation();
                                         removeFile(index);
                                     }}
-                                    className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 backdrop-blur-sm text-white opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-red-500 hover:scale-110"
+                                    className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 backdrop-blur-sm text-white opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300 hover:bg-red-500 hover:scale-110"
+                                    aria-label="Remove photo"
                                 >
                                     <X size={14} />
                                 </button>

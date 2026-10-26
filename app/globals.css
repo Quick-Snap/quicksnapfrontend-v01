@@ -131,7 +131,7 @@
   
   /* Input Components - Dark Theme */
   .input {
-    @apply w-full px-4 py-2.5 rounded-lg transition-all duration-200;
+    @apply w-full px-4 py-2.5 rounded-lg text-base sm:text-sm transition-all duration-200;
     @apply bg-white border border-zinc-200 text-zinc-900 placeholder-zinc-400;
     @apply focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-500/50;
     @apply hover:border-zinc-300;
@@ -139,7 +139,7 @@
   }
   
   .input-glass {
-    @apply backdrop-blur-md bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white placeholder-gray-500;
+    @apply backdrop-blur-md bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-base sm:text-sm text-white placeholder-gray-500;
     @apply focus:bg-white/10 focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/30;
     @apply shadow-lg;
   }
@@ -287,6 +287,16 @@
   
   .text-gradient-purple {
     @apply bg-gradient-to-r from-violet-500 to-purple-500 bg-clip-text text-transparent;
+  }
+
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
   }
 }
 

@@ -233,6 +233,7 @@ export default function ShootProofingPage() {
               disabled={regeneratingToken}
               className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:border-white/10 dark:bg-white/[0.04] dark:text-zinc-400 dark:hover:text-white px-2.5 py-1.5 text-xs font-medium transition"
               title="Regenerate token (invalidates previously shared link)"
+              aria-label="Regenerate link"
             >
               <RotateCcw size={13} className={regeneratingToken ? 'animate-spin' : ''} />
               <span className="hidden sm:inline">Regenerate Link</span>
@@ -279,18 +280,18 @@ export default function ShootProofingPage() {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 bg-zinc-50 border border-zinc-200 rounded-2xl p-4 dark:bg-black/40 dark:border-white/10">
-            <div className="px-3 border-r border-zinc-200 dark:border-white/10">
-              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 font-medium uppercase tracking-wider">❤️ Album</p>
-              <p className="text-2xl font-bold text-rose-600 dark:text-rose-400">{albumCount}</p>
+          <div className="grid grid-cols-3 divide-x divide-zinc-200 dark:divide-white/10 w-full sm:w-auto sm:flex sm:items-center sm:gap-3 bg-zinc-50 border border-zinc-200 rounded-2xl p-3 sm:p-4 dark:bg-black/40 dark:border-white/10 text-center sm:text-left">
+            <div className="px-2 sm:px-3">
+              <p className="text-[10px] sm:text-[11px] text-zinc-500 dark:text-zinc-400 font-medium uppercase tracking-wider">❤️ Album</p>
+              <p className="text-xl sm:text-2xl font-bold text-rose-600 dark:text-rose-400">{albumCount}</p>
             </div>
-            <div className="px-3 border-r border-zinc-200 dark:border-white/10">
-              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 font-medium uppercase tracking-wider">🔖 Keepers</p>
-              <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{originalCount}</p>
+            <div className="px-2 sm:px-3">
+              <p className="text-[10px] sm:text-[11px] text-zinc-500 dark:text-zinc-400 font-medium uppercase tracking-wider">🔖 Keepers</p>
+              <p className="text-xl sm:text-2xl font-bold text-amber-600 dark:text-amber-400">{originalCount}</p>
             </div>
-            <div className="px-3">
-              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 font-medium uppercase tracking-wider">📦 Unique Total</p>
-              <p className="text-2xl font-bold text-violet-600 dark:text-violet-400">{combinedCount}</p>
+            <div className="px-2 sm:px-3">
+              <p className="text-[10px] sm:text-[11px] text-zinc-500 dark:text-zinc-400 font-medium uppercase tracking-wider">📦 Total</p>
+              <p className="text-xl sm:text-2xl font-bold text-violet-600 dark:text-violet-400">{combinedCount}</p>
             </div>
           </div>
         </div>
@@ -440,11 +441,11 @@ export default function ShootProofingPage() {
       {/* Interactive Visual Gallery */}
       <div className="space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-zinc-200 dark:border-white/10 pb-4">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar w-full sm:w-auto py-0.5">
             <button
               type="button"
               onClick={() => setActiveTab('combined')}
-              className={`rounded-xl px-4 py-2 text-xs font-semibold transition ${
+              className={`shrink-0 rounded-xl px-3 sm:px-4 py-2 text-xs font-semibold transition ${
                 activeTab === 'combined'
                   ? 'bg-violet-600 text-white shadow-md shadow-violet-600/25'
                   : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-white/5'
@@ -455,7 +456,7 @@ export default function ShootProofingPage() {
             <button
               type="button"
               onClick={() => setActiveTab('album')}
-              className={`rounded-xl px-4 py-2 text-xs font-semibold transition flex items-center gap-1.5 ${
+              className={`shrink-0 rounded-xl px-3 sm:px-4 py-2 text-xs font-semibold transition flex items-center gap-1.5 ${
                 activeTab === 'album'
                   ? 'bg-rose-600 text-white shadow-md shadow-rose-600/25'
                   : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-white/5'
@@ -467,7 +468,7 @@ export default function ShootProofingPage() {
             <button
               type="button"
               onClick={() => setActiveTab('bookmark')}
-              className={`rounded-xl px-4 py-2 text-xs font-semibold transition flex items-center gap-1.5 ${
+              className={`shrink-0 rounded-xl px-3 sm:px-4 py-2 text-xs font-semibold transition flex items-center gap-1.5 ${
                 activeTab === 'bookmark'
                   ? 'bg-amber-600 text-white shadow-md shadow-amber-600/25'
                   : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-white/5'
@@ -478,22 +479,22 @@ export default function ShootProofingPage() {
             </button>
           </div>
 
-          <span className="text-xs text-zinc-500">
+          <span className="text-xs text-zinc-500 shrink-0">
             Showing {currentDisplayPhotos.length} selected photos
           </span>
         </div>
 
         {/* Client & Loved Ones Filter Pills */}
         {byUser.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2 pt-1 pb-2">
-            <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium mr-1 flex items-center gap-1">
+          <div className="flex items-center gap-2 pt-1 pb-2 overflow-x-auto no-scrollbar">
+            <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium mr-1 flex items-center gap-1 shrink-0">
               <Users size={13} />
-              <span>Filter by Loved One:</span>
+              <span>Filter:</span>
             </span>
             <button
               type="button"
               onClick={() => setSelectedUserFilter('all')}
-              className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition ${
+              className={`shrink-0 inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition ${
                 selectedUserFilter === 'all'
                   ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-sm'
                   : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-white/5 dark:text-zinc-300 dark:hover:bg-white/10'
@@ -511,7 +512,7 @@ export default function ShootProofingPage() {
                   key={item.user._id}
                   type="button"
                   onClick={() => setSelectedUserFilter(item.user._id)}
-                  className={`inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-semibold transition ${
+                  className={`shrink-0 inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-semibold transition ${
                     isSelected
                       ? 'bg-violet-600 text-white shadow-sm shadow-violet-600/30'
                       : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-white/5 dark:text-zinc-300 dark:hover:bg-white/10'

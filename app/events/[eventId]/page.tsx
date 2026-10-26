@@ -1331,11 +1331,11 @@ export default function PublicEventPage() {
 
                 {(currentUser || isProofingMode) && (
                     <div className="mb-8 flex flex-col items-center gap-3 px-0 sm:px-2">
-                        <div className={`flex w-full max-w-2xl flex-wrap justify-center rounded-2xl p-1.5 gap-1 ${softSurface}`}>
+                        <div className={`flex w-full max-w-2xl overflow-x-auto no-scrollbar rounded-2xl p-1.5 gap-1 ${softSurface}`}>
                             <button
                                 type="button"
                                 onClick={() => setPhotoViewMode('all')}
-                                className={`min-h-[44px] flex-1 rounded-xl px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition-all ${
+                                className={`min-h-[44px] flex-1 min-w-[70px] whitespace-nowrap rounded-xl px-2.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition-all ${
                                     photoViewMode === 'all'
                                         ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/25'
                                         : 'text-zinc-600 hover:bg-zinc-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white'
@@ -1346,44 +1346,44 @@ export default function PublicEventPage() {
                             <button
                                 type="button"
                                 onClick={() => setPhotoViewMode('my')}
-                                className={`min-h-[44px] flex-1 rounded-xl px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 ${
+                                className={`min-h-[44px] flex-1 min-w-[95px] whitespace-nowrap rounded-xl px-2.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 ${
                                     photoViewMode === 'my'
                                         ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/25'
                                         : 'text-zinc-600 hover:bg-zinc-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white'
                                 }`}
                             >
-                                <Sparkles className="h-3.5 w-3.5" />
+                                <Sparkles className="h-3.5 w-3.5 shrink-0" />
                                 <span>{currentUser ? 'My photos' : 'Find My Face'}</span>
-                                {myPhotos.length > 0 && <span>({myPhotos.length})</span>}
+                                {myPhotos.length > 0 && <span className="shrink-0">({myPhotos.length})</span>}
                                 {isGuest && currentUser && !currentUser.faceRegistered && myPhotos.length === 0 && (
-                                    <span className="inline-block w-2 h-2 rounded-full bg-amber-400" title="Face registration required" />
+                                    <span className="inline-block w-2 h-2 shrink-0 rounded-full bg-amber-400" title="Face registration required" />
                                 )}
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setPhotoViewMode('album')}
-                                className={`min-h-[44px] flex-1 rounded-xl px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 ${
+                                className={`min-h-[44px] flex-1 min-w-[80px] whitespace-nowrap rounded-xl px-2.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 ${
                                     photoViewMode === 'album'
                                         ? 'bg-gradient-to-r from-rose-600 to-pink-600 text-white shadow-md shadow-rose-500/25'
                                         : 'text-zinc-600 hover:bg-zinc-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white'
                                 }`}
                             >
-                                <Heart className={`h-3.5 w-3.5 ${photoViewMode === 'album' ? 'fill-current' : 'text-rose-500'}`} />
+                                <Heart className={`h-3.5 w-3.5 shrink-0 ${photoViewMode === 'album' ? 'fill-current' : 'text-rose-500'}`} />
                                 <span>Album</span>
-                                {currentUser && myAlbumCount > 0 && <span className="rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-bold">{myAlbumCount}</span>}
+                                {currentUser && myAlbumCount > 0 && <span className="shrink-0 rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-bold">{myAlbumCount}</span>}
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setPhotoViewMode('bookmark')}
-                                className={`min-h-[44px] flex-1 rounded-xl px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 ${
+                                className={`min-h-[44px] flex-1 min-w-[85px] whitespace-nowrap rounded-xl px-2.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 ${
                                     photoViewMode === 'bookmark'
                                         ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-md shadow-amber-500/25'
                                         : 'text-zinc-600 hover:bg-zinc-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white'
                                 }`}
                             >
-                                <Bookmark className={`h-3.5 w-3.5 ${photoViewMode === 'bookmark' ? 'fill-current' : 'text-amber-500'}`} />
+                                <Bookmark className={`h-3.5 w-3.5 shrink-0 ${photoViewMode === 'bookmark' ? 'fill-current' : 'text-amber-500'}`} />
                                 <span>Keepers</span>
-                                {currentUser && myBookmarkCount > 0 && <span className="rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-bold">{myBookmarkCount}</span>}
+                                {currentUser && myBookmarkCount > 0 && <span className="shrink-0 rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-bold">{myBookmarkCount}</span>}
                             </button>
                         </div>
 
@@ -1565,10 +1565,10 @@ export default function PublicEventPage() {
                                                     }}
                                                     className={`backdrop-blur-md transition-all ${
                                                         isMyAlbumPick
-                                                            ? 'flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-500 text-white shadow-md shadow-rose-500/30 opacity-100 scale-100 hover:scale-105 active:scale-95'
+                                                            ? 'flex items-center gap-1.5 px-2.5 py-1.5 sm:py-1 rounded-full bg-rose-500 text-white shadow-md shadow-rose-500/30 opacity-100 scale-100 hover:scale-105 active:scale-95'
                                                             : albumCount > 0
-                                                            ? 'flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 text-white/90 border border-white/25 opacity-100 hover:border-rose-400 hover:text-rose-400 active:scale-95'
-                                                            : 'flex items-center justify-center p-1.5 rounded-full bg-black/50 text-white/80 hover:text-rose-400 opacity-0 group-hover:opacity-100 hover:scale-110 active:scale-95'
+                                                            ? 'flex items-center gap-1.5 px-2.5 py-1.5 sm:py-1 rounded-full bg-black/60 text-white/90 border border-white/25 opacity-100 hover:border-rose-400 hover:text-rose-400 active:scale-95'
+                                                            : 'flex items-center justify-center p-2 sm:p-1.5 rounded-full bg-black/50 text-white/80 hover:text-rose-400 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 hover:scale-110 active:scale-95'
                                                     }`}
                                                     title={getSelectionTooltip(photo, 'album')}
                                                     aria-label="Toggle album selection"
@@ -1586,10 +1586,10 @@ export default function PublicEventPage() {
                                                     }}
                                                     className={`backdrop-blur-md transition-all ${
                                                         isMyOriginalPick
-                                                            ? 'flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500 text-white shadow-md shadow-amber-500/30 opacity-100 scale-100 hover:scale-105 active:scale-95'
+                                                            ? 'flex items-center gap-1.5 px-2.5 py-1.5 sm:py-1 rounded-full bg-amber-500 text-white shadow-md shadow-amber-500/30 opacity-100 scale-100 hover:scale-105 active:scale-95'
                                                             : originalCount > 0
-                                                            ? 'flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 text-white/90 border border-white/25 opacity-100 hover:border-amber-400 hover:text-amber-400 active:scale-95'
-                                                            : 'flex items-center justify-center p-1.5 rounded-full bg-black/50 text-white/80 hover:text-amber-400 opacity-0 group-hover:opacity-100 hover:scale-110 active:scale-95'
+                                                            ? 'flex items-center gap-1.5 px-2.5 py-1.5 sm:py-1 rounded-full bg-black/60 text-white/90 border border-white/25 opacity-100 hover:border-amber-400 hover:text-amber-400 active:scale-95'
+                                                            : 'flex items-center justify-center p-2 sm:p-1.5 rounded-full bg-black/50 text-white/80 hover:text-amber-400 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 hover:scale-110 active:scale-95'
                                                     }`}
                                                     title={getSelectionTooltip(photo, 'original')}
                                                     aria-label="Toggle high-res bookmark"
