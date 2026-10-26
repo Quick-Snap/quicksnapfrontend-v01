@@ -923,16 +923,18 @@ export default function PublicEventPage() {
         }
     };
 
-    const handleBatchDownloadFavorites = async (photosToDownload?: any[]) => {
+    const handleBatchDownloadFavorites = async (photosToDownload?: any[], customLabel?: string) => {
         if (batchDownloading) return;
-        const list = photosToDownload || (photoViewMode === 'album' ? myAlbumPhotos : myLikedPhotos);
+        const list = photosToDownload || (photoViewMode === 'album' ? myAlbumPhotos : (myPhotosFilter === 'favorites' ? myLikedPhotos : myPhotos));
         if (!list || list.length === 0) {
-            toast.error('No favorite photos to download.');
+            toast.error('No photos to download.');
             return;
         }
 
         setBatchDownloading(true);
-        const t = toast.loading(`Preparing high-res ZIP of your ${list.length} favorites...`);
+        const label = customLabel || (photoViewMode === 'album' ? 'Album' : (myPhotosFilter === 'favorites' ? 'Favorites' : 'Matched_Photos'));
+        const friendlyName = label.replace(/_/g, ' ').toLowerCase();
+        const t = toast.loading(`Preparing high-res ZIP of your ${list.length} ${friendlyName}...`);
 
         try {
             const photoIds = list.map((p: any) => p.imageId || p._id).filter(Boolean);
@@ -941,15 +943,15 @@ export default function PublicEventPage() {
             const link = document.createElement('a');
             link.href = downloadUrl;
             const cleanName = (event?.name || 'Event').replace(/[^a-zA-Z0-9_-]/g, '_');
-            link.download = `${cleanName}_Favorites.zip`;
+            link.download = `${cleanName}_${label}.zip`;
             document.body.appendChild(link);
             link.click();
             link.remove();
             window.URL.revokeObjectURL(downloadUrl);
-            toast.success(`Downloaded all ${list.length} favorites!`, { id: t });
+            toast.success(`Downloaded ${list.length} ${friendlyName}!`, { id: t });
         } catch (error) {
             console.error('Batch download error:', error);
-            toast.error('Failed to download favorites ZIP. Please try again.', { id: t });
+            toast.error(`Failed to download ${friendlyName} ZIP. Please try again.`, { id: t });
         } finally {
             setBatchDownloading(false);
         }
@@ -1621,7 +1623,7 @@ export default function PublicEventPage() {
                     <>
                         {/* Sub-filter inside My Photos */}
                         {photoViewMode === 'my' && currentUser && myPhotos.length > 0 && (
-                            <div className="mb-6 flex flex-wrap items-center justify-between gap-3 px-1">
+                            <div className="mb-6 flex flex-wrap items-center justify-between gap-2.5 px-1">
                                 <div className="flex items-center gap-1 rounded-xl bg-zinc-100 p-1 dark:bg-white/5 border border-zinc-200/80 dark:border-white/10">
                                     <button
                                         type="button"
@@ -1629,7 +1631,7 @@ export default function PublicEventPage() {
                                             setMyPhotosFilter('all');
                                             setCurrentPage(1);
                                         }}
-                                        className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+                                        className={`rounded-lg px-2.5 sm:px-3 py-1.5 text-xs font-semibold transition-all ${
                                             myPhotosFilter === 'all'
                                                 ? 'bg-white text-zinc-900 shadow-sm dark:bg-white/15 dark:text-white'
                                                 : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white'
@@ -1643,7 +1645,7 @@ export default function PublicEventPage() {
                                             setMyPhotosFilter('favorites');
                                             setCurrentPage(1);
                                         }}
-                                        className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+                                        className={`flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-1.5 text-xs font-semibold transition-all ${
                                             myPhotosFilter === 'favorites'
                                                 ? 'bg-rose-500 text-white shadow-sm shadow-rose-500/25'
                                                 : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white'
@@ -1654,17 +1656,34 @@ export default function PublicEventPage() {
                                     </button>
                                 </div>
 
-                                {/* 1-Tap Download Favorites Button */}
-                                {myLikedPhotos.length > 0 && (
+                                {/* Contextual 1-Tap Download Button: Matched vs Favorites */}
+                                {myPhotosFilter === 'all' && myPhotos.length > 0 && (
                                     <Button
-                                        onClick={() => handleBatchDownloadFavorites(myLikedPhotos)}
+                                        size="sm"
+                                        onClick={() => handleBatchDownloadFavorites(myPhotos, 'Matched_Photos')}
                                         disabled={batchDownloading}
-                                        className="h-9 px-3.5 text-xs rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white font-semibold shadow-md shadow-rose-500/20 flex items-center gap-1.5"
+                                        className="h-8 px-2.5 sm:px-3 text-xs rounded-lg bg-violet-600 hover:bg-violet-500 text-white font-medium shadow-sm flex items-center gap-1.5 shrink-0"
                                     >
                                         {batchDownloading ? (
-                                            <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                            <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
                                         ) : (
-                                            <Download size={13} />
+                                            <Download size={12} />
+                                        )}
+                                        <span>Download Matched ({myPhotos.length})</span>
+                                    </Button>
+                                )}
+
+                                {myPhotosFilter === 'favorites' && myLikedPhotos.length > 0 && (
+                                    <Button
+                                        size="sm"
+                                        onClick={() => handleBatchDownloadFavorites(myLikedPhotos, 'Favorites')}
+                                        disabled={batchDownloading}
+                                        className="h-8 px-2.5 sm:px-3 text-xs rounded-lg bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white font-medium shadow-sm shadow-rose-500/20 flex items-center gap-1.5 shrink-0"
+                                    >
+                                        {batchDownloading ? (
+                                            <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                        ) : (
+                                            <Download size={12} />
                                         )}
                                         <span>Download Favorites ({myLikedPhotos.length})</span>
                                     </Button>
@@ -1674,19 +1693,20 @@ export default function PublicEventPage() {
 
                         {/* 1-Tap Download All Album Selections in Album Tab */}
                         {photoViewMode === 'album' && currentUser && myAlbumCount > 0 && (
-                            <div className="mb-6 flex flex-wrap items-center justify-between gap-3 px-1">
+                            <div className="mb-6 flex flex-wrap items-center justify-between gap-2.5 px-1">
                                 <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
                                     Showing your {myAlbumCount} shortlisted album picks
                                 </span>
                                 <Button
-                                    onClick={() => handleBatchDownloadFavorites(myAlbumPhotos)}
+                                    size="sm"
+                                    onClick={() => handleBatchDownloadFavorites(myAlbumPhotos, 'Album')}
                                     disabled={batchDownloading}
-                                    className="h-9 px-3.5 text-xs rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white font-semibold shadow-md shadow-rose-500/20 flex items-center gap-1.5"
+                                    className="h-8 px-2.5 sm:px-3 text-xs rounded-lg bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white font-medium shadow-sm shadow-rose-500/20 flex items-center gap-1.5 shrink-0"
                                 >
                                     {batchDownloading ? (
-                                        <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                        <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
                                     ) : (
-                                        <Download size={13} />
+                                        <Download size={12} />
                                     )}
                                     <span>Download All ({myAlbumCount})</span>
                                 </Button>
