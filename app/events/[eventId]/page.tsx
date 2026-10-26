@@ -1380,59 +1380,112 @@ export default function PublicEventPage() {
 
                 {(currentUser || isProofingMode) && (
                     <div className="mb-8 flex flex-col items-center gap-3 px-0 sm:px-2">
-                        <div className={`flex w-full max-w-2xl overflow-x-auto no-scrollbar rounded-2xl p-1.5 gap-1 ${softSurface}`}>
+                        <div className={`flex items-center justify-between sm:justify-center w-full max-w-2xl rounded-2xl p-1.5 gap-1.5 transition-all duration-300 ${softSurface}`}>
+                            {/* TAB 1: ALL PHOTOS */}
                             <button
                                 type="button"
-                                onClick={() => setPhotoViewMode('all')}
-                                className={`min-h-[44px] flex-1 min-w-[70px] whitespace-nowrap rounded-xl px-2.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition-all ${
+                                onClick={() => handleSwitchViewMode('all')}
+                                aria-label="View all event photos"
+                                className={`min-h-[44px] whitespace-nowrap rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 ease-out flex items-center justify-center gap-1.5 ${
                                     photoViewMode === 'all'
-                                        ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/25'
-                                        : 'text-zinc-600 hover:bg-zinc-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white'
+                                        ? 'flex-1 sm:flex-initial px-4 sm:px-5 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/25'
+                                        : 'flex-initial shrink-0 px-2.5 sm:px-3.5 py-2 text-zinc-600 hover:bg-zinc-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white'
                                 }`}
                             >
-                                All {(authenticatedPhotoTotal || totalPhotos) > 0 ? `(${authenticatedPhotoTotal || totalPhotos})` : ''}
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setPhotoViewMode('my')}
-                                className={`min-h-[44px] flex-1 min-w-[95px] whitespace-nowrap rounded-xl px-2.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 ${
-                                    photoViewMode === 'my'
-                                        ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/25'
-                                        : 'text-zinc-600 hover:bg-zinc-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white'
-                                }`}
-                            >
-                                <Sparkles className="h-3.5 w-3.5 shrink-0" />
-                                <span>{currentUser ? 'My photos' : 'Find My Face'}</span>
-                                {myPhotos.length > 0 && <span className="shrink-0">({myPhotos.length})</span>}
-                                {isGuest && currentUser && !currentUser.faceRegistered && myPhotos.length === 0 && (
-                                    <span className="inline-block w-2 h-2 shrink-0 rounded-full bg-amber-400" title="Face registration required" />
+                                <ImageIcon className={`h-3.5 w-3.5 shrink-0 ${photoViewMode === 'all' ? 'text-white' : 'text-zinc-500 dark:text-gray-400'}`} />
+                                <span className={photoViewMode === 'all' ? 'inline' : 'hidden sm:inline'}>
+                                    {photoViewMode === 'all' ? 'All Photos' : 'All'}
+                                </span>
+                                {(authenticatedPhotoTotal || totalPhotos) > 0 && (
+                                    <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                                        photoViewMode === 'all'
+                                            ? 'bg-white/20 text-white'
+                                            : 'bg-zinc-200/80 text-zinc-700 dark:bg-white/10 dark:text-zinc-300'
+                                    }`}>
+                                        {authenticatedPhotoTotal || totalPhotos}
+                                    </span>
                                 )}
                             </button>
+
+                            {/* TAB 2: MY PHOTOS / FIND MY FACE */}
                             <button
                                 type="button"
-                                onClick={() => setPhotoViewMode('album')}
-                                className={`min-h-[44px] flex-1 min-w-[80px] whitespace-nowrap rounded-xl px-2.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 ${
-                                    photoViewMode === 'album'
-                                        ? 'bg-gradient-to-r from-rose-600 to-pink-600 text-white shadow-md shadow-rose-500/25'
-                                        : 'text-zinc-600 hover:bg-zinc-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white'
+                                onClick={() => handleSwitchViewMode('my')}
+                                aria-label="View my matched photos"
+                                className={`min-h-[44px] whitespace-nowrap rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 ease-out flex items-center justify-center gap-1.5 ${
+                                    photoViewMode === 'my'
+                                        ? 'flex-1 sm:flex-initial px-4 sm:px-5 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/25'
+                                        : 'flex-initial shrink-0 px-2.5 sm:px-3.5 py-2 text-zinc-600 hover:bg-zinc-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white'
                                 }`}
                             >
-                                <Heart className={`h-3.5 w-3.5 shrink-0 ${photoViewMode === 'album' ? 'fill-current' : 'text-rose-500'}`} />
-                                <span>Album</span>
-                                {currentUser && myAlbumCount > 0 && <span className="shrink-0 rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-bold">{myAlbumCount}</span>}
+                                <Sparkles className={`h-3.5 w-3.5 shrink-0 ${photoViewMode === 'my' ? 'text-white' : 'text-violet-500 dark:text-violet-400'}`} />
+                                <span className={photoViewMode === 'my' ? 'inline' : 'hidden sm:inline'}>
+                                    {currentUser ? 'My photos' : 'Find My Face'}
+                                </span>
+                                {myPhotos.length > 0 && (
+                                    <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                                        photoViewMode === 'my'
+                                            ? 'bg-white/20 text-white'
+                                            : 'bg-violet-500/10 text-violet-600 dark:bg-violet-500/20 dark:text-violet-300'
+                                    }`}>
+                                        {myPhotos.length}
+                                    </span>
+                                )}
+                                {isGuest && currentUser && !currentUser.faceRegistered && myPhotos.length === 0 && (
+                                    <span className="inline-block w-2 h-2 shrink-0 rounded-full bg-amber-400 animate-pulse" title="Face registration required" />
+                                )}
                             </button>
+
+                            {/* TAB 3: ALBUM */}
                             <button
                                 type="button"
-                                onClick={() => setPhotoViewMode('bookmark')}
-                                className={`min-h-[44px] flex-1 min-w-[85px] whitespace-nowrap rounded-xl px-2.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 ${
-                                    photoViewMode === 'bookmark'
-                                        ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-md shadow-amber-500/25'
-                                        : 'text-zinc-600 hover:bg-zinc-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white'
+                                onClick={() => handleSwitchViewMode('album')}
+                                aria-label="View album favorites"
+                                className={`min-h-[44px] whitespace-nowrap rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 ease-out flex items-center justify-center gap-1.5 ${
+                                    photoViewMode === 'album'
+                                        ? 'flex-1 sm:flex-initial px-4 sm:px-5 py-2.5 bg-gradient-to-r from-rose-600 to-pink-600 text-white shadow-md shadow-rose-500/25'
+                                        : 'flex-initial shrink-0 px-2.5 sm:px-3.5 py-2 text-zinc-600 hover:bg-zinc-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white'
                                 }`}
                             >
-                                <Bookmark className={`h-3.5 w-3.5 shrink-0 ${photoViewMode === 'bookmark' ? 'fill-current' : 'text-amber-500'}`} />
-                                <span>Keepers</span>
-                                {currentUser && myBookmarkCount > 0 && <span className="shrink-0 rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-bold">{myBookmarkCount}</span>}
+                                <Heart className={`h-3.5 w-3.5 shrink-0 ${photoViewMode === 'album' ? 'fill-current text-white' : 'text-rose-500'}`} />
+                                <span className={photoViewMode === 'album' ? 'inline' : 'hidden sm:inline'}>
+                                    Album
+                                </span>
+                                {currentUser && myAlbumCount > 0 && (
+                                    <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                                        photoViewMode === 'album'
+                                            ? 'bg-white/20 text-white'
+                                            : 'bg-rose-500/10 text-rose-600 dark:bg-rose-500/20 dark:text-rose-300'
+                                    }`}>
+                                        {myAlbumCount}
+                                    </span>
+                                )}
+                            </button>
+
+                            {/* TAB 4: KEEPERS */}
+                            <button
+                                type="button"
+                                onClick={() => handleSwitchViewMode('bookmark')}
+                                aria-label="View keepers"
+                                className={`min-h-[44px] whitespace-nowrap rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 ease-out flex items-center justify-center gap-1.5 ${
+                                    photoViewMode === 'bookmark'
+                                        ? 'flex-1 sm:flex-initial px-4 sm:px-5 py-2.5 bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-md shadow-amber-500/25'
+                                        : 'flex-initial shrink-0 px-2.5 sm:px-3.5 py-2 text-zinc-600 hover:bg-zinc-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white'
+                                }`}
+                            >
+                                <Bookmark className={`h-3.5 w-3.5 shrink-0 ${photoViewMode === 'bookmark' ? 'fill-current text-white' : 'text-amber-500'}`} />
+                                <span className={photoViewMode === 'bookmark' ? 'inline' : 'hidden sm:inline'}>
+                                    Keepers
+                                </span>
+                                {currentUser && myBookmarkCount > 0 && (
+                                    <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                                        photoViewMode === 'bookmark'
+                                            ? 'bg-white/20 text-white'
+                                            : 'bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300'
+                                    }`}>
+                                        {myBookmarkCount}
+                                    </span>
+                                )}
                             </button>
                         </div>
 
