@@ -15,6 +15,15 @@ export interface User {
     autoDownload: boolean;
     privacy: 'public' | 'friends' | 'private';
   };
+  studioSettings?: {
+    businessName?: string;
+    phone?: string;
+    watermarkText?: string;
+    watermarkPosition?: 'bottom-right' | 'bottom-left' | 'center';
+    watermarkOpacity?: number;
+    brandColor?: string;
+    defaultProofingDays?: number;
+  };
   events?: string[]; // IDs of joined/organized events
   joinedEvents?: string[]; // IDs of joined events
 }

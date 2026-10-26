@@ -110,7 +110,9 @@ export const useAuthStore = create<AuthStore>()(
                 roles: normalizedRoles,
                 faceRegistered: !!userData.faceId || !!userData.faceRegistered,
                 createdAt: userData.createdAt,
+                phone: userData.phone || '',
                 settings: userData.settings,
+                studioSettings: userData.studioSettings || {},
                 events: (userData.events || userData.joinedEvents || [])
                   .map((e: { _id?: string } | string) =>
                     typeof e === 'string' ? e : e?._id

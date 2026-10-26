@@ -594,6 +594,19 @@ export const userApi = {
     return response.data;
   },
 
+  updateStudioSettings: async (settings: {
+    businessName?: string;
+    phone?: string;
+    watermarkText?: string;
+    watermarkPosition?: 'bottom-right' | 'bottom-left' | 'center';
+    watermarkOpacity?: number;
+    brandColor?: string;
+    defaultProofingDays?: number;
+  }) => {
+    const response = await api.put<ApiResponse<any>>('/users/studio-settings', settings);
+    return response.data;
+  },
+
   updateName: async (name: string) => {
     const response = await api.patch<ApiResponse<any>>('/users/name', { name });
     return response.data;
