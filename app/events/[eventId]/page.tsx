@@ -105,6 +105,8 @@ export default function PublicEventPage() {
     const [selectedPhoto, setSelectedPhoto] = useState<any>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [photoViewMode, setPhotoViewMode] = useState<'all' | 'my' | 'album' | 'bookmark'>('all');
+    const [myPhotosFilter, setMyPhotosFilter] = useState<'all' | 'favorites'>('all');
+    const [batchDownloading, setBatchDownloading] = useState(false);
     const [notifying, setNotifying] = useState(false);
     const [joining, setJoining] = useState(false);
     const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
@@ -493,6 +495,15 @@ export default function PublicEventPage() {
         [allKnownPhotosList]
     );
 
+    // Photos matched to current user that are also favorited (heart)
+    const myLikedPhotos = useMemo(() => {
+        if (!currentUser || !myPhotos || myPhotos.length === 0) return [];
+        return myPhotos.filter((p: any) => {
+            const photoObj = allKnownPhotosMap.get(p.imageId || p._id) || p;
+            return isSelectedByCurrentUser(photoObj, 'album');
+        });
+    }, [currentUser, myPhotos, allKnownPhotosMap, isSelectedByCurrentUser]);
+
     const myAlbumCount = myAlbumPhotos.length;
     const myBookmarkCount = myBookmarkPhotos.length;
     const shootWideAlbumCount = shootWideAlbumPhotos.length;
@@ -502,6 +513,9 @@ export default function PublicEventPage() {
     const displayPhotos = useMemo(() => {
         if (photoViewMode === 'my') {
             if (!currentUser) return [];
+            if (myPhotosFilter === 'favorites') {
+                return myLikedPhotos;
+            }
             return myPhotos;
         }
         if (photoViewMode === 'album') {
@@ -513,10 +527,13 @@ export default function PublicEventPage() {
             return myBookmarkPhotos;
         }
         return allKnownPhotosList;
-    }, [photoViewMode, currentUser, myPhotos, myAlbumPhotos, myBookmarkPhotos, allKnownPhotosList]);
+    }, [photoViewMode, myPhotosFilter, currentUser, myPhotos, myLikedPhotos, myAlbumPhotos, myBookmarkPhotos, allKnownPhotosList]);
 
     const handleSwitchViewMode = useCallback((mode: 'all' | 'my' | 'album' | 'bookmark') => {
         setPhotoViewMode(mode);
+        if (mode === 'my') {
+            setMyPhotosFilter('all');
+        }
         setCurrentPage(1);
     }, []);
 
@@ -903,6 +920,38 @@ export default function PublicEventPage() {
             toast.error('Failed to download original image. Please try again.', { id: t });
         } finally {
             setDownloading(null);
+        }
+    };
+
+    const handleBatchDownloadFavorites = async (photosToDownload?: any[]) => {
+        if (batchDownloading) return;
+        const list = photosToDownload || (photoViewMode === 'album' ? myAlbumPhotos : myLikedPhotos);
+        if (!list || list.length === 0) {
+            toast.error('No favorite photos to download.');
+            return;
+        }
+
+        setBatchDownloading(true);
+        const t = toast.loading(`Preparing high-res ZIP of your ${list.length} favorites...`);
+
+        try {
+            const photoIds = list.map((p: any) => p.imageId || p._id).filter(Boolean);
+            const blob = await eventApi.downloadFavoritesZip(eventId, photoIds);
+            const downloadUrl = window.URL.createObjectURL(new Blob([blob], { type: 'application/zip' }));
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            const cleanName = (event?.name || 'Event').replace(/[^a-zA-Z0-9_-]/g, '_');
+            link.download = `${cleanName}_Favorites.zip`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(downloadUrl);
+            toast.success(`Downloaded all ${list.length} favorites!`, { id: t });
+        } catch (error) {
+            console.error('Batch download error:', error);
+            toast.error('Failed to download favorites ZIP. Please try again.', { id: t });
+        } finally {
+            setBatchDownloading(false);
         }
     };
 
@@ -1517,6 +1566,80 @@ export default function PublicEventPage() {
                     </div>
                 ) : photos.length > 0 ? (
                     <>
+                        {/* Sub-filter inside My Photos */}
+                        {photoViewMode === 'my' && currentUser && myPhotos.length > 0 && (
+                            <div className="mb-6 flex flex-wrap items-center justify-between gap-3 px-1">
+                                <div className="flex items-center gap-1 rounded-xl bg-zinc-100 p-1 dark:bg-white/5 border border-zinc-200/80 dark:border-white/10">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setMyPhotosFilter('all');
+                                            setCurrentPage(1);
+                                        }}
+                                        className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+                                            myPhotosFilter === 'all'
+                                                ? 'bg-white text-zinc-900 shadow-sm dark:bg-white/15 dark:text-white'
+                                                : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white'
+                                        }`}
+                                    >
+                                        All Matched ({myPhotos.length})
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setMyPhotosFilter('favorites');
+                                            setCurrentPage(1);
+                                        }}
+                                        className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+                                            myPhotosFilter === 'favorites'
+                                                ? 'bg-rose-500 text-white shadow-sm shadow-rose-500/25'
+                                                : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white'
+                                        }`}
+                                    >
+                                        <Heart size={12} className={myPhotosFilter === 'favorites' ? 'fill-current' : 'text-rose-500'} />
+                                        <span>Favorites ({myLikedPhotos.length})</span>
+                                    </button>
+                                </div>
+
+                                {/* 1-Tap Download Favorites Button */}
+                                {myLikedPhotos.length > 0 && (
+                                    <Button
+                                        onClick={() => handleBatchDownloadFavorites(myLikedPhotos)}
+                                        disabled={batchDownloading}
+                                        className="h-9 px-3.5 text-xs rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white font-semibold shadow-md shadow-rose-500/20 flex items-center gap-1.5"
+                                    >
+                                        {batchDownloading ? (
+                                            <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                        ) : (
+                                            <Download size={13} />
+                                        )}
+                                        <span>Download Favorites ({myLikedPhotos.length})</span>
+                                    </Button>
+                                )}
+                            </div>
+                        )}
+
+                        {/* 1-Tap Download All Album Selections in Album Tab */}
+                        {photoViewMode === 'album' && currentUser && myAlbumCount > 0 && (
+                            <div className="mb-6 flex flex-wrap items-center justify-between gap-3 px-1">
+                                <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                                    Showing your {myAlbumCount} shortlisted album picks
+                                </span>
+                                <Button
+                                    onClick={() => handleBatchDownloadFavorites(myAlbumPhotos)}
+                                    disabled={batchDownloading}
+                                    className="h-9 px-3.5 text-xs rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white font-semibold shadow-md shadow-rose-500/20 flex items-center gap-1.5"
+                                >
+                                    {batchDownloading ? (
+                                        <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                    ) : (
+                                        <Download size={13} />
+                                    )}
+                                    <span>Download All ({myAlbumCount})</span>
+                                </Button>
+                            </div>
+                        )}
+
                         <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
                             {photos.map((photo: any, index: number) => (
                                 <button
@@ -1751,32 +1874,56 @@ export default function PublicEventPage() {
                                 </div>
                             </div>
                         ) : (
-                            <div className={`rounded-[1.65rem] px-6 py-16 text-center ${softSurface}`}>
-                                <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-100 dark:bg-violet-500/15">
-                                    <Sparkles className="h-8 w-8 text-violet-600 dark:text-violet-400" />
-                                </div>
-                                <h3 className="mb-2 text-xl font-bold text-zinc-900 dark:text-white">
-                                    No Photos Matched to You Yet
-                                </h3>
-                                <p className="mx-auto max-w-md text-sm leading-relaxed text-zinc-600 dark:text-gray-400 mb-6">
-                                    Your face is registered and active! We scanned {authenticatedPhotoTotal} uploaded event photos, but didn&apos;t detect your face in them yet. Either the photographer hasn&apos;t uploaded photos of you yet, or you weren&apos;t captured in this event&apos;s current uploads.
-                                </p>
-                                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                            myPhotosFilter === 'favorites' && myLikedPhotos.length === 0 && myPhotos.length > 0 ? (
+                                <div className={`rounded-[1.65rem] px-6 py-16 text-center ${softSurface} border border-rose-500/20 bg-gradient-to-b from-rose-500/5 via-transparent to-transparent`}>
+                                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-500/15 text-rose-500">
+                                        <Heart className="h-8 w-8 text-rose-500" />
+                                    </div>
+                                    <h3 className="mb-2 text-xl font-bold text-zinc-900 dark:text-white">
+                                        No Favorites Selected in My Photos Yet
+                                    </h3>
+                                    <p className="mx-auto max-w-md text-sm leading-relaxed text-zinc-600 dark:text-gray-400 mb-6">
+                                        Tap the Heart (❤️) icon on any of your {myPhotos.length} matched photos to shortlist your top favorites for quick viewing and downloading.
+                                    </p>
                                     <Button
                                         variant="outline"
-                                        onClick={() => setPhotoViewMode('all')}
+                                        onClick={() => {
+                                            setMyPhotosFilter('all');
+                                            setCurrentPage(1);
+                                        }}
                                         className="rounded-xl px-5 h-11"
                                     >
-                                        Browse All Event Photos ({authenticatedPhotoTotal})
+                                        View All {myPhotos.length} Matched Photos
                                     </Button>
-                                    <Link
-                                        href={`/register-face?redirect=/events/${eventId}`}
-                                        className="text-xs text-zinc-500 hover:text-violet-600 dark:text-gray-400 dark:hover:text-violet-400 py-2 inline-flex items-center gap-1"
-                                    >
-                                        Look changed? Update your face selfie →
-                                    </Link>
                                 </div>
-                            </div>
+                            ) : (
+                                <div className={`rounded-[1.65rem] px-6 py-16 text-center ${softSurface}`}>
+                                    <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-100 dark:bg-violet-500/15">
+                                        <Sparkles className="h-8 w-8 text-violet-600 dark:text-violet-400" />
+                                    </div>
+                                    <h3 className="mb-2 text-xl font-bold text-zinc-900 dark:text-white">
+                                        No Photos Matched to You Yet
+                                    </h3>
+                                    <p className="mx-auto max-w-md text-sm leading-relaxed text-zinc-600 dark:text-gray-400 mb-6">
+                                        Your face is registered and active! We scanned {authenticatedPhotoTotal} uploaded event photos, but didn&apos;t detect your face in them yet. Either the photographer hasn&apos;t uploaded photos of you yet, or you weren&apos;t captured in this event&apos;s current uploads.
+                                    </p>
+                                    <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => setPhotoViewMode('all')}
+                                            className="rounded-xl px-5 h-11"
+                                        >
+                                            Browse All Event Photos ({authenticatedPhotoTotal})
+                                        </Button>
+                                        <Link
+                                            href={`/register-face?redirect=/events/${eventId}`}
+                                            className="text-xs text-zinc-500 hover:text-violet-600 dark:text-gray-400 dark:hover:text-violet-400 py-2 inline-flex items-center gap-1"
+                                        >
+                                            Look changed? Update your face selfie →
+                                        </Link>
+                                    </div>
+                                </div>
+                            )
                         )
                     ) : photoViewMode === 'album' ? (
                         !currentUser ? (

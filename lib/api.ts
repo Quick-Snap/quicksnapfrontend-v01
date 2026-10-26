@@ -592,6 +592,13 @@ export const eventApi = {
     >(`/events/${eventId}/selections/notify`, data);
     return response.data;
   },
+
+  downloadFavoritesZip: async (eventId: string, photoIds?: string[]) => {
+    const response = await api.post(`/events/${eventId}/download-favorites-zip`, { photoIds }, {
+      responseType: 'blob',
+    });
+    return response.data;
+  },
 };
 
 // User API
