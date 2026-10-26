@@ -464,7 +464,12 @@ export default function PublicEventPage() {
         return false;
     }, [currentUser]);
 
-    const allKnownPhotosList = useMemo(() => Array.from(allKnownPhotosMap.values()), [allKnownPhotosMap]);
+    const allKnownPhotosList = useMemo(() => {
+        if (allPhotos && allPhotos.length > 0) {
+            return allPhotos.map((p: any) => allKnownPhotosMap.get(p.imageId || p._id) || p);
+        }
+        return Array.from(allKnownPhotosMap.values());
+    }, [allPhotos, allKnownPhotosMap]);
 
     // Personal picks (strictly for the logged-in user)
     const myAlbumPhotos = useMemo(
@@ -507,8 +512,8 @@ export default function PublicEventPage() {
             if (!currentUser) return [];
             return myBookmarkPhotos;
         }
-        return allPhotos;
-    }, [photoViewMode, currentUser, myPhotos, myAlbumPhotos, myBookmarkPhotos, allPhotos]);
+        return allKnownPhotosList;
+    }, [photoViewMode, currentUser, myPhotos, myAlbumPhotos, myBookmarkPhotos, allKnownPhotosList]);
 
     const handleSwitchViewMode = useCallback((mode: 'all' | 'my' | 'album' | 'bookmark') => {
         setPhotoViewMode(mode);
@@ -565,7 +570,9 @@ export default function PublicEventPage() {
                 if (p.imageId === photoId || p._id === photoId) {
                     const oldList = (type === 'album' ? p.albumFavoritedBy : p.originalRequestedBy) || [];
                     let updatedUsers = [...oldList];
-                    const oldCount = (type === 'album' ? p.albumFavoritedCount : p.originalRequestedCount) || 0;
+                    const oldCount = typeof (type === 'album' ? p.albumFavoritedCount : p.originalRequestedCount) === 'number'
+                        ? (type === 'album' ? p.albumFavoritedCount : p.originalRequestedCount)
+                        : (Array.isArray(oldList) ? oldList.length : 0) || ((type === 'album' ? p.isAlbumFavorite : p.isOriginalRequested) ? 1 : 0);
                     let updatedCount = oldCount;
                     if (nextStatus) {
                         if (!updatedUsers.some((u: any) => (u?._id || u?.id || u)?.toString() === myUserId)) {
@@ -576,7 +583,7 @@ export default function PublicEventPage() {
                         updatedUsers = updatedUsers.filter((u: any) => (u?._id || u?.id || u)?.toString() !== myUserId);
                         updatedCount = Math.max(0, oldCount - 1);
                     }
-                    const overallActive = nextStatus || updatedUsers.length > 0;
+                    const overallActive = nextStatus || updatedUsers.length > 0 || updatedCount > 0;
                     return {
                         ...p,
                         [type === 'album' ? 'albumFavoritedBy' : 'originalRequestedBy']: updatedUsers,
@@ -593,7 +600,9 @@ export default function PublicEventPage() {
             if (prev.imageId === photoId || prev._id === photoId) {
                 const oldList = (type === 'album' ? prev.albumFavoritedBy : prev.originalRequestedBy) || [];
                 let updatedUsers = [...oldList];
-                const oldCount = (type === 'album' ? prev.albumFavoritedCount : prev.originalRequestedCount) || 0;
+                const oldCount = typeof (type === 'album' ? prev.albumFavoritedCount : prev.originalRequestedCount) === 'number'
+                    ? (type === 'album' ? prev.albumFavoritedCount : prev.originalRequestedCount)
+                    : (Array.isArray(oldList) ? oldList.length : 0) || ((type === 'album' ? prev.isAlbumFavorite : prev.isOriginalRequested) ? 1 : 0);
                 let updatedCount = oldCount;
                 if (nextStatus) {
                     if (!updatedUsers.some((u: any) => (u?._id || u?.id || u)?.toString() === myUserId)) {
@@ -604,7 +613,7 @@ export default function PublicEventPage() {
                     updatedUsers = updatedUsers.filter((u: any) => (u?._id || u?.id || u)?.toString() !== myUserId);
                     updatedCount = Math.max(0, oldCount - 1);
                 }
-                const overallActive = nextStatus || updatedUsers.length > 0;
+                const overallActive = nextStatus || updatedUsers.length > 0 || updatedCount > 0;
                 return {
                     ...prev,
                     [type === 'album' ? 'albumFavoritedBy' : 'originalRequestedBy']: updatedUsers,
@@ -664,18 +673,54 @@ export default function PublicEventPage() {
             };
 
             if (type === 'album') {
-                if (nextStatus) {
-                    const idx = albumFavs.findIndex((p: any) => (p.imageId || p._id) === photoId);
-                    if (idx >= 0) albumFavs[idx] = { ...albumFavs[idx], ...updatedPhoto };
-                    else albumFavs.unshift(updatedPhoto);
+                const idx = albumFavs.findIndex((p: any) => (p.imageId || p._id) === photoId);
+                const existingItem = idx >= 0 ? albumFavs[idx] : photo;
+                const oldCount = typeof existingItem?.albumFavoritedCount === 'number'
+                    ? existingItem.albumFavoritedCount
+                    : (existingItem?.isAlbumFavorite ? 1 : 0);
+                const updatedCount = nextStatus ? Math.max(1, oldCount + 1) : Math.max(0, oldCount - 1);
+                const oldUsers = existingItem?.albumFavoritedBy || [];
+                const updatedUsers = nextStatus
+                    ? [...oldUsers.filter((u: any) => (u?._id || u?.id || u)?.toString() !== myUserId), { _id: myUserId, name: currentUser.name || 'You' }]
+                    : oldUsers.filter((u: any) => (u?._id || u?.id || u)?.toString() !== myUserId);
+
+                if (updatedCount > 0 || updatedUsers.length > 0) {
+                    const mergedItem = {
+                        ...existingItem,
+                        _id: photoId,
+                        imageId: photoId,
+                        isAlbumFavorite: true,
+                        albumFavoritedCount: updatedCount,
+                        albumFavoritedBy: updatedUsers
+                    };
+                    if (idx >= 0) albumFavs[idx] = mergedItem;
+                    else albumFavs.unshift(mergedItem);
                 } else {
                     albumFavs = albumFavs.filter((p: any) => (p.imageId || p._id) !== photoId);
                 }
             } else {
-                if (nextStatus) {
-                    const idx = origReqs.findIndex((p: any) => (p.imageId || p._id) === photoId);
-                    if (idx >= 0) origReqs[idx] = { ...origReqs[idx], ...updatedPhoto };
-                    else origReqs.unshift(updatedPhoto);
+                const idx = origReqs.findIndex((p: any) => (p.imageId || p._id) === photoId);
+                const existingItem = idx >= 0 ? origReqs[idx] : photo;
+                const oldCount = typeof existingItem?.originalRequestedCount === 'number'
+                    ? existingItem.originalRequestedCount
+                    : (existingItem?.isOriginalRequested ? 1 : 0);
+                const updatedCount = nextStatus ? Math.max(1, oldCount + 1) : Math.max(0, oldCount - 1);
+                const oldUsers = existingItem?.originalRequestedBy || [];
+                const updatedUsers = nextStatus
+                    ? [...oldUsers.filter((u: any) => (u?._id || u?.id || u)?.toString() !== myUserId), { _id: myUserId, name: currentUser.name || 'You' }]
+                    : oldUsers.filter((u: any) => (u?._id || u?.id || u)?.toString() !== myUserId);
+
+                if (updatedCount > 0 || updatedUsers.length > 0) {
+                    const mergedItem = {
+                        ...existingItem,
+                        _id: photoId,
+                        imageId: photoId,
+                        isOriginalRequested: true,
+                        originalRequestedCount: updatedCount,
+                        originalRequestedBy: updatedUsers
+                    };
+                    if (idx >= 0) origReqs[idx] = mergedItem;
+                    else origReqs.unshift(mergedItem);
                 } else {
                     origReqs = origReqs.filter((p: any) => (p.imageId || p._id) !== photoId);
                 }
