@@ -451,37 +451,6 @@ export default function PublicEventPage() {
         return map;
     }, [allPhotos, myPhotos, selectionsResult]);
 
-    const allKnownPhotosList = useMemo(() => Array.from(allKnownPhotosMap.values()), [allKnownPhotosMap]);
-
-    const albumPhotos = useMemo(
-        () => allKnownPhotosList.filter((p: any) => p.isAlbumFavorite === true),
-        [allKnownPhotosList]
-    );
-
-    const bookmarkPhotos = useMemo(
-        () => allKnownPhotosList.filter((p: any) => p.isOriginalRequested === true),
-        [allKnownPhotosList]
-    );
-
-    const albumCount = albumPhotos.length;
-    const bookmarkCount = bookmarkPhotos.length;
-
-    // Determine which photos to display based on view mode
-    const displayPhotos = useMemo(() => {
-        if (photoViewMode === 'my') {
-            if (!currentUser) return [];
-            return myPhotos;
-        }
-        if (photoViewMode === 'album') return albumPhotos;
-        if (photoViewMode === 'bookmark') return bookmarkPhotos;
-        return allPhotos;
-    }, [photoViewMode, currentUser, myPhotos, albumPhotos, bookmarkPhotos, allPhotos]);
-
-    const handleSwitchViewMode = useCallback((mode: 'all' | 'my' | 'album' | 'bookmark') => {
-        setPhotoViewMode(mode);
-        setCurrentPage(1);
-    }, []);
-
     const isSelectedByCurrentUser = useCallback((photo: any, type: 'album' | 'original') => {
         if (!currentUser || !photo) return false;
         const myId = (currentUser.id || (currentUser as any)._id)?.toString();
@@ -494,6 +463,57 @@ export default function PublicEventPage() {
         }
         return type === 'album' ? Boolean(photo.isAlbumFavorite) : Boolean(photo.isOriginalRequested);
     }, [currentUser]);
+
+    const allKnownPhotosList = useMemo(() => Array.from(allKnownPhotosMap.values()), [allKnownPhotosMap]);
+
+    // Personal picks (strictly for the logged-in user)
+    const myAlbumPhotos = useMemo(
+        () => (currentUser ? allKnownPhotosList.filter((p: any) => isSelectedByCurrentUser(p, 'album')) : []),
+        [allKnownPhotosList, currentUser, isSelectedByCurrentUser]
+    );
+
+    const myBookmarkPhotos = useMemo(
+        () => (currentUser ? allKnownPhotosList.filter((p: any) => isSelectedByCurrentUser(p, 'original')) : []),
+        [allKnownPhotosList, currentUser, isSelectedByCurrentUser]
+    );
+
+    // Shoot-wide deduplicated totals (all loved ones combined)
+    const shootWideAlbumPhotos = useMemo(
+        () => allKnownPhotosList.filter((p: any) => p.isAlbumFavorite === true),
+        [allKnownPhotosList]
+    );
+
+    const shootWideBookmarkPhotos = useMemo(
+        () => allKnownPhotosList.filter((p: any) => p.isOriginalRequested === true),
+        [allKnownPhotosList]
+    );
+
+    const myAlbumCount = myAlbumPhotos.length;
+    const myBookmarkCount = myBookmarkPhotos.length;
+    const shootWideAlbumCount = shootWideAlbumPhotos.length;
+    const shootWideBookmarkCount = shootWideBookmarkPhotos.length;
+
+    // Determine which photos to display based on view mode
+    const displayPhotos = useMemo(() => {
+        if (photoViewMode === 'my') {
+            if (!currentUser) return [];
+            return myPhotos;
+        }
+        if (photoViewMode === 'album') {
+            if (!currentUser) return [];
+            return myAlbumPhotos;
+        }
+        if (photoViewMode === 'bookmark') {
+            if (!currentUser) return [];
+            return myBookmarkPhotos;
+        }
+        return allPhotos;
+    }, [photoViewMode, currentUser, myPhotos, myAlbumPhotos, myBookmarkPhotos, allPhotos]);
+
+    const handleSwitchViewMode = useCallback((mode: 'all' | 'my' | 'album' | 'bookmark') => {
+        setPhotoViewMode(mode);
+        setCurrentPage(1);
+    }, []);
 
     const getSelectionTooltip = useCallback((photo: any, type: 'album' | 'original') => {
         const isMyPick = isSelectedByCurrentUser(photo, type);
@@ -1214,9 +1234,17 @@ export default function PublicEventPage() {
                                   ? `${myPhotos.length} photo${myPhotos.length === 1 ? '' : 's'} with you`
                                   : 'No photos found with your face yet'
                               : photoViewMode === 'album'
-                                ? `${albumCount} photo${albumCount === 1 ? '' : 's'} selected for album`
+                                ? !currentUser
+                                  ? 'Sign in to view your personal album selection.'
+                                  : myAlbumCount > 0
+                                    ? `${myAlbumCount} photo${myAlbumCount === 1 ? '' : 's'} in your album selection`
+                                    : 'Your album selection is currently empty'
                                 : photoViewMode === 'bookmark'
-                                  ? `${bookmarkCount} keeper${bookmarkCount === 1 ? '' : 's'} saved`
+                                  ? !currentUser
+                                    ? 'Sign in to view your personal keepers.'
+                                    : myBookmarkCount > 0
+                                      ? `${myBookmarkCount} keeper${myBookmarkCount === 1 ? '' : 's'} saved`
+                                      : 'No keepers saved yet'
                                   : (authenticatedPhotoTotal || totalPhotos) > 0
                                     ? `${authenticatedPhotoTotal || totalPhotos} moments from this event`
                                     : 'Photos will show here after upload'}
@@ -1300,7 +1328,7 @@ export default function PublicEventPage() {
                             >
                                 <Heart className={`h-3.5 w-3.5 ${photoViewMode === 'album' ? 'fill-current' : 'text-rose-500'}`} />
                                 <span>Album</span>
-                                {albumCount > 0 && <span className="rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-bold">{albumCount}</span>}
+                                {currentUser && myAlbumCount > 0 && <span className="rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-bold">{myAlbumCount}</span>}
                             </button>
                             <button
                                 type="button"
@@ -1313,22 +1341,22 @@ export default function PublicEventPage() {
                             >
                                 <Bookmark className={`h-3.5 w-3.5 ${photoViewMode === 'bookmark' ? 'fill-current' : 'text-amber-500'}`} />
                                 <span>Keepers</span>
-                                {bookmarkCount > 0 && <span className="rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-bold">{bookmarkCount}</span>}
+                                {currentUser && myBookmarkCount > 0 && <span className="rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-bold">{myBookmarkCount}</span>}
                             </button>
                         </div>
 
                         {/* Quick Notify Bar when client has selected items */}
-                        {(albumCount > 0 || bookmarkCount > 0) && (
+                        {currentUser && (myAlbumCount > 0 || myBookmarkCount > 0) && (
                             <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
                                 <span className="text-xs text-zinc-500 dark:text-gray-400 font-medium">
-                                    Selection: <strong className="text-rose-500">{albumCount}</strong> Album • <strong className="text-amber-500">{bookmarkCount}</strong> Keepers
+                                    Your personal picks: <strong className="text-rose-500">{myAlbumCount}</strong> Album • <strong className="text-amber-500">{myBookmarkCount}</strong> Keepers
                                 </span>
                                 <Button
                                     onClick={handleNotifyPhotographer}
                                     disabled={notifying}
                                     className="h-8 px-3 text-xs rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-medium shadow-sm transition"
                                 >
-                                    {notifying ? 'Notifying...' : 'Notify Photographer (Selection Ready) 🚀'}
+                                    {notifying ? 'Notifying...' : 'Notify Photographer (My Selection Ready) 🚀'}
                                 </Button>
                             </div>
                         )}
@@ -1687,43 +1715,103 @@ export default function PublicEventPage() {
                             </div>
                         )
                     ) : photoViewMode === 'album' ? (
-                        <div className={`rounded-[1.65rem] px-6 py-16 text-center ${softSurface}`}>
-                            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-100 dark:bg-rose-500/15">
-                                <Heart className="h-8 w-8 text-rose-600 dark:text-rose-400" />
+                        !currentUser ? (
+                            <div className={`rounded-[1.65rem] px-6 py-12 sm:py-16 text-center ${softSurface} border border-rose-500/20 bg-gradient-to-b from-rose-500/5 via-transparent to-transparent`}>
+                                <div className="mx-auto mb-5 relative flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-rose-500 to-pink-600 text-white shadow-xl shadow-rose-500/25">
+                                    <Heart className="h-9 w-9 fill-current" />
+                                </div>
+                                <h3 className="mb-2 text-xl sm:text-2xl font-bold text-zinc-900 dark:text-white">
+                                    Curate Your Personal Album Picks
+                                </h3>
+                                <p className="mx-auto max-w-md text-sm sm:text-base leading-relaxed text-zinc-600 dark:text-gray-300 mb-6">
+                                    Sign in or create a quick account so you can shortlist your personal picks for the album!
+                                </p>
+                                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto">
+                                    <Button
+                                        onClick={() => router.push(`/login?redirect=${encodeURIComponent(`/events/${eventId}${proofTokenParam ? `?proofToken=${proofTokenParam}` : ''}`)}`)}
+                                        className="w-full sm:w-auto h-12 px-6 rounded-xl font-semibold shadow-lg shadow-rose-500/25 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white flex items-center justify-center gap-2"
+                                    >
+                                        <Heart className="h-5 w-5 fill-current" />
+                                        Sign In to Select Photos
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => router.push(`/register?redirect=${encodeURIComponent(`/events/${eventId}${proofTokenParam ? `?proofToken=${proofTokenParam}` : ''}`)}`)}
+                                        className="w-full sm:w-auto h-12 px-5 rounded-xl border-zinc-300 dark:border-white/20 font-semibold"
+                                    >
+                                        Create Free Account
+                                    </Button>
+                                </div>
                             </div>
-                            <h3 className="mb-2 text-xl font-bold text-zinc-900 dark:text-white">
-                                No Album Photos Selected Yet
-                            </h3>
-                            <p className="mx-auto max-w-md text-sm leading-relaxed text-zinc-600 dark:text-gray-400 mb-6">
-                                Tap the Heart (❤️) icon on any photo in the gallery to add it to your physical wedding album selection.
-                            </p>
-                            <Button
-                                variant="outline"
-                                onClick={() => setPhotoViewMode('all')}
-                                className="rounded-xl px-5 h-11"
-                            >
-                                Browse All Photos
-                            </Button>
-                        </div>
+                        ) : (
+                            <div className={`rounded-[1.65rem] px-6 py-16 text-center ${softSurface}`}>
+                                <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-100 dark:bg-rose-500/15">
+                                    <Heart className="h-8 w-8 text-rose-600 dark:text-rose-400" />
+                                </div>
+                                <h3 className="mb-2 text-xl font-bold text-zinc-900 dark:text-white">
+                                    No Album Photos Selected Yet
+                                </h3>
+                                <p className="mx-auto max-w-md text-sm leading-relaxed text-zinc-600 dark:text-gray-400 mb-6">
+                                    Tap the Heart (❤️) icon on any photo in the gallery to add it to your personal album selection.
+                                </p>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setPhotoViewMode('all')}
+                                    className="rounded-xl px-5 h-11"
+                                >
+                                    Browse All Photos
+                                </Button>
+                            </div>
+                        )
                     ) : photoViewMode === 'bookmark' ? (
-                        <div className={`rounded-[1.65rem] px-6 py-16 text-center ${softSurface}`}>
-                            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-100 dark:bg-amber-500/15">
-                                <Bookmark className="h-8 w-8 text-amber-600 dark:text-amber-400" />
+                        !currentUser ? (
+                            <div className={`rounded-[1.65rem] px-6 py-12 sm:py-16 text-center ${softSurface} border border-amber-500/20 bg-gradient-to-b from-amber-500/5 via-transparent to-transparent`}>
+                                <div className="mx-auto mb-5 relative flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-xl shadow-amber-500/25">
+                                    <Bookmark className="h-9 w-9 fill-current" />
+                                </div>
+                                <h3 className="mb-2 text-xl sm:text-2xl font-bold text-zinc-900 dark:text-white">
+                                    Save Your Personal Keepers
+                                </h3>
+                                <p className="mx-auto max-w-md text-sm sm:text-base leading-relaxed text-zinc-600 dark:text-gray-300 mb-6">
+                                    Sign in or create a quick account to bookmark your personal high-res keepers for download and sharing!
+                                </p>
+                                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto">
+                                    <Button
+                                        onClick={() => router.push(`/login?redirect=${encodeURIComponent(`/events/${eventId}${proofTokenParam ? `?proofToken=${proofTokenParam}` : ''}`)}`)}
+                                        className="w-full sm:w-auto h-12 px-6 rounded-xl font-semibold shadow-lg shadow-amber-500/25 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white flex items-center justify-center gap-2"
+                                    >
+                                        <Bookmark className="h-5 w-5 fill-current" />
+                                        Sign In to Save Keepers
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => router.push(`/register?redirect=${encodeURIComponent(`/events/${eventId}${proofTokenParam ? `?proofToken=${proofTokenParam}` : ''}`)}`)}
+                                        className="w-full sm:w-auto h-12 px-5 rounded-xl border-zinc-300 dark:border-white/20 font-semibold"
+                                    >
+                                        Create Free Account
+                                    </Button>
+                                </div>
                             </div>
-                            <h3 className="mb-2 text-xl font-bold text-zinc-900 dark:text-white">
-                                No High-Res Keepers Bookmarked Yet
-                            </h3>
-                            <p className="mx-auto max-w-md text-sm leading-relaxed text-zinc-600 dark:text-gray-400 mb-6">
-                                Tap the Bookmark (🔖) icon on any photo to save it for high-resolution print quality delivery.
-                            </p>
-                            <Button
-                                variant="outline"
-                                onClick={() => setPhotoViewMode('all')}
-                                className="rounded-xl px-5 h-11"
-                            >
-                                Browse All Photos
-                            </Button>
-                        </div>
+                        ) : (
+                            <div className={`rounded-[1.65rem] px-6 py-16 text-center ${softSurface}`}>
+                                <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-100 dark:bg-amber-500/15">
+                                    <Bookmark className="h-8 w-8 text-amber-600 dark:text-amber-400" />
+                                </div>
+                                <h3 className="mb-2 text-xl font-bold text-zinc-900 dark:text-white">
+                                    No High-Res Keepers Bookmarked Yet
+                                </h3>
+                                <p className="mx-auto max-w-md text-sm leading-relaxed text-zinc-600 dark:text-gray-400 mb-6">
+                                    Tap the Bookmark (🔖) icon on any photo in the gallery to save it as your personal high-res keeper.
+                                </p>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setPhotoViewMode('all')}
+                                    className="rounded-xl px-5 h-11"
+                                >
+                                    Browse All Photos
+                                </Button>
+                            </div>
+                        )
                     ) : (
                         <div className={`rounded-[1.65rem] px-6 py-16 text-center ${softSurface}`}>
                             <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-zinc-100 dark:bg-white/5">
