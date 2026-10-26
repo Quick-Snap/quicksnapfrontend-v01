@@ -105,7 +105,7 @@ export default function EditEventPage() {
     }
 
     return (
-        <RoleGuard allowedRoles={['organizer', 'admin']}>
+        <RoleGuard allowedRoles={['organizer']}>
             <div className="max-w-3xl mx-auto space-y-6">
                 <div className="flex items-center gap-4 mb-4">
                     <Link href={`/organizer/events/${eventId}`} className="p-2 hover:bg-gray-100 rounded-full transition-colors">

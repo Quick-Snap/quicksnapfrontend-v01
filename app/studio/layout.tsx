@@ -27,11 +27,20 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
   const pathname = usePathname();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
-  const exitHref = isOrganizerOrAdmin ? '/organizer' : '/dashboard';
+  const isActualOrganizer = Boolean(user?.roles?.includes('organizer'));
+  const isActualAdmin = Boolean(user?.roles?.includes('admin'));
+
+  const exitHref = isActualOrganizer ? '/organizer' : isActualAdmin ? '/admin' : '/dashboard';
   const handleExitStudio = () => {
-    if (isOrganizerOrAdmin && user?.roles?.includes('organizer')) {
+    if (isActualOrganizer) {
       try {
         localStorage.setItem('activeRole', 'organizer');
+      } catch {
+        /* ignore */
+      }
+    } else if (isActualAdmin) {
+      try {
+        localStorage.setItem('activeRole', 'admin');
       } catch {
         /* ignore */
       }

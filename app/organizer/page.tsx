@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import RoleGuard from '../components/RoleGuard';
 import { Calendar, Plus, Upload, Users, Image as ImageIcon, BarChart3, ArrowRight, Sparkles } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import api from '@/app/api/axios'; // Or wherever api is configured
+import { eventApi } from '@/lib/api';
 
 export default function OrganizerDashboard() {
     const { user } = useAuth();
@@ -23,8 +23,8 @@ export default function OrganizerDashboard() {
         const fetchDashboardData = async () => {
             try {
                 // Fetch only the organizer's own events
-                const eventsRes = await api.get('/events/my-organized');
-                const myEvents = eventsRes.data.data || [];
+                const eventsRes = await eventApi.getMyOrganizedEvents();
+                const myEvents = eventsRes.data || [];
                 setRecentEvents(myEvents.slice(0, 5));
 
                 // Calculate stats from organizer's own events
@@ -54,7 +54,7 @@ export default function OrganizerDashboard() {
     }, [user]);
 
     return (
-        <RoleGuard allowedRoles={['organizer', 'admin']}>
+        <RoleGuard allowedRoles={['organizer']}>
             <div className="space-y-8">
                 {/* Header */}
                 <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 rounded-2xl p-8 shadow-2xl shadow-indigo-500/20">

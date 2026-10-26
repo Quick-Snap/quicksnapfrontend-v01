@@ -162,7 +162,7 @@ export default function CreateEventPage() {
     const isFormValid = formData.name && formData.venue && formData.startDate && formData.endDate && (customCode.trim() === '' || isAvailable === true);
 
     return (
-        <RoleGuard allowedRoles={['organizer', 'admin']}>
+        <RoleGuard allowedRoles={['organizer']}>
             <div className="max-w-4xl mx-auto space-y-8">
                 {/* Header */}
                 <div className="flex items-center justify-between">

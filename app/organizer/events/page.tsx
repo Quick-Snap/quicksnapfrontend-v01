@@ -82,7 +82,7 @@ export default function OrganizerEventsPage() {
   });
 
   return (
-    <RoleGuard allowedRoles={['organizer', 'admin']}>
+    <RoleGuard allowedRoles={['organizer']}>
       <div className="space-y-6">
         {/* Header */}
         <div className="relative overflow-hidden rounded-2xl border border-zinc-200/90 bg-gradient-to-br from-violet-50/95 via-white to-zinc-50 p-8 shadow-[0_20px_60px_-15px_rgba(15,23,42,0.08)] dark:border-white/5 dark:bg-gradient-to-br dark:from-[#181025] dark:via-[#0f0b1d] dark:to-[#0a0d1e] dark:shadow-[0_20px_80px_rgba(0,0,0,0.45)]">

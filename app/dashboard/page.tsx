@@ -44,7 +44,7 @@ export default function DashboardPage() {
   }
 
   if (role === 'photographer') {
-    if (isOrganizerOrAdmin) {
+    if (user.roles?.includes('organizer')) {
       return <OrganizerDashboard />;
     }
     return <PhotographerDashboard />;

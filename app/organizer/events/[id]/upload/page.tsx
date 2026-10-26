@@ -202,7 +202,7 @@ export default function EventUploadPage() {
     }
 
     return (
-        <RoleGuard allowedRoles={['organizer', 'admin', 'photographer']}>
+        <RoleGuard allowedRoles={['organizer', 'photographer']}>
             <div className="max-w-5xl mx-auto space-y-8">
                 {/* Header */}
                 <div className="flex items-center justify-between">
