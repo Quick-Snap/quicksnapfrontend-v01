@@ -28,6 +28,8 @@ type PhotoLightboxProps = {
   onReport?: () => void;
   isAlbumFavorite?: boolean;
   isOriginalRequested?: boolean;
+  albumTooltip?: string;
+  originalTooltip?: string;
   onToggleAlbum?: () => void;
   onToggleOriginal?: () => void;
 };
@@ -46,6 +48,8 @@ export function PhotoLightbox({
   onReport,
   isAlbumFavorite = false,
   isOriginalRequested = false,
+  albumTooltip,
+  originalTooltip,
   onToggleAlbum,
   onToggleOriginal,
 }: PhotoLightboxProps) {
@@ -150,7 +154,7 @@ export function PhotoLightbox({
                 e.stopPropagation();
                 onToggleAlbum();
               }}
-              title={isAlbumFavorite ? "Remove from Album selection" : "Select for Album (❤️)"}
+              title={albumTooltip || (isAlbumFavorite ? "Remove from Album selection" : "Select for Album (❤️)")}
               aria-label="Toggle album selection"
             >
               <Heart
@@ -172,7 +176,7 @@ export function PhotoLightbox({
                 e.stopPropagation();
                 onToggleOriginal();
               }}
-              title={isOriginalRequested ? "Remove from High-Res requests" : "Save for High-Res Master (🔖)"}
+              title={originalTooltip || (isOriginalRequested ? "Remove from High-Res requests" : "Save for High-Res Master (🔖)")}
               aria-label="Toggle high-res bookmark"
             >
               <Bookmark

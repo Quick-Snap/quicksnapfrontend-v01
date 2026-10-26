@@ -66,8 +66,8 @@ export default function RoleApplicationsPage() {
             </div>
             <h1 className="text-3xl font-bold text-white">Apply for organizer or photographer</h1>
             <p className="text-gray-400 max-w-3xl">
-              Choose how you want to contribute. Organizer access enables full event CRUD and photo
-              review. Photographer access focuses on bulk RAW uploads to S3 that trigger Lambda + Rekognition.
+              Choose how you want to contribute. Organizer access enables full event management and gallery
+              oversight. Photographer access unlocks bulk photo uploads, automatic AI face indexing, and client proofing.
             </p>
             {!user && (
               <div className="flex gap-3 mt-2">
@@ -102,7 +102,7 @@ export default function RoleApplicationsPage() {
               </li>
               <li className="flex items-start gap-2">
                 <Sparkles className="h-4 w-4 text-violet-400 mt-0.5 shrink-0" />
-                <span>Upload event photos (bulk) to RAW S3</span>
+                <span>Upload event photos in bulk</span>
               </li>
               <li className="flex items-start gap-2">
                 <Sparkles className="h-4 w-4 text-violet-400 mt-0.5 shrink-0" />
@@ -147,7 +147,7 @@ export default function RoleApplicationsPage() {
               </div>
               <div>
                 <p className="font-semibold text-white text-lg">Photographer</p>
-                <p className="text-sm text-gray-500">Bulk RAW ingest to S3</p>
+                <p className="text-sm text-gray-500">Fast photo upload &amp; AI delivery</p>
               </div>
             </div>
             <ul className="text-sm text-gray-400 space-y-2 mb-6">
@@ -157,7 +157,7 @@ export default function RoleApplicationsPage() {
               </li>
               <li className="flex items-start gap-2">
                 <Sparkles className="h-4 w-4 text-violet-400 mt-0.5 shrink-0" />
-                <span>Lambda auto-runs moderation + Rekognition</span>
+                <span>Automated AI face recognition and safety screening</span>
               </li>
               <li className="flex items-start gap-2">
                 <Sparkles className="h-4 w-4 text-violet-400 mt-0.5 shrink-0" />
@@ -165,7 +165,7 @@ export default function RoleApplicationsPage() {
               </li>
               <li className="flex items-start gap-2">
                 <Sparkles className="h-4 w-4 text-violet-400 mt-0.5 shrink-0" />
-                <span>Public-safe photos enter event galleries</span>
+                <span>Clean, family-friendly photos enter event galleries</span>
               </li>
             </ul>
             <div className="flex gap-3">
@@ -173,7 +173,7 @@ export default function RoleApplicationsPage() {
                 <>
                   <Link href="/photographer/upload">
                     <Button className="bg-violet-600 text-white hover:bg-violet-500 shadow-lg shadow-violet-500/20">
-                      Bulk upload to RAW
+                      Upload Photos
                     </Button>
                   </Link>
                   <Link href="/dashboard">

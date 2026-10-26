@@ -379,18 +379,18 @@ export default function ImageUploader({
                 <div className="flex items-start gap-3">
                     <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
                     <div className="text-sm text-blue-900">
-                        <p className="font-medium mb-1">Automatic AI Processing</p>
+                        <p className="font-medium mb-1">Automatic AI Photo Processing</p>
                         <p className="text-blue-700">
-                            After upload, images are automatically sent to AWS S3. A Lambda function will:
+                            After upload, photos are automatically processed by our intelligent cloud engine:
                         </p>
                         <ul className="list-disc list-inside mt-2 space-y-1 text-blue-700">
-                            <li>Detect and recognize faces using AWS Rekognition</li>
-                            <li>Match faces with registered users</li>
-                            <li>Moderate content for safety</li>
-                            <li>Organize photos by user and event</li>
+                            <li>Detect and index faces with high precision</li>
+                            <li>Match photos instantly with registered attendees</li>
+                            <li>Screen content for safety and clean family-friendly galleries</li>
+                            <li>Organize photos by attendee and event collections</li>
                         </ul>
                         <p className="mt-2 text-blue-700">
-                            Users will automatically see photos they appear in within minutes!
+                            Attendees will automatically see photos they appear in within minutes!
                         </p>
                     </div>
                 </div>

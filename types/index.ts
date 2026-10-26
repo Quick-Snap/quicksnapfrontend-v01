@@ -53,6 +53,13 @@ export interface Event {
     requireRegistration: boolean;
   };
   accessCode?: string;
+  proofingSettings?: {
+    enabled?: boolean;
+    token?: string;
+    tokenCreatedAt?: string;
+  };
+  isProofingEnabled?: boolean;
+  isProofingAuthorized?: boolean;
   tags: string[];
   coverImage?: string;
   isDeleted?: boolean;
@@ -87,7 +94,11 @@ export interface Photo {
   downloadCount: number;
   url?: string;
   isAlbumFavorite?: boolean;
+  albumFavoritedCount?: number;
+  albumFavoritedBy?: Array<{ _id: string; name: string; email?: string; avatar?: string }>;
   isOriginalRequested?: boolean;
+  originalRequestedCount?: number;
+  originalRequestedBy?: Array<{ _id: string; name: string; email?: string; avatar?: string }>;
   createdAt?: string;
   updatedAt?: string;
 }

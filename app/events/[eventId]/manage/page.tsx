@@ -950,10 +950,10 @@ export default function ManageEventPage() {
                             />
                             <div>
                                 <p className="text-sm font-medium text-zinc-900 dark:text-white">
-                                    Grant Trusted Uploader
+                                    Mark as Tested &amp; Trusted Uploader
                                 </p>
                                 <p className="text-xs text-zinc-500 dark:text-gray-400">
-                                    Bypasses Rekognition moderation checks on uploads to optimize AWS costs
+                                    Confirm this photographer is verified and trusted, and will not upload any NSFW or inappropriate content
                                 </p>
                             </div>
                         </label>
@@ -1646,7 +1646,7 @@ function TrashBinModal({ isOpen, onClose, eventId, onRefresh }: TrashBinModalPro
     };
 
     const handlePurge = async (photoId: string) => {
-        if (!confirm("Are you sure you want to permanently delete this photo? This cannot be undone and S3 storage will be cleared immediately.")) {
+        if (!confirm("Are you sure you want to permanently delete this photo? This cannot be undone and all photo files will be permanently cleared.")) {
             return;
         }
         setActioning(photoId);

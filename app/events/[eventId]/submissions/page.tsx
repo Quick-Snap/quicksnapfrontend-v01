@@ -651,10 +651,10 @@ export default function EventSubmissionsReviewPage() {
                             <div className="h-full w-full flex flex-col items-center justify-center p-4 text-center bg-gradient-to-br from-red-50 to-zinc-100 dark:from-red-950/20 dark:to-zinc-900/40">
                               <Trash2 size={24} className="text-red-500 mb-1.5" />
                               <span className="text-xs font-bold text-red-600 dark:text-red-400 uppercase tracking-wider">
-                                Deleted from S3
+                                Permanently Deleted
                               </span>
                               <span className="text-[10px] text-zinc-400 dark:text-gray-500 mt-0.5">
-                                Storage purged immediately
+                                Storage cleared immediately
                               </span>
                             </div>
                           ) : photo.previewUrl ? (
@@ -748,7 +748,7 @@ export default function EventSubmissionsReviewPage() {
                         ) : (
                           <div className="text-center py-1">
                             <span className="text-[11px] font-semibold text-zinc-500 dark:text-gray-400">
-                              {isApproved ? '✓ Promoted to Event Pool' : '✗ Deleted from S3'}
+                              {isApproved ? '✓ Promoted to Event Pool' : '✗ Permanently Deleted'}
                             </span>
                           </div>
                         )}
@@ -955,7 +955,7 @@ export default function EventSubmissionsReviewPage() {
                   </div>
                   <h3 className="text-lg font-bold text-white mb-1">Photo Rejected & Deleted</h3>
                   <p className="text-sm text-white/60">
-                    This photo was rejected and immediately purged from AWS S3 storage.
+                    This photo was rejected and permanently removed from cloud storage.
                   </p>
                 </div>
               ) : activeReviewPhoto.previewUrl ? (

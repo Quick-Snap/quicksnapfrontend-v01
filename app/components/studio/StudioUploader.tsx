@@ -370,7 +370,7 @@ export default function StudioUploader({ presetEventId }: StudioUploaderProps) {
               <span>Studio Pro Pipeline</span>
             </p>
             <p className="leading-relaxed">
-              Photos uploaded here are immediately indexed by AWS Rekognition. Guests can find their face matches, and shortlists sync directly with your Studio proofing dashboard.
+              Photos uploaded here are immediately indexed by AI face recognition. Clients and guests can find their face matches, and shortlists sync directly with your Studio proofing dashboard.
             </p>
           </div>
         </div>
@@ -382,7 +382,7 @@ export default function StudioUploader({ presetEventId }: StudioUploaderProps) {
               <div className="flex items-center gap-3">
                 <Loader2 className="h-5 w-5 text-violet-600 dark:text-violet-400 animate-spin" />
                 <div>
-                  <p className="font-semibold text-zinc-900 dark:text-white text-sm">Uploading photos to S3 RAW storage...</p>
+                  <p className="font-semibold text-zinc-900 dark:text-white text-sm">Uploading photos securely...</p>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">Please keep this browser window open.</p>
                 </div>
               </div>
@@ -414,7 +414,7 @@ export default function StudioUploader({ presetEventId }: StudioUploaderProps) {
                 {uploadedCount} photo{uploadedCount === 1 ? '' : 's'} ingested successfully!
               </p>
               <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                Photos are stored in S3 RAW storage and submitted to AI matching. You can now proof them or export filenames to Adobe Lightroom.
+                Photos are safely stored and processed with AI face matching. You can now proof them or export filenames to Adobe Lightroom.
               </p>
             </div>
           </div>
@@ -439,7 +439,7 @@ export default function StudioUploader({ presetEventId }: StudioUploaderProps) {
                       <p className="font-semibold text-zinc-900 dark:text-white">
                         {files.length} photo{files.length === 1 ? '' : 's'} queued ({formatFileSize(totalFileSize)})
                       </p>
-                      <p className="text-zinc-500">Ready for parallel S3 upload</p>
+                      <p className="text-zinc-500">Ready for high-speed cloud upload</p>
                     </div>
 
                     <div className="flex items-center gap-2">

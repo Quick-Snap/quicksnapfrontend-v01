@@ -121,24 +121,24 @@ export default function EventUploadPage() {
                                     Upload Successful!
                                 </h3>
                                 <p className="text-green-800 mb-3">
-                                    {uploadedCount} {uploadedCount === 1 ? 'photo' : 'photos'} uploaded successfully to AWS S3.
+                                    {uploadedCount} {uploadedCount === 1 ? 'photo' : 'photos'} uploaded successfully.
                                 </p>
                                 <div className="bg-white rounded-lg p-4 border border-green-200">
                                     <p className="text-sm text-gray-700 mb-2 font-medium">
                                         🚀 Automatic Processing Started
                                     </p>
                                     <ul className="text-sm text-gray-600 space-y-1">
-                                        <li>✓ Photos uploaded to AWS S3</li>
-                                        <li>⏳ Lambda function processing images...</li>
-                                        <li>⏳ AWS Rekognition detecting faces...</li>
-                                        <li>⏳ Matching faces with registered users...</li>
-                                        <li>⏳ Creating user photo collections...</li>
+                                        <li>✓ Photos uploaded securely to the cloud</li>
+                                        <li>⏳ Optimizing images for web &amp; mobile preview...</li>
+                                        <li>⏳ Smart AI detecting faces...</li>
+                                        <li>⏳ Matching faces with registered attendees...</li>
+                                        <li>⏳ Preparing personal attendee galleries...</li>
                                     </ul>
                                     <p className="text-sm text-gray-700 mt-3">
                                         <strong>Processing time:</strong> 1-5 minutes depending on photo count
                                     </p>
                                     <p className="text-sm text-gray-600 mt-1">
-                                        Users will automatically see photos they appear in once processing completes.
+                                        Attendees will automatically see photos they appear in once processing completes.
                                     </p>
                                 </div>
                                 <p className="text-sm text-green-700 mt-3">
@@ -162,15 +162,15 @@ export default function EventUploadPage() {
                             </div>
                             <div>
                                 <h4 className="font-semibold mb-2">2. Automatic Processing</h4>
-                                <p>Photos are sent to AWS S3 and processed by Lambda functions automatically.</p>
+                                <p>Photos are securely stored in the cloud and optimized for fast viewing.</p>
                             </div>
                             <div>
                                 <h4 className="font-semibold mb-2">3. Face Recognition</h4>
-                                <p>AWS Rekognition detects faces and matches them with registered users.</p>
+                                <p>Intelligent AI detects faces and matches them with registered attendees.</p>
                             </div>
                             <div>
                                 <h4 className="font-semibold mb-2">4. User Delivery</h4>
-                                <p>Each user automatically receives photos they appear in within minutes.</p>
+                                <p>Each attendee automatically receives photos they appear in within minutes.</p>
                             </div>
                         </div>
                     </div>
@@ -229,26 +229,26 @@ export default function EventUploadPage() {
                 {/* Technical Details */}
                 <div className="mt-8 bg-gray-100 rounded-lg p-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                        🔧 Technical Details
+                        ✨ Processing &amp; Quality
                     </h3>
                     <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-700">
                         <div>
-                            <strong>Storage:</strong> AWS S3 (3 buckets: RAW, PROCESSED, PUBLIC)
+                            <strong>Cloud Storage:</strong> Secure, encrypted cloud CDN delivery
                         </div>
                         <div>
-                            <strong>Processing:</strong> AWS Lambda (serverless, auto-scaling)
+                            <strong>Optimization:</strong> Fast progressive loading &amp; web proxies
                         </div>
                         <div>
-                            <strong>Face Recognition:</strong> AWS Rekognition (99.9% accuracy)
+                            <strong>AI Face Matching:</strong> High-precision neural face recognition
                         </div>
                         <div>
-                            <strong>Database:</strong> MongoDB (photo metadata & user mapping)
+                            <strong>Private Galleries:</strong> Isolated personal collections per attendee
                         </div>
                         <div>
-                            <strong>Content Moderation:</strong> AWS Rekognition DetectModerationLabels
+                            <strong>Content Safety:</strong> Automated protection against inappropriate/NSFW content
                         </div>
                         <div>
-                            <strong>Processing Time:</strong> 1-5 minutes per batch
+                            <strong>Turnaround:</strong> Instant indexing within 1-5 minutes
                         </div>
                     </div>
                 </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
     Calendar,
@@ -24,7 +24,8 @@ import {
     X,
     Tv,
     Heart,
-    Bookmark
+    Bookmark,
+    AlertCircle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { eventApi, photoApi } from '@/lib/api';
@@ -93,8 +94,12 @@ export default function PublicEventPage() {
     const { isUser: isViewingAsUser, isOrganizer: isRoleOrganizer, isAdmin: isRoleAdmin } = useRole();
     const params = useParams();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const queryClient = useQueryClient();
     const eventId = params?.eventId as string;
+
+    const proofTokenParam = searchParams?.get('proofToken') || '';
+    const accessCodeParam = searchParams?.get('code') || '';
 
     const [downloading, setDownloading] = useState<string | null>(null);
     const [selectedPhoto, setSelectedPhoto] = useState<any>(null);
@@ -106,6 +111,7 @@ export default function PublicEventPage() {
     const [isGuestUploadModalOpen, setIsGuestUploadModalOpen] = useState(false);
     const [showPostJoinSelfieModal, setShowPostJoinSelfieModal] = useState(false);
     const [isScanningUpdatedSelfie, setIsScanningUpdatedSelfie] = useState(false);
+    const [showSelectionAuthModal, setShowSelectionAuthModal] = useState(false);
     const loadUser = useAuthStore((state) => state.loadUser);
 
     useEffect(() => {
@@ -166,13 +172,17 @@ export default function PublicEventPage() {
         }
     };
 
-    // Fetch Event details
+    // Fetch Event details (with proofToken validation if present)
     const { data: eventResult, isLoading: loading } = useQuery(
-        ['event', eventId],
-        () => eventApi.getById(eventId, { lite: true }),
+        ['event', eventId, proofTokenParam],
+        () => eventApi.getById(eventId, { lite: true, proofToken: proofTokenParam }),
         { enabled: !!eventId, staleTime: 60 * 1000, retry: reactQueryRetry }
     );
     const event = eventResult?.data;
+    const studioInfo = (event?.organizer as any)?.studioSettings;
+    const isProofingAuthorized = Boolean(event?.isProofingAuthorized);
+    const isProofingMode = isProofingAuthorized;
+    const isProofingDisabled = event?.isProofingEnabled === false && Boolean(proofTokenParam);
 
     // The viewer is acting as an organizer for this event ONLY IF their active role is organizer or admin,
     // and they have event ownership or admin permissions.
@@ -252,14 +262,17 @@ export default function PublicEventPage() {
         }
     }, [currentUser, isGuest, isOrganizer]);
 
-    // Full gallery — authenticated users only (hybrid progressive loading: instant initial paint, background stream)
+    // Full gallery (hybrid progressive loading: instant initial paint, background stream)
     const { data: photosResult, isLoading: photosLoading } = useQuery(
-        ['eventPhotos', eventId],
+        ['eventPhotos', eventId, proofTokenParam, accessCodeParam],
         () => fetchEventPhotosProgressive(eventId, {
             initialLimit: 24,
+            all: isProofingMode || isOrganizer,
+            proofToken: proofTokenParam,
+            code: accessCodeParam,
             onBatch: ({ photos, total, hasMore, isInitial }) => {
                 if (!isInitial) {
-                    queryClient.setQueryData(['eventPhotos', eventId], (prev: any) => ({
+                    queryClient.setQueryData(['eventPhotos', eventId, proofTokenParam, accessCodeParam], (prev: any) => ({
                         ...(prev && typeof prev === 'object' ? prev : {}),
                         success: true,
                         data: {
@@ -272,19 +285,19 @@ export default function PublicEventPage() {
             },
         }),
         {
-            enabled: !!eventId && !!currentUser,
+            enabled: !!eventId && (!!currentUser || isProofingMode),
             staleTime: 5 * 60 * 1000,
             retry: reactQueryRetry,
         }
     );
     const allPhotos = normalizeEventPhotosPayload(photosResult);
 
-    // Teaser for shared links — uses existing GET photos with limit (no backend deploy needed)
+    // Teaser for shared links — uses existing GET photos with limit (only for logged-out non-proofing visitors)
     const { data: previewResult, isLoading: previewLoading } = useQuery(
         ['eventPhotosPreview', eventId],
         () => eventApi.getPhotos(eventId, { limit: PREVIEW_PHOTO_COUNT }),
         {
-            enabled: !!eventId && !currentUser,
+            enabled: !!eventId && !currentUser && !isProofingMode,
             staleTime: 5 * 60 * 1000,
             retry: false,
         }
@@ -364,7 +377,7 @@ export default function PublicEventPage() {
         ['eventSelections', eventId],
         () => eventApi.getSelections(eventId),
         {
-            enabled: !!eventId && !!currentUser,
+            enabled: !!eventId && (!!currentUser || isProofingMode),
             staleTime: 30 * 1000,
             retry: reactQueryRetry,
         }
@@ -407,6 +420,10 @@ export default function PublicEventPage() {
                     imageId: id,
                     isAlbumFavorite: p.isAlbumFavorite !== undefined ? p.isAlbumFavorite : (existing?.isAlbumFavorite ?? false),
                     isOriginalRequested: p.isOriginalRequested !== undefined ? p.isOriginalRequested : (existing?.isOriginalRequested ?? false),
+                    albumFavoritedCount: existing?.albumFavoritedCount ?? p.albumFavoritedCount,
+                    originalRequestedCount: existing?.originalRequestedCount ?? p.originalRequestedCount,
+                    albumFavoritedBy: existing?.albumFavoritedBy ?? p.albumFavoritedBy,
+                    originalRequestedBy: existing?.originalRequestedBy ?? p.originalRequestedBy,
                 });
             }
         }
@@ -423,6 +440,10 @@ export default function PublicEventPage() {
                     imageId: id,
                     isAlbumFavorite: p.isAlbumFavorite !== undefined ? p.isAlbumFavorite : (existing?.isAlbumFavorite ?? false),
                     isOriginalRequested: p.isOriginalRequested !== undefined ? p.isOriginalRequested : (existing?.isOriginalRequested ?? false),
+                    albumFavoritedCount: existing?.albumFavoritedCount ?? p.albumFavoritedCount,
+                    originalRequestedCount: existing?.originalRequestedCount ?? p.originalRequestedCount,
+                    albumFavoritedBy: existing?.albumFavoritedBy ?? p.albumFavoritedBy,
+                    originalRequestedBy: existing?.originalRequestedBy ?? p.originalRequestedBy,
                 });
             }
         }
@@ -458,18 +479,89 @@ export default function PublicEventPage() {
         setCurrentPage(1);
     }, []);
 
+    const isSelectedByCurrentUser = useCallback((photo: any, type: 'album' | 'original') => {
+        if (!currentUser || !photo) return false;
+        const myId = (currentUser.id || (currentUser as any)._id)?.toString();
+        const list = type === 'album' ? photo.albumFavoritedBy : photo.originalRequestedBy;
+        if (Array.isArray(list) && list.length > 0) {
+            return list.some((u: any) => {
+                const uid = typeof u === 'string' ? u : (u?._id || u?.id)?.toString();
+                return uid === myId;
+            });
+        }
+        return type === 'album' ? Boolean(photo.isAlbumFavorite) : Boolean(photo.isOriginalRequested);
+    }, [currentUser]);
+
+    const getSelectionTooltip = useCallback((photo: any, type: 'album' | 'original') => {
+        const isMyPick = isSelectedByCurrentUser(photo, type);
+        const totalCount = (type === 'album' ? photo.albumFavoritedCount : photo.originalRequestedCount) ?? 0;
+        const isSelectedAny = type === 'album' ? Boolean(photo.isAlbumFavorite) : Boolean(photo.isOriginalRequested);
+        const otherCount = Math.max(0, isMyPick ? totalCount - 1 : totalCount);
+
+        if (type === 'album') {
+            if (isMyPick) {
+                if (otherCount === 1) return 'In your album picks (❤️) • Also picked by 1 loved one (click to remove)';
+                if (otherCount > 1) return `In your album picks (❤️) • Also picked by ${otherCount} loved ones (click to remove)`;
+                return 'In your album picks (❤️) — click to remove';
+            }
+            if (isSelectedAny) {
+                if (totalCount === 1) return 'Picked by 1 loved one (❤️) — click to add to your picks';
+                if (totalCount > 1) return `Picked by ${totalCount} loved ones (❤️) — click to add to your picks`;
+                return 'Picked by a loved one (❤️) — click to add to your picks';
+            }
+            return 'Select for Album (❤️)';
+        } else {
+            if (isMyPick) {
+                if (otherCount === 1) return 'In your keepers (🔖) • Also kept by 1 loved one (click to remove)';
+                if (otherCount > 1) return `In your keepers (🔖) • Also kept by ${otherCount} loved ones (click to remove)`;
+                return 'In your keepers (🔖) — click to remove';
+            }
+            if (isSelectedAny) {
+                if (totalCount === 1) return 'Kept by 1 loved one (🔖) — click to add to your keepers';
+                if (totalCount > 1) return `Kept by ${totalCount} loved ones (🔖) — click to add to your keepers`;
+                return 'Kept by a loved one (🔖) — click to add to your keepers';
+            }
+            return 'Save as High-Res Keeper (🔖)';
+        }
+    }, [isSelectedByCurrentUser]);
+
     const handleToggleSelection = useCallback(async (photo: any, type: 'album' | 'original') => {
+        if (!currentUser) {
+            setShowSelectionAuthModal(true);
+            return;
+        }
         if (!photo?._id && !photo?.imageId) return;
         const photoId = photo.imageId || photo._id;
-        const currentStatus = type === 'album' ? !!photo.isAlbumFavorite : !!photo.isOriginalRequested;
-        const nextStatus = !currentStatus;
+
+        const myUserId = (currentUser.id || (currentUser as any)._id)?.toString();
+        const userList = type === 'album' ? photo.albumFavoritedBy : photo.originalRequestedBy;
+        const isSelectedByMe = Array.isArray(userList) && userList.length > 0
+            ? userList.some((u: any) => (typeof u === 'string' ? u : (u?._id || u?.id)?.toString()) === myUserId)
+            : Boolean(type === 'album' ? photo.isAlbumFavorite : photo.isOriginalRequested);
+        const nextStatus = !isSelectedByMe;
 
         const updateList = (list: any[]) =>
             (list || []).map((p) => {
                 if (p.imageId === photoId || p._id === photoId) {
+                    const oldList = (type === 'album' ? p.albumFavoritedBy : p.originalRequestedBy) || [];
+                    let updatedUsers = [...oldList];
+                    const oldCount = (type === 'album' ? p.albumFavoritedCount : p.originalRequestedCount) || 0;
+                    let updatedCount = oldCount;
+                    if (nextStatus) {
+                        if (!updatedUsers.some((u: any) => (u?._id || u?.id || u)?.toString() === myUserId)) {
+                            updatedUsers.push({ _id: myUserId, name: currentUser.name || 'You', email: currentUser.email || '' });
+                        }
+                        updatedCount = Math.max(1, oldCount + 1);
+                    } else {
+                        updatedUsers = updatedUsers.filter((u: any) => (u?._id || u?.id || u)?.toString() !== myUserId);
+                        updatedCount = Math.max(0, oldCount - 1);
+                    }
+                    const overallActive = nextStatus || updatedUsers.length > 0;
                     return {
                         ...p,
-                        [type === 'album' ? 'isAlbumFavorite' : 'isOriginalRequested']: nextStatus,
+                        [type === 'album' ? 'albumFavoritedBy' : 'originalRequestedBy']: updatedUsers,
+                        [type === 'album' ? 'isAlbumFavorite' : 'isOriginalRequested']: overallActive,
+                        [type === 'album' ? 'albumFavoritedCount' : 'originalRequestedCount']: updatedCount,
                     };
                 }
                 return p;
@@ -479,15 +571,42 @@ export default function PublicEventPage() {
         setSelectedPhoto((prev: any) => {
             if (!prev) return prev;
             if (prev.imageId === photoId || prev._id === photoId) {
+                const oldList = (type === 'album' ? prev.albumFavoritedBy : prev.originalRequestedBy) || [];
+                let updatedUsers = [...oldList];
+                const oldCount = (type === 'album' ? prev.albumFavoritedCount : prev.originalRequestedCount) || 0;
+                let updatedCount = oldCount;
+                if (nextStatus) {
+                    if (!updatedUsers.some((u: any) => (u?._id || u?.id || u)?.toString() === myUserId)) {
+                        updatedUsers.push({ _id: myUserId, name: currentUser.name || 'You', email: currentUser.email || '' });
+                    }
+                    updatedCount = Math.max(1, oldCount + 1);
+                } else {
+                    updatedUsers = updatedUsers.filter((u: any) => (u?._id || u?.id || u)?.toString() !== myUserId);
+                    updatedCount = Math.max(0, oldCount - 1);
+                }
+                const overallActive = nextStatus || updatedUsers.length > 0;
                 return {
                     ...prev,
-                    [type === 'album' ? 'isAlbumFavorite' : 'isOriginalRequested']: nextStatus,
+                    [type === 'album' ? 'albumFavoritedBy' : 'originalRequestedBy']: updatedUsers,
+                    [type === 'album' ? 'isAlbumFavorite' : 'isOriginalRequested']: overallActive,
+                    [type === 'album' ? 'albumFavoritedCount' : 'originalRequestedCount']: updatedCount,
                 };
             }
             return prev;
         });
 
         // Optimistically update caches
+        queryClient.setQueryData(['eventPhotos', eventId, proofTokenParam, accessCodeParam], (prev: any) => {
+            if (!prev?.data?.photos) return prev;
+            return {
+                ...prev,
+                data: {
+                    ...prev.data,
+                    photos: updateList(prev.data.photos),
+                },
+            };
+        });
+
         queryClient.setQueryData(['eventPhotos', eventId], (prev: any) => {
             if (!prev?.data?.photos) return prev;
             return {
@@ -571,8 +690,8 @@ export default function PublicEventPage() {
             queryClient.invalidateQueries(['eventSelections', eventId]);
             toast.success(
                 type === 'album'
-                    ? (nextStatus ? 'Added to Album selection (❤️)' : 'Removed from Album')
-                    : (nextStatus ? 'Saved as High-Res Keeper (🔖)' : 'Removed from Bookmarks'),
+                    ? (nextStatus ? 'Added to your Album picks (❤️)' : 'Removed from your picks')
+                    : (nextStatus ? 'Saved as your High-Res Keeper (🔖)' : 'Removed from your keepers'),
                 { id: `sel-${photoId}-${type}`, duration: 1800 }
             );
         } catch (err: any) {
@@ -581,19 +700,26 @@ export default function PublicEventPage() {
             queryClient.invalidateQueries(['myEventPhotos', eventId]);
             queryClient.invalidateQueries(['eventSelections', eventId]);
         }
-    }, [eventId, queryClient]);
+    }, [currentUser, eventId, queryClient, proofTokenParam, accessCodeParam]);
 
     const handleNotifyPhotographer = useCallback(async () => {
+        let clientName = currentUser?.name;
+        if (!clientName) {
+            const entered = prompt('Please enter your name or email so the photographer knows who submitted this selection:');
+            if (entered === null) return;
+            clientName = entered.trim() || 'Client';
+        }
+
         setNotifying(true);
         try {
-            const res = await eventApi.notifySelectionReady(eventId);
+            const res = await eventApi.notifySelectionReady(eventId, { clientName });
             toast.success(res.message || 'Photographer has been notified of your selections!', { duration: 4000 });
         } catch (err: any) {
             toast.error(err.response?.data?.message || 'Failed to notify photographer');
         } finally {
             setNotifying(false);
         }
-    }, [eventId]);
+    }, [eventId, currentUser]);
 
     /** Real total count of all event photos for authenticated visitors: server total first while streaming, then exact loaded count. */
     const authenticatedPhotoTotal = useMemo(() => {
@@ -646,7 +772,7 @@ export default function PublicEventPage() {
     );
 
     const isLoadingPhotos =
-        !currentUser
+        !currentUser && !isProofingMode
             ? previewLoading
             : photoViewMode === 'my' && !!currentUser
               ? myPhotosLoading
@@ -835,7 +961,7 @@ export default function PublicEventPage() {
                                         </span>
                                     )}
                                     <span className="rounded-full bg-zinc-900/[0.06] px-2.5 py-1 text-[11px] font-medium uppercase tracking-wide text-zinc-600 dark:bg-white/10 dark:text-gray-400">
-                                        {!currentUser
+                                        {!currentUser && !isProofingMode
                                             ? anonymousPhotoTotal != null
                                                 ? `${anonymousPhotoTotal} photos`
                                                 : previewPhotos.length > 0
@@ -843,11 +969,35 @@ export default function PublicEventPage() {
                                                   : 'Gallery'
                                             : photoViewMode === 'my' && !!currentUser
                                               ? `${totalPhotos} yours`
-                                              : `${authenticatedPhotoTotal} photos`}
+                                              : `${authenticatedPhotoTotal || totalPhotos} photos`}
                                     </span>
                                 </div>
 
                                 <div className="space-y-3">
+                                    {studioInfo && (studioInfo.businessName || studioInfo.logoUrl) && (
+                                        <div className="inline-flex items-center gap-3 rounded-2xl border border-violet-500/25 bg-white/80 dark:bg-black/40 px-3.5 py-1.5 backdrop-blur-md shadow-sm">
+                                            {studioInfo.logoUrl ? (
+                                                /* eslint-disable-next-line @next/next/no-img-element */
+                                                <img
+                                                    src={studioInfo.logoUrl}
+                                                    alt={studioInfo.businessName || 'Studio Logo'}
+                                                    className="h-6 w-auto max-w-[120px] object-contain rounded"
+                                                />
+                                            ) : (
+                                                <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-violet-600 text-white font-bold text-xs">
+                                                    {studioInfo.businessName ? studioInfo.businessName.charAt(0).toUpperCase() : 'S'}
+                                                </div>
+                                            )}
+                                            <div className="text-left">
+                                                <p className="text-xs font-bold text-zinc-900 dark:text-white leading-tight">
+                                                    {studioInfo.businessName || 'Pro Studio Shoot'}
+                                                </p>
+                                                <p className="text-[10px] text-violet-600 dark:text-violet-400 font-medium">
+                                                    Client Proofing &amp; Selection Gallery
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
                                     <h1 className="text-balance text-2xl font-semibold leading-[1.15] tracking-tight text-zinc-900 dark:text-white sm:text-3xl md:text-4xl lg:text-[2.75rem]">
                                         {event.name}
                                     </h1>
@@ -878,8 +1028,8 @@ export default function PublicEventPage() {
                                             <div className="min-w-0">
                                                 <p className="text-xs font-medium text-zinc-500 dark:text-gray-500">Photos</p>
                                                 <p className="text-xl font-semibold tabular-nums text-zinc-900 dark:text-white sm:text-2xl">
-                                                    {currentUser
-                                                        ? authenticatedPhotoTotal
+                                                    {currentUser || isProofingMode
+                                                        ? authenticatedPhotoTotal || totalPhotos
                                                         : anonymousPhotoTotal != null
                                                           ? anonymousPhotoTotal
                                                           : previewPhotos.length > 0
@@ -1052,13 +1202,22 @@ export default function PublicEventPage() {
                         Gallery
                     </h2>
                     <p className="mx-auto mt-2 max-w-lg px-2 text-sm leading-relaxed text-zinc-600 sm:text-base dark:text-gray-400">
-                        {!currentUser
+                        {!currentUser && !isProofingMode
                             ? 'Preview below — sign in for the full set and downloads.'
                             : totalPhotos > 0
                               ? `${totalPhotos} moment${totalPhotos === 1 ? '' : 's'} from this event`
                               : 'Photos will show here after upload'}
                     </p>
                 </div>
+
+                {isProofingDisabled && (
+                    <div className="mb-6 mx-auto max-w-xl rounded-2xl border border-amber-400/40 bg-amber-500/10 p-4 text-left text-amber-800 dark:text-amber-200 flex items-center gap-3">
+                        <AlertCircle className="h-5 w-5 shrink-0 text-amber-500" />
+                        <p className="text-xs sm:text-sm">
+                            Client proofing is currently paused for this shoot. Please contact your photographer for an updated link.
+                        </p>
+                    </div>
+                )}
 
                 {isGuest && currentUser && !currentUser.faceRegistered && myPhotos.length === 0 && (
                     <div className="mb-6 mx-auto max-w-xl rounded-2xl border border-amber-400/40 bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 p-4 text-left backdrop-blur-md">
@@ -1087,7 +1246,7 @@ export default function PublicEventPage() {
                     </div>
                 )}
 
-                {currentUser && (
+                {(currentUser || isProofingMode) && (
                     <div className="mb-8 flex flex-col items-center gap-3 px-0 sm:px-2">
                         <div className={`flex w-full max-w-2xl flex-wrap justify-center rounded-2xl p-1.5 gap-1 ${softSurface}`}>
                             <button
@@ -1099,7 +1258,7 @@ export default function PublicEventPage() {
                                         : 'text-zinc-600 hover:bg-zinc-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white'
                                 }`}
                             >
-                                All {authenticatedPhotoTotal > 0 ? `(${authenticatedPhotoTotal})` : ''}
+                                All {(authenticatedPhotoTotal || totalPhotos) > 0 ? `(${authenticatedPhotoTotal || totalPhotos})` : ''}
                             </button>
                             <button
                                 type="button"
@@ -1110,9 +1269,10 @@ export default function PublicEventPage() {
                                         : 'text-zinc-600 hover:bg-zinc-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white'
                                 }`}
                             >
-                                <span>My photos</span>
+                                <Sparkles className="h-3.5 w-3.5" />
+                                <span>{currentUser ? 'My photos' : 'Find My Face'}</span>
                                 {myPhotos.length > 0 && <span>({myPhotos.length})</span>}
-                                {isGuest && !currentUser.faceRegistered && myPhotos.length === 0 && (
+                                {isGuest && currentUser && !currentUser.faceRegistered && myPhotos.length === 0 && (
                                     <span className="inline-block w-2 h-2 rounded-full bg-amber-400" title="Face registration required" />
                                 )}
                             </button>
@@ -1190,14 +1350,14 @@ export default function PublicEventPage() {
 
                 {isLoadingPhotos ? (
                     <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4 md:gap-4">
-                        {[...Array(!currentUser ? 4 : 8)].map((_, i) => (
+                        {[...Array(!currentUser && !isProofingMode ? 4 : 8)].map((_, i) => (
                             <div
                                 key={i}
                                 className="aspect-square animate-pulse rounded-xl bg-zinc-100 ring-1 ring-zinc-900/[0.04] dark:bg-white/[0.06] dark:ring-white/[0.06]"
                             />
                         ))}
                     </div>
-                ) : !currentUser ? (
+                ) : (!currentUser && !isProofingMode) ? (
                     <div className="space-y-6 sm:space-y-8">
                         {previewPhotos.length > 0 && (
                             <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4 md:gap-4">
@@ -1294,7 +1454,7 @@ export default function PublicEventPage() {
                                         className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                                     />
                                     {/* Quick Selection Heart ❤️ and Bookmark 🔖 Buttons */}
-                                    {currentUser && (
+                                    {(currentUser || isProofingMode) && (
                                         <div
                                             className="absolute top-2 right-2 z-10 flex items-center gap-1.5"
                                             onClick={(e) => e.stopPropagation()}
@@ -1306,14 +1466,16 @@ export default function PublicEventPage() {
                                                     handleToggleSelection(photo, 'album');
                                                 }}
                                                 className={`p-1.5 rounded-full backdrop-blur-md transition-all ${
-                                                    photo.isAlbumFavorite
+                                                    isSelectedByCurrentUser(photo, 'album')
                                                         ? 'bg-rose-500 text-white shadow-md shadow-rose-500/30 opacity-100 scale-105'
+                                                        : photo.isAlbumFavorite
+                                                        ? 'bg-rose-500/80 text-white border border-rose-300 opacity-90 group-hover:opacity-100 hover:scale-110'
                                                         : 'bg-black/50 text-white/80 hover:text-rose-400 opacity-0 group-hover:opacity-100 hover:scale-110'
                                                 }`}
-                                                title={photo.isAlbumFavorite ? "In Album (❤️)" : "Select for Album (❤️)"}
+                                                title={getSelectionTooltip(photo, 'album')}
                                                 aria-label="Toggle album selection"
                                             >
-                                                <Heart className={`h-3.5 w-3.5 ${photo.isAlbumFavorite ? 'fill-current' : ''}`} />
+                                                <Heart className={`h-3.5 w-3.5 ${isSelectedByCurrentUser(photo, 'album') || photo.isAlbumFavorite ? 'fill-current' : ''}`} />
                                             </button>
                                             <button
                                                 type="button"
@@ -1322,14 +1484,16 @@ export default function PublicEventPage() {
                                                     handleToggleSelection(photo, 'original');
                                                 }}
                                                 className={`p-1.5 rounded-full backdrop-blur-md transition-all ${
-                                                    photo.isOriginalRequested
+                                                    isSelectedByCurrentUser(photo, 'original')
                                                         ? 'bg-amber-500 text-white shadow-md shadow-amber-500/30 opacity-100 scale-105'
+                                                        : photo.isOriginalRequested
+                                                        ? 'bg-amber-500/80 text-white border border-amber-300 opacity-90 group-hover:opacity-100 hover:scale-110'
                                                         : 'bg-black/50 text-white/80 hover:text-amber-400 opacity-0 group-hover:opacity-100 hover:scale-110'
                                                 }`}
-                                                title={photo.isOriginalRequested ? "High-Res Keeper (🔖)" : "Save as High-Res Keeper (🔖)"}
+                                                title={getSelectionTooltip(photo, 'original')}
                                                 aria-label="Toggle high-res bookmark"
                                             >
-                                                <Bookmark className={`h-3.5 w-3.5 ${photo.isOriginalRequested ? 'fill-current' : ''}`} />
+                                                <Bookmark className={`h-3.5 w-3.5 ${isSelectedByCurrentUser(photo, 'original') || photo.isOriginalRequested ? 'fill-current' : ''}`} />
                                             </button>
                                         </div>
                                     )}
@@ -1361,8 +1525,36 @@ export default function PublicEventPage() {
                         )}
                     </>
                 ) : (
-                    photoViewMode === 'my' && !!currentUser ? (
-                        isGuest && !currentUser?.faceRegistered && myPhotos.length === 0 ? (
+                    photoViewMode === 'my' ? (
+                        !currentUser ? (
+                            <div className={`rounded-[1.65rem] px-6 py-12 sm:py-16 text-center ${softSurface} border border-violet-500/20 bg-gradient-to-b from-violet-500/5 via-transparent to-transparent`}>
+                                <div className="mx-auto mb-5 relative flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-xl shadow-violet-500/25">
+                                    <Sparkles className="h-9 w-9" />
+                                </div>
+                                <h3 className="mb-2 text-xl sm:text-2xl font-bold text-zinc-900 dark:text-white">
+                                    Find Your Photos with Face Match
+                                </h3>
+                                <p className="mx-auto max-w-md text-sm sm:text-base leading-relaxed text-zinc-600 dark:text-gray-300 mb-6">
+                                    Please sign in or create an account to match your face once. Our smart AI will register your profile and find your photos across all visits!
+                                </p>
+                                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto">
+                                    <Button
+                                        onClick={() => router.push(`/login?redirect=${encodeURIComponent(`/register-face?redirect=/events/${eventId}${proofTokenParam ? `?proofToken=${proofTokenParam}` : ''}`)}`)}
+                                        className="w-full sm:w-auto h-12 px-6 rounded-xl font-semibold shadow-lg shadow-violet-500/25 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white flex items-center justify-center gap-2"
+                                    >
+                                        <Camera className="h-5 w-5" />
+                                        Sign In to Match Face
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => setPhotoViewMode('all')}
+                                        className="w-full sm:w-auto h-12 px-5 rounded-xl border-zinc-300 dark:border-white/20"
+                                    >
+                                        Browse All Photos
+                                    </Button>
+                                </div>
+                            </div>
+                        ) : isGuest && !currentUser?.faceRegistered && myPhotos.length === 0 ? (
                             <div className={`rounded-[1.65rem] px-6 py-12 sm:py-16 text-center ${softSurface} border border-amber-400/30 bg-gradient-to-b from-amber-500/5 via-transparent to-transparent`}>
                                 <div className="mx-auto mb-5 relative flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-xl shadow-violet-500/25">
                                     <Camera className="h-9 w-9" />
@@ -1543,10 +1735,12 @@ export default function PublicEventPage() {
                     onClose={() => setSelectedPhoto(null)}
                     onUntag={photoViewMode === 'my' ? () => handleUntag(selectedPhoto) : undefined}
                     onReport={() => handleReportPhoto(selectedPhoto)}
-                    isAlbumFavorite={!!selectedPhoto?.isAlbumFavorite}
-                    isOriginalRequested={!!selectedPhoto?.isOriginalRequested}
-                    onToggleAlbum={currentUser ? () => handleToggleSelection(selectedPhoto, 'album') : undefined}
-                    onToggleOriginal={currentUser ? () => handleToggleSelection(selectedPhoto, 'original') : undefined}
+                    isAlbumFavorite={isSelectedByCurrentUser(selectedPhoto, 'album') || Boolean(selectedPhoto?.isAlbumFavorite)}
+                    isOriginalRequested={isSelectedByCurrentUser(selectedPhoto, 'original') || Boolean(selectedPhoto?.isOriginalRequested)}
+                    albumTooltip={selectedPhoto ? getSelectionTooltip(selectedPhoto, 'album') : undefined}
+                    originalTooltip={selectedPhoto ? getSelectionTooltip(selectedPhoto, 'original') : undefined}
+                    onToggleAlbum={(currentUser || isProofingMode) ? () => handleToggleSelection(selectedPhoto, 'album') : undefined}
+                    onToggleOriginal={(currentUser || isProofingMode) ? () => handleToggleSelection(selectedPhoto, 'original') : undefined}
                     footer={
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                             <div className="min-w-0 flex-1">
@@ -1616,6 +1810,46 @@ export default function PublicEventPage() {
                     queryClient.invalidateQueries(['event', eventId]);
                 }}
             />
+
+            {/* Selection Authentication Modal for Loved Ones */}
+            {showSelectionAuthModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="relative w-full max-w-md rounded-3xl bg-white p-6 sm:p-8 shadow-2xl dark:bg-[#13111f] dark:border dark:border-white/10 text-center">
+                        <button
+                            type="button"
+                            onClick={() => setShowSelectionAuthModal(false)}
+                            className="absolute top-4 right-4 p-2 rounded-full text-zinc-400 hover:text-zinc-600 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/10 transition"
+                            aria-label="Close modal"
+                        >
+                            <X className="h-5 w-5" />
+                        </button>
+                        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-tr from-rose-500 to-violet-600 text-white shadow-lg shadow-violet-500/25">
+                            <Heart className="h-8 w-8 fill-current" />
+                        </div>
+                        <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">
+                            Sign in to Save Your Selections
+                        </h3>
+                        <p className="text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed mb-6">
+                            Please sign in or create a quick account so your selections are saved to you. This allows you and your loved ones to curate your personal picks together while keeping track of everyone&apos;s choices!
+                        </p>
+                        <div className="flex flex-col gap-3">
+                            <Button
+                                onClick={() => router.push(`/login?redirect=${encodeURIComponent(`/events/${eventId}${proofTokenParam ? `?proofToken=${proofTokenParam}` : ''}`)}`)}
+                                className="w-full h-11 rounded-xl font-semibold bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-md shadow-violet-500/25"
+                            >
+                                Log In to Select
+                            </Button>
+                            <Button
+                                variant="outline"
+                                onClick={() => router.push(`/register?redirect=${encodeURIComponent(`/events/${eventId}${proofTokenParam ? `?proofToken=${proofTokenParam}` : ''}`)}`)}
+                                className="w-full h-11 rounded-xl font-semibold border-zinc-200 dark:border-white/15 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-white/5"
+                            >
+                                Create Quick Account
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
             </div>
         </div>
     );

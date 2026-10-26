@@ -150,10 +150,10 @@ export default function AssignPhotographerPage() {
                             />
                             <div>
                                 <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                    Grant Trusted Uploader
+                                    Mark as Tested &amp; Trusted Uploader
                                 </p>
                                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                                    Bypasses Rekognition moderation checks on uploads to optimize AWS costs
+                                    Confirm this photographer is verified and trusted, and will not upload any NSFW or inappropriate content
                                 </p>
                             </div>
                         </label>

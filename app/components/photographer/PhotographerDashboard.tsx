@@ -72,24 +72,24 @@ export default function PhotographerDashboard() {
       <div className="grid gap-3 sm:grid-cols-3 sm:gap-4">
         {[
           {
-            title: 'Upload (≤50)',
-            desc: 'Drop JPG/PNG/WEBP; multer streams to S3 RAW with event + uploader metadata.',
+            title: 'Fast Cloud Upload',
+            desc: 'Drop JPG, PNG, or WEBP photos. Securely uploaded and optimized in the background.',
             icon: CloudUpload,
             gradient: 'from-blue-500 to-blue-400',
             iconBg: 'bg-blue-100 dark:bg-blue-500/10',
             iconColor: 'text-blue-700 dark:text-blue-400',
           },
           {
-            title: 'Lambda + Rekognition',
-            desc: 'S3 event triggers moderation + face detection + collection match.',
+            title: 'AI Face Matching & Safety',
+            desc: 'Intelligent face indexing instantly matches attendees and screens for clean family-friendly galleries.',
             icon: Sparkles,
             gradient: 'from-violet-500 to-violet-400',
             iconBg: 'bg-violet-100 dark:bg-violet-500/10',
             iconColor: 'text-violet-700 dark:text-violet-400',
           },
           {
-            title: 'Delivery & review',
-            desc: 'Matched photos surface to users. Public-safe items show in event galleries.',
+            title: 'Instant Delivery & Proofing',
+            desc: 'Attendees discover their personal photos, while organizers and clients review selections.',
             icon: ShieldCheck,
             gradient: 'from-emerald-500 to-emerald-400',
             iconBg: 'bg-emerald-100 dark:bg-emerald-500/10',

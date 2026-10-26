@@ -113,6 +113,9 @@ export interface ProgressiveBatchEvent<T = any> {
 export interface ProgressiveFetchOptions {
   all?: boolean;
   isLiveWall?: boolean;
+  proof?: boolean;
+  proofToken?: string;
+  code?: string;
   initialLimit?: number;
   batchLimit?: number;
   onBatch?: (data: ProgressiveBatchEvent) => void;
@@ -135,6 +138,9 @@ export async function fetchEventPhotosProgressive(
   const initialRes = await eventApi.getPhotos(eventId, {
     all: options?.all ?? false,
     isLiveWall: options?.isLiveWall ?? false,
+    proof: options?.proof,
+    proofToken: options?.proofToken,
+    code: options?.code,
     limit: initialLimit,
   });
 
@@ -176,6 +182,9 @@ export async function fetchEventPhotosProgressive(
           const nextRes = await eventApi.getPhotos(eventId, {
             all: options?.all ?? false,
             isLiveWall: options?.isLiveWall ?? false,
+            proof: options?.proof,
+            proofToken: options?.proofToken,
+            code: options?.code,
             limit: batchLimit,
             lastKey: cursor,
           });

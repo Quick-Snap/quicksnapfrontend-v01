@@ -137,10 +137,10 @@ function ApproveModal({ request, onClose, onConfirm, loading }: ApproveModalProp
             />
             <div>
               <p className="text-sm font-medium text-zinc-900 dark:text-white">
-                Grant Trusted Uploader
+                Mark as Tested &amp; Trusted Uploader
               </p>
               <p className="text-xs text-zinc-500 dark:text-gray-400">
-                Bypasses Rekognition moderation checks on uploads to optimize AWS costs
+                Confirm this user is verified and trusted, and will not upload any NSFW or inappropriate content
               </p>
             </div>
           </label>

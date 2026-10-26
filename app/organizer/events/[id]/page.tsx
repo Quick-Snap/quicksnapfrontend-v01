@@ -480,7 +480,7 @@ function TrashBinModal({ isOpen, onClose, eventId, onRefresh }: TrashBinModalPro
     };
 
     const handlePurge = async (photoId: string) => {
-        if (!confirm("Are you sure you want to permanently delete this photo? This cannot be undone and S3 storage will be cleared immediately.")) {
+        if (!confirm("Are you sure you want to permanently delete this photo? This cannot be undone and all photo files will be permanently cleared.")) {
             return;
         }
         setActioning(photoId);

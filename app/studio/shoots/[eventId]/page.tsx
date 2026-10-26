@@ -20,7 +20,12 @@ import {
   Image as ImageIcon,
   CheckCircle,
   HelpCircle,
-  FolderDown
+  FolderDown,
+  Share2,
+  RotateCcw,
+  Lock,
+  Unlock,
+  Users
 } from 'lucide-react';
 import { Button } from '@/app/components/ui/Button';
 import toast from 'react-hot-toast';
@@ -32,15 +37,18 @@ export default function ShootProofingPage() {
 
   const [activeTab, setActiveTab] = useState<'album' | 'bookmark' | 'combined'>('combined');
   const [copiedType, setCopiedType] = useState<string | null>(null);
+  const [selectedUserFilter, setSelectedUserFilter] = useState<string>('all');
+  const [togglingProofing, setTogglingProofing] = useState(false);
+  const [regeneratingToken, setRegeneratingToken] = useState(false);
 
   // Fetch Event Details
-  const { data: eventData, isLoading: eventLoading } = useQuery(['eventDetails', eventId], () =>
+  const { data: eventData, isLoading: eventLoading, refetch: refetchShoot } = useQuery(['eventDetails', eventId], () =>
     eventApi.getById(eventId)
   );
   const shoot = eventData?.data;
 
   // Fetch Event Selections (❤️ Album and 🔖 Keepers)
-  const { data: selectionsData, isLoading: selLoading, refetch } = useQuery(
+  const { data: selectionsData, isLoading: selLoading, refetch: refetchSelections } = useQuery(
     ['eventSelections', eventId],
     () => eventApi.getSelections(eventId),
     {
@@ -53,16 +61,79 @@ export default function ShootProofingPage() {
   const albumFavorites = useMemo(() => selections?.albumFavorites || [], [selections?.albumFavorites]);
   const originalRequests = useMemo(() => selections?.originalRequests || [], [selections?.originalRequests]);
   const combinedPhotos = useMemo(() => selections?.combined || [], [selections?.combined]);
+  const byUser = useMemo(() => selections?.byUser || [], [selections?.byUser]);
 
   const albumCount = selections?.counts?.albumCount || albumFavorites.length;
   const originalCount = selections?.counts?.originalCount || originalRequests.length;
   const combinedCount = selections?.counts?.combinedCount || combinedPhotos.length;
 
   const currentDisplayPhotos = useMemo(() => {
-    if (activeTab === 'album') return albumFavorites;
-    if (activeTab === 'bookmark') return originalRequests;
-    return combinedPhotos;
-  }, [activeTab, albumFavorites, originalRequests, combinedPhotos]);
+    let list: any[] = [];
+    if (activeTab === 'album') list = albumFavorites;
+    else if (activeTab === 'bookmark') list = originalRequests;
+    else list = combinedPhotos;
+
+    if (selectedUserFilter !== 'all') {
+      list = list.filter((p) => {
+        const inAlbum = (p.albumFavoritedBy || []).some((u: any) => (u._id || u).toString() === selectedUserFilter);
+        const inOriginal = (p.originalRequestedBy || []).some((u: any) => (u._id || u).toString() === selectedUserFilter);
+        if (activeTab === 'album') return inAlbum;
+        if (activeTab === 'bookmark') return inOriginal;
+        return inAlbum || inOriginal;
+      });
+    }
+
+    return list;
+  }, [activeTab, albumFavorites, originalRequests, combinedPhotos, selectedUserFilter]);
+
+  const proofingToken = shoot?.proofingSettings?.token;
+  const isProofingEnabled = shoot?.proofingSettings?.enabled !== false;
+
+  const handleCopyProofingLink = () => {
+    if (!proofingToken) {
+      toast.error('Proofing token is not available yet.');
+      return;
+    }
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.roopixo.com';
+    const url = `${origin}/events/${eventId}?proofToken=${proofingToken}`;
+    navigator.clipboard.writeText(url);
+    toast.success('Secure Client Proofing Link copied! 📋', { duration: 3000 });
+  };
+
+  const handleToggleProofing = async () => {
+    setTogglingProofing(true);
+    try {
+      const res = await eventApi.toggleProofing(eventId, !isProofingEnabled);
+      toast.success(res.message || 'Updated proofing status');
+      refetchShoot();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to update proofing status');
+    } finally {
+      setTogglingProofing(false);
+    }
+  };
+
+  const handleRegenerateToken = async () => {
+    if (!confirm('Regenerate proofing link?\n\nThis will immediately invalidate any previously shared link and generate a new secure token. Anyone with the old link will lose proofing access.')) {
+      return;
+    }
+    setRegeneratingToken(true);
+    try {
+      const res = await eventApi.regenerateProofingToken(eventId);
+      toast.success('New proofing token generated! Old links are now invalid.');
+      refetchShoot();
+      if (res.data?.token) {
+        const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.roopixo.com';
+        const url = `${origin}/events/${eventId}?proofToken=${res.data.token}`;
+        navigator.clipboard.writeText(url);
+        toast.success('New link copied to clipboard! 📋', { duration: 3500 });
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to regenerate proofing token');
+    } finally {
+      setRegeneratingToken(false);
+    }
+  };
 
   /** Copy filenames formatted as comma-separated or newline string */
   const handleCopyFilenames = (photos: any[], label: string) => {
@@ -127,15 +198,55 @@ export default function ShootProofingPage() {
         </Link>
 
         {shoot && (
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+            {/* Proofing Status Toggle */}
+            <button
+              type="button"
+              onClick={handleToggleProofing}
+              disabled={togglingProofing}
+              className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold transition ${
+                isProofingEnabled
+                  ? 'border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300'
+                  : 'border-zinc-300 bg-zinc-100 text-zinc-600 dark:border-white/10 dark:bg-white/5 dark:text-zinc-400'
+              }`}
+              title={isProofingEnabled ? "Click to Pause Client Proofing" : "Click to Enable Client Proofing"}
+            >
+              {isProofingEnabled ? <Unlock size={13} className="text-emerald-600 dark:text-emerald-400" /> : <Lock size={13} />}
+              <span>Proofing: {isProofingEnabled ? 'Active' : 'Paused'}</span>
+            </button>
+
+            {/* Copy Secure Proofing Link */}
+            <button
+              type="button"
+              onClick={handleCopyProofingLink}
+              disabled={!isProofingEnabled}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100 shadow-sm dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-300 dark:hover:bg-violet-500/20 px-3.5 py-1.5 text-xs font-semibold transition disabled:opacity-50"
+            >
+              <Share2 size={14} />
+              <span>Copy Secure Proofing Link</span>
+            </button>
+
+            {/* Regenerate Token Button */}
+            <button
+              type="button"
+              onClick={handleRegenerateToken}
+              disabled={regeneratingToken}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:border-white/10 dark:bg-white/[0.04] dark:text-zinc-400 dark:hover:text-white px-2.5 py-1.5 text-xs font-medium transition"
+              title="Regenerate token (invalidates previously shared link)"
+            >
+              <RotateCcw size={13} className={regeneratingToken ? 'animate-spin' : ''} />
+              <span className="hidden sm:inline">Regenerate Link</span>
+            </button>
+
             <Link
-              href={`/events/${eventId}`}
+              href={proofingToken ? `/events/${eventId}?proofToken=${proofingToken}` : `/events/${eventId}`}
               target="_blank"
               className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white text-zinc-700 hover:text-zinc-900 hover:bg-zinc-100 shadow-sm dark:shadow-none dark:border-white/10 dark:bg-white/[0.04] dark:text-zinc-300 dark:hover:text-white dark:hover:bg-white/[0.08] px-3.5 py-1.5 text-xs font-semibold transition"
             >
               <ExternalLink size={14} />
-              <span>Open Client Gallery</span>
+              <span>Preview Gallery</span>
             </Link>
+
             <Link href={`/studio/shoots/${eventId}/upload`}>
               <Button className="rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold px-3.5 py-1.5">
                 <Upload size={14} className="mr-1.5" />
@@ -372,6 +483,57 @@ export default function ShootProofingPage() {
           </span>
         </div>
 
+        {/* Client & Loved Ones Filter Pills */}
+        {byUser.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 pt-1 pb-2">
+            <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium mr-1 flex items-center gap-1">
+              <Users size={13} />
+              <span>Filter by Loved One:</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => setSelectedUserFilter('all')}
+              className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition ${
+                selectedUserFilter === 'all'
+                  ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-sm'
+                  : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-white/5 dark:text-zinc-300 dark:hover:bg-white/10'
+              }`}
+            >
+              <span>All Loved Ones</span>
+              <span className="rounded-full bg-black/10 dark:bg-white/20 px-1.5 py-0.5 text-[10px]">
+                {combinedCount}
+              </span>
+            </button>
+            {byUser.map((item: any) => {
+              const isSelected = selectedUserFilter === item.user._id;
+              return (
+                <button
+                  key={item.user._id}
+                  type="button"
+                  onClick={() => setSelectedUserFilter(item.user._id)}
+                  className={`inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-semibold transition ${
+                    isSelected
+                      ? 'bg-violet-600 text-white shadow-sm shadow-violet-600/30'
+                      : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-white/5 dark:text-zinc-300 dark:hover:bg-white/10'
+                  }`}
+                >
+                  {item.user.avatar ? (
+                    <img src={item.user.avatar} alt={item.user.name} className="h-4 w-4 rounded-full object-cover" />
+                  ) : (
+                    <div className="h-4 w-4 rounded-full bg-violet-500/20 text-violet-600 dark:text-violet-300 flex items-center justify-center text-[9px] font-bold">
+                      {item.user.name?.charAt(0)?.toUpperCase() || 'U'}
+                    </div>
+                  )}
+                  <span>{item.user.name}</span>
+                  <span className="rounded-full bg-black/10 dark:bg-white/20 px-1.5 py-0.5 text-[10px]">
+                    {item.combinedCount}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {/* Selected Photos Grid */}
         {currentDisplayPhotos.length > 0 ? (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
@@ -411,11 +573,25 @@ export default function ShootProofingPage() {
                     )}
                   </div>
 
-                  {/* Filename Bar */}
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-2">
+                  {/* Filename & Loved Ones Badges */}
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-2 space-y-1">
                     <p className="text-[10px] font-mono text-zinc-200 truncate" title={photo.fileName}>
                       {photo.fileName}
                     </p>
+                    {((photo.albumFavoritedBy && photo.albumFavoritedBy.length > 0) || (photo.originalRequestedBy && photo.originalRequestedBy.length > 0)) && (
+                      <div className="flex flex-wrap gap-1 pointer-events-none">
+                        {(photo.albumFavoritedBy || []).map((u: any) => (
+                          <span key={u._id} className="rounded bg-rose-500/80 px-1 py-0.5 text-[9px] text-white font-medium truncate max-w-[90px]" title={`In Album by ${u.name}`}>
+                            ❤️ {u.name}
+                          </span>
+                        ))}
+                        {(photo.originalRequestedBy || []).map((u: any) => (
+                          <span key={u._id} className="rounded bg-amber-500/80 px-1 py-0.5 text-[9px] text-white font-medium truncate max-w-[90px]" title={`Keeper by ${u.name}`}>
+                            🔖 {u.name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               );

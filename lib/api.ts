@@ -393,9 +393,12 @@ export const eventApi = {
     return response.data;
   },
 
-  getById: async (eventId: string, options?: { lite?: boolean }) => {
+  getById: async (eventId: string, options?: { lite?: boolean; proofToken?: string }) => {
+    const params: Record<string, string> = {};
+    if (options?.lite) params.lite = 'true';
+    if (options?.proofToken) params.proofToken = options.proofToken;
     const response = await api.get<ApiResponse<any>>(`/events/${eventId}`, {
-      params: options?.lite ? { lite: 'true' } : undefined,
+      params: Object.keys(params).length ? params : undefined,
     });
     return response.data;
   },
@@ -442,7 +445,7 @@ export const eventApi = {
 
   getPhotos: async (
     eventId: string,
-    params?: { page?: number; limit?: number; lastKey?: string; all?: boolean; isLiveWall?: boolean }
+    params?: { page?: number; limit?: number; lastKey?: string; all?: boolean; isLiveWall?: boolean; proof?: boolean; proofToken?: string; code?: string }
   ) => {
     const query: Record<string, string | number | undefined> = {};
     if (params?.limit != null) query.limit = params.limit;
@@ -450,9 +453,22 @@ export const eventApi = {
     if (params?.lastKey != null) query.lastKey = params.lastKey;
     if (params?.all === true) query.all = 'true';
     if (params?.isLiveWall === true) query.isLiveWall = 'true';
+    if (params?.proof === true) query.proof = 'true';
+    if (params?.proofToken) query.proofToken = params.proofToken;
+    if (params?.code) query.code = params.code;
     const response = await api.get<ApiResponse<any>>(`/events/${eventId}/photos`, {
       params: query,
     });
+    return response.data;
+  },
+
+  toggleProofing: async (eventId: string, enabled?: boolean) => {
+    const response = await api.patch<ApiResponse<any>>(`/events/${eventId}/proofing`, { enabled });
+    return response.data;
+  },
+
+  regenerateProofingToken: async (eventId: string) => {
+    const response = await api.post<ApiResponse<any>>(`/events/${eventId}/proofing/regenerate`);
     return response.data;
   },
 
@@ -548,19 +564,32 @@ export const eventApi = {
         albumFavorites: any[];
         originalRequests: any[];
         combined: any[];
+        byUser?: {
+          user: {
+            _id: string;
+            name: string;
+            email?: string;
+            avatar?: string;
+          };
+          albumCount: number;
+          originalCount: number;
+          combinedCount: number;
+          albumPhotoIds: string[];
+          originalPhotoIds: string[];
+        }[];
       }>
     >(`/events/${eventId}/selections`);
     return response.data;
   },
 
-  notifySelectionReady: async (eventId: string) => {
+  notifySelectionReady: async (eventId: string, data?: { clientName?: string; clientContact?: string }) => {
     const response = await api.post<
       ApiResponse<{
         albumCount: number;
         originalCount: number;
         combinedCount: number;
       }>
-    >(`/events/${eventId}/selections/notify`);
+    >(`/events/${eventId}/selections/notify`, data);
     return response.data;
   },
 };

@@ -53,7 +53,7 @@ export default function OrganizerEventsPage() {
 
   const handlePermanentDelete = async (eventId: string) => {
     if (actionInProgress) return;
-    if (!confirm('Are you sure you want to permanently delete this event? This will instantly and irreversibly clear S3 physical files, Rekognition face collection indexes, and all metadata!')) {
+    if (!confirm('Are you sure you want to permanently delete this event? This will permanently and irreversibly delete all event photos, face recognition indexes, and gallery records.')) {
       return;
     }
     setActionInProgress(eventId);
