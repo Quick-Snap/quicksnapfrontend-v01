@@ -812,46 +812,41 @@ export default function PublicEventPage() {
                 console.warn('Clipboard write fallback error:', clipErr);
             }
 
-            // Helper toast with clipboard confirmation + 1-tap WhatsApp action
-            const showShareSuccessToast = () => {
-                toast.success(
-                    (t) => (
-                        <div className="flex flex-col gap-1.5 py-0.5">
-                            <span className="font-semibold text-zinc-900 dark:text-white">
-                                Selection copied to clipboard! 📋
-                            </span>
-                            <span className="text-xs text-zinc-600 dark:text-zinc-300">
-                                Ready to share via WhatsApp, Instagram, or Messages.
-                            </span>
-                            <a
-                                href={`https://wa.me/?text=${encodeURIComponent(shareText)}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                onClick={() => toast.dismiss(t.id)}
-                                className="mt-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1 text-xs font-semibold text-white shadow-sm hover:bg-emerald-500 transition"
-                            >
-                                Share via WhatsApp 💬
-                            </a>
-                        </div>
-                    ),
-                    { duration: 6500 }
-                );
-            };
+            // 2. Immediate toast with clipboard confirmation & 1-tap WhatsApp button
+            toast.success(
+                (t) => (
+                    <div className="flex flex-col gap-1.5 py-0.5">
+                        <span className="font-semibold text-zinc-900 dark:text-white">
+                            Selection copied to clipboard! 📋
+                        </span>
+                        <span className="text-xs text-zinc-600 dark:text-zinc-300">
+                            Ready to share via WhatsApp, Instagram, or Messages.
+                        </span>
+                        <a
+                            href={`https://wa.me/?text=${encodeURIComponent(shareText)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={() => toast.dismiss(t.id)}
+                            className="mt-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1 text-xs font-semibold text-white shadow-sm hover:bg-emerald-500 transition"
+                        >
+                            Share via WhatsApp 💬
+                        </a>
+                    </div>
+                ),
+                { duration: 7500 }
+            );
 
-            // 2. Open Native Share Sheet if available (iOS / Android: WhatsApp, Instagram, Messages, etc.)
-            if (typeof navigator !== 'undefined' && navigator.share) {
-                try {
-                    await navigator.share({
-                        title: `Photo Selection - ${event?.name || 'Event'}`,
-                        text: shareText,
-                        url: shareUrl,
-                    });
-                    showShareSuccessToast();
-                } catch (shareErr: any) {
-                    showShareSuccessToast();
-                }
-            } else {
-                showShareSuccessToast();
+            // 3. Open Native Share Sheet if available (iOS / Android: WhatsApp, Instagram, Messages, etc.)
+            if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+                navigator.share({
+                    title: `Photo Selection - ${event?.name || 'Event'}`,
+                    text: shareText,
+                    url: shareUrl,
+                }).catch((shareErr: any) => {
+                    if (shareErr?.name !== 'AbortError') {
+                        console.warn('Native share dismissed or not supported:', shareErr);
+                    }
+                });
             }
         } catch (err: any) {
             toast.error(err.response?.data?.message || 'Failed to notify photographer');
