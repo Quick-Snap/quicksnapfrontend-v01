@@ -812,31 +812,13 @@ export default function PublicEventPage() {
                 console.warn('Clipboard write fallback error:', clipErr);
             }
 
-            // 2. Open Native Share Sheet if available (iOS / Android: WhatsApp, Instagram, Messages, etc.)
-            if (typeof navigator !== 'undefined' && navigator.share) {
-                try {
-                    await navigator.share({
-                        title: `Photo Selection - ${event?.name || 'Event'}`,
-                        text: shareText,
-                        url: shareUrl,
-                    });
-                    toast.success('Selection shared & photographer notified! 🚀');
-                } catch (shareErr: any) {
-                    if (shareErr?.name !== 'AbortError') {
-                        console.error('Share error:', shareErr);
-                    }
-                    toast.success(
-                        'Selection copied to clipboard! 📋 Share via WhatsApp, Instagram or Messages.',
-                        { duration: 4500 }
-                    );
-                }
-            } else {
-                // 3. Desktop / Fallback: Toast with 1-tap WhatsApp Web action
+            // Helper toast with clipboard confirmation + 1-tap WhatsApp action
+            const showShareSuccessToast = () => {
                 toast.success(
                     (t) => (
                         <div className="flex flex-col gap-1.5 py-0.5">
                             <span className="font-semibold text-zinc-900 dark:text-white">
-                                Selection text copied to clipboard! 📋
+                                Selection copied to clipboard! 📋
                             </span>
                             <span className="text-xs text-zinc-600 dark:text-zinc-300">
                                 Ready to share via WhatsApp, Instagram, or Messages.
@@ -854,6 +836,22 @@ export default function PublicEventPage() {
                     ),
                     { duration: 6500 }
                 );
+            };
+
+            // 2. Open Native Share Sheet if available (iOS / Android: WhatsApp, Instagram, Messages, etc.)
+            if (typeof navigator !== 'undefined' && navigator.share) {
+                try {
+                    await navigator.share({
+                        title: `Photo Selection - ${event?.name || 'Event'}`,
+                        text: shareText,
+                        url: shareUrl,
+                    });
+                    showShareSuccessToast();
+                } catch (shareErr: any) {
+                    showShareSuccessToast();
+                }
+            } else {
+                showShareSuccessToast();
             }
         } catch (err: any) {
             toast.error(err.response?.data?.message || 'Failed to notify photographer');
