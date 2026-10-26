@@ -557,10 +557,7 @@ export default function PublicEventPage() {
         const photoId = photo.imageId || photo._id;
 
         const myUserId = (currentUser.id || (currentUser as any)._id)?.toString();
-        const userList = type === 'album' ? photo.albumFavoritedBy : photo.originalRequestedBy;
-        const isSelectedByMe = Array.isArray(userList) && userList.length > 0
-            ? userList.some((u: any) => (typeof u === 'string' ? u : (u?._id || u?.id)?.toString()) === myUserId)
-            : Boolean(type === 'album' ? photo.isAlbumFavorite : photo.isOriginalRequested);
+        const isSelectedByMe = isSelectedByCurrentUser(photo, type);
         const nextStatus = !isSelectedByMe;
 
         const updateList = (list: any[]) =>
