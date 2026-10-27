@@ -15,7 +15,9 @@ import {
     Info,
     X,
     Cloud,
-    Zap
+    Zap,
+    Sliders,
+    Check
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import RoleGuard from '@/app/components/RoleGuard';
@@ -25,6 +27,7 @@ import { photoApi } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import RefreshAttendeeMatchesCard from '@/app/components/events/RefreshAttendeeMatchesCard';
 import { useAppStore } from '@/stores/appStore';
+import { batchCompressImages, formatBytes } from '@/lib/clientImageCompress';
 
 interface UploadProgress {
     total: number;
@@ -47,6 +50,11 @@ export default function EventUploadPage() {
     const [targetSubEvent, setTargetSubEvent] = useState<string>('');
     const [uploading, setUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
+
+    // Upload quality mode: 'preview' (fast web proofing) vs 'original' (full RAW)
+    const [uploadQuality, setUploadQuality] = useState<'preview' | 'original'>('preview');
+    const [compressing, setCompressing] = useState(false);
+    const [compressionStatus, setCompressionStatus] = useState<string>('');
 
     const fetchEvent = async () => {
         try {
@@ -116,13 +124,36 @@ export default function EventUploadPage() {
         });
 
         try {
+            let filesToUpload = files;
+            if (uploadQuality === 'preview') {
+                setCompressing(true);
+                setCompressionStatus(`Optimizing ${files.length} photo(s) for fast web proofing...`);
+                try {
+                    const compressRes = await batchCompressImages(files, (p) => {
+                        setCompressionStatus(`Optimizing ${p.current} of ${p.total} (${p.percent}%)...`);
+                    });
+                    filesToUpload = compressRes.files;
+                    if (compressRes.savedBytes > 0) {
+                        toast.success(
+                            `Saved ${formatBytes(compressRes.savedBytes)} (${compressRes.percentSaved}% upload bandwidth)!`,
+                            { duration: 4000 }
+                        );
+                    }
+                } catch (err) {
+                    console.warn('Compression error, falling back to original files:', err);
+                    filesToUpload = files;
+                } finally {
+                    setCompressing(false);
+                }
+            }
+
             const result = await photoApi.uploadWithPresignedUrls(
                 eventId,
-                files,
+                filesToUpload,
                 (fileIndex, progress) => {
                     setUploadProgress(prev => prev ? {
                         ...prev,
-                        currentFile: files[fileIndex].name,
+                        currentFile: filesToUpload[fileIndex]?.name || files[fileIndex]?.name,
                         percent: progress.percent,
                     } : null);
                 },
@@ -137,7 +168,7 @@ export default function EventUploadPage() {
                         ...prev,
                         failed: prev.failed + 1,
                     } : null);
-                    console.error(`Failed to upload ${files[fileIndex].name}: ${error}`);
+                    console.error(`Failed to upload ${filesToUpload[fileIndex]?.name || files[fileIndex]?.name}: ${error}`);
                 },
                 5,
                 targetSubEvent || undefined
@@ -288,6 +319,68 @@ export default function EventUploadPage() {
                                         </p>
                                     </div>
                                 )}
+
+                                {/* Upload Quality Mode Selector */}
+                                <div className="mb-6 rounded-2xl border border-zinc-200/90 dark:border-white/10 bg-zinc-50/70 dark:bg-white/[0.02] p-4 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <Sliders size={16} className="text-violet-500" />
+                                            <span className="text-xs font-bold uppercase tracking-wider text-zinc-800 dark:text-zinc-200">
+                                                Upload Quality Mode
+                                            </span>
+                                        </div>
+                                        <span className="text-[11px] font-semibold text-violet-700 dark:text-violet-300 bg-violet-100 dark:bg-violet-900/40 px-2.5 py-0.5 rounded-full">
+                                            {uploadQuality === 'preview' ? '⚡ 10x Faster Uploads (Recommended)' : '💎 Untouched RAW Quality'}
+                                        </span>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        {/* Mode 1: Fast Web Proofing */}
+                                        <button
+                                            type="button"
+                                            onClick={() => setUploadQuality('preview')}
+                                            className={`p-3.5 rounded-xl text-left border transition-all ${
+                                                uploadQuality === 'preview'
+                                                    ? 'border-violet-500 bg-white dark:bg-violet-950/30 ring-2 ring-violet-500/30 shadow-sm'
+                                                    : 'border-zinc-200 dark:border-white/10 bg-white/60 dark:bg-white/[0.02] hover:border-zinc-300 dark:hover:border-white/20'
+                                            }`}
+                                        >
+                                            <div className="flex items-center justify-between mb-1.5">
+                                                <span className="text-sm font-semibold text-zinc-900 dark:text-white flex items-center gap-1.5">
+                                                    <span>⚡ Fast Web Proofing</span>
+                                                    <span className="text-[10px] uppercase font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 rounded">
+                                                        Recommended
+                                                    </span>
+                                                </span>
+                                                {uploadQuality === 'preview' && <Check size={16} className="text-violet-600 dark:text-violet-400" />}
+                                            </div>
+                                            <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                                                Resizes in browser to 2048px retina quality (~500 KB). 10x faster upload from venue or mobile hotspots. Perfect for guest face matching & album selection.
+                                            </p>
+                                        </button>
+
+                                        {/* Mode 2: Full Master Original */}
+                                        <button
+                                            type="button"
+                                            onClick={() => setUploadQuality('original')}
+                                            className={`p-3.5 rounded-xl text-left border transition-all ${
+                                                uploadQuality === 'original'
+                                                    ? 'border-violet-500 bg-white dark:bg-violet-950/30 ring-2 ring-violet-500/30 shadow-sm'
+                                                    : 'border-zinc-200 dark:border-white/10 bg-white/60 dark:bg-white/[0.02] hover:border-zinc-300 dark:hover:border-white/20'
+                                            }`}
+                                        >
+                                            <div className="flex items-center justify-between mb-1.5">
+                                                <span className="text-sm font-semibold text-zinc-900 dark:text-white flex items-center gap-1.5">
+                                                    <span>💎 Full Master RAWs</span>
+                                                </span>
+                                                {uploadQuality === 'original' && <Check size={16} className="text-violet-600 dark:text-violet-400" />}
+                                            </div>
+                                            <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                                                Uploads untouched original files (10MB–30MB+). Preserves maximum print DPI for clients requesting full original RAW downloads.
+                                            </p>
+                                        </button>
+                                    </div>
+                                </div>
 
                                 <UploadZone
                                     onFilesSelected={setFiles}
@@ -464,8 +557,12 @@ export default function EventUploadPage() {
                                         </div>
                                     </div>
 
-                                    <h3 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2">Uploading Photos...</h3>
-                                    <p className="text-zinc-500 dark:text-gray-400 mb-4">Please keep this window open</p>
+                                    <h3 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2">
+                                        {compressing ? 'Optimizing Photos...' : 'Uploading Photos...'}
+                                    </h3>
+                                    <p className="text-zinc-500 dark:text-gray-400 mb-4">
+                                        {compressing ? (compressionStatus || 'Scaling in browser to 2048px retina quality to save bandwidth') : 'Please keep this window open'}
+                                    </p>
                                     
                                     {uploadProgress.currentFile && (
                                         <div className="px-4 py-2 rounded-lg bg-zinc-100 border border-zinc-200 dark:bg-white/5 dark:border-white/10 mb-6">
