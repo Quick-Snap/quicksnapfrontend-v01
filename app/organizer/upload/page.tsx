@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import RoleGuard from '@/app/components/RoleGuard';
 import UploadZone from '@/app/components/ui/UploadZone';
 import { photoApi, eventApi } from '@/lib/api';
+import api from '@/app/api/axios';
 import toast from 'react-hot-toast';
 import { Loader2, CheckCircle, AlertCircle, Sliders, Check } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -42,13 +43,18 @@ export default function BulkUploadPage() {
 
     const fetchEvents = async () => {
         try {
-            const response = await eventApi.getAll({ limit: 100 });
-            if (response.success && response.data) {
-                setEvents(response.data);
-            }
+            const res = await api.get('/events/managed/all');
+            const list = Array.isArray(res.data?.data) ? res.data.data : (res.data?.data?.events || []);
+            setEvents(list);
         } catch (error) {
             console.error('Error fetching events:', error);
-            toast.error('Failed to load events');
+            try {
+                const response = await eventApi.getAll({ limit: 100 });
+                const fallbackList = Array.isArray(response.data) ? response.data : ((response.data as any)?.events || []);
+                setEvents(fallbackList);
+            } catch (fallbackError) {
+                toast.error('Failed to load events');
+            }
         } finally {
             setLoadingEvents(false);
         }
@@ -156,7 +162,7 @@ export default function BulkUploadPage() {
                             disabled={loadingEvents}
                         >
                             <option value="">Select an event...</option>
-                            {events.map(event => (
+                            {(Array.isArray(events) ? events : []).map(event => (
                                 <option key={event._id} value={event._id}>
                                     {event.name}
                                 </option>
