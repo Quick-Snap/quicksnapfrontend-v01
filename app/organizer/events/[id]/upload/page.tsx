@@ -387,6 +387,7 @@ export default function EventUploadPage() {
                                     maxFiles={100}
                                     eventId={eventId}
                                     onSyncComplete={fetchEvent}
+                                    uploadQuality={uploadQuality}
                                 />
 
                                 {/* File Summary */}

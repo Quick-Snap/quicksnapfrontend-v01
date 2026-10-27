@@ -567,6 +567,7 @@ export default function StudioUploader({ presetEventId }: StudioUploaderProps) {
                   maxFiles={200}
                   eventId={selectedEvent}
                   onSyncComplete={handleSyncComplete}
+                  uploadQuality={uploadQuality}
                 />
 
                 {/* Queue Summary & Submit Button */}

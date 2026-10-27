@@ -247,7 +247,12 @@ export default function BulkUploadPage() {
                             </div>
                         )}
 
-                        <UploadZone onFilesSelected={setFiles} maxFiles={100} />
+                        <UploadZone 
+                            onFilesSelected={setFiles} 
+                            maxFiles={100} 
+                            eventId={selectedEvent} 
+                            uploadQuality={uploadQuality}
+                        />
 
                         {/* Upload Progress */}
                         {uploadProgress && (

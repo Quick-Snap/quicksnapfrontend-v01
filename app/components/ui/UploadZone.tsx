@@ -13,9 +13,10 @@ interface UploadZoneProps {
     maxFiles?: number;
     eventId?: string;
     onSyncComplete?: () => void;
+    uploadQuality?: 'preview' | 'original';
 }
 
-export default function UploadZone({ onFilesSelected, maxFiles = 100, eventId, onSyncComplete }: UploadZoneProps) {
+export default function UploadZone({ onFilesSelected, maxFiles = 100, eventId, onSyncComplete, uploadQuality = 'preview' }: UploadZoneProps) {
     const { isPhotographerOrOrganizer } = useRole();
     const [previews, setPreviews] = useState<{ file: File; url: string }[]>([]);
     const [error, setError] = useState<string | null>(null);
@@ -192,6 +193,7 @@ export default function UploadZone({ onFilesSelected, maxFiles = 100, eventId, o
                     onClose={() => setIsGoogleModalOpen(false)} 
                     eventId={eventId} 
                     onSyncComplete={onSyncComplete}
+                    initialQuality={uploadQuality}
                 />
             )}
  

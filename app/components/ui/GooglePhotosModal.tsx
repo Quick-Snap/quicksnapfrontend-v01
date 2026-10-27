@@ -13,7 +13,9 @@ import {
     CheckCircle, 
     AlertCircle, 
     ChevronRight,
-    Loader2
+    Loader2,
+    Sliders,
+    Check
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/app/api/axios';
@@ -24,6 +26,7 @@ interface GooglePhotosModalProps {
     onClose: () => void;
     eventId: string;
     onSyncComplete?: () => void;
+    initialQuality?: 'preview' | 'original';
 }
 
 /**
@@ -132,7 +135,7 @@ function ProxyImage({ baseUrl, googleToken, filename, className }: {
     );
 }
 
-export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComplete }: GooglePhotosModalProps) {
+export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComplete, initialQuality = 'preview' }: GooglePhotosModalProps) {
     const theme = useAppStore(state => state.ui.theme);
     const isDarkMode = theme === 'dark';
 
@@ -141,6 +144,15 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
     const [photos, setPhotos] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     
+    // Upload/Import Quality Mode: 'preview' (2048px Fast Proofing) vs 'original' (Untouched RAW)
+    const [uploadQuality, setUploadQuality] = useState<'preview' | 'original'>(initialQuality || 'preview');
+
+    useEffect(() => {
+        if (initialQuality) {
+            setUploadQuality(initialQuality);
+        }
+    }, [initialQuality]);
+
     // Ingestion state
     const [syncing, setSyncing] = useState(false);
     const [syncProgress, setSyncProgress] = useState({ total: 0, current: 0, success: 0, failed: 0 });
@@ -410,7 +422,8 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                 eventId,
                 folderUrl: driveFolderUrl,
                 autoSyncEnabled,
-                syncDurationDays: autoSyncEnabled ? syncDurationDays : 0
+                syncDurationDays: autoSyncEnabled ? syncDurationDays : 0,
+                quality: uploadQuality
             });
 
             if (res.data?.success) {
@@ -512,7 +525,8 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                             res = await api.post('/photos/google-drive/import-file', {
                                 eventId,
                                 fileId: photo.id,
-                                filename: photo.filename
+                                filename: photo.filename,
+                                quality: uploadQuality
                             }, {
                                 headers: !googleToken ? {} : { 'x-google-access-token': googleToken }
                             });
@@ -520,7 +534,8 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                             res = await api.post('/photos/google-photos/import-file', {
                                 eventId,
                                 baseUrl: photo.baseUrl,
-                                filename: photo.filename
+                                filename: photo.filename,
+                                quality: uploadQuality
                             }, {
                                 headers: (activeTab === 'link' || !googleToken) ? {} : { 'x-google-access-token': googleToken }
                             });
@@ -765,6 +780,68 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                     ) : !selectedAlbum ? (
                         /* Choice Dashboard */
                         <div className="space-y-6">
+                            {/* Import Quality Mode Selector */}
+                            <div className="max-w-xl mx-auto rounded-2xl border border-zinc-200/90 dark:border-white/10 bg-zinc-50/70 dark:bg-white/[0.02] p-3.5 space-y-2.5">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <Sliders size={15} className="text-violet-500" />
+                                        <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-800 dark:text-zinc-200">
+                                            Import Quality Mode
+                                        </span>
+                                    </div>
+                                    <span className="text-[10px] font-semibold text-violet-700 dark:text-violet-300 bg-violet-100 dark:bg-violet-900/40 px-2 py-0.5 rounded-full">
+                                        {uploadQuality === 'preview' ? '⚡ 10x Faster Ingest (Recommended)' : '💎 Untouched RAW Master'}
+                                    </span>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                    {/* Mode 1: Fast Web Proofing */}
+                                    <button
+                                        type="button"
+                                        onClick={() => setUploadQuality('preview')}
+                                        className={`p-2.5 rounded-xl text-left border transition-all ${
+                                            uploadQuality === 'preview'
+                                                ? 'border-violet-500 bg-white dark:bg-violet-950/30 ring-2 ring-violet-500/30 shadow-sm'
+                                                : 'border-zinc-200 dark:border-white/10 bg-white/60 dark:bg-white/[0.02] hover:border-zinc-300 dark:hover:border-white/20'
+                                        }`}
+                                    >
+                                        <div className="flex items-center justify-between mb-1">
+                                            <span className="text-xs font-semibold text-zinc-900 dark:text-white flex items-center gap-1.5">
+                                                <span>⚡ Fast Web Proofing</span>
+                                                <span className="text-[9px] uppercase font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 rounded">
+                                                    Recommended
+                                                </span>
+                                            </span>
+                                            {uploadQuality === 'preview' && <Check size={14} className="text-violet-600 dark:text-violet-400" />}
+                                        </div>
+                                        <p className="text-[10px] text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                                            Imports via Google 2048px CDN (~500 KB). 10x faster cloud ingest, saving ~85% AWS S3 storage while preserving retina sharpness.
+                                        </p>
+                                    </button>
+
+                                    {/* Mode 2: Full Master Original */}
+                                    <button
+                                        type="button"
+                                        onClick={() => setUploadQuality('original')}
+                                        className={`p-2.5 rounded-xl text-left border transition-all ${
+                                            uploadQuality === 'original'
+                                                ? 'border-violet-500 bg-white dark:bg-violet-950/30 ring-2 ring-violet-500/30 shadow-sm'
+                                                : 'border-zinc-200 dark:border-white/10 bg-white/60 dark:bg-white/[0.02] hover:border-zinc-300 dark:hover:border-white/20'
+                                        }`}
+                                    >
+                                        <div className="flex items-center justify-between mb-1">
+                                            <span className="text-xs font-semibold text-zinc-900 dark:text-white flex items-center gap-1.5">
+                                                <span>💎 Full Master RAWs</span>
+                                            </span>
+                                            {uploadQuality === 'original' && <Check size={14} className="text-violet-600 dark:text-violet-400" />}
+                                        </div>
+                                        <p className="text-[10px] text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                                            Downloads full camera originals (15MB–30MB+). Preserves maximum print resolution for master archive delivery.
+                                        </p>
+                                    </button>
+                                </div>
+                            </div>
+
                             {/* Premium Tab Selector */}
                             <div className="flex p-1 rounded-xl bg-zinc-100 dark:bg-white/5 max-w-xl mx-auto gap-1">
                                 <button
@@ -1070,8 +1147,70 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                                     Back to Albums
                                 </button>
                                 <span className="text-sm font-medium text-zinc-600 dark:text-gray-300">
-                                    Selected: <span className="font-bold">{selectedAlbum.title}</span>
+                                    Selected: <span className="font-bold">{selectedAlbum.title}</span> ({photos.length} photos)
                                 </span>
+                            </div>
+
+                            {/* Import Quality Mode Selector in Preview View */}
+                            <div className="rounded-2xl border border-zinc-200/90 dark:border-white/10 bg-zinc-50/70 dark:bg-white/[0.02] p-3.5 space-y-2.5">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <Sliders size={15} className="text-violet-500" />
+                                        <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-800 dark:text-zinc-200">
+                                            Import Quality Mode
+                                        </span>
+                                    </div>
+                                    <span className="text-[10px] font-semibold text-violet-700 dark:text-violet-300 bg-violet-100 dark:bg-violet-900/40 px-2 py-0.5 rounded-full">
+                                        {uploadQuality === 'preview' ? '⚡ 10x Faster Ingest (Recommended)' : '💎 Untouched RAW Master'}
+                                    </span>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                    {/* Mode 1: Fast Web Proofing */}
+                                    <button
+                                        type="button"
+                                        onClick={() => setUploadQuality('preview')}
+                                        className={`p-2.5 rounded-xl text-left border transition-all ${
+                                            uploadQuality === 'preview'
+                                                ? 'border-violet-500 bg-white dark:bg-violet-950/30 ring-2 ring-violet-500/30 shadow-sm'
+                                                : 'border-zinc-200 dark:border-white/10 bg-white/60 dark:bg-white/[0.02] hover:border-zinc-300 dark:hover:border-white/20'
+                                        }`}
+                                    >
+                                        <div className="flex items-center justify-between mb-1">
+                                            <span className="text-xs font-semibold text-zinc-900 dark:text-white flex items-center gap-1.5">
+                                                <span>⚡ Fast Web Proofing</span>
+                                                <span className="text-[9px] uppercase font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.2 rounded">
+                                                    Recommended
+                                                </span>
+                                            </span>
+                                            {uploadQuality === 'preview' && <Check size={14} className="text-violet-600 dark:text-violet-400" />}
+                                        </div>
+                                        <p className="text-[10px] text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                                            Imports via Google 2048px CDN (~500 KB). 10x faster cloud ingest, saving ~85% AWS S3 storage while preserving retina sharpness.
+                                        </p>
+                                    </button>
+
+                                    {/* Mode 2: Full Master Original */}
+                                    <button
+                                        type="button"
+                                        onClick={() => setUploadQuality('original')}
+                                        className={`p-2.5 rounded-xl text-left border transition-all ${
+                                            uploadQuality === 'original'
+                                                ? 'border-violet-500 bg-white dark:bg-violet-950/30 ring-2 ring-violet-500/30 shadow-sm'
+                                                : 'border-zinc-200 dark:border-white/10 bg-white/60 dark:bg-white/[0.02] hover:border-zinc-300 dark:hover:border-white/20'
+                                        }`}
+                                    >
+                                        <div className="flex items-center justify-between mb-1">
+                                            <span className="text-xs font-semibold text-zinc-900 dark:text-white flex items-center gap-1.5">
+                                                <span>💎 Full Master RAWs</span>
+                                            </span>
+                                            {uploadQuality === 'original' && <Check size={14} className="text-violet-600 dark:text-violet-400" />}
+                                        </div>
+                                        <p className="text-[10px] text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                                            Downloads full camera originals (15MB–30MB+). Preserves maximum print resolution for master archive delivery.
+                                        </p>
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
