@@ -259,7 +259,7 @@ export default function CreateEventPage() {
                                     </div>
                                 </div>
 
-                                <div className="flex items-stretch gap-2 sm:gap-2.5 w-full overflow-x-auto sm:overflow-visible pb-1 sm:pb-0 scrollbar-none">
+                                <div className="flex items-stretch gap-1.5 sm:gap-2.5 w-full overflow-x-auto sm:overflow-visible pb-1 sm:pb-0 scrollbar-none">
                                     {(Object.keys(EVENT_PROFILES) as EventCategory[]).map((catKey) => {
                                         const prof = EVENT_PROFILES[catKey];
                                         const isSelected = category === catKey;
@@ -269,19 +269,19 @@ export default function CreateEventPage() {
                                                 type="button"
                                                 onClick={() => handleCategorySelect(catKey)}
                                                 aria-pressed={isSelected}
-                                                className={`group relative min-h-[64px] rounded-2xl border text-left transition-all duration-300 ease-out overflow-hidden flex items-center ${
+                                                className={`group relative min-h-[66px] rounded-2xl border text-left transition-all duration-300 ease-out overflow-hidden flex items-center ${
                                                     isSelected
-                                                        ? 'flex-[2.4] sm:flex-[2.8] min-w-[145px] sm:min-w-[170px] px-3.5 py-2.5 bg-gradient-to-r from-violet-500/15 via-violet-500/10 to-indigo-500/10 dark:from-violet-500/20 dark:to-indigo-500/20 border-violet-500 text-violet-900 dark:text-white ring-2 ring-violet-500/30 shadow-md shadow-violet-500/10'
-                                                        : 'flex-1 min-w-[56px] sm:min-w-[68px] justify-center p-2 bg-zinc-50/60 dark:bg-white/[0.03] border-zinc-200 dark:border-white/5 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-white/10 hover:bg-zinc-100/70 dark:hover:bg-white/[0.06]'
+                                                        ? 'flex-[2.6] sm:flex-[3] min-w-[155px] sm:min-w-[185px] px-3 sm:px-3.5 py-2 sm:py-2.5 bg-gradient-to-r from-violet-500/15 via-violet-500/10 to-indigo-500/10 dark:from-violet-500/20 dark:to-indigo-500/20 border-violet-500 text-violet-900 dark:text-white ring-2 ring-violet-500/30 shadow-md shadow-violet-500/10'
+                                                        : 'flex-1 min-w-[56px] sm:min-w-[66px] justify-center px-1 py-2 bg-zinc-50/60 dark:bg-white/[0.03] border-zinc-200 dark:border-white/5 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-white/10 hover:bg-zinc-100/70 dark:hover:bg-white/[0.06]'
                                                 }`}
                                             >
                                                 {isSelected ? (
-                                                    <div className="flex items-center gap-2.5 w-full min-w-0">
+                                                    <div className="flex items-center gap-2 sm:gap-2.5 w-full min-w-0">
                                                         <span className="text-2xl sm:text-3xl shrink-0 transition-transform group-hover:scale-110">
                                                             {prof.icon}
                                                         </span>
                                                         <div className="flex flex-col min-w-0 text-left">
-                                                            <span className="text-xs sm:text-sm font-bold text-zinc-900 dark:text-white leading-tight truncate">
+                                                            <span className="text-xs sm:text-sm font-bold text-zinc-900 dark:text-white leading-tight line-clamp-2">
                                                                 {prof.name.split('&')[0].trim()}
                                                             </span>
                                                             <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-violet-600 dark:text-violet-300 mt-0.5">
@@ -295,7 +295,7 @@ export default function CreateEventPage() {
                                                         <span className="text-xl sm:text-2xl mb-1 opacity-75 group-hover:opacity-100 group-hover:scale-105 transition-all shrink-0">
                                                             {prof.icon}
                                                         </span>
-                                                        <span className="text-[11px] font-medium leading-tight text-zinc-500 dark:text-zinc-400 group-hover:text-zinc-800 dark:group-hover:text-zinc-200 truncate max-w-full">
+                                                        <span className="text-[10.5px] sm:text-[11px] font-medium leading-tight tracking-tight text-zinc-500 dark:text-zinc-400 group-hover:text-zinc-800 dark:group-hover:text-zinc-200 truncate max-w-full">
                                                             {prof.shortName}
                                                         </span>
                                                     </div>
