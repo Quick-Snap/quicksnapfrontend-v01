@@ -44,10 +44,16 @@ export function Footer({
               Contact page
             </Link>
             <Link
-              href="/term"
+              href="/terms"
               className="text-sm font-light text-white/40 hover:text-violet-400 transition-colors"
             >
               Terms & Conditions
+            </Link>
+            <Link
+              href="/privacy"
+              className="text-sm font-light text-white/40 hover:text-violet-400 transition-colors"
+            >
+              Privacy Policy
             </Link>
           </div>
 

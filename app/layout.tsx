@@ -112,6 +112,11 @@ const jsonLd = {
       name: 'Roopixo',
       url: 'https://www.roopixo.com',
       logo: 'https://www.roopixo.com/favicon.png',
+      sameAs: [
+        'https://www.linkedin.com/company/roopixo',
+        'https://www.instagram.com/roopixo',
+        'https://x.com/Roopixo',
+      ],
     },
   ],
 };
