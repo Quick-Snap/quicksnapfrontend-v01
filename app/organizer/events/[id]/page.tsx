@@ -480,7 +480,7 @@ function EventPhotosGrid({
 
     const fetchPhotos = useCallback(async () => {
         try {
-            const data = await eventApi.getPhotos(eventId, { limit: 60 });
+            const data = await eventApi.getPhotos(eventId, { limit: 60, all: true });
             setPhotos(data?.data?.photos || []);
         } catch (err) {
             console.error("Failed to fetch photos", err);
