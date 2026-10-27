@@ -11,6 +11,7 @@ export interface SubEventItem {
 export interface EventProfile {
   id: EventCategory;
   name: string;
+  shortName: string;
   icon: string;
   accentGlow: string;
   accentBorder: string;
@@ -25,6 +26,7 @@ export const EVENT_PROFILES: Record<EventCategory, EventProfile> = {
   wedding: {
     id: 'wedding',
     name: 'Wedding & Pre-Wedding',
+    shortName: 'Wedding',
     icon: '💍',
     accentGlow: 'from-amber-400/20 via-rose-500/20 to-purple-500/20',
     accentBorder: 'border-rose-500/30',
@@ -45,6 +47,7 @@ export const EVENT_PROFILES: Record<EventCategory, EventProfile> = {
   college: {
     id: 'college',
     name: 'College Fest & Campus',
+    shortName: 'College',
     icon: '🎓',
     accentGlow: 'from-violet-500/20 via-fuchsia-500/20 to-cyan-500/20',
     accentBorder: 'border-violet-500/30',
@@ -57,6 +60,7 @@ export const EVENT_PROFILES: Record<EventCategory, EventProfile> = {
   corporate: {
     id: 'corporate',
     name: 'Corporate Conference & Summit',
+    shortName: 'Corporate',
     icon: '🏢',
     accentGlow: 'from-blue-500/20 via-indigo-500/20 to-slate-500/20',
     accentBorder: 'border-blue-500/30',
@@ -69,6 +73,7 @@ export const EVENT_PROFILES: Record<EventCategory, EventProfile> = {
   festival: {
     id: 'festival',
     name: 'Cultural Fest & Concert',
+    shortName: 'Cultural',
     icon: '🎉',
     accentGlow: 'from-amber-500/20 via-orange-500/20 to-rose-500/20',
     accentBorder: 'border-orange-500/30',
@@ -81,6 +86,7 @@ export const EVENT_PROFILES: Record<EventCategory, EventProfile> = {
   community: {
     id: 'community',
     name: 'Community Event & Meetup',
+    shortName: 'Community',
     icon: '🤝',
     accentGlow: 'from-emerald-500/20 via-teal-500/20 to-cyan-500/20',
     accentBorder: 'border-emerald-500/30',
@@ -93,6 +99,7 @@ export const EVENT_PROFILES: Record<EventCategory, EventProfile> = {
   general: {
     id: 'general',
     name: 'General Event / Party',
+    shortName: 'General',
     icon: '✨',
     accentGlow: 'from-violet-500/15 via-purple-500/15 to-indigo-500/15',
     accentBorder: 'border-white/20',
