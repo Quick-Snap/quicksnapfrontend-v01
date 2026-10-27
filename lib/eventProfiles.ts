@@ -1,4 +1,4 @@
-export type EventCategory = 'wedding' | 'college' | 'corporate' | 'festival' | 'general';
+export type EventCategory = 'wedding' | 'college' | 'corporate' | 'community' | 'festival' | 'general';
 
 export interface SubEventItem {
   _id?: string;
@@ -77,6 +77,18 @@ export const EVENT_PROFILES: Record<EventCategory, EventProfile> = {
     heroSubtitle: 'Festival Gallery & Live Action',
     albumButtonLabel: 'Save Favorites',
     quickCeremonies: ['Day 1', 'Day 2', 'Main Stage', 'After Party'],
+  },
+  community: {
+    id: 'community',
+    name: 'Community Event & Meetup',
+    icon: '🤝',
+    accentGlow: 'from-emerald-500/20 via-teal-500/20 to-cyan-500/20',
+    accentBorder: 'border-emerald-500/30',
+    accentText: 'text-emerald-400',
+    badgeClass: 'border-emerald-500/40 bg-emerald-950/50 text-emerald-300 shadow-emerald-950/40',
+    heroSubtitle: 'Where Builders, Creators & Communities Connect',
+    albumButtonLabel: 'Save Highlights',
+    quickCeremonies: ['Keynote & Talks', 'Workshops', 'Networking & Demos', 'Hackathon', 'Community Showcase'],
   },
   general: {
     id: 'general',

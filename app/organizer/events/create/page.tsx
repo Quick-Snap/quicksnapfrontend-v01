@@ -259,7 +259,7 @@ export default function CreateEventPage() {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
                                     {(Object.keys(EVENT_PROFILES) as EventCategory[]).map((catKey) => {
                                         const prof = EVENT_PROFILES[catKey];
                                         const isSelected = category === catKey;
