@@ -240,6 +240,15 @@ export default function ShootProofingPage() {
             </button>
 
             <Link
+              href={`/organizer/events/${eventId}`}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white text-zinc-700 hover:text-zinc-900 hover:bg-zinc-100 shadow-sm dark:shadow-none dark:border-white/10 dark:bg-white/[0.04] dark:text-zinc-300 dark:hover:text-white dark:hover:bg-white/[0.08] px-3.5 py-1.5 text-xs font-semibold transition"
+              title="Manage ceremonies and event details"
+            >
+              <Layers size={14} className="text-violet-500" />
+              <span>Ceremonies</span>
+            </Link>
+
+            <Link
               href={proofingToken ? `/events/${eventId}?proofToken=${proofingToken}` : `/events/${eventId}`}
               target="_blank"
               className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white text-zinc-700 hover:text-zinc-900 hover:bg-zinc-100 shadow-sm dark:shadow-none dark:border-white/10 dark:bg-white/[0.04] dark:text-zinc-300 dark:hover:text-white dark:hover:bg-white/[0.08] px-3.5 py-1.5 text-xs font-semibold transition"
