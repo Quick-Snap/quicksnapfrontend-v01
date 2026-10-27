@@ -44,6 +44,7 @@ export default function EventUploadPage() {
     const [eventData, setEventData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [files, setFiles] = useState<File[]>([]);
+    const [targetSubEvent, setTargetSubEvent] = useState<string>('');
     const [uploading, setUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
 
@@ -137,7 +138,9 @@ export default function EventUploadPage() {
                         failed: prev.failed + 1,
                     } : null);
                     console.error(`Failed to upload ${files[fileIndex].name}: ${error}`);
-                }
+                },
+                5,
+                targetSubEvent || undefined
             );
 
             if (result.successCount > 0) {
@@ -262,6 +265,29 @@ export default function EventUploadPage() {
                                         <p className="text-sm text-zinc-500 dark:text-gray-500">Drag and drop or click to select</p>
                                     </div>
                                 </div>
+
+                                {eventData?.subEvents && eventData.subEvents.length > 0 && (
+                                    <div className="mb-6 p-4 rounded-xl border border-violet-100 bg-violet-50/50 dark:border-white/5 dark:bg-white/[0.02]">
+                                        <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider mb-2">
+                                            Target Ceremony / Sub-Event
+                                        </label>
+                                        <select
+                                            value={targetSubEvent}
+                                            onChange={(e) => setTargetSubEvent(e.target.value)}
+                                            className="w-full rounded-xl border border-zinc-200 bg-white p-3 text-sm text-zinc-900 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 dark:border-white/10 dark:bg-zinc-900 dark:text-white"
+                                        >
+                                            <option value="">All / Main Event (General)</option>
+                                            {eventData.subEvents.map((sub: any) => (
+                                                <option key={sub._id || sub.name} value={sub._id}>
+                                                    {sub.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <p className="mt-1.5 text-xs text-zinc-500 dark:text-gray-400">
+                                            Photos will be tagged with this ceremony for seamless guest filtering in the gallery.
+                                        </p>
+                                    </div>
+                                )}
 
                                 <UploadZone
                                     onFilesSelected={setFiles}

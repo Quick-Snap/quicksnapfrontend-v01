@@ -17,7 +17,10 @@ import {
     ArrowLeft,
     Clock,
     CheckCircle,
-    XCircle
+    XCircle,
+    Layers,
+    Plus,
+    X
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import RoleGuard from '@/app/components/RoleGuard';
@@ -38,6 +41,10 @@ export default function EventDetailsPage() {
     const [isTrashOpen, setIsTrashOpen] = useState(false);
     const [trashCount, setTrashCount] = useState(0);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+    // Ceremonies / Sub-Events state
+    const [newCeremonyName, setNewCeremonyName] = useState('');
+    const [addingCeremony, setAddingCeremony] = useState(false);
 
     const fetchEvent = useCallback(async () => {
         try {
@@ -90,6 +97,43 @@ export default function EventDetailsPage() {
             console.error('Error deleting event:', error);
             toast.error('Failed to delete event');
             setDeleting(false);
+        }
+    };
+
+    const handleAddCeremony = async () => {
+        const trimmed = newCeremonyName.trim();
+        if (!trimmed) return;
+        setAddingCeremony(true);
+        try {
+            const res = await eventApi.addSubEvent(eventId, { name: trimmed });
+            if (res.success) {
+                toast.success(`Added ceremony "${trimmed}"`);
+                setNewCeremonyName('');
+                fetchEvent();
+            } else {
+                toast.error(res.message || 'Failed to add ceremony');
+            }
+        } catch (err: any) {
+            toast.error(err.response?.data?.message || 'Failed to add ceremony');
+        } finally {
+            setAddingCeremony(false);
+        }
+    };
+
+    const handleDeleteCeremony = async (subEventId: string, name: string) => {
+        if (!confirm(`Remove ceremony "${name}"?\n\nPhotos previously assigned to this ceremony will not be deleted; they will simply appear under General Event.`)) {
+            return;
+        }
+        try {
+            const res = await eventApi.deleteSubEvent(eventId, subEventId);
+            if (res.success) {
+                toast.success(`Removed ceremony "${name}"`);
+                fetchEvent();
+            } else {
+                toast.error(res.message || 'Failed to remove ceremony');
+            }
+        } catch (err: any) {
+            toast.error(err.response?.data?.message || 'Failed to remove ceremony');
         }
     };
 
@@ -273,6 +317,71 @@ export default function EventDetailsPage() {
                                     <p className="text-2xl font-bold">{event.stats?.processedPhotos || 0}</p>
                                 </div>
                             </div>
+                        </div>
+
+                        <div className="card">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="font-bold text-lg flex items-center gap-2">
+                                    <Layers size={18} className="text-violet-500" />
+                                    Ceremonies / Sub-Events
+                                </h3>
+                                <span className="text-xs px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 font-semibold">
+                                    {event.subEvents?.length || 0}
+                                </span>
+                            </div>
+
+                            {event.subEvents && event.subEvents.length > 0 ? (
+                                <div className="space-y-2 mb-4">
+                                    {event.subEvents.map((sub: any, idx: number) => (
+                                        <div
+                                            key={sub._id || sub.name}
+                                            className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-50 dark:bg-white/[0.03] border border-zinc-200/80 dark:border-white/5 text-sm"
+                                        >
+                                            <div className="flex items-center gap-2 min-w-0">
+                                                <span className="text-xs font-mono text-zinc-400">{idx + 1}.</span>
+                                                <span className="font-medium text-zinc-800 dark:text-zinc-200 truncate">{sub.name}</span>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleDeleteCeremony(sub._id, sub.name)}
+                                                className="text-zinc-400 hover:text-rose-500 p-1 rounded-lg transition"
+                                                title="Delete ceremony"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-4 text-zinc-500 text-xs bg-zinc-50 dark:bg-white/[0.02] rounded-xl border border-dashed border-zinc-200 dark:border-white/10 mb-4">
+                                    No ceremonies yet. Photos are currently grouped under General Event.
+                                </div>
+                            )}
+
+                            {/* Add Ceremony Form */}
+                            <form
+                                onSubmit={(e) => {
+                                    e.preventDefault();
+                                    handleAddCeremony();
+                                }}
+                                className="flex gap-2"
+                            >
+                                <input
+                                    type="text"
+                                    value={newCeremonyName}
+                                    onChange={(e) => setNewCeremonyName(e.target.value)}
+                                    placeholder="e.g. Sangeet, Reception..."
+                                    className="input flex-1 py-2 px-3 text-xs rounded-xl"
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={addingCeremony || !newCeremonyName.trim()}
+                                    className="px-3 py-2 text-xs font-semibold bg-violet-600 hover:bg-violet-500 text-white rounded-xl disabled:opacity-50 transition flex items-center gap-1 shrink-0"
+                                >
+                                    <Plus size={13} />
+                                    <span>{addingCeremony ? 'Adding...' : 'Add'}</span>
+                                </button>
+                            </form>
                         </div>
 
                         <div className="card">

@@ -18,18 +18,25 @@ import {
     CheckCircle,
     AlertCircle,
     CheckCircle2,
-    Hash
+    Hash,
+    Plus,
+    X,
+    Layers
 } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import RoleGuard from '@/app/components/RoleGuard';
 import api from '@/app/api/axios';
 import { eventApi } from '@/lib/api';
+import { EVENT_PROFILES, EventCategory } from '@/lib/eventProfiles';
 
 export default function CreateEventPage() {
     const router = useRouter();
     const queryClient = useQueryClient();
     const [loading, setLoading] = useState(false);
+    const [category, setCategory] = useState<EventCategory>('wedding');
+    const [subEvents, setSubEvents] = useState<string[]>(['Haldi & Mehndi', 'Sangeet', 'Wedding', 'Reception']);
+    const [customCeremony, setCustomCeremony] = useState('');
     const [formData, setFormData] = useState({
         name: '',
         organizerName: '',
@@ -111,6 +118,41 @@ export default function CreateEventPage() {
         }));
     };
 
+    const handleCategorySelect = (newCat: EventCategory) => {
+        setCategory(newCat);
+        const profile = EVENT_PROFILES[newCat];
+        if (profile?.quickCeremonies && profile.quickCeremonies.length > 0) {
+            setSubEvents(profile.quickCeremonies);
+        } else {
+            setSubEvents([]);
+        }
+    };
+
+    const handleToggleQuickCeremony = (ceremonyName: string) => {
+        setSubEvents(prev => {
+            if (prev.includes(ceremonyName)) {
+                return prev.filter(c => c !== ceremonyName);
+            } else {
+                return [...prev, ceremonyName];
+            }
+        });
+    };
+
+    const handleAddCustomCeremony = () => {
+        const trimmed = customCeremony.trim();
+        if (!trimmed) return;
+        if (subEvents.includes(trimmed)) {
+            toast.error(`"${trimmed}" is already added`);
+            return;
+        }
+        setSubEvents(prev => [...prev, trimmed]);
+        setCustomCeremony('');
+    };
+
+    const handleRemoveCeremony = (nameToRemove: string) => {
+        setSubEvents(prev => prev.filter(c => c !== nameToRemove));
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -130,9 +172,17 @@ export default function CreateEventPage() {
 
             const payload: any = {
                 ...formData,
+                category,
                 startDate: new Date(formData.startDate).toISOString(),
                 endDate: new Date(formData.endDate).toISOString(),
             };
+
+            if (subEvents.length > 0) {
+                payload.subEvents = subEvents.map((name, idx) => ({
+                    name: name.trim(),
+                    order: idx,
+                }));
+            }
 
             if (customCode.trim()) {
                 payload.accessCode = customCode.trim().toUpperCase();
@@ -197,6 +247,142 @@ export default function CreateEventPage() {
                     {/* Main Form */}
                     <div className="lg:col-span-2 space-y-6">
                         <form onSubmit={handleSubmit} className="space-y-6">
+                            {/* 1. Event Type / Category Selector */}
+                            <div className="card border-zinc-200/90 shadow-lg shadow-zinc-900/5 dark:bg-[#0d0b14] dark:border-white/5 dark:shadow-[0_16px_60px_rgba(0,0,0,0.45)]">
+                                <div className="flex items-center gap-3 mb-5">
+                                    <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center">
+                                        <Sparkles className="h-5 w-5 text-violet-400" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">Event Category &amp; Personalization</h2>
+                                        <p className="text-sm text-gray-500">Tailors the gallery aesthetic, labels, and ceremony workflows</p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                                    {(Object.keys(EVENT_PROFILES) as EventCategory[]).map((catKey) => {
+                                        const prof = EVENT_PROFILES[catKey];
+                                        const isSelected = category === catKey;
+                                        return (
+                                            <button
+                                                key={catKey}
+                                                type="button"
+                                                onClick={() => handleCategorySelect(catKey)}
+                                                className={`flex flex-col items-center justify-center p-3.5 rounded-xl border text-center transition-all ${
+                                                    isSelected
+                                                        ? 'border-violet-500 bg-violet-500/10 text-violet-700 dark:text-violet-300 ring-2 ring-violet-500/20 shadow-sm'
+                                                        : 'border-zinc-200 dark:border-white/5 bg-zinc-50/60 dark:bg-white/[0.03] text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-white/10'
+                                                }`}
+                                            >
+                                                <span className="text-2xl mb-1.5">{prof.icon}</span>
+                                                <span className="text-xs font-semibold leading-tight line-clamp-1">{prof.name.split('&')[0].trim()}</span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* 2. Sub-Events & Ceremonies (Multi-Session) */}
+                            <div className="card border-zinc-200/90 shadow-lg shadow-zinc-900/5 dark:bg-[#0d0b14] dark:border-white/5 dark:shadow-[0_16px_60px_rgba(0,0,0,0.45)]">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center">
+                                        <Layers className="h-5 w-5 text-indigo-400" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">Ceremonies &amp; Multi-Session Tabs</h2>
+                                        <p className="text-sm text-gray-500">Organize photos into ceremonies without splitting the event or QR code</p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    {/* Quick Adds */}
+                                    {EVENT_PROFILES[category]?.quickCeremonies && EVENT_PROFILES[category].quickCeremonies.length > 0 && (
+                                        <div>
+                                            <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">
+                                                Quick-add popular ceremonies for {EVENT_PROFILES[category].name.split('&')[0].trim()}:
+                                            </p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {EVENT_PROFILES[category].quickCeremonies.map((ceremony) => {
+                                                    const isAdded = subEvents.includes(ceremony);
+                                                    return (
+                                                        <button
+                                                            key={ceremony}
+                                                            type="button"
+                                                            onClick={() => handleToggleQuickCeremony(ceremony)}
+                                                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                                                                isAdded
+                                                                    ? 'bg-violet-600 text-white shadow-sm'
+                                                                    : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-700 dark:bg-white/5 dark:text-zinc-300 dark:hover:bg-white/10 border border-zinc-200/80 dark:border-white/10'
+                                                            }`}
+                                                        >
+                                                            <span>{ceremony}</span>
+                                                            {isAdded ? <CheckCircle size={12} /> : <Plus size={12} />}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Custom Ceremony Input */}
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={customCeremony}
+                                            onChange={(e) => setCustomCeremony(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    e.preventDefault();
+                                                    handleAddCustomCeremony();
+                                                }
+                                            }}
+                                            placeholder="Add custom ceremony (e.g. After Party, Cocktail)..."
+                                            className="input flex-1 rounded-xl py-2.5 px-4 text-sm"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={handleAddCustomCeremony}
+                                            disabled={!customCeremony.trim()}
+                                            className="px-4 py-2.5 rounded-xl text-sm font-semibold bg-violet-600 hover:bg-violet-500 text-white disabled:opacity-50 transition"
+                                        >
+                                            Add
+                                        </button>
+                                    </div>
+
+                                    {/* Active Selected Ceremonies */}
+                                    {subEvents.length > 0 ? (
+                                        <div className="pt-2">
+                                            <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">
+                                                Active ceremonies ({subEvents.length}):
+                                            </p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {subEvents.map((c, idx) => (
+                                                    <span
+                                                        key={c}
+                                                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-violet-500/10 text-violet-700 dark:text-violet-300 border border-violet-500/20"
+                                                    >
+                                                        <span className="text-zinc-400 font-mono text-[10px]">{idx + 1}.</span>
+                                                        <span>{c}</span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleRemoveCeremony(c)}
+                                                            className="text-zinc-400 hover:text-rose-500 ml-0.5"
+                                                            title="Remove ceremony"
+                                                        >
+                                                            <X size={13} />
+                                                        </button>
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <p className="text-xs text-zinc-400 italic">
+                                            No sub-events selected. Photos will be grouped under one unified gallery.
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
                             {/* Event Details Section */}
                             <div className="card border-zinc-200/90 shadow-lg shadow-zinc-900/5 dark:bg-[#0d0b14] dark:border-white/5 dark:shadow-[0_16px_60px_rgba(0,0,0,0.45)]">
                                 <div className="flex items-center gap-3 mb-6">
@@ -521,11 +707,25 @@ export default function CreateEventPage() {
                             
                             <div className="space-y-4">
                                 <div className="rounded-xl border border-violet-200/80 bg-gradient-to-br from-violet-50 to-indigo-50 p-4 dark:border-violet-500/20 dark:from-violet-500/10 dark:to-indigo-500/10">
-                                    <p className="mb-1 text-xs uppercase tracking-wide text-zinc-500 dark:text-gray-500">Event Name</p>
+                                    <div className="flex items-center justify-between gap-2 mb-1">
+                                        <p className="text-xs uppercase tracking-wide text-zinc-500 dark:text-gray-500">Event Name</p>
+                                        <span className="text-xs px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-700 dark:text-violet-300 font-medium">
+                                            {EVENT_PROFILES[category].icon} {EVENT_PROFILES[category].name.split('&')[0].trim()}
+                                        </span>
+                                    </div>
                                     <p className="truncate font-medium text-zinc-900 dark:text-white">
                                         {formData.name || 'Your event name...'}
                                     </p>
                                 </div>
+
+                                {subEvents.length > 0 && (
+                                    <div className="rounded-xl border border-zinc-200/90 bg-zinc-50 p-3 dark:border-white/5 dark:bg-white/5">
+                                        <p className="mb-1 text-xs text-zinc-500 dark:text-gray-500">Ceremonies ({subEvents.length})</p>
+                                        <p className="text-xs text-zinc-700 dark:text-gray-300 line-clamp-2">
+                                            {subEvents.join(' • ')}
+                                        </p>
+                                    </div>
+                                )}
 
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="rounded-xl border border-zinc-200/90 bg-zinc-50 p-3 dark:border-white/5 dark:bg-white/5">

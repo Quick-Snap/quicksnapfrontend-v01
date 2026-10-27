@@ -52,6 +52,7 @@ import JoinEventModal from '@/app/components/student/JoinEventModal';
 import PostJoinSelfieModal from '@/app/components/events/PostJoinSelfieModal';
 import GuestUploadModal from '@/app/components/events/GuestUploadModal';
 import { formatEventSchedule } from '@/lib/eventDateUtils';
+import { getEventProfile } from '@/lib/eventProfiles';
 
 const PHOTOS_PER_PAGE = 12;
 const PREVIEW_PHOTO_COUNT = 4;
@@ -103,6 +104,7 @@ export default function PublicEventPage() {
 
     const [downloading, setDownloading] = useState<string | null>(null);
     const [selectedPhoto, setSelectedPhoto] = useState<any>(null);
+    const [selectedSubEventId, setSelectedSubEventId] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [photoViewMode, setPhotoViewMode] = useState<'all' | 'my' | 'album' | 'bookmark'>('all');
     const [myPhotosFilter, setMyPhotosFilter] = useState<'all' | 'favorites'>('all');
@@ -181,6 +183,7 @@ export default function PublicEventPage() {
         { enabled: !!eventId, staleTime: 60 * 1000, retry: reactQueryRetry }
     );
     const event = eventResult?.data;
+    const eventProfile = getEventProfile(event?.category);
     const studioInfo = (event?.organizer as any)?.studioSettings;
     const isProofingAuthorized = Boolean(event?.isProofingAuthorized);
     const isProofingMode = isProofingAuthorized;
@@ -509,8 +512,8 @@ export default function PublicEventPage() {
     const shootWideAlbumCount = shootWideAlbumPhotos.length;
     const shootWideBookmarkCount = shootWideBookmarkPhotos.length;
 
-    // Determine which photos to display based on view mode
-    const displayPhotos = useMemo(() => {
+    // Base photos before ceremony / sub-event filtering
+    const baseDisplayPhotos = useMemo(() => {
         if (photoViewMode === 'my') {
             if (!currentUser) return [];
             if (myPhotosFilter === 'favorites') {
@@ -529,11 +532,30 @@ export default function PublicEventPage() {
         return allKnownPhotosList;
     }, [photoViewMode, myPhotosFilter, currentUser, myPhotos, myLikedPhotos, myAlbumPhotos, myBookmarkPhotos, allKnownPhotosList]);
 
+    // Filter by selected ceremony / sub-event if active
+    const displayPhotos = useMemo(() => {
+        if (!selectedSubEventId) return baseDisplayPhotos;
+        return baseDisplayPhotos.filter((p: any) => {
+            const sId = p.subEventId?._id || p.subEventId;
+            return sId && sId.toString() === selectedSubEventId;
+        });
+    }, [baseDisplayPhotos, selectedSubEventId]);
+
+    // Count photos per ceremony within the current active tab
+    const countPhotosInSubEvent = useCallback((subId: string) => {
+        if (!baseDisplayPhotos) return 0;
+        return baseDisplayPhotos.filter((p: any) => {
+            const sId = p.subEventId?._id || p.subEventId;
+            return sId && sId.toString() === subId;
+        }).length;
+    }, [baseDisplayPhotos]);
+
     const handleSwitchViewMode = useCallback((mode: 'all' | 'my' | 'album' | 'bookmark') => {
         setPhotoViewMode(mode);
         if (mode === 'my') {
             setMyPhotosFilter('all');
         }
+        setSelectedSubEventId(null);
         setCurrentPage(1);
     }, []);
 
@@ -1075,6 +1097,9 @@ export default function PublicEventPage() {
                     <div className="pointer-events-none absolute inset-0 bg-gradient-mesh opacity-[0.38] dark:opacity-50" />
                     <div className="pointer-events-none absolute -left-20 bottom-0 h-48 w-48 rounded-full bg-violet-400/20 blur-3xl dark:bg-violet-500/12" />
                     <div className="pointer-events-none absolute -right-10 -top-16 h-56 w-56 rounded-full bg-indigo-400/15 blur-3xl dark:bg-indigo-500/10" />
+                    {eventProfile?.accentGlow && (
+                        <div className={`pointer-events-none absolute -right-10 -top-16 h-72 w-72 rounded-full bg-gradient-to-br ${eventProfile.accentGlow} blur-3xl opacity-60`} />
+                    )}
 
                     <div className="relative min-w-0">
                         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
@@ -1109,6 +1134,12 @@ export default function PublicEventPage() {
                         <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-2 lg:gap-10 xl:gap-12">
                             <div className="min-w-0 space-y-5 sm:space-y-6">
                                 <div className="flex flex-wrap items-center gap-2">
+                                    {eventProfile && (
+                                        <span className={`rounded-full px-3 py-1 text-xs font-semibold sm:text-sm border shadow-sm ${eventProfile.badgeClass}`}>
+                                            <span className="mr-1">{eventProfile.icon}</span>
+                                            {eventProfile.name.split('&')[0].trim()}
+                                        </span>
+                                    )}
                                     <span
                                         className={`rounded-full px-3 py-1 text-xs font-semibold sm:text-sm ${
                                             isActive
@@ -1558,6 +1589,47 @@ export default function PublicEventPage() {
                                 </Button>
                             </div>
                         )}
+                    </div>
+                )}
+
+                {/* Ceremony / Sub-Event Horizontal Filter Bar */}
+                {event?.subEvents && event.subEvents.length > 0 && (
+                    <div className="mb-6 flex items-center justify-start sm:justify-center overflow-x-auto pb-2 scrollbar-none gap-2 px-1">
+                        <button
+                            type="button"
+                            onClick={() => { setSelectedSubEventId(null); setCurrentPage(1); }}
+                            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border ${
+                                selectedSubEventId === null
+                                    ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-white dark:text-zinc-900 dark:border-white shadow-sm'
+                                    : 'bg-zinc-100 text-zinc-600 border-zinc-200/80 hover:bg-zinc-200/80 dark:bg-zinc-800/60 dark:text-zinc-300 dark:border-white/10 dark:hover:bg-zinc-800'
+                            }`}
+                        >
+                            ✨ All Ceremonies
+                            <span className="ml-1.5 opacity-75">({baseDisplayPhotos.length})</span>
+                        </button>
+                        {event.subEvents.map((sub: any) => {
+                            const subIdStr = (sub._id || sub.id)?.toString();
+                            const isSelected = selectedSubEventId === subIdStr;
+                            const count = countPhotosInSubEvent(subIdStr);
+                            return (
+                                <button
+                                    key={subIdStr || sub.name}
+                                    type="button"
+                                    onClick={() => {
+                                        setSelectedSubEventId(isSelected ? null : subIdStr);
+                                        setCurrentPage(1);
+                                    }}
+                                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border ${
+                                        isSelected
+                                            ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white border-violet-500 shadow-sm'
+                                            : 'bg-zinc-100 text-zinc-600 border-zinc-200/80 hover:bg-zinc-200/80 dark:bg-zinc-800/60 dark:text-zinc-300 dark:border-white/10 dark:hover:bg-zinc-800'
+                                    }`}
+                                >
+                                    {sub.name}
+                                    {count > 0 && <span className="ml-1.5 opacity-75">({count})</span>}
+                                </button>
+                            );
+                        })}
                     </div>
                 )}
 
@@ -2154,10 +2226,12 @@ export default function PublicEventPage() {
                                 <ImageIcon className="h-8 w-8 text-zinc-400 dark:text-gray-500" />
                             </div>
                             <h3 className="mb-2 text-lg font-semibold text-zinc-900 dark:text-white">
-                                No photos uploaded yet
+                                {selectedSubEventId ? 'No photos in this ceremony yet' : 'No photos uploaded yet'}
                             </h3>
                             <p className="mx-auto max-w-sm text-sm leading-relaxed text-zinc-600 dark:text-gray-400">
-                                Uploaded photos from organizers and photographers will appear here.
+                                {selectedSubEventId
+                                    ? 'Try selecting "✨ All Ceremonies" or a different ceremony tag above.'
+                                    : 'Uploaded photos from organizers and photographers will appear here.'}
                             </p>
                         </div>
                     )

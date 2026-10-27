@@ -46,6 +46,7 @@ export default function StudioUploader({ presetEventId }: StudioUploaderProps) {
   const router = useRouter();
 
   const [selectedEvent, setSelectedEvent] = useState(presetEventId || '');
+  const [targetSubEvent, setTargetSubEvent] = useState<string>('');
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
@@ -215,7 +216,9 @@ export default function StudioUploader({ presetEventId }: StudioUploaderProps) {
               : null
           );
           console.error(`Failed to upload ${files[fileIndex].name}: ${error}`);
-        }
+        },
+        5,
+        targetSubEvent || undefined
       );
 
       setUploadedCount(result.successCount);
@@ -344,6 +347,7 @@ export default function StudioUploader({ presetEventId }: StudioUploaderProps) {
               value={selectedEvent}
               onChange={(e) => {
                 setSelectedEvent(e.target.value);
+                setTargetSubEvent('');
                 setFiles([]);
               }}
               disabled={eventsLoading || uploading}
@@ -361,6 +365,27 @@ export default function StudioUploader({ presetEventId }: StudioUploaderProps) {
               <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
                 No shoots found. Create a shoot first from the Studio dashboard.
               </p>
+            )}
+
+            {selectedEventData?.subEvents && selectedEventData.subEvents.length > 0 && (
+              <div className="mt-3">
+                <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider mb-2">
+                  Target Ceremony / Sub-Event
+                </label>
+                <select
+                  value={targetSubEvent}
+                  onChange={(e) => setTargetSubEvent(e.target.value)}
+                  disabled={uploading}
+                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-900 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-white"
+                >
+                  <option value="" className="bg-white dark:bg-[#141724]">All / Main Shoot (General)</option>
+                  {selectedEventData.subEvents.map((sub: any) => (
+                    <option key={sub._id || sub.name} value={sub._id} className="bg-white dark:bg-[#141724]">
+                      {sub.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
             )}
           </div>
 

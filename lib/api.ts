@@ -96,11 +96,12 @@ interface UploadProgress {
 // Photo API
 export const photoApi = {
   // Get presigned URLs for direct S3 upload
-  getUploadUrls: async (eventId: string, files: UploadUrlRequest[]) => {
+  getUploadUrls: async (eventId: string, files: UploadUrlRequest[], subEventId?: string) => {
     const response = await api.post<ApiResponse<{ urls: UploadUrlResponse[] }>>(
       '/photos/get-upload-urls',
       {
         eventId,
+        subEventId,
         files,
       }
     );
@@ -158,7 +159,8 @@ export const photoApi = {
     onFileProgress?: (fileIndex: number, progress: UploadProgress) => void,
     onFileComplete?: (fileIndex: number, key: string) => void,
     onFileError?: (fileIndex: number, error: string) => void,
-    concurrency: number = 5
+    concurrency: number = 5,
+    subEventId?: string
   ) => {
     // Step 1: Get presigned URLs for all files
     const fileRequests: UploadUrlRequest[] = files.map((file) => ({
@@ -166,7 +168,7 @@ export const photoApi = {
       fileType: file.type || 'application/octet-stream',
     }));
 
-    const urlResponse = await photoApi.getUploadUrls(eventId, fileRequests);
+    const urlResponse = await photoApi.getUploadUrls(eventId, fileRequests, subEventId);
     if (!urlResponse.data?.urls) {
       throw new Error('Failed to get upload URLs from server');
     }
@@ -597,6 +599,26 @@ export const eventApi = {
     const response = await api.post(`/events/${eventId}/download-favorites-zip`, { photoIds }, {
       responseType: 'blob',
     });
+    return response.data;
+  },
+
+  addSubEvent: async (eventId: string, data: { name: string; date?: string; coverPhotoUrl?: string; order?: number }) => {
+    const response = await api.post<ApiResponse<any>>(`/events/${eventId}/sub-events`, data);
+    return response.data;
+  },
+
+  updateSubEvent: async (eventId: string, subEventId: string, data: { name?: string; date?: string; coverPhotoUrl?: string; order?: number }) => {
+    const response = await api.put<ApiResponse<any>>(`/events/${eventId}/sub-events/${subEventId}`, data);
+    return response.data;
+  },
+
+  deleteSubEvent: async (eventId: string, subEventId: string) => {
+    const response = await api.delete<ApiResponse<any>>(`/events/${eventId}/sub-events/${subEventId}`);
+    return response.data;
+  },
+
+  batchAssignPhotosSubEvent: async (eventId: string, data: { photoIds: string[]; subEventId: string | null }) => {
+    const response = await api.patch<ApiResponse<any>>(`/events/${eventId}/photos/batch-sub-event`, data);
     return response.data;
   },
 };
