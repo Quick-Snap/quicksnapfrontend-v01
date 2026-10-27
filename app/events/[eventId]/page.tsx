@@ -25,7 +25,8 @@ import {
     Tv,
     Heart,
     Bookmark,
-    AlertCircle
+    AlertCircle,
+    Layers
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { eventApi, photoApi } from '@/lib/api';
@@ -1594,42 +1595,81 @@ export default function PublicEventPage() {
 
                 {/* Ceremony / Sub-Event Horizontal Filter Bar */}
                 {event?.subEvents && event.subEvents.length > 0 && (
-                    <div className="mb-6 flex items-center justify-start sm:justify-center overflow-x-auto pb-2 scrollbar-none gap-2 px-1">
-                        <button
-                            type="button"
-                            onClick={() => { setSelectedSubEventId(null); setCurrentPage(1); }}
-                            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border ${
-                                selectedSubEventId === null
-                                    ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-white dark:text-zinc-900 dark:border-white shadow-sm'
-                                    : 'bg-zinc-100 text-zinc-600 border-zinc-200/80 hover:bg-zinc-200/80 dark:bg-zinc-800/60 dark:text-zinc-300 dark:border-white/10 dark:hover:bg-zinc-800'
-                            }`}
-                        >
-                            ✨ All Ceremonies
-                            <span className="ml-1.5 opacity-75">({baseDisplayPhotos.length})</span>
-                        </button>
-                        {event.subEvents.map((sub: any) => {
-                            const subIdStr = (sub._id || sub.id)?.toString();
-                            const isSelected = selectedSubEventId === subIdStr;
-                            const count = countPhotosInSubEvent(subIdStr);
+                    <div className="mb-6">
+                        <div className="flex items-center justify-start sm:justify-center overflow-x-auto pb-2 scrollbar-none gap-2 px-1">
+                            <button
+                                type="button"
+                                onClick={() => { setSelectedSubEventId(null); setCurrentPage(1); }}
+                                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border ${
+                                    selectedSubEventId === null
+                                        ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-white dark:text-zinc-900 dark:border-white shadow-sm'
+                                        : 'bg-zinc-100 text-zinc-600 border-zinc-200/80 hover:bg-zinc-200/80 dark:bg-zinc-800/60 dark:text-zinc-300 dark:border-white/10 dark:hover:bg-zinc-800'
+                                }`}
+                            >
+                                ✨ All Ceremonies
+                                <span className="ml-1.5 opacity-75">({baseDisplayPhotos.length})</span>
+                            </button>
+                            {event.subEvents.map((sub: any) => {
+                                const subIdStr = (sub._id || sub.id)?.toString();
+                                const isSelected = selectedSubEventId === subIdStr;
+                                const count = countPhotosInSubEvent(subIdStr);
+                                return (
+                                    <button
+                                        key={subIdStr || sub.name}
+                                        type="button"
+                                        onClick={() => {
+                                            setSelectedSubEventId(isSelected ? null : subIdStr);
+                                            setCurrentPage(1);
+                                        }}
+                                        className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border ${
+                                            isSelected
+                                                ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white border-violet-500 shadow-sm'
+                                                : 'bg-zinc-100 text-zinc-600 border-zinc-200/80 hover:bg-zinc-200/80 dark:bg-zinc-800/60 dark:text-zinc-300 dark:border-white/10 dark:hover:bg-zinc-800'
+                                        }`}
+                                    >
+                                        {sub.name}
+                                        {count > 0 && <span className="ml-1.5 opacity-75">({count})</span>}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {/* Dedicated 1-Click Download for Active Ceremony Tab */}
+                        {selectedSubEventId && (() => {
+                            const activeCeremony = event.subEvents.find((s: any) => (s._id || s.id)?.toString() === selectedSubEventId);
+                            if (!activeCeremony || displayPhotos.length === 0) return null;
                             return (
-                                <button
-                                    key={subIdStr || sub.name}
-                                    type="button"
-                                    onClick={() => {
-                                        setSelectedSubEventId(isSelected ? null : subIdStr);
-                                        setCurrentPage(1);
-                                    }}
-                                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border ${
-                                        isSelected
-                                            ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white border-violet-500 shadow-sm'
-                                            : 'bg-zinc-100 text-zinc-600 border-zinc-200/80 hover:bg-zinc-200/80 dark:bg-zinc-800/60 dark:text-zinc-300 dark:border-white/10 dark:hover:bg-zinc-800'
-                                    }`}
-                                >
-                                    {sub.name}
-                                    {count > 0 && <span className="ml-1.5 opacity-75">({count})</span>}
-                                </button>
+                                <div className="mt-2.5 mx-auto max-w-xl flex items-center justify-between gap-3 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-violet-600/10 via-indigo-600/10 to-violet-600/5 border border-violet-300/40 dark:border-violet-600/30 shadow-sm backdrop-blur-sm animate-fadeIn">
+                                    <div className="flex items-center gap-2.5 min-w-0">
+                                        <div className="h-8 w-8 rounded-xl bg-violet-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                                            <Layers size={15} />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-xs font-semibold text-zinc-900 dark:text-white truncate">
+                                                {activeCeremony.name}
+                                            </p>
+                                            <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                                                {displayPhotos.length} {displayPhotos.length === 1 ? 'photo' : 'photos'} available
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleBatchDownloadFavorites(displayPhotos, `${activeCeremony.name}_Ceremony`)}
+                                        disabled={batchDownloading}
+                                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-violet-600 hover:bg-violet-500 text-white shadow-sm transition active:scale-95 disabled:opacity-50 shrink-0"
+                                        title={`Download all ${activeCeremony.name} photos as ZIP`}
+                                    >
+                                        {batchDownloading ? (
+                                            <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                        ) : (
+                                            <Download size={13} />
+                                        )}
+                                        <span>Download {activeCeremony.name} ({displayPhotos.length})</span>
+                                    </button>
+                                </div>
                             );
-                        })}
+                        })()}
                     </div>
                 )}
 

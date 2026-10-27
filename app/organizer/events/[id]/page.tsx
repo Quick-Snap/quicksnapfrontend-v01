@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import api from '@/app/api/axios';
 import Link from 'next/link';
@@ -20,7 +20,12 @@ import {
     XCircle,
     Layers,
     Plus,
-    X
+    X,
+    Check,
+    CheckSquare,
+    Square,
+    FolderInput,
+    Filter
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import RoleGuard from '@/app/components/RoleGuard';
@@ -262,6 +267,7 @@ export default function EventDetailsPage() {
                             </h3>
                             <EventPhotosGrid 
                                 eventId={eventId} 
+                                subEvents={event?.subEvents || []}
                                 onPhotoDeleted={fetchTrashCount} 
                                 refreshTrigger={refreshTrigger} 
                             />
@@ -447,19 +453,34 @@ export default function EventDetailsPage() {
 
 function EventPhotosGrid({ 
     eventId, 
+    subEvents = [],
     onPhotoDeleted, 
     refreshTrigger 
 }: { 
     eventId: string; 
+    subEvents?: any[];
     onPhotoDeleted?: () => void; 
     refreshTrigger?: number; 
 }) {
     const [photos, setPhotos] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [targetSubEventId, setTargetSubEventId] = useState<string>('');
+    const [filterSubEvent, setFilterSubEvent] = useState<string>('all');
+    const [isReassigning, setIsReassigning] = useState(false);
+
+    const ceremonyMap = useMemo(() => {
+        const map = new Map<string, string>();
+        (subEvents || []).forEach((s: any) => {
+            const id = (s._id || s.id)?.toString();
+            if (id) map.set(id, s.name);
+        });
+        return map;
+    }, [subEvents]);
 
     const fetchPhotos = useCallback(async () => {
         try {
-            const data = await eventApi.getPhotos(eventId, { limit: 12 });
+            const data = await eventApi.getPhotos(eventId, { limit: 60 });
             setPhotos(data?.data?.photos || []);
         } catch (err) {
             console.error("Failed to fetch photos", err);
@@ -472,6 +493,89 @@ function EventPhotosGrid({
         fetchPhotos();
     }, [eventId, refreshTrigger, fetchPhotos]);
 
+    // Prune selections if photos change
+    useEffect(() => {
+        setSelectedIds(prev => {
+            if (prev.size === 0) return prev;
+            const valid = new Set<string>();
+            photos.forEach(p => {
+                const id = (p.imageId || p._id)?.toString();
+                if (id && prev.has(id)) valid.add(id);
+            });
+            return valid;
+        });
+    }, [photos]);
+
+    const toggleSelect = (photoId: string, e?: React.MouseEvent) => {
+        e?.stopPropagation();
+        setSelectedIds(prev => {
+            const next = new Set(prev);
+            if (next.has(photoId)) next.delete(photoId);
+            else next.add(photoId);
+            return next;
+        });
+    };
+
+    // Filter displayed photos based on ceremony filter
+    const displayedPhotos = useMemo(() => {
+        if (filterSubEvent === 'all') return photos;
+        if (filterSubEvent === 'unassigned') {
+            return photos.filter(p => !p.subEventId);
+        }
+        return photos.filter(p => {
+            const sId = (p.subEventId?._id || p.subEventId)?.toString();
+            return sId === filterSubEvent;
+        });
+    }, [photos, filterSubEvent]);
+
+    const handleSelectAll = () => {
+        const allDisplayedSelected = displayedPhotos.length > 0 && displayedPhotos.every((p: any) => {
+            const id = (p.imageId || p._id)?.toString();
+            return id && selectedIds.has(id);
+        });
+
+        if (allDisplayedSelected) {
+            setSelectedIds(new Set());
+        } else {
+            const next = new Set<string>(selectedIds);
+            displayedPhotos.forEach((p: any) => {
+                const id = (p.imageId || p._id)?.toString();
+                if (id) next.add(id);
+            });
+            setSelectedIds(next);
+        }
+    };
+
+    const handleBatchAssign = async () => {
+        if (selectedIds.size === 0) return;
+        setIsReassigning(true);
+        const toastId = toast.loading(`Moving ${selectedIds.size} photo(s)...`);
+        try {
+            const photoIdArray = Array.from(selectedIds);
+            await eventApi.batchAssignPhotosSubEvent(eventId, {
+                photoIds: photoIdArray,
+                subEventId: targetSubEventId ? targetSubEventId : null,
+            });
+            const targetName = targetSubEventId ? (ceremonyMap.get(targetSubEventId) || 'Ceremony') : 'General Event';
+            toast.success(`Moved ${photoIdArray.length} photo(s) to ${targetName}!`, { id: toastId });
+            
+            // Optimistically update photos in local state
+            setPhotos(prev => prev.map(p => {
+                const id = (p.imageId || p._id)?.toString();
+                if (selectedIds.has(id)) {
+                    return { ...p, subEventId: targetSubEventId || null };
+                }
+                return p;
+            }));
+            setSelectedIds(new Set());
+        } catch (err: any) {
+            console.error('Batch ceremony assignment failed:', err);
+            toast.error(err.response?.data?.message || 'Failed to reassign ceremony', { id: toastId });
+        } finally {
+            setIsReassigning(false);
+        }
+    };
+
     const handleDeletePhoto = async (photoId: string) => {
         if (!confirm('Are you sure you want to delete this photo? It will be moved to the Trash Bin for 3 days.')) {
             return;
@@ -483,6 +587,11 @@ function EventPhotosGrid({
             
             // Instantly remove from UI grid
             setPhotos(prev => prev.filter(p => p._id !== photoId && p.imageId !== photoId));
+            setSelectedIds(prev => {
+                const next = new Set(prev);
+                next.delete(photoId);
+                return next;
+            });
             
             if (onPhotoDeleted) {
                 onPhotoDeleted();
@@ -505,35 +614,202 @@ function EventPhotosGrid({
     }
 
     return (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {photos.map((photo) => (
-                <div key={photo._id} className="aspect-square bg-gray-100 rounded-lg overflow-hidden relative group border border-zinc-200 dark:border-white/5">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                        src={photo.url}
-                        alt={photo.fileName}
-                        className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                    />
-                    {photo.isPublic && (
-                        <div className="absolute top-2 right-2 bg-green-500 text-white text-[10px] px-1.5 py-0.5 rounded-full z-10 shadow-sm">
-                            Public
-                        </div>
-                    )}
-                    {/* Hover Overlay Delete Button */}
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 z-10">
+        <div className="space-y-4">
+            {/* Ceremony Filter Tabs */}
+            {subEvents && subEvents.length > 0 && (
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs">
+                    <span className="text-zinc-400 font-medium flex items-center gap-1 shrink-0 mr-1">
+                        <Filter size={12} />
+                        Filter:
+                    </span>
+                    <button
+                        type="button"
+                        onClick={() => setFilterSubEvent('all')}
+                        className={`px-2.5 py-1 rounded-lg font-medium transition ${
+                            filterSubEvent === 'all'
+                                ? 'bg-zinc-800 text-white dark:bg-white dark:text-zinc-900 shadow-sm'
+                                : 'bg-zinc-100 dark:bg-white/5 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-white/10'
+                        }`}
+                    >
+                        All ({photos.length})
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setFilterSubEvent('unassigned')}
+                        className={`px-2.5 py-1 rounded-lg font-medium transition ${
+                            filterSubEvent === 'unassigned'
+                                ? 'bg-zinc-800 text-white dark:bg-white dark:text-zinc-900 shadow-sm'
+                                : 'bg-zinc-100 dark:bg-white/5 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-white/10'
+                        }`}
+                    >
+                        General ({photos.filter(p => !p.subEventId).length})
+                    </button>
+                    {subEvents.map((sub: any) => {
+                        const subId = (sub._id || sub.id)?.toString();
+                        const count = photos.filter(p => {
+                            const sId = (p.subEventId?._id || p.subEventId)?.toString();
+                            return sId === subId;
+                        }).length;
+                        return (
+                            <button
+                                key={subId || sub.name}
+                                type="button"
+                                onClick={() => setFilterSubEvent(subId)}
+                                className={`px-2.5 py-1 rounded-lg font-medium transition whitespace-nowrap ${
+                                    filterSubEvent === subId
+                                        ? 'bg-violet-600 text-white shadow-sm'
+                                        : 'bg-zinc-100 dark:bg-white/5 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-white/10'
+                                }`}
+                            >
+                                {sub.name} ({count})
+                            </button>
+                        );
+                    })}
+                </div>
+            )}
+
+            {/* Sticky / Floating Batch Ceremony Reassignment Bar */}
+            {selectedIds.size > 0 && (
+                <div className="p-3 rounded-2xl bg-zinc-900/95 dark:bg-zinc-900/95 backdrop-blur-md text-white border border-violet-500/30 shadow-xl flex flex-wrap items-center justify-between gap-3 animate-fadeIn">
+                    <div className="flex items-center gap-2">
+                        <span className="flex items-center justify-center w-6 h-6 rounded-full bg-violet-600 text-[11px] font-bold">
+                            {selectedIds.size}
+                        </span>
+                        <span className="text-xs font-semibold">
+                            {selectedIds.size} photo{selectedIds.size === 1 ? '' : 's'} selected
+                        </span>
                         <button
-                            onClick={() => handleDeletePhoto(photo._id || photo.imageId)}
-                            className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all shadow-md active:scale-95"
-                            title="Move to Trash"
+                            type="button"
+                            onClick={handleSelectAll}
+                            className="ml-2 text-xs text-violet-300 hover:text-white underline underline-offset-2 transition"
                         >
-                            <Trash2 size={16} />
+                            {displayedPhotos.length > 0 && displayedPhotos.every((p: any) => selectedIds.has((p.imageId || p._id)?.toString())) ? 'Deselect All' : 'Select All'}
+                        </button>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <div className="flex items-center gap-1.5 bg-zinc-800 rounded-xl px-2.5 py-1.5 border border-white/10">
+                            <FolderInput size={14} className="text-violet-400 shrink-0" />
+                            <span className="text-[11px] text-zinc-400">Move to:</span>
+                            <select
+                                value={targetSubEventId}
+                                onChange={(e) => setTargetSubEventId(e.target.value)}
+                                className="bg-transparent text-xs font-medium text-white focus:outline-none cursor-pointer pr-1"
+                            >
+                                <option value="" className="bg-zinc-900 text-white">General Event (None)</option>
+                                {subEvents.map((s: any) => (
+                                    <option key={s._id || s.name} value={s._id || s.id} className="bg-zinc-900 text-white">
+                                        {s.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={handleBatchAssign}
+                            disabled={isReassigning}
+                            className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-violet-600 hover:bg-violet-500 text-white shadow-sm transition active:scale-95 disabled:opacity-50 flex items-center gap-1.5"
+                        >
+                            {isReassigning ? (
+                                <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                                <Check size={13} />
+                            )}
+                            <span>Apply Ceremony</span>
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => setSelectedIds(new Set())}
+                            className="p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-white/10 transition"
+                            title="Clear selection"
+                        >
+                            <X size={15} />
                         </button>
                     </div>
                 </div>
-            ))}
-            {photos.length > 12 && (
-                <div className="flex items-center justify-center aspect-square bg-gray-50 rounded-lg border text-sm text-gray-500">
-                    + More
+            )}
+
+            {/* Photos Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {displayedPhotos.map((photo: any) => {
+                    const photoId = (photo.imageId || photo._id)?.toString();
+                    const isSelected = selectedIds.has(photoId);
+                    const ceremonyName = photo.subEventId
+                        ? (ceremonyMap.get(String(photo.subEventId?._id || photo.subEventId)) || 'Ceremony')
+                        : null;
+
+                    return (
+                        <div 
+                            key={photo._id || photo.imageId} 
+                            onClick={() => toggleSelect(photoId)}
+                            className={`aspect-square bg-gray-100 rounded-xl overflow-hidden relative group border transition-all cursor-pointer ${
+                                isSelected
+                                    ? 'border-violet-500 ring-2 ring-violet-500/80 shadow-md scale-[0.98]'
+                                    : 'border-zinc-200 dark:border-white/5 hover:border-zinc-400 dark:hover:border-white/20'
+                            }`}
+                        >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                                src={photo.thumbnailUrl || photo.url}
+                                alt={photo.fileName}
+                                className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                            />
+
+                            {/* Multi-select Checkbox */}
+                            <button
+                                type="button"
+                                onClick={(e) => toggleSelect(photoId, e)}
+                                className={`absolute top-2 left-2 z-20 rounded-md p-1 transition-all ${
+                                    isSelected
+                                        ? 'bg-violet-600 text-white shadow-md'
+                                        : 'bg-black/50 text-white/80 opacity-0 group-hover:opacity-100 hover:bg-black/80'
+                                }`}
+                                title={isSelected ? 'Deselect photo' : 'Select photo'}
+                            >
+                                {isSelected ? <CheckSquare size={16} /> : <Square size={16} />}
+                            </button>
+
+                            {/* Public Badge */}
+                            {photo.isPublic && (
+                                <div className="absolute top-2 right-2 bg-emerald-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-full z-10 shadow-sm">
+                                    Public
+                                </div>
+                            )}
+
+                            {/* Ceremony Tag Badge */}
+                            {ceremonyName ? (
+                                <span className="absolute bottom-2 left-2 max-w-[85%] truncate bg-zinc-950/85 backdrop-blur-md text-violet-300 border border-violet-500/30 text-[10px] font-semibold px-2 py-0.5 rounded-md shadow-sm z-10">
+                                    {ceremonyName}
+                                </span>
+                            ) : (
+                                <span className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-md text-zinc-400 text-[10px] font-medium px-1.5 py-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                    General
+                                </span>
+                            )}
+
+                            {/* Hover Overlay Delete Button */}
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 z-10 pointer-events-none">
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeletePhoto(photoId);
+                                    }}
+                                    className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all shadow-md active:scale-95 pointer-events-auto"
+                                    title="Move to Trash"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+            {displayedPhotos.length === 0 && (
+                <div className="text-center py-8 text-zinc-500 text-xs bg-zinc-50 dark:bg-white/[0.02] rounded-xl border border-dashed border-zinc-200 dark:border-white/10">
+                    No photos found in this ceremony.
                 </div>
             )}
         </div>
