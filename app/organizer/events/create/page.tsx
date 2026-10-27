@@ -158,6 +158,12 @@ export default function CreateEventPage() {
         setLoading(true);
 
         try {
+            if (!formData.description.trim()) {
+                toast.error('Event description is required');
+                setLoading(false);
+                return;
+            }
+
             if (new Date(formData.endDate) <= new Date(formData.startDate)) {
                 toast.error('End date must be after start date');
                 setLoading(false);
@@ -209,7 +215,7 @@ export default function CreateEventPage() {
     };
 
     // Check if form is valid for visual feedback
-    const isFormValid = formData.name && formData.venue && formData.startDate && formData.endDate && (customCode.trim() === '' || isAvailable === true);
+    const isFormValid = formData.name.trim() && formData.description.trim() && formData.venue.trim() && formData.startDate && formData.endDate && (customCode.trim() === '' || isAvailable === true);
 
     return (
         <RoleGuard allowedRoles={['organizer']}>
@@ -467,10 +473,11 @@ export default function CreateEventPage() {
                                     {/* Description */}
                                     <div>
                                         <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-gray-300">
-                                            Description
+                                            Description <span className="text-red-400">*</span>
                                         </label>
                                         <textarea
                                             name="description"
+                                            required
                                             rows={4}
                                             value={formData.description}
                                             onChange={handleChange}

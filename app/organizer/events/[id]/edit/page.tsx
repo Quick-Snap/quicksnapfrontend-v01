@@ -73,6 +73,11 @@ export default function EditEventPage() {
         e.preventDefault();
 
         // Basic validation
+        if (!formData.description.trim()) {
+            toast.error('Event description is required');
+            return;
+        }
+
         if (new Date(formData.endDate) <= new Date(formData.startDate)) {
             toast.error('End date must be after start date');
             return;
@@ -138,7 +143,7 @@ export default function EditEventPage() {
                         {/* Description */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Description
+                                Description <span className="text-red-500">*</span>
                             </label>
                             <div className="relative">
                                 <div className="absolute top-3 left-3 pointer-events-none">
@@ -146,6 +151,7 @@ export default function EditEventPage() {
                                 </div>
                                 <textarea
                                     name="description"
+                                    required
                                     value={formData.description}
                                     onChange={handleChange}
                                     rows={4}
