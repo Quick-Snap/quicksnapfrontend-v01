@@ -676,6 +676,22 @@ export const userApi = {
     const response = await api.patch<ApiResponse<OrganizerRequest>>('/users/become-organizer', body);
     return response.data;
   },
+
+  checkOrLinkPhone: async (data: {
+    phone: string;
+    action: 'check' | 'link';
+    transferConfirmed?: boolean;
+  }) => {
+    const response = await api.post<
+      ApiResponse<{
+        alreadyLinked?: boolean;
+        maskedEmail?: string;
+        phone?: string;
+        isPhoneVerified?: boolean;
+      }>
+    >('/users/phone', data);
+    return response.data;
+  },
 };
 
 export const organizerRequestApi = {

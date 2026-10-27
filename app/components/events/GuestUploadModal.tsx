@@ -15,9 +15,15 @@ import {
   Trash2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { guestSubmissionsApi } from '@/lib/api';
+import { guestSubmissionsApi, userApi } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { optimizeImageForUpload } from '@/lib/photoUrl';
+import {
+  initRecaptchaVerifier,
+  sendPhoneVerificationOtp,
+  confirmPhoneVerificationOtp,
+} from '@/lib/firebase';
+import type { ConfirmationResult } from 'firebase/auth';
 
 interface GuestUploadModalProps {
   isOpen: boolean;
@@ -44,11 +50,14 @@ export default function GuestUploadModal({
 
   // Phone Verification State
   const [guestName, setGuestName] = useState(user?.name || '');
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState(user?.phone || '');
   const [otpCode, setOtpCode] = useState('');
   const [otpSent, setOtpSent] = useState(false);
+  const [sendingOtp, setSendingOtp] = useState(false);
   const [verifyingOtp, setVerifyingOtp] = useState(false);
   const [isPhoneVerified, setIsPhoneVerified] = useState(false);
+  const [alreadyLinkedWarning, setAlreadyLinkedWarning] = useState<string | null>(null);
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
 
   // Guest upload allowance & existing photos
   const [myExistingSubmissions, setMyExistingSubmissions] = useState<any[]>([]);
@@ -83,9 +92,19 @@ export default function GuestUploadModal({
     }
   };
 
-  // Auto-fill from localStorage if previously verified
+  // Auto-fill from authenticated user profile or localStorage if previously verified
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (user?.name && !guestName) {
+      setGuestName(user.name);
+    }
+
+    if (user?.phone) {
+      const cleanPhone = user.phone.replace(/[^0-9]/g, '');
+      setPhone(cleanPhone);
+      setIsPhoneVerified(true);
+      setStep(2);
+      fetchMySubmissions(cleanPhone);
+    } else if (typeof window !== 'undefined') {
       const savedPhone = localStorage.getItem('qs_verified_guest_phone');
       const savedName = localStorage.getItem('qs_verified_guest_name');
       if (savedPhone) {
@@ -98,11 +117,57 @@ export default function GuestUploadModal({
         setGuestName(savedName);
       }
     }
-  }, [eventId]);
+  }, [user, eventId]);
 
   if (!isOpen) return null;
 
-  // Handle Mock/Firebase OTP Send
+  // If user is not logged in, enforce sign-in before allowing guest photo uploads
+  if (!user) {
+    const returnUrl = typeof window !== 'undefined' ? window.location.pathname + window.location.search : '';
+    const loginUrl = `/login?redirect=${encodeURIComponent(returnUrl)}`;
+
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-fade-in overflow-y-auto">
+        <div className="relative w-full max-w-md my-auto flex flex-col rounded-3xl border border-zinc-200/90 bg-white p-6 sm:p-7 shadow-2xl dark:border-white/10 dark:bg-[#0f0c18] overflow-hidden text-center">
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute top-4 right-4 rounded-full p-2 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-white/5 dark:hover:text-white"
+          >
+            <X size={18} />
+          </button>
+
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-100 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300 mb-4 mt-2">
+            <Lock size={26} />
+          </div>
+
+          <h3 className="text-lg font-bold text-zinc-900 dark:text-white">Sign In Required to Share</h3>
+          <p className="mt-2 text-xs text-zinc-500 dark:text-gray-400 max-w-xs mx-auto leading-relaxed">
+            To protect event security and ensure your photos are credited to you at <span className="font-semibold text-zinc-800 dark:text-zinc-200">{eventName}</span>, please sign in to your Roopixo account first.
+          </p>
+
+          <div className="mt-6 flex flex-col gap-2.5">
+            <a
+              href={loginUrl}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-semibold text-white shadow-md shadow-violet-500/20 hover:bg-violet-500 transition-all active:scale-[0.99]"
+            >
+              <span>Sign In to Upload Photos</span>
+              <ArrowRight size={15} />
+            </a>
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-full rounded-xl border border-zinc-200 py-2.5 text-xs font-semibold text-zinc-600 hover:bg-zinc-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle Real Firebase SMS OTP Send with Phone Collision Check
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanPhone = phone.replace(/[^0-9]/g, '');
@@ -115,33 +180,90 @@ export default function GuestUploadModal({
       return;
     }
 
-    setOtpSent(true);
-    toast.success(`Verification code sent to +91 ${cleanPhone.slice(-10)}`);
+    setSendingOtp(true);
+    try {
+      // 1. Check if phone number is already registered to another account
+      const checkRes = await userApi.checkOrLinkPhone({
+        phone: cleanPhone,
+        action: 'check',
+      });
+
+      if (checkRes.success && checkRes.data?.alreadyLinked) {
+        setAlreadyLinkedWarning(
+          `This mobile number is already registered with ${checkRes.data.maskedEmail}. Verifying it will transfer ownership to your account.`
+        );
+      } else {
+        setAlreadyLinkedWarning(null);
+      }
+
+      // 2. Initialize Invisible reCAPTCHA and send real SMS OTP via Firebase
+      const formattedE164 = `+91${cleanPhone.slice(-10)}`;
+      const verifier = initRecaptchaVerifier('recaptcha-container');
+      const confirmation = await sendPhoneVerificationOtp(formattedE164, verifier);
+      setConfirmationResult(confirmation);
+
+      setOtpSent(true);
+      toast.success(`Verification code sent to +91 ${cleanPhone.slice(-10)}`);
+    } catch (err: any) {
+      console.error('[Firebase Phone Auth] Send OTP failed:', err);
+      let errorMsg = 'Failed to send verification SMS';
+      if (err.code === 'auth/quota-exceeded') {
+        errorMsg = 'Daily SMS quota reached. Please use a test phone number or add billing in Firebase.';
+      } else if (err.code === 'auth/invalid-phone-number') {
+        errorMsg = 'Invalid mobile number. Please check the 10-digit number.';
+      } else if (err.code === 'auth/unauthorized-domain') {
+        errorMsg = 'Domain not authorized in Firebase Console (Settings > Authorized domains).';
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+      toast.error(errorMsg);
+    } finally {
+      setSendingOtp(false);
+    }
   };
 
-  // Handle OTP Verification
+  // Handle Real Firebase OTP Verification & Account Link
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!otpCode || otpCode.length < 4) {
+    if (!otpCode || otpCode.trim().length < 4) {
       toast.error('Please enter the verification code');
       return;
     }
 
+    const cleanPhone = phone.replace(/[^0-9]/g, '');
     setVerifyingOtp(true);
     try {
-      // Firebase Phone Auth integration hook with dev bypass
-      await new Promise((r) => setTimeout(r, 600));
+      // 1. Verify OTP with Firebase if active session exists
+      if (confirmationResult) {
+        await confirmPhoneVerificationOtp(confirmationResult, otpCode.trim());
+      }
+
+      // 2. Link & verify phone with account ownership transfer support on our backend
+      await userApi.checkOrLinkPhone({
+        phone: cleanPhone,
+        action: 'link',
+        transferConfirmed: true,
+      });
 
       setIsPhoneVerified(true);
       if (typeof window !== 'undefined') {
-        localStorage.setItem('qs_verified_guest_phone', phone);
+        localStorage.setItem('qs_verified_guest_phone', cleanPhone);
         localStorage.setItem('qs_verified_guest_name', guestName);
       }
-      toast.success('Mobile number verified successfully!');
+      toast.success('Mobile number verified & linked to your account!');
       setStep(2);
-      fetchMySubmissions(phone);
-    } catch {
-      toast.error('Invalid verification code');
+      fetchMySubmissions(cleanPhone);
+    } catch (err: any) {
+      console.error('[Firebase Phone Auth] Verification failed:', err);
+      let errorMsg = 'Invalid verification code. Please check and try again.';
+      if (err.code === 'auth/invalid-verification-code') {
+        errorMsg = 'Incorrect verification code. Please try again.';
+      } else if (err.code === 'auth/code-expired') {
+        errorMsg = 'Verification code has expired. Please request a new code.';
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+      toast.error(errorMsg);
     } finally {
       setVerifyingOtp(false);
     }
@@ -345,14 +467,36 @@ export default function GuestUploadModal({
 
                   <button
                     type="submit"
-                    className="w-full mt-2 inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-violet-500 transition-colors"
+                    disabled={sendingOtp}
+                    className="w-full mt-2 inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-violet-500 transition-colors disabled:opacity-60"
                   >
-                    <span>Get Verification Code</span>
-                    <ArrowRight size={15} />
+                    {sendingOtp ? (
+                      <>
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                        <span>Checking Mobile Number...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Get Verification Code</span>
+                        <ArrowRight size={15} />
+                      </>
+                    )}
                   </button>
                 </form>
               ) : (
                 <form onSubmit={handleVerifyOtp} className="space-y-4">
+                  {alreadyLinkedWarning && (
+                    <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3.5 dark:border-amber-500/20 dark:bg-amber-500/10 text-left">
+                      <div className="flex items-start gap-2.5">
+                        <AlertCircle size={16} className="shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+                        <div className="text-xs text-amber-800 dark:text-amber-300 space-y-0.5">
+                          <p className="font-bold">Number Registered on Another Account</p>
+                          <p className="opacity-90 leading-relaxed">{alreadyLinkedWarning}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
                       <label className="text-xs font-semibold text-zinc-700 dark:text-gray-300">
@@ -360,7 +504,10 @@ export default function GuestUploadModal({
                       </label>
                       <button
                         type="button"
-                        onClick={() => setOtpSent(false)}
+                        onClick={() => {
+                          setOtpSent(false);
+                          setAlreadyLinkedWarning(null);
+                        }}
                         className="text-xs text-violet-600 hover:underline dark:text-violet-400"
                       >
                         Change Number
@@ -390,12 +537,15 @@ export default function GuestUploadModal({
                     ) : (
                       <>
                         <ShieldCheck size={16} />
-                        <span>Verify & Continue</span>
+                        <span>{alreadyLinkedWarning ? 'Verify & Transfer to Account' : 'Verify & Continue'}</span>
                       </>
                     )}
                   </button>
                 </form>
               )}
+
+              {/* Invisible Firebase reCAPTCHA anchor */}
+              <div id="recaptcha-container"></div>
             </div>
           )}
 

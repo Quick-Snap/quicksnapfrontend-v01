@@ -16,6 +16,8 @@ import {
   Clock,
   Sparkles,
   Phone,
+  Mail,
+  ShieldCheck,
   Shield,
   Eye,
   Calendar,
@@ -494,14 +496,31 @@ export default function EventSubmissionsReviewPage() {
                     <div className="flex items-start justify-between gap-3 mb-3">
                       <div className="flex items-center gap-3">
                         <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 font-bold text-white shadow-sm text-base">
-                          {sub.guest.name?.charAt(0).toUpperCase() || 'G'}
+                          {sub.guestUser?.name?.charAt(0).toUpperCase() || sub.guest.name?.charAt(0).toUpperCase() || 'G'}
                         </div>
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-bold text-zinc-900 dark:text-white">
-                            {sub.guest.name}
-                          </p>
+                          <div className="flex items-center gap-1.5">
+                            <p className="truncate text-sm font-bold text-zinc-900 dark:text-white">
+                              {sub.guestUser?.name || sub.guest.name}
+                            </p>
+                            {sub.guestUser && (
+                              <span
+                                className="inline-flex items-center gap-0.5 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-bold text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300 shrink-0"
+                                title="Verified Account"
+                              >
+                                <ShieldCheck size={9} />
+                                Verified
+                              </span>
+                            )}
+                          </div>
+                          {sub.guestUser?.email && (
+                            <p className="flex items-center gap-1 text-[11px] text-zinc-500 dark:text-gray-400 truncate font-mono">
+                              <Mail size={10} className="shrink-0" />
+                              {sub.guestUser.email}
+                            </p>
+                          )}
                           <p className="flex items-center gap-1 text-xs text-zinc-500 dark:text-gray-400 font-mono">
-                            <Phone size={10} />
+                            <Phone size={10} className="shrink-0" />
                             +91 {sub.guest.phone?.slice(-10)}
                           </p>
                         </div>
@@ -597,12 +616,24 @@ export default function EventSubmissionsReviewPage() {
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="text-base font-bold text-zinc-900 dark:text-white">
-                      Reviewing: {activeGuestSubmission.guest.name}
+                      Reviewing: {activeGuestSubmission.guestUser?.name || activeGuestSubmission.guest.name}
                     </h3>
-                    <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">
+                    {activeGuestSubmission.guestUser && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300">
+                        <ShieldCheck size={11} />
+                        Verified Account
+                      </span>
+                    )}
+                    <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300 font-mono">
                       +91 {activeGuestSubmission.guest.phone?.slice(-10)}
                     </span>
                   </div>
+                  {activeGuestSubmission.guestUser?.email && (
+                    <p className="flex items-center gap-1 text-xs text-zinc-500 dark:text-gray-400 font-mono mt-0.5">
+                      <Mail size={11} className="shrink-0" />
+                      {activeGuestSubmission.guestUser.email}
+                    </p>
+                  )}
                   <p className="text-xs text-zinc-500 dark:text-gray-400 mt-0.5">
                     Compare duplicate shots and approve the best ones into the Event Pool or Live Wall.
                   </p>
