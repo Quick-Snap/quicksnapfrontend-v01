@@ -878,5 +878,45 @@ export const guestSubmissionsApi = {
   },
 };
 
+export interface AdminAISettings {
+  provider: 'insightface' | 'rekognition';
+  microservice: {
+    online: boolean;
+    latencyMs?: number;
+    model: string;
+    device: string;
+    error: string | null;
+    serviceUrl: string;
+  };
+  stats: {
+    totalEvents: number;
+    totalPhotos: number;
+    totalIndexedPhotos: number;
+    unindexedPhotos: number;
+    activeIndexingJobs: number;
+    insightFaceIndexedPhotos: number;
+    rekognitionIndexedPhotos: number;
+    totalUsersWithFace: number;
+  };
+}
+
+export const adminAIApi = {
+  getSettings: async () => {
+    const response = await api.get<ApiResponse<AdminAISettings>>('/admin/ai-settings');
+    return response.data;
+  },
+  updateProvider: async (provider: 'insightface' | 'rekognition') => {
+    const response = await api.patch<ApiResponse<{ provider: 'insightface' | 'rekognition' }>>(
+      '/admin/ai-settings',
+      { provider }
+    );
+    return response.data;
+  },
+  testConnection: async () => {
+    const response = await api.post<ApiResponse<{ health: any }>>('/admin/ai-test-connection');
+    return response.data;
+  }
+};
+
 export default api;
 

@@ -5,6 +5,7 @@ import { Shield, Clock, CheckCircle, XCircle, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { adminOrganizerRequestApi } from '@/lib/api';
 import { softSurface } from '@/lib/dashboardUi';
+import AIEngineControlCard from './AIEngineControlCard';
 
 export default function AdminDashboard() {
   const { data: statsData } = useQuery('organizerRequestStats', () =>
@@ -89,6 +90,9 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
+
+      {/* AI Face Recognition Dual-Engine Control & Stats */}
+      <AIEngineControlCard />
 
       <section className={`p-5 sm:p-8 ${softSurface}`}>
         <h2 className="mb-5 text-lg font-semibold text-zinc-900 dark:text-white sm:text-xl">Quick action</h2>
