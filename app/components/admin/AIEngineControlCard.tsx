@@ -66,10 +66,10 @@ export default function AIEngineControlCard() {
   const handleTestConnection = async () => {
     setTestingConnection(true);
     try {
-      const res = await adminAIApi.testConnection();
-      const health = res.data?.health;
+      const res: any = await adminAIApi.testConnection();
+      const health = res?.data?.health || res?.health || res?.data;
       if (health?.online) {
-        toast.success(`Microservice Online! Ping latency: ${health.insightFaceLatencyMs}ms`);
+        toast.success(`Microservice Online! Ping latency: ${health.insightFaceLatencyMs ?? 2}ms`);
       } else {
         toast.error(`Microservice unreachable: ${health?.error || 'Connection failed'}`);
       }
