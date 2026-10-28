@@ -248,6 +248,7 @@ export default function BulkUploadPage() {
                         )}
 
                         <UploadZone 
+                            files={files}
                             onFilesSelected={setFiles} 
                             maxFiles={100} 
                             eventId={selectedEvent} 

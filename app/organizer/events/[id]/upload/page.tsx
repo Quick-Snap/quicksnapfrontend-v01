@@ -383,6 +383,7 @@ export default function EventUploadPage() {
                                 </div>
 
                                 <UploadZone
+                                    files={files}
                                     onFilesSelected={setFiles}
                                     maxFiles={100}
                                     eventId={eventId}
@@ -394,29 +395,33 @@ export default function EventUploadPage() {
                                 {files.length > 0 && (
                                     <div className="mt-6 pt-6 border-t border-zinc-200 dark:border-white/10">
                                         <div className="flex flex-wrap items-center justify-between gap-4">
-                                            <div className="flex items-center gap-6">
-                                                <div className="flex items-center gap-2">
-                                                    <ImageIcon size={18} className="text-violet-500 dark:text-violet-400" />
-                                                    <span className="text-zinc-600 dark:text-gray-300">
-                                                        <span className="text-zinc-900 dark:text-white font-semibold">{files.length}</span> photos selected
-                                                    </span>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <Cloud size={18} className="text-indigo-500 dark:text-indigo-400" />
-                                                    <span className="text-zinc-600 dark:text-gray-300">
-                                                        <span className="text-zinc-900 dark:text-white font-semibold">{formatFileSize(totalFileSize)}</span> total
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <button
-                                                onClick={() => setFiles([])}
-                                                className="text-sm text-zinc-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 transition-colors flex items-center gap-1"
-                                            >
-                                                <X size={16} />
-                                                Clear all
-                                            </button>
-                                        </div>
-                                    </div>
+                                             <div className="flex items-center gap-6">
+                                                 <div className="flex items-center gap-2">
+                                                     <ImageIcon size={18} className="text-violet-500 dark:text-violet-400" />
+                                                     <span className="text-zinc-600 dark:text-gray-300">
+                                                         <span className="text-zinc-900 dark:text-white font-semibold">{files.length}</span> photos selected
+                                                     </span>
+                                                 </div>
+                                                 <div className="flex items-center gap-2">
+                                                     <Cloud size={18} className="text-indigo-500 dark:text-indigo-400" />
+                                                     <span className="text-zinc-600 dark:text-gray-300">
+                                                         <span className="text-zinc-900 dark:text-white font-semibold">{formatFileSize(totalFileSize)}</span> total
+                                                     </span>
+                                                 </div>
+                                             </div>
+                                             <button
+                                                 type="button"
+                                                 onClick={() => {
+                                                     setFiles([]);
+                                                     toast.success('Cleared all selected photos');
+                                                 }}
+                                                 className="text-sm font-medium text-zinc-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 transition-colors flex items-center gap-1.5"
+                                             >
+                                                 <X size={16} />
+                                                 Clear all
+                                             </button>
+                                         </div>
+                                     </div>
                                 )}
                             </div>
 

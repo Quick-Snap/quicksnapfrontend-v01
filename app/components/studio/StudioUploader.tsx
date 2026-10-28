@@ -563,6 +563,7 @@ export default function StudioUploader({ presetEventId }: StudioUploaderProps) {
                 </div>
 
                 <UploadZone
+                  files={files}
                   onFilesSelected={setFiles}
                   maxFiles={200}
                   eventId={selectedEvent}

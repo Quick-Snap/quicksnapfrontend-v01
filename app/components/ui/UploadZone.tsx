@@ -14,13 +14,30 @@ interface UploadZoneProps {
     eventId?: string;
     onSyncComplete?: () => void;
     uploadQuality?: 'preview' | 'original';
+    files?: File[];
 }
 
-export default function UploadZone({ onFilesSelected, maxFiles = 100, eventId, onSyncComplete, uploadQuality = 'preview' }: UploadZoneProps) {
+export default function UploadZone({
+    onFilesSelected,
+    maxFiles = 100,
+    eventId,
+    onSyncComplete,
+    uploadQuality = 'preview',
+    files
+}: UploadZoneProps) {
     const { isPhotographerOrOrganizer } = useRole();
     const [previews, setPreviews] = useState<{ file: File; url: string }[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
+
+    // Synchronize when parent clears files (e.g. "Clear all" button clicked)
+    React.useEffect(() => {
+        if (files !== undefined && files.length === 0 && previews.length > 0) {
+            previews.forEach(p => URL.revokeObjectURL(p.url));
+            setPreviews([]);
+            setError(null);
+        }
+    }, [files, previews]);
 
     const onDrop = useCallback(async (acceptedFiles: File[]) => {
         setError(null);
@@ -87,6 +104,13 @@ export default function UploadZone({ onFilesSelected, maxFiles = 100, eventId, o
         setPreviews(newPreviews);
         onFilesSelected(newPreviews.map(p => p.file));
     };
+
+    const handleClearAll = useCallback(() => {
+        previews.forEach(p => URL.revokeObjectURL(p.url));
+        setPreviews([]);
+        setError(null);
+        onFilesSelected([]);
+    }, [previews, onFilesSelected]);
 
     const formatFileSize = (bytes: number) => {
         if (bytes === 0) return '0 Bytes';
@@ -218,6 +242,15 @@ export default function UploadZone({ onFilesSelected, maxFiles = 100, eventId, o
                                 {previews.length}
                             </span>
                         </div>
+                        <button
+                            type="button"
+                            onClick={handleClearAll}
+                            className="text-xs font-semibold text-zinc-500 hover:text-red-600 dark:text-zinc-400 dark:hover:text-red-400 transition-colors flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-white/10 hover:border-red-200 dark:hover:border-red-900/50 hover:bg-red-50/50 dark:hover:bg-red-950/20"
+                            title="Remove all selected photos"
+                        >
+                            <X size={14} />
+                            Clear all
+                        </button>
                     </div>
  
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
