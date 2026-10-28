@@ -878,6 +878,17 @@ export const guestSubmissionsApi = {
   },
 };
 
+export interface EventAIBreakdown {
+  eventId: string;
+  eventName: string;
+  eventCode?: string;
+  totalPhotos: number;
+  indexedPhotos: number;
+  insightFaceCount: number;
+  rekognitionCount: number;
+  insightFacePercentage?: number;
+}
+
 export interface AdminAISettings {
   provider: 'insightface' | 'rekognition';
   microservice: {
@@ -888,6 +899,8 @@ export interface AdminAISettings {
     error: string | null;
     serviceUrl: string;
   };
+  timeline?: 'all' | '1h' | '24h' | '7d' | '30d';
+  selectedEventId?: string | null;
   stats: {
     totalEvents: number;
     totalPhotos: number;
@@ -897,12 +910,16 @@ export interface AdminAISettings {
     insightFaceIndexedPhotos: number;
     rekognitionIndexedPhotos: number;
     totalUsersWithFace: number;
+    insightFacePercentage?: number;
+    savingsEstimateUsd?: number;
   };
+  eventsList?: Array<{ _id: string; name: string; eventCode?: string }>;
+  eventBreakdown?: EventAIBreakdown[];
 }
 
 export const adminAIApi = {
-  getSettings: async () => {
-    const response = await api.get<ApiResponse<AdminAISettings>>('/admin/ai-settings');
+  getSettings: async (params?: { timeline?: string; eventId?: string }) => {
+    const response = await api.get<ApiResponse<AdminAISettings>>('/admin/ai-settings', { params });
     return response.data;
   },
   updateProvider: async (provider: 'insightface' | 'rekognition') => {
