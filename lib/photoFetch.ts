@@ -175,8 +175,8 @@ export async function fetchEventPhotosProgressive(
         if (cursor === prevCursor) break;
         prevCursor = cursor;
 
-        // Yield slightly so browser UI remains completely responsive
-        await new Promise((r) => setTimeout(r, 60));
+        // Yield slightly so browser UI remains completely responsive and avoids network contention
+        await new Promise((r) => setTimeout(r, 350));
 
         try {
           const nextRes = await eventApi.getPhotos(eventId, {
@@ -276,7 +276,7 @@ export async function fetchMyPhotosProgressive(
         if (cursor === prevCursor) break;
         prevCursor = cursor;
 
-        await new Promise((r) => setTimeout(r, 60));
+        await new Promise((r) => setTimeout(r, 350));
 
         try {
           const nextRes = await photoApi.getMyPhotos({

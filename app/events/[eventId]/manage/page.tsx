@@ -210,13 +210,11 @@ export default function ManageEventPage() {
                     eventApi.getById(eventId),
                     fetchEventPhotosProgressive(eventId, {
                         all: true,
-                        initialLimit: 36,
-                        batchLimit: 48,
-                        onBatch: async ({ photos, isInitial }) => {
+                        initialLimit: GALLERY_PHOTOS_PER_PAGE,
+                        batchLimit: GALLERY_PHOTOS_PER_PAGE,
+                        onBatch: ({ photos, isInitial }) => {
                             if (!isInitial) {
-                                let updated = photos;
-                                updated = await enrichPhotosWithDisplayUrls(updated, photoRowId);
-                                applyPhotosAndOfficialState(updated);
+                                applyPhotosAndOfficialState(photos);
                             }
                         },
                     }),

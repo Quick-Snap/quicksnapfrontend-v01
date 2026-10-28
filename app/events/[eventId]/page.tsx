@@ -56,7 +56,7 @@ import AIDiscoveryLounge from '@/app/components/events/AIDiscoveryLounge';
 import { formatEventSchedule } from '@/lib/eventDateUtils';
 import { getEventProfile } from '@/lib/eventProfiles';
 
-const PHOTOS_PER_PAGE = 12;
+const PHOTOS_PER_PAGE = 48;
 const PREVIEW_PHOTO_COUNT = 4;
 
 /** Up to 2 retries on 429; one retry otherwise. */
@@ -273,7 +273,7 @@ export default function PublicEventPage() {
     const { data: photosResult, isLoading: photosLoading } = useQuery(
         ['eventPhotos', eventId, proofTokenParam, accessCodeParam],
         () => fetchEventPhotosProgressive(eventId, {
-            initialLimit: 24,
+            initialLimit: 48,
             all: isProofingMode || isOrganizer,
             proofToken: proofTokenParam,
             code: accessCodeParam,
@@ -349,7 +349,7 @@ export default function PublicEventPage() {
         () => fetchMyPhotosProgressive(
             { eventId },
             {
-                initialLimit: 24,
+                initialLimit: 48,
                 batchLimit: 48,
                 onBatch: ({ photos, total, isInitial }) => {
                     if (!isInitial) {
