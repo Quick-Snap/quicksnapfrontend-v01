@@ -23,7 +23,9 @@ import {
   Search,
   X,
   ExternalLink,
-  ChevronRight
+  ChevronRight,
+  Trash2,
+  Users
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { adminAIApi, AdminAISettings, EventAIBreakdown } from '@/lib/api';
@@ -88,6 +90,22 @@ export default function AIEngineControlCard() {
     }
   );
 
+  const purgeOrphanMutation = useMutation(
+    async () => {
+      const res = await adminAIApi.purgeOrphanPhotos();
+      return res;
+    },
+    {
+      onSuccess: (res: any) => {
+        queryClient.invalidateQueries('adminAISettings');
+        toast.success(res?.message || 'Orphan photos purged from S3 & database successfully!');
+      },
+      onError: (err: any) => {
+        toast.error(err?.response?.data?.message || 'Failed to purge orphan photos.');
+      }
+    }
+  );
+
   const handleTestConnection = async () => {
     setTestingConnection(true);
     try {
@@ -125,9 +143,12 @@ export default function AIEngineControlCard() {
   });
 
   const selectedEventName = eventsList.find((e) => e._id === selectedEventId)?.name;
-  const totalAiIndexed = (stats?.insightFaceIndexedPhotos ?? 0) + (stats?.rekognitionIndexedPhotos ?? 0);
-  const auraFacePercent = totalAiIndexed > 0
-    ? Math.round(((stats?.insightFaceIndexedPhotos ?? 0) / totalAiIndexed) * 100)
+  const totalCalls = stats?.totalAiCalls ?? ((stats?.insightFaceIndexedPhotos ?? 0) + (stats?.rekognitionIndexedPhotos ?? 0));
+  const auraCalls = stats?.totalAuraFaceCalls ?? (stats?.insightFaceIndexedPhotos ?? 0);
+  const rekCalls = stats?.totalRekognitionCalls ?? (stats?.rekognitionIndexedPhotos ?? 0);
+
+  const auraFacePercent = totalCalls > 0
+    ? Math.round((auraCalls / totalCalls) * 100)
     : (currentProvider === 'insightface' ? 100 : 0);
   const rekognitionPercent = 100 - auraFacePercent;
 
@@ -177,6 +198,40 @@ export default function AIEngineControlCard() {
       </div>
 
       <div className="p-6 sm:p-8 space-y-8">
+        {/* Orphan Photos Storage Waste Alert */}
+        {(stats?.orphanPhotosCount ?? 0) > 0 && (
+          <div className="flex flex-col gap-3 rounded-2xl border border-amber-300 bg-amber-50/80 p-4 dark:border-amber-500/30 dark:bg-amber-950/20 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-amber-900 dark:text-amber-200">
+                  Storage Cleanup Needed: {stats?.orphanPhotosCount} Orphan Photos Detected
+                </h4>
+                <p className="mt-0.5 text-xs text-amber-700 dark:text-amber-300/80">
+                  Leftover test photos from previously deleted events are still consuming AWS S3 RAW & PROCESSED storage space.
+                </p>
+              </div>
+            </div>
+
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                if (confirm(`Permanently purge ${stats?.orphanPhotosCount} orphan photo files from AWS S3 and database?`)) {
+                  purgeOrphanMutation.mutate();
+                }
+              }}
+              loading={purgeOrphanMutation.isLoading}
+              className="shrink-0 border-amber-400 bg-white text-amber-800 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-900/40 dark:text-amber-200"
+            >
+              <Trash2 className="mr-1.5 h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+              Purge S3 & Free Space
+            </Button>
+          </div>
+        )}
+
         {/* Active Engine Cards / Toggle */}
         <div>
           <div className="mb-3 flex items-center justify-between">
@@ -384,11 +439,11 @@ export default function AIEngineControlCard() {
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-4 w-4 text-violet-600 dark:text-violet-400" />
                 <h4 className="text-sm font-semibold text-zinc-900 dark:text-white">
-                  Engine Workload Distribution
+                  Engine Workload Distribution (Indexing + Guest Matches)
                 </h4>
               </div>
               <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                {totalAiIndexed.toLocaleString()} total photos indexed
+                {totalCalls.toLocaleString()} total AI API calls
               </span>
             </div>
 
@@ -410,13 +465,13 @@ export default function AIEngineControlCard() {
               <div className="flex items-center gap-2">
                 <span className="h-2.5 w-2.5 rounded-full bg-violet-600" />
                 <span className="font-medium text-zinc-800 dark:text-zinc-200">
-                  AuraFace Microservice: <strong>{stats?.insightFaceIndexedPhotos ?? 0}</strong> ({auraFacePercent}%)
+                  AuraFace Microservice: <strong>{auraCalls}</strong> ({auraFacePercent}%)
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="h-2.5 w-2.5 rounded-full bg-blue-500" />
                 <span className="font-medium text-zinc-800 dark:text-zinc-200">
-                  AWS Rekognition: <strong>{stats?.rekognitionIndexedPhotos ?? 0}</strong> ({rekognitionPercent}%)
+                  AWS Rekognition: <strong>{rekCalls}</strong> ({rekognitionPercent}%)
                 </span>
               </div>
             </div>
@@ -428,30 +483,30 @@ export default function AIEngineControlCard() {
               <div className="flex items-center justify-between">
                 <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300">
                   <DollarSign className="h-3 w-3" />
-                  Self-Hosted ROI
+                  Total Self-Hosted ROI
                 </span>
                 <span className="text-[11px] text-emerald-700/80 dark:text-emerald-400/80">
-                  $0.001 / photo saved
+                  $0.001 / call saved
                 </span>
               </div>
               <p className="mt-2 text-2xl font-black text-emerald-700 dark:text-emerald-400">
                 ${(stats?.savingsEstimateUsd ?? 0).toFixed(3)} <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-500">USD</span>
               </p>
               <p className="mt-1 text-xs text-emerald-800/80 dark:text-emerald-300/80">
-                Estimated AWS Rekognition API charges avoided by running AuraFace on your EC2 instance.
+                Estimated AWS charges avoided across both Photo Indexing and Guest Matching searches.
               </p>
             </div>
             <div className="pt-2 text-[10px] text-emerald-600/80 dark:text-emerald-400/60">
-              Zero recurring per-search charges with local Apache 2.0 ONNX model.
+              Zero per-photo and zero per-guest search charges with local Apache 2.0 ONNX model.
             </div>
           </div>
         </div>
 
-        {/* Live System Statistics */}
+        {/* Live System Statistics: Segregated Breakdown */}
         <div>
           <div className="mb-3 flex items-center justify-between">
             <h3 className="text-sm font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-              Photo Indexing Metrics ({TIMELINE_OPTIONS.find((t) => t.value === timeline)?.label})
+              AI Activity Metrics ({TIMELINE_OPTIONS.find((t) => t.value === timeline)?.label})
             </h3>
             {isRefetching && (
               <span className="text-xs text-violet-600 dark:text-violet-400 flex items-center gap-1">
@@ -477,24 +532,33 @@ export default function AIEngineControlCard() {
             </div>
 
             <div className={`p-4 ${softSurface}`}>
-              <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Indexed by AI</p>
+              <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Photos Indexed</p>
               <p className="mt-1 text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                 {stats?.totalIndexedPhotos ?? 0}
               </p>
+              <div className="mt-1 text-[10px] text-zinc-400">
+                Aura: {stats?.photoIndexing?.insightFace ?? stats?.insightFaceIndexedPhotos ?? 0} • Rek: {stats?.photoIndexing?.rekognition ?? stats?.rekognitionIndexedPhotos ?? 0}
+              </div>
             </div>
 
             <div className={`p-4 ${softSurface}`}>
-              <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">InsightFace Indexed</p>
+              <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Guest Searches</p>
+              <p className="mt-1 text-2xl font-bold text-purple-600 dark:text-purple-400">
+                {stats?.guestMatching?.total ?? 0}
+              </p>
+              <div className="mt-1 text-[10px] text-zinc-400">
+                Aura: {stats?.guestMatching?.insightFace ?? 0} • Rek: {stats?.guestMatching?.rekognition ?? 0}
+              </div>
+            </div>
+
+            <div className={`p-4 ${softSurface}`}>
+              <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Total AI Calls</p>
               <p className="mt-1 text-2xl font-bold text-violet-600 dark:text-violet-400">
-                {stats?.insightFaceIndexedPhotos ?? 0}
+                {stats?.totalAiCalls ?? ((stats?.insightFaceIndexedPhotos ?? 0) + (stats?.rekognitionIndexedPhotos ?? 0))}
               </p>
-            </div>
-
-            <div className={`p-4 ${softSurface}`}>
-              <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Rekognition Indexed</p>
-              <p className="mt-1 text-2xl font-bold text-blue-600 dark:text-blue-400">
-                {stats?.rekognitionIndexedPhotos ?? 0}
-              </p>
+              <div className="mt-1 text-[10px] text-violet-600 dark:text-violet-400">
+                Indexing + Matches
+              </div>
             </div>
 
             <div className={`p-4 ${softSurface}`}>
@@ -502,6 +566,9 @@ export default function AIEngineControlCard() {
               <p className="mt-1 text-2xl font-bold text-amber-600 dark:text-amber-400">
                 {stats?.activeIndexingJobs ?? 0}
               </p>
+              <div className="mt-1 text-[10px] text-zinc-400">
+                Live queue
+              </div>
             </div>
           </div>
         </div>
@@ -515,7 +582,7 @@ export default function AIEngineControlCard() {
                 Recognition Calls by Event
               </h3>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                Breakdown of AI engine routing for events active in {TIMELINE_OPTIONS.find((t) => t.value === timeline)?.label.toLowerCase()}.
+                Audit of AI photo indexing and guest face matching for active events in {TIMELINE_OPTIONS.find((t) => t.value === timeline)?.label.toLowerCase()}.
               </p>
             </div>
 
@@ -546,7 +613,7 @@ export default function AIEngineControlCard() {
                 No event photo activity recorded in this timeframe.
               </p>
               <p className="text-xs text-zinc-400 mt-1">
-                Upload photos to any event to inspect real-time AI recognition routing here.
+                Upload photos or join an event to inspect real-time AI recognition routing here.
               </p>
             </div>
           ) : (
@@ -557,6 +624,7 @@ export default function AIEngineControlCard() {
                     <th className="pb-3 font-semibold">Event Name</th>
                     <th className="pb-3 font-semibold text-center">Total Photos</th>
                     <th className="pb-3 font-semibold text-center">Indexed</th>
+                    <th className="pb-3 font-semibold text-center">Guest Matches</th>
                     <th className="pb-3 font-semibold text-center">AuraFace Calls</th>
                     <th className="pb-3 font-semibold text-center">AWS Rekognition</th>
                     <th className="pb-3 font-semibold text-center">AuraFace %</th>
@@ -566,7 +634,6 @@ export default function AIEngineControlCard() {
                 <tbody className="divide-y divide-zinc-100 dark:divide-white/5">
                   {filteredBreakdown.map((item) => {
                     const isSelected = selectedEventId === item.eventId;
-                    const totalIndexed = (item.insightFaceCount || 0) + (item.rekognitionCount || 0);
                     const auraPercent = item.insightFacePercentage ?? 0;
 
                     return (
@@ -590,6 +657,12 @@ export default function AIEngineControlCard() {
                         <td className="py-3 px-2 text-center">
                           <span className="font-bold text-emerald-600 dark:text-emerald-400">
                             {item.indexedPhotos}
+                          </span>
+                        </td>
+                        <td className="py-3 px-2 text-center">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2 py-0.5 font-semibold text-purple-700 dark:bg-purple-500/15 dark:text-purple-300">
+                            <Users className="h-3 w-3" />
+                            {item.guestMatchCount || 0}
                           </span>
                         </td>
                         <td className="py-3 px-2 text-center">

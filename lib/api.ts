@@ -884,8 +884,10 @@ export interface EventAIBreakdown {
   eventCode?: string;
   totalPhotos: number;
   indexedPhotos: number;
+  guestMatchCount?: number;
   insightFaceCount: number;
   rekognitionCount: number;
+  totalAiCalls?: number;
   insightFacePercentage?: number;
 }
 
@@ -910,8 +912,22 @@ export interface AdminAISettings {
     insightFaceIndexedPhotos: number;
     rekognitionIndexedPhotos: number;
     totalUsersWithFace: number;
+    photoIndexing?: {
+      insightFace: number;
+      rekognition: number;
+      total: number;
+    };
+    guestMatching?: {
+      insightFace: number;
+      rekognition: number;
+      total: number;
+    };
+    totalAuraFaceCalls?: number;
+    totalRekognitionCalls?: number;
+    totalAiCalls?: number;
     insightFacePercentage?: number;
     savingsEstimateUsd?: number;
+    orphanPhotosCount?: number;
   };
   eventsList?: Array<{ _id: string; name: string; eventCode?: string }>;
   eventBreakdown?: EventAIBreakdown[];
@@ -926,6 +942,12 @@ export const adminAIApi = {
     const response = await api.patch<ApiResponse<{ provider: 'insightface' | 'rekognition' }>>(
       '/admin/ai-settings',
       { provider }
+    );
+    return response.data;
+  },
+  purgeOrphanPhotos: async () => {
+    const response = await api.post<ApiResponse<{ purgedCount: number; s3RawDeleted: number; s3ProcessedDeleted: number }>>(
+      '/admin/purge-orphan-photos'
     );
     return response.data;
   },
