@@ -882,6 +882,7 @@ export interface EventAIBreakdown {
   eventId: string;
   eventName: string;
   eventCode?: string;
+  status?: 'active' | 'trash' | 'orphan';
   totalPhotos: number;
   indexedPhotos: number;
   guestMatchCount?: number;

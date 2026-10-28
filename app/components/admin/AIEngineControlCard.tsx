@@ -644,8 +644,20 @@ export default function AIEngineControlCard() {
                         }`}
                       >
                         <td className="py-3 pr-4">
-                          <div className="font-semibold text-zinc-900 dark:text-white">
-                            {item.eventName}
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="font-semibold text-zinc-900 dark:text-white">
+                              {item.eventName}
+                            </span>
+                            {item.status === 'orphan' && (
+                              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
+                                Orphan Test Data
+                              </span>
+                            )}
+                            {item.status === 'trash' && (
+                              <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold text-rose-800 dark:bg-rose-950/60 dark:text-rose-300">
+                                In Trash Bin
+                              </span>
+                            )}
                           </div>
                           <div className="text-[10px] text-zinc-400 font-mono mt-0.5">
                             {item.eventCode ? `Code: ${item.eventCode}` : `ID: ${item.eventId.slice(-6)}`}
