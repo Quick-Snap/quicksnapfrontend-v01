@@ -174,13 +174,13 @@ export default function AIEngineControlCard() {
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <h4 className="font-bold text-zinc-900 dark:text-white">InsightFace Microservice</h4>
+                    <h4 className="font-bold text-zinc-900 dark:text-white">AuraFace Microservice</h4>
                     <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400">
-                      90% Cheaper
+                      Apache 2.0 Commercial
                     </span>
                   </div>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
-                    Self-hosted Buffalo_S model running on ONNX Runtime CPU. 512-dim face embeddings with &lt;5ms vectorized cosine matching.
+                    Self-hosted AuraFace-v1 model (100% commercially permissive under Apache 2.0) running on ONNX Runtime CPU. 512-dim face embeddings with &lt;5ms vectorized cosine matching.
                   </p>
                   <div className="pt-2 flex flex-wrap items-center gap-2 text-xs">
                     <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium ${
@@ -311,7 +311,7 @@ export default function AIEngineControlCard() {
                 Microservice: {microservice?.serviceUrl || 'http://127.0.0.1:5055'}
               </p>
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                Model: <strong>{microservice?.model || 'buffalo_s'}</strong> • Device: <strong>{microservice?.device || 'cpu'}</strong> • Failover: <strong>Automatic AWS Rekognition fallback enabled</strong>
+                Model: <strong>{microservice?.model || 'AuraFace-v1 (Apache 2.0)'}</strong> • Device: <strong>{microservice?.device || 'cpu'}</strong> • Failover: <strong>Automatic AWS Rekognition fallback enabled</strong>
               </p>
             </div>
           </div>
