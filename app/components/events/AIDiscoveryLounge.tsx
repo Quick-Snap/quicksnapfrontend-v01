@@ -46,6 +46,7 @@ export default function AIDiscoveryLounge({
   const progressPct = aiData?.progress?.percentage || 0;
   const totalPhotos = aiData?.totalPhotos || 0;
   const currentPhotos = aiData?.progress?.current || 0;
+  const isIncremental = (aiData?.indexedPhotos || 0) > 0;
 
   // Initialize and tick down countdown timer
   useEffect(() => {
@@ -91,15 +92,17 @@ export default function AIDiscoveryLounge({
             <div>
               <div className="flex items-center gap-2">
                 <h4 className="text-sm font-semibold text-zinc-900 dark:text-white">
-                  Setting Up AI Face Finder
+                  {isIncremental ? 'Indexing New Photos' : 'Setting Up AI Face Finder'}
                 </h4>
                 <span className="inline-flex items-center gap-1 rounded-full bg-violet-500/15 px-2 py-0.5 text-[11px] font-medium text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">
                   <Sparkles size={11} className="animate-spin text-violet-600 dark:text-violet-400" />
-                  First-Time Setup
+                  {isIncremental ? 'Updating Matches' : 'First-Time Setup'}
                 </span>
               </div>
               <p className="mt-0.5 text-xs text-zinc-600 dark:text-zinc-400">
-                Scanning gallery photos for face discovery. Your personal matches will appear automatically!
+                {isIncremental
+                  ? 'Scanning newly uploaded photos for face matches. Your personal matches will appear automatically!'
+                  : 'Scanning gallery photos for face discovery. Your personal matches will appear automatically!'}
               </p>
             </div>
           </div>

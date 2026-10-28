@@ -261,6 +261,9 @@ export default function StudioUploader({ presetEventId }: StudioUploaderProps) {
 
       if (result.successCount > 0) {
         toast.success(`${result.successCount} photo(s) uploaded successfully!`);
+        if (selectedEvent) {
+          eventApi.warmUpAI(selectedEvent).catch(() => {});
+        }
       }
       if (result.errorCount > 0) {
         toast.error(`${result.errorCount} photo(s) failed to upload`);

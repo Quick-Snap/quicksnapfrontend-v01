@@ -23,7 +23,7 @@ import toast from 'react-hot-toast';
 import RoleGuard from '@/app/components/RoleGuard';
 import UploadZone from '@/app/components/ui/UploadZone';
 import api from '@/app/api/axios';
-import { photoApi } from '@/lib/api';
+import { photoApi, eventApi } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import RefreshAttendeeMatchesCard from '@/app/components/events/RefreshAttendeeMatchesCard';
 import { useAppStore } from '@/stores/appStore';
@@ -176,6 +176,8 @@ export default function EventUploadPage() {
 
             if (result.successCount > 0) {
                 toast.success(`${result.successCount} photos uploaded successfully!`);
+                // Trigger background AI face indexing & attendee auto-matching immediately
+                eventApi.warmUpAI(eventId).catch(() => {});
             }
             if (result.errorCount > 0) {
                 toast.error(`${result.errorCount} photos failed to upload`);

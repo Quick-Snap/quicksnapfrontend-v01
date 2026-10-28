@@ -130,6 +130,9 @@ export default function BulkUploadPage() {
 
             if (result.successCount > 0) {
                 toast.success(`${result.successCount} photos uploaded successfully! Processing started.`);
+                if (selectedEvent) {
+                    eventApi.warmUpAI(selectedEvent).catch(() => {});
+                }
             }
             if (result.errorCount > 0) {
                 toast.error(`${result.errorCount} photos failed to upload`);
