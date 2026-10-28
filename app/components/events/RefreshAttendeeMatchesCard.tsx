@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { RefreshCw, Users, ChevronDown, ChevronUp } from 'lucide-react';
+import { RefreshCw, Users, ChevronDown, ChevronUp, Zap, CheckCircle2, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { eventApi } from '@/lib/api';
 import { canRefreshAttendeePhotoMatches } from '@/lib/eventPermissions';
@@ -54,9 +54,44 @@ export default function RefreshAttendeeMatchesCard({
     skippedDownloadFailed: number;
   } | null>(null);
 
+  const [aiStatus, setAiStatus] = useState<'idle' | 'indexing' | 'ready'>('idle');
+  const [warmingUp, setWarmingUp] = useState(false);
+
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const allowed = event ? canRefreshAttendeePhotoMatches(user, event) : false;
+
+  const fetchAIStatus = useCallback(async () => {
+    if (!eventId) return;
+    try {
+      const res = await eventApi.getAIStatus(eventId);
+      if (res.success && res.data) {
+        setAiStatus(res.data.status);
+      }
+    } catch {}
+  }, [eventId]);
+
+  useEffect(() => {
+    fetchAIStatus();
+  }, [fetchAIStatus]);
+
+  const handleWarmUpAI = async () => {
+    if (!eventId || warmingUp) return;
+    setWarmingUp(true);
+    try {
+      const res = await eventApi.warmUpAI(eventId);
+      if (res.success) {
+        toast.success('AI Face Finder pre-indexing started in background!');
+        setAiStatus('indexing');
+      } else {
+        toast.error(res.message || 'Failed to start AI pre-indexing');
+      }
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || 'Failed to start AI pre-indexing');
+    } finally {
+      setWarmingUp(false);
+    }
+  };
 
   // Clear polling on unmount
   useEffect(() => {
@@ -249,6 +284,46 @@ export default function RefreshAttendeeMatchesCard({
                 </>
               )}
             </button>
+
+            {aiStatus === 'idle' && (
+              <button
+                type="button"
+                onClick={handleWarmUpAI}
+                disabled={warmingUp}
+                className={
+                  isDark
+                    ? 'inline-flex items-center justify-center gap-1.5 rounded-xl border border-violet-500/30 bg-violet-500/10 px-4 py-2.5 text-sm font-semibold text-violet-300 hover:bg-violet-500/20 disabled:opacity-50'
+                    : 'inline-flex items-center justify-center gap-1.5 rounded-lg border border-violet-300 bg-violet-50 px-4 py-2.5 text-sm font-semibold text-violet-700 hover:bg-violet-100 disabled:opacity-50'
+                }
+                title="Pre-index all gallery photos in AWS Rekognition ahead of time for instant guest results"
+              >
+                {warmingUp ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Starting…
+                  </>
+                ) : (
+                  <>
+                    <Zap className="h-4 w-4 text-violet-400" />
+                    Pre-Index AI Face Finder
+                  </>
+                )}
+              </button>
+            )}
+
+            {aiStatus === 'indexing' && (
+              <span className="inline-flex items-center gap-1.5 rounded-lg bg-violet-500/10 px-3 py-1.5 text-xs font-medium text-violet-500 dark:text-violet-400">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                AI Indexing in progress…
+              </span>
+            )}
+
+            {aiStatus === 'ready' && (
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                AI Face Finder Ready
+              </span>
+            )}
             {pending && (
               <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                 <span className={`text-sm ${subClass}`}>

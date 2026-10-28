@@ -555,6 +555,31 @@ export const eventApi = {
     return response.data;
   },
 
+  getAIStatus: async (eventId: string) => {
+    const response = await api.get<
+      ApiResponse<{
+        status: 'idle' | 'indexing' | 'ready';
+        totalPhotos: number;
+        indexedPhotos: number;
+        unindexedPhotos: number;
+        progress: {
+          total: number;
+          current: number;
+          percentage: number;
+          estimatedSecondsRemaining: number;
+        };
+        aiIndexedAt: string | null;
+        hasRegisteredAttendeesWithFaces: boolean;
+      }>
+    >(`/events/${eventId}/ai-status`);
+    return response.data;
+  },
+
+  warmUpAI: async (eventId: string) => {
+    const response = await api.post<ApiResponse<{ status: 'indexing' }>>(`/events/${eventId}/warm-up-ai`);
+    return response.data;
+  },
+
   getSelections: async (eventId: string) => {
     const response = await api.get<
       ApiResponse<{

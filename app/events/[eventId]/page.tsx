@@ -52,6 +52,7 @@ import { PhotoLightbox } from '@/app/components/photos/PhotoLightbox';
 import JoinEventModal from '@/app/components/student/JoinEventModal';
 import PostJoinSelfieModal from '@/app/components/events/PostJoinSelfieModal';
 import GuestUploadModal from '@/app/components/events/GuestUploadModal';
+import AIDiscoveryLounge from '@/app/components/events/AIDiscoveryLounge';
 import { formatEventSchedule } from '@/lib/eventDateUtils';
 import { getEventProfile } from '@/lib/eventProfiles';
 
@@ -1672,6 +1673,16 @@ export default function PublicEventPage() {
                         })()}
                     </div>
                 )}
+
+                <div className="mb-6 mx-auto max-w-2xl">
+                    <AIDiscoveryLounge
+                        eventId={eventId}
+                        onReady={() => {
+                            queryClient.invalidateQueries(['myEventPhotos', eventId]);
+                            queryClient.invalidateQueries(['eventPhotos', eventId]);
+                        }}
+                    />
+                </div>
 
                 {isScanningUpdatedSelfie && photoViewMode === 'my' && (
                     <div className="mb-6 mx-auto max-w-xl flex items-center justify-between gap-3 rounded-2xl border border-violet-400/30 bg-gradient-to-r from-violet-600/10 via-indigo-600/10 to-violet-600/5 p-4 text-violet-900 dark:text-violet-200 shadow-sm animate-pulse">
