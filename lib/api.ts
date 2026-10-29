@@ -1036,6 +1036,31 @@ export const adminCouponsApi = {
   }
 };
 
+export interface AIPricingCalculationResult {
+  quota: number;
+  durationDays: number;
+  recommendedPrice: number;
+  floorPrice: number;
+  premiumPrice: number;
+  estimatedInfraCost: number;
+  grossMarginPercent: number;
+  enabledFeatures: string[];
+  disabledFeatures: string[];
+  salesPitchText: string;
+}
+
+export const adminPricingCalculatorApi = {
+  calculate: async (data: {
+    photoQuota: number;
+    days: number;
+    features: Record<string, boolean>;
+    maxTeamMembers?: number;
+  }) => {
+    const response = await api.post<ApiResponse<AIPricingCalculationResult>>('/admin/ai-price-calculator', data);
+    return response.data;
+  }
+};
+
 export const adminBypassApi = {
   grantOrganizerBypass: async (data: {
     userId?: string;
@@ -1043,6 +1068,9 @@ export const adminBypassApi = {
     effectiveTier?: string;
     days?: number;
     customPhotoQuota?: number;
+    customFeatures?: Record<string, boolean>;
+    agreedPrice?: number;
+    customInvoiceNumber?: string;
     reason?: string;
   }) => {
     const response = await api.post<ApiResponse<any>>('/admin/bypass/organizer', data);
