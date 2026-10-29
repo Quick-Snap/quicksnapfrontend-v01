@@ -24,6 +24,8 @@ import {
   Users
 } from 'lucide-react';
 import { BrandLogo } from '@/components/BrandLogo';
+import { useAuth } from '@/contexts/AuthContext';
+import UpgradeModal from '@/components/UpgradeModal';
 
 type Currency = 'INR' | 'USD';
 type BillingCycle = 'annual' | 'monthly';
@@ -325,13 +327,24 @@ const RETAIL_FAQS = [
 ];
 
 export default function PricingPage() {
+  const { user } = useAuth();
   const [category, setCategory] = useState<PricingCategory>('studio');
   const [currency, setCurrency] = useState<Currency>('INR');
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('annual');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [upgradeTier, setUpgradeTier] = useState<'starter_pro' | 'studio_pro' | 'enterprise' | null>(null);
 
   const isAnnual = billingCycle === 'annual';
   const isStudio = category === 'studio';
+
+  const handlePlanClick = (tierId: string, href: string) => {
+    if (user) {
+      const mapped = tierId === 'starter' ? 'starter_pro' : tierId === 'enterprise' ? 'enterprise' : 'studio_pro';
+      setUpgradeTier(mapped);
+    } else {
+      window.location.href = href;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#09090b] text-zinc-100 selection:bg-violet-500 selection:text-white">
@@ -506,6 +519,29 @@ export default function PricingPage() {
           </div>
         </div>
 
+        {/* 14-Day Free Trial Banner */}
+        <div className="mt-10 max-w-4xl mx-auto rounded-3xl border border-violet-500/30 bg-gradient-to-r from-violet-950/40 via-indigo-950/20 to-purple-950/40 p-6 sm:p-8 backdrop-blur-xl shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 px-3 py-1 text-xs font-bold text-emerald-300">
+              <Sparkles className="h-3.5 w-3.5" />
+              100% Free • Zero Credit Card Required
+            </div>
+            <h3 className="text-xl sm:text-2xl font-extrabold text-white">
+              Try Roopixo Free for 14 Days
+            </h3>
+            <p className="text-xs sm:text-sm text-zinc-300 max-w-xl leading-relaxed">
+              Experience instant AI face matching firsthand. Create 1 live test event, upload up to 200 photos, and see your guests find their photos in less than 1 second.
+            </p>
+          </div>
+          <Link
+            href="/register?plan=free_trial"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white text-zinc-900 px-6 py-3.5 text-sm font-bold shadow-lg hover:bg-zinc-100 transition shrink-0"
+          >
+            Start 14-Day Free Trial
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+
         {/* SECTION A: Photographers & Studios Cards */}
         {isStudio && (
           <div className="mt-14 grid grid-cols-1 gap-8 lg:grid-cols-3 lg:gap-8 items-stretch">
@@ -585,8 +621,9 @@ export default function PricingPage() {
 
                   {/* Card CTA */}
                   <div className="mt-8 pt-4">
-                    <Link
-                      href={tier.ctaHref}
+                    <button
+                      type="button"
+                      onClick={() => handlePlanClick(tier.id, tier.ctaHref)}
                       className={`flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-sm font-semibold transition-all ${
                         tier.popular
                           ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-500/30 hover:from-violet-500 hover:to-indigo-500'
@@ -595,7 +632,7 @@ export default function PricingPage() {
                     >
                       {tier.ctaLabel}
                       <ArrowRight className="h-4 w-4" />
-                    </Link>
+                    </button>
                     <p className="mt-2 text-center text-[11px] text-zinc-500">
                       Instant setup • Cancel anytime
                     </p>
@@ -893,6 +930,15 @@ export default function PricingPage() {
           <p>© {new Date().getFullYear()} Roopixo Technologies. All rights reserved.</p>
         </div>
       </footer>
+
+      {/* Upgrade & Checkout Modal */}
+      {upgradeTier && (
+        <UpgradeModal
+          isOpen={!!upgradeTier}
+          onClose={() => setUpgradeTier(null)}
+          targetTier={upgradeTier}
+        />
+      )}
     </div>
   );
 }

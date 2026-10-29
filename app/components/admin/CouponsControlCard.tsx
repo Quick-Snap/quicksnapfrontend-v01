@@ -1,0 +1,490 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import {
+  Tag,
+  Plus,
+  Trash2,
+  CheckCircle,
+  XCircle,
+  Loader2,
+  Calendar,
+  Percent,
+  IndianRupee,
+  ShieldCheck,
+  UserCheck,
+  CalendarDays
+} from 'lucide-react';
+import toast from 'react-hot-toast';
+import { adminCouponsApi, adminBypassApi, CouponInfo } from '@/lib/api';
+
+export default function CouponsControlCard() {
+  const [coupons, setCoupons] = useState<CouponInfo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showBypassModal, setShowBypassModal] = useState(false);
+
+  // Form state for new coupon
+  const [code, setCode] = useState('');
+  const [description, setDescription] = useState('');
+  const [discountType, setDiscountType] = useState<'percentage' | 'fixed_amount'>('percentage');
+  const [discountValue, setDiscountValue] = useState<number>(20);
+  const [validDays, setValidDays] = useState<number>(30);
+  const [usageLimit, setUsageLimit] = useState<string>('50');
+  const [creating, setCreating] = useState(false);
+
+  // Form state for Admin Bypass
+  const [bypassType, setBypassType] = useState<'organizer' | 'event'>('organizer');
+  const [targetId, setTargetId] = useState('');
+  const [bypassTier, setBypassTier] = useState<'starter_pro' | 'studio_pro' | 'enterprise'>('studio_pro');
+  const [bypassDays, setBypassDays] = useState<number>(30);
+  const [customPhotoQuota, setCustomPhotoQuota] = useState<string>('');
+  const [bypassReason, setBypassReason] = useState('VIP Complimentary Access');
+  const [grantingBypass, setGrantingBypass] = useState(false);
+
+  const fetchCoupons = async () => {
+    try {
+      const res = await adminCouponsApi.getAll();
+      if (res.success && res.data) {
+        setCoupons(res.data);
+      }
+    } catch (err: any) {
+      console.error('Failed to fetch coupons:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCoupons();
+  }, []);
+
+  const handleCreateCoupon = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!code.trim() || !discountValue) {
+      toast.error('Code and discount value are required');
+      return;
+    }
+
+    setCreating(true);
+    try {
+      const validUntil = new Date(Date.now() + validDays * 24 * 60 * 60 * 1000).toISOString();
+      const res = await adminCouponsApi.create({
+        code: code.trim().toUpperCase(),
+        description: description.trim(),
+        discountType,
+        discountValue: Number(discountValue),
+        validUntil,
+        usageLimit: usageLimit ? Number(usageLimit) : undefined,
+        applicableTiers: ['all']
+      });
+
+      if (res.success) {
+        toast.success(`Coupon "${code.toUpperCase()}" created!`);
+        setShowCreateModal(false);
+        setCode('');
+        setDescription('');
+        fetchCoupons();
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to create coupon');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleToggleStatus = async (id: string) => {
+    try {
+      const res = await adminCouponsApi.toggle(id);
+      if (res.success) {
+        toast.success(res.message || 'Status updated');
+        fetchCoupons();
+      }
+    } catch (err: any) {
+      toast.error('Failed to update status');
+    }
+  };
+
+  const handleDelete = async (id: string, codeStr: string) => {
+    if (!confirm(`Are you sure you want to delete coupon "${codeStr}"?`)) return;
+    try {
+      const res = await adminCouponsApi.delete(id);
+      if (res.success) {
+        toast.success('Coupon deleted');
+        fetchCoupons();
+      }
+    } catch (err: any) {
+      toast.error('Failed to delete coupon');
+    }
+  };
+
+  const handleGrantBypass = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!targetId.trim()) {
+      toast.error(`Please provide the ${bypassType === 'organizer' ? 'User ID' : 'Event ID'}`);
+      return;
+    }
+
+    setGrantingBypass(true);
+    try {
+      if (bypassType === 'organizer') {
+        const res = await adminBypassApi.grantOrganizerBypass({
+          userId: targetId.trim(),
+          effectiveTier: bypassTier,
+          days: bypassDays,
+          customPhotoQuota: customPhotoQuota ? Number(customPhotoQuota) : undefined,
+          reason: bypassReason
+        });
+        if (res.success) {
+          toast.success(res.message || 'Organizer bypass granted!');
+          setShowBypassModal(false);
+          setTargetId('');
+        }
+      } else {
+        const res = await adminBypassApi.grantEventBypass({
+          eventId: targetId.trim(),
+          days: bypassDays,
+          customPhotoLimit: customPhotoQuota ? Number(customPhotoQuota) : undefined,
+          allowGoogleDriveSync: true,
+          allowRawDownloads: true,
+          reason: bypassReason
+        });
+        if (res.success) {
+          toast.success(res.message || 'Event exemption granted!');
+          setShowBypassModal(false);
+          setTargetId('');
+        }
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to grant bypass');
+    } finally {
+      setGrantingBypass(false);
+    }
+  };
+
+  return (
+    <div className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-zinc-900/60 backdrop-blur-xl">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-100 pb-5 dark:border-white/10">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400">
+              <Tag className="h-5 w-5" />
+            </div>
+            <h2 className="text-xl font-bold text-zinc-900 dark:text-white">
+              Discount Coupons & Admin Bypass
+            </h2>
+          </div>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            Generate promotional discount promo codes for checkout or grant custom exemptions to organizers & events.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => setShowBypassModal(true)}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2 text-xs font-semibold text-zinc-700 hover:bg-zinc-100 dark:border-white/10 dark:bg-white/5 dark:text-zinc-200 dark:hover:bg-white/10 transition"
+          >
+            <ShieldCheck className="h-4 w-4 text-violet-500" />
+            Grant Custom Bypass
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowCreateModal(true)}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-3.5 py-2 text-xs font-bold text-white shadow-md shadow-violet-500/20 hover:from-violet-500 hover:to-indigo-500 transition"
+          >
+            <Plus className="h-4 w-4" />
+            Create Coupon
+          </button>
+        </div>
+      </div>
+
+      {/* Coupons Table */}
+      <div className="mt-6">
+        {loading ? (
+          <div className="flex items-center justify-center py-12 text-zinc-400">
+            <Loader2 className="h-6 w-6 animate-spin mr-2" />
+            Loading coupons…
+          </div>
+        ) : coupons.length === 0 ? (
+          <div className="text-center py-12 border border-dashed border-zinc-200 dark:border-white/10 rounded-2xl">
+            <Tag className="h-8 w-8 text-zinc-400 mx-auto mb-2 opacity-50" />
+            <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">No active coupons created yet</p>
+            <p className="text-xs text-zinc-500 mt-1">Click "Create Coupon" above to generate your first promotional code.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="border-b border-zinc-200 text-zinc-500 dark:border-white/10 dark:text-zinc-400">
+                  <th className="py-3 px-4 font-semibold">Code</th>
+                  <th className="py-3 px-4 font-semibold">Discount</th>
+                  <th className="py-3 px-4 font-semibold">Redemptions</th>
+                  <th className="py-3 px-4 font-semibold">Valid Until</th>
+                  <th className="py-3 px-4 font-semibold">Status</th>
+                  <th className="py-3 px-4 text-right font-semibold">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100 dark:divide-white/5">
+                {coupons.map((c) => {
+                  const isExpired = new Date(c.validUntil).getTime() < Date.now();
+                  return (
+                    <tr key={c._id} className="hover:bg-zinc-50/50 dark:hover:bg-white/[0.02] transition">
+                      <td className="py-3.5 px-4 font-mono font-bold text-violet-600 dark:text-violet-400">
+                        {c.code}
+                      </td>
+                      <td className="py-3.5 px-4 font-semibold text-zinc-800 dark:text-zinc-200">
+                        {c.discountType === 'percentage' ? `${c.discountValue}% off` : `₹${c.discountValue} flat off`}
+                      </td>
+                      <td className="py-3.5 px-4 text-zinc-600 dark:text-zinc-400">
+                        {c.usageCount} {c.usageLimit ? `/ ${c.usageLimit}` : 'uses'}
+                      </td>
+                      <td className="py-3.5 px-4 text-zinc-500">
+                        {new Date(c.validUntil).toLocaleDateString()}
+                        {isExpired && <span className="ml-1.5 text-rose-500 font-semibold">(Expired)</span>}
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleStatus(c._id)}
+                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                            c.isActive && !isExpired
+                              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                              : 'bg-zinc-500/10 text-zinc-500 border border-zinc-500/20'
+                          }`}
+                        >
+                          {c.isActive && !isExpired ? 'Active' : 'Inactive'}
+                        </button>
+                      </td>
+                      <td className="py-3.5 px-4 text-right">
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(c._id, c.code)}
+                          className="rounded-lg p-1.5 text-zinc-400 hover:text-rose-500 hover:bg-rose-500/10 transition"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* CREATE COUPON MODAL */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-white/10 dark:bg-zinc-900 text-zinc-900 dark:text-white">
+            <h3 className="text-lg font-bold">Create Discount Promo Code</h3>
+            <p className="text-xs text-zinc-500 mt-1">Generated code can be used on checkout across all plans.</p>
+
+            <form onSubmit={handleCreateCoupon} className="mt-5 space-y-4">
+              <div>
+                <label className="text-xs font-semibold block mb-1">Coupon Code</label>
+                <input
+                  type="text"
+                  placeholder="e.g. STUDIO25 or DIWALI50"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value.toUpperCase())}
+                  required
+                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2 text-xs uppercase font-mono font-bold dark:border-white/10 dark:bg-white/5 focus:outline-none focus:border-violet-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold block mb-1">Discount Type</label>
+                  <select
+                    value={discountType}
+                    onChange={(e: any) => setDiscountType(e.target.value)}
+                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs dark:border-white/10 dark:bg-white/5"
+                  >
+                    <option value="percentage">Percentage (%)</option>
+                    <option value="fixed_amount">Flat Amount (₹)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold block mb-1">Discount Value</label>
+                  <input
+                    type="number"
+                    value={discountValue}
+                    onChange={(e) => setDiscountValue(Number(e.target.value))}
+                    required
+                    min="1"
+                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2 text-xs font-bold dark:border-white/10 dark:bg-white/5"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold block mb-1">Validity (Days)</label>
+                  <input
+                    type="number"
+                    value={validDays}
+                    onChange={(e) => setValidDays(Number(e.target.value))}
+                    min="1"
+                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2 text-xs dark:border-white/10 dark:bg-white/5"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold block mb-1">Usage Limit</label>
+                  <input
+                    type="number"
+                    value={usageLimit}
+                    onChange={(e) => setUsageLimit(e.target.value)}
+                    placeholder="e.g. 50 (blank = infinite)"
+                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2 text-xs dark:border-white/10 dark:bg-white/5"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-zinc-100 dark:border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="rounded-xl px-4 py-2 text-xs font-medium text-zinc-500 hover:bg-zinc-100 dark:hover:bg-white/5"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={creating}
+                  className="rounded-xl bg-violet-600 px-4 py-2 text-xs font-bold text-white hover:bg-violet-500 transition disabled:opacity-50"
+                >
+                  {creating ? 'Creating…' : 'Create Coupon'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* GRANT ADMIN BYPASS MODAL */}
+      {showBypassModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-white/10 dark:bg-zinc-900 text-zinc-900 dark:text-white">
+            <h3 className="text-lg font-bold">Grant Admin Bypass</h3>
+            <p className="text-xs text-zinc-500 mt-1">Exempt an organizer or specific event from payment restrictions.</p>
+
+            <form onSubmit={handleGrantBypass} className="mt-5 space-y-4">
+              <div>
+                <label className="text-xs font-semibold block mb-1">Target Type</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setBypassType('organizer')}
+                    className={`rounded-xl py-2 text-xs font-bold border transition ${
+                      bypassType === 'organizer'
+                        ? 'border-violet-500 bg-violet-500/10 text-violet-600 dark:text-violet-400'
+                        : 'border-zinc-200 dark:border-white/10 text-zinc-400'
+                    }`}
+                  >
+                    Specific Organizer
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBypassType('event')}
+                    className={`rounded-xl py-2 text-xs font-bold border transition ${
+                      bypassType === 'event'
+                        ? 'border-violet-500 bg-violet-500/10 text-violet-600 dark:text-violet-400'
+                        : 'border-zinc-200 dark:border-white/10 text-zinc-400'
+                    }`}
+                  >
+                    Specific Event
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold block mb-1">
+                  {bypassType === 'organizer' ? 'User ID (MongoDB _id)' : 'Event ID (MongoDB _id)'}
+                </label>
+                <input
+                  type="text"
+                  placeholder="Paste 24-character MongoDB ID"
+                  value={targetId}
+                  onChange={(e) => setTargetId(e.target.value.trim())}
+                  required
+                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2 text-xs font-mono dark:border-white/10 dark:bg-white/5 focus:outline-none focus:border-violet-500"
+                />
+              </div>
+
+              {bypassType === 'organizer' && (
+                <div>
+                  <label className="text-xs font-semibold block mb-1">Effective Tier</label>
+                  <select
+                    value={bypassTier}
+                    onChange={(e: any) => setBypassTier(e.target.value)}
+                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs dark:border-white/10 dark:bg-white/5"
+                  >
+                    <option value="studio_pro">Studio Pro (1.5 Lakh photos + GDrive sync)</option>
+                    <option value="enterprise">Enterprise (3.5 Lakh photos + White-label)</option>
+                    <option value="starter_pro">Starter Pro (30k photos)</option>
+                  </select>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold block mb-1">Duration (Days)</label>
+                  <input
+                    type="number"
+                    value={bypassDays}
+                    onChange={(e) => setBypassDays(Number(e.target.value))}
+                    min="1"
+                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2 text-xs dark:border-white/10 dark:bg-white/5"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold block mb-1">Custom Photo Quota</label>
+                  <input
+                    type="number"
+                    value={customPhotoQuota}
+                    onChange={(e) => setCustomPhotoQuota(e.target.value)}
+                    placeholder="e.g. 50000"
+                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2 text-xs dark:border-white/10 dark:bg-white/5"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold block mb-1">Reason / Note</label>
+                <input
+                  type="text"
+                  value={bypassReason}
+                  onChange={(e) => setBypassReason(e.target.value)}
+                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2 text-xs dark:border-white/10 dark:bg-white/5"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-zinc-100 dark:border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setShowBypassModal(false)}
+                  className="rounded-xl px-4 py-2 text-xs font-medium text-zinc-500 hover:bg-zinc-100 dark:hover:bg-white/5"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={grantingBypass}
+                  className="rounded-xl bg-violet-600 px-4 py-2 text-xs font-bold text-white hover:bg-violet-500 transition disabled:opacity-50"
+                >
+                  {grantingBypass ? 'Granting…' : 'Confirm Bypass'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

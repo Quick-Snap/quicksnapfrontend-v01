@@ -4,10 +4,11 @@ import { useState } from 'react';
 import RoleGuard from '@/app/components/RoleGuard';
 import OrganizerRequestsPanel from '@/app/components/admin/OrganizerRequestsPanel';
 import AIEngineControlCard from '@/app/components/admin/AIEngineControlCard';
-import { Cpu, Users } from 'lucide-react';
+import CouponsControlCard from '@/app/components/admin/CouponsControlCard';
+import { Cpu, Users, Tag } from 'lucide-react';
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<'requests' | 'ai'>('requests');
+  const [activeTab, setActiveTab] = useState<'requests' | 'coupons' | 'ai'>('requests');
 
   return (
     <RoleGuard allowedRoles={['admin']}>
@@ -26,6 +27,17 @@ export default function AdminPage() {
             Organizer Requests
           </button>
           <button
+            onClick={() => setActiveTab('coupons')}
+            className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-semibold transition-colors ${
+              activeTab === 'coupons'
+                ? 'border-violet-600 text-violet-600 dark:border-violet-400 dark:text-violet-400'
+                : 'border-transparent text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200'
+            }`}
+          >
+            <Tag className="h-4 w-4" />
+            Coupons & Quota Bypass
+          </button>
+          <button
             onClick={() => setActiveTab('ai')}
             className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-semibold transition-colors ${
               activeTab === 'ai'
@@ -39,9 +51,9 @@ export default function AdminPage() {
         </div>
 
         {/* Tab Content */}
-        {activeTab === 'requests' ? (
-          <OrganizerRequestsPanel />
-        ) : (
+        {activeTab === 'requests' && <OrganizerRequestsPanel />}
+        {activeTab === 'coupons' && <CouponsControlCard />}
+        {activeTab === 'ai' && (
           <div className="space-y-6">
             <AIEngineControlCard />
           </div>

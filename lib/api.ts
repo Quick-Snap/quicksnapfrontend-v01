@@ -958,5 +958,115 @@ export const adminAIApi = {
   }
 };
 
+export interface CouponInfo {
+  _id: string;
+  code: string;
+  description?: string;
+  discountType: 'percentage' | 'fixed_amount';
+  discountValue: number;
+  applicableTiers: string[];
+  minOrderAmount?: number;
+  maxDiscountAmount?: number;
+  currency: 'INR' | 'USD';
+  validFrom: string;
+  validUntil: string;
+  usageLimit?: number;
+  usageCount: number;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface CouponCalculationResult {
+  valid: boolean;
+  code: string;
+  discountType: 'percentage' | 'fixed_amount';
+  discountValue: number;
+  discountAmount: number;
+  originalAmount: number;
+  finalAmount: number;
+  label: string;
+}
+
+export const paymentApi = {
+  applyCoupon: async (data: { code: string; tierId: string; billingCycle?: string }) => {
+    const response = await api.post<ApiResponse<CouponCalculationResult>>('/payments/apply-coupon', data);
+    return response.data;
+  },
+  createOrder: async (data: { tierId: string; billingCycle?: string; couponCode?: string; currency?: string }) => {
+    const response = await api.post<ApiResponse<{
+      orderId: string;
+      amount: number;
+      currency: string;
+      invoiceNumber: string;
+      tier: { id: string; name: string };
+      keyId: string;
+      isSandbox: boolean;
+    }>>('/payments/create-order', data);
+    return response.data;
+  },
+  verifyPayment: async (data: {
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature: string;
+    tierId: string;
+    billingCycle?: string;
+    couponCode?: string;
+  }) => {
+    const response = await api.post<ApiResponse<any>>('/payments/verify', data);
+    return response.data;
+  }
+};
+
+export const adminCouponsApi = {
+  getAll: async () => {
+    const response = await api.get<ApiResponse<CouponInfo[]>>('/admin/coupons');
+    return response.data;
+  },
+  create: async (data: Partial<CouponInfo>) => {
+    const response = await api.post<ApiResponse<CouponInfo>>('/admin/coupons', data);
+    return response.data;
+  },
+  toggle: async (id: string) => {
+    const response = await api.patch<ApiResponse<CouponInfo>>(`/admin/coupons/${id}/toggle`);
+    return response.data;
+  },
+  delete: async (id: string) => {
+    const response = await api.delete<ApiResponse<any>>(`/admin/coupons/${id}`);
+    return response.data;
+  }
+};
+
+export const adminBypassApi = {
+  grantOrganizerBypass: async (data: {
+    userId: string;
+    effectiveTier?: string;
+    days?: number;
+    customPhotoQuota?: number;
+    reason?: string;
+  }) => {
+    const response = await api.post<ApiResponse<any>>('/admin/bypass/organizer', data);
+    return response.data;
+  },
+  revokeOrganizerBypass: async (userId: string) => {
+    const response = await api.delete<ApiResponse<any>>(`/admin/bypass/organizer/${userId}`);
+    return response.data;
+  },
+  grantEventBypass: async (data: {
+    eventId: string;
+    days?: number;
+    customPhotoLimit?: number;
+    allowGoogleDriveSync?: boolean;
+    allowRawDownloads?: boolean;
+    reason?: string;
+  }) => {
+    const response = await api.post<ApiResponse<any>>('/admin/bypass/event', data);
+    return response.data;
+  },
+  revokeEventBypass: async (eventId: string) => {
+    const response = await api.delete<ApiResponse<any>>(`/admin/bypass/event/${eventId}`);
+    return response.data;
+  }
+};
+
 export default api;
 

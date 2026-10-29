@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from 'react-query';
-import { Shield, Clock, CheckCircle, XCircle, Sparkles } from 'lucide-react';
+import { Shield, Clock, CheckCircle, XCircle, Sparkles, Tag } from 'lucide-react';
 import Link from 'next/link';
 import { adminOrganizerRequestApi } from '@/lib/api';
 import { softSurface } from '@/lib/dashboardUi';
@@ -95,25 +95,41 @@ export default function AdminDashboard() {
       <AIEngineControlCard />
 
       <section className={`p-5 sm:p-8 ${softSurface}`}>
-        <h2 className="mb-5 text-lg font-semibold text-zinc-900 dark:text-white sm:text-xl">Quick action</h2>
-        <Link href="/admin" className="action-card group max-w-md">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-100 transition-colors group-hover:bg-violet-200/80 dark:bg-violet-500/10 dark:group-hover:bg-violet-500/20">
-            <Shield className="h-5 w-5 text-violet-700 dark:text-violet-400" />
-          </div>
-          <div>
-            <p className="font-semibold text-zinc-900 dark:text-white">
-              Review organizer requests
-              {stats.pending > 0 && (
-                <span className="ml-2 rounded-full bg-amber-500 px-2 py-0.5 text-xs font-bold text-white">
-                  {stats.pending}
-                </span>
-              )}
-            </p>
-            <p className="text-sm text-zinc-500 dark:text-gray-400">
-              Approve or reject pending applications
-            </p>
-          </div>
-        </Link>
+        <h2 className="mb-5 text-lg font-semibold text-zinc-900 dark:text-white sm:text-xl">Quick actions</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Link href="/admin" className="action-card group">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-100 transition-colors group-hover:bg-violet-200/80 dark:bg-violet-500/10 dark:group-hover:bg-violet-500/20">
+              <Shield className="h-5 w-5 text-violet-700 dark:text-violet-400" />
+            </div>
+            <div>
+              <p className="font-semibold text-zinc-900 dark:text-white">
+                Review organizer requests
+                {stats.pending > 0 && (
+                  <span className="ml-2 rounded-full bg-amber-500 px-2 py-0.5 text-xs font-bold text-white">
+                    {stats.pending}
+                  </span>
+                )}
+              </p>
+              <p className="text-sm text-zinc-500 dark:text-gray-400">
+                Approve or reject pending applications
+              </p>
+            </div>
+          </Link>
+
+          <Link href="/admin" className="action-card group">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100 transition-colors group-hover:bg-amber-200/80 dark:bg-amber-500/10 dark:group-hover:bg-amber-500/20">
+              <Tag className="h-5 w-5 text-amber-700 dark:text-amber-400" />
+            </div>
+            <div>
+              <p className="font-semibold text-zinc-900 dark:text-white">
+                Coupons & quota bypass
+              </p>
+              <p className="text-sm text-zinc-500 dark:text-gray-400">
+                Create promo codes or grant custom quota extensions
+              </p>
+            </div>
+          </Link>
+        </div>
       </section>
     </div>
   );

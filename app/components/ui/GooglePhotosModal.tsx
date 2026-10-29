@@ -20,6 +20,7 @@ import {
 import toast from 'react-hot-toast';
 import api from '@/app/api/axios';
 import { useAppStore } from '@/stores/appStore';
+import UpgradeModal from '@/components/UpgradeModal';
 
 interface GooglePhotosModalProps {
     isOpen: boolean;
@@ -139,6 +140,7 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
     const theme = useAppStore(state => state.ui.theme);
     const isDarkMode = theme === 'dark';
 
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
     const [googleToken, setGoogleToken] = useState<string | null>(null);
     const [selectedAlbum, setSelectedAlbum] = useState<any | null>(null);
     const [photos, setPhotos] = useState<any[]>([]);
@@ -442,7 +444,11 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
             }
         } catch (err: any) {
             console.error('Background drive sync error:', err);
-            toast.error(err.response?.data?.message || 'Failed to start background import.');
+            if (err.response?.data?.code === 'FEATURE_LOCKED') {
+                setShowUpgradeModal(true);
+            } else {
+                toast.error(err.response?.data?.message || 'Failed to start background import.');
+            }
         } finally {
             setIsStartingBackgroundSync(false);
         }
@@ -1355,6 +1361,15 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
                     </div>
                 )}
             </div>
+
+            {/* Upgrade Modal for Locked Feature */}
+            <UpgradeModal
+                isOpen={showUpgradeModal}
+                onClose={() => setShowUpgradeModal(false)}
+                targetTier="studio_pro"
+                featureName="Google Drive Auto-Sync"
+                reason="Google Drive background auto-sync is exclusive to Studio Pro members. Upgrade your plan to link shared Drive folders and ingest photos automatically."
+            />
         </div>
     );
 }
