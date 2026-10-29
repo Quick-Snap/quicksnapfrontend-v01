@@ -36,8 +36,8 @@ export default function UpgradeModal({
   isOpen,
   onClose,
   targetTier = 'studio_pro',
-  featureName = 'Google Drive Auto-Sync',
-  reason = 'Upgrade to Studio Pro to unlock this feature and supercharge your photography workflow.',
+  featureName,
+  reason,
   onSuccess
 }: UpgradeModalProps) {
   const { user } = useAuth();
@@ -59,7 +59,8 @@ export default function UpgradeModal({
       photos: '30,000 Photos',
       events: 'Unlimited Events',
       gallery: '1 Full Year Live Gallery',
-      perk4: 'Lightroom Selection Export'
+      perk4: 'Lightroom Selection Export',
+      description: 'Ideal for freelance photographers & solo creators delivering modern AI event galleries.'
     },
     studio_pro: {
       name: 'Studio Pro',
@@ -68,7 +69,8 @@ export default function UpgradeModal({
       photos: '1,50,000 Photos',
       events: 'Google Drive Auto-Sync',
       gallery: '2 Full Years Live Gallery',
-      perk4: '2 Team Logins'
+      perk4: '2 Team Logins',
+      description: 'For active wedding studios & commercial photographers doing 2 to 4 shoots a month.'
     },
     enterprise: {
       name: 'Enterprise',
@@ -77,7 +79,8 @@ export default function UpgradeModal({
       photos: '3,50,000 Photos / Custom',
       events: 'White-Label CNAME Domain',
       gallery: '3 Full Years Live Gallery',
-      perk4: '5 Team Logins & WhatsApp VIP'
+      perk4: '5 Team Logins & WhatsApp VIP',
+      description: 'For high-volume wedding production houses, collegiate fests & event agencies.'
     }
   };
   const activeConfig = tierConfig[targetTier] || tierConfig.studio_pro;
@@ -218,12 +221,23 @@ export default function UpgradeModal({
 
         {/* Header */}
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-violet-400/30 bg-violet-500/10 px-3 py-1 text-xs font-semibold text-violet-300">
-            <Lock className="h-3 w-3 text-violet-400" />
-            {featureName} Locked
-          </div>
-          <h2 className="text-2xl font-extrabold text-white">Upgrade to {tierName}</h2>
-          <p className="text-xs text-zinc-400 leading-relaxed">{reason}</p>
+          {featureName ? (
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-300">
+              <Lock className="h-3 w-3 text-amber-400" />
+              {featureName} Locked
+            </div>
+          ) : (
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-violet-400/30 bg-violet-500/10 px-3 py-1 text-xs font-semibold text-violet-300">
+              <Sparkles className="h-3 w-3 text-violet-400" />
+              Roopixo {tierName} Plan
+            </div>
+          )}
+          <h2 className="text-2xl font-extrabold text-white">
+            {featureName ? `Upgrade to ${tierName}` : `Activate ${tierName}`}
+          </h2>
+          <p className="text-xs text-zinc-400 leading-relaxed">
+            {reason || activeConfig.description}
+          </p>
         </div>
 
         {/* Billing Toggle */}
