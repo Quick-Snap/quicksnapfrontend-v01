@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { User, Mail, Camera, Shield, Edit3, Check, X, Calendar, Sparkles, Loader2, Briefcase, Clock, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { User, Mail, Camera, Shield, Edit3, Check, X, Calendar, Sparkles, Loader2, Briefcase, Clock, AlertCircle, CheckCircle2, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { organizerRequestApi, userApi } from '@/lib/api';
 import { OrganizerRequest } from '@/types';
@@ -9,7 +9,6 @@ import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { Button } from '@/app/components/ui/Button';
-import ApplyOrganizerModal from '@/app/components/profile/ApplyOrganizerModal';
 
 export default function ProfilePage() {
     const { user, updateUser } = useAuth();
@@ -326,94 +325,38 @@ export default function ProfilePage() {
                 )}
             </div>
 
-            {/* Become Organizer */}
+            {/* Host Events / Become Organizer */}
             {canApply && (
                 <div className="card">
                     <div className="flex items-center gap-3 mb-6">
-                        <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-500/10 flex items-center justify-center">
-                            <Briefcase className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                        <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-500/10 flex items-center justify-center">
+                            <Sparkles className="h-5 w-5 text-violet-600 dark:text-violet-400" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Become an Organizer</h2>
-                            <p className="text-sm text-zinc-600 dark:text-gray-400">Host events and manage your organization on Roopixo</p>
+                            <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Host Events on Roopixo</h2>
+                            <p className="text-sm text-zinc-600 dark:text-gray-400">Deliver instant AI selfie photo discovery to your wedding & event guests</p>
                         </div>
                     </div>
 
-                    {loadingRequest ? (
-                        <div className="flex items-center justify-center py-8 text-zinc-500">
-                            <Loader2 className="h-6 w-6 animate-spin mr-2" />
-                            Loading application status…
-                        </div>
-                    ) : myRequest?.status === 'pending' ? (
-                        <div className="rounded-2xl border border-amber-200/90 bg-gradient-to-br from-amber-50 to-orange-50 p-6 dark:border-amber-500/20 dark:from-amber-500/10 dark:to-orange-500/10">
-                            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                                <div className="flex items-start gap-4">
-                                    <div className="w-14 h-14 rounded-xl bg-amber-200/80 dark:bg-amber-500/20 flex items-center justify-center shrink-0">
-                                        <Clock className="h-7 w-7 text-amber-700 dark:text-amber-400" />
-                                    </div>
-                                    <div>
-                                        <p className="font-semibold text-amber-900 dark:text-amber-300 text-lg">Application under review</p>
-                                        <p className="text-zinc-600 dark:text-gray-400 mt-1">
-                                            Your request is pending review. This usually takes 1–2 business days.
-                                        </p>
-                                        {myRequest.organizationName && (
-                                            <p className="text-sm text-zinc-500 dark:text-gray-500 mt-2">
-                                                Organization: {myRequest.organizationName}
-                                            </p>
-                                        )}
-                                    </div>
+                    <div className="rounded-2xl border border-violet-200/90 bg-gradient-to-br from-violet-50 to-indigo-50 p-6 dark:border-violet-500/20 dark:from-violet-500/10 dark:to-indigo-500/10">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div className="flex items-start gap-4">
+                                <div className="w-14 h-14 rounded-xl bg-violet-200/80 dark:bg-violet-500/20 flex items-center justify-center shrink-0">
+                                    <Briefcase className="h-7 w-7 text-violet-700 dark:text-violet-400" />
                                 </div>
-                                <Button
-                                    variant="outline"
-                                    onClick={handleCancelRequest}
-                                    loading={cancelling}
-                                    className="shrink-0"
-                                >
-                                    Cancel application
-                                </Button>
-                            </div>
-                        </div>
-                    ) : myRequest?.status === 'rejected' ? (
-                        <div className="rounded-2xl border border-red-200/90 bg-gradient-to-br from-red-50 to-rose-50 p-6 dark:border-red-500/20 dark:from-red-500/10 dark:to-rose-500/10">
-                            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                                <div className="flex items-start gap-4">
-                                    <div className="w-14 h-14 rounded-xl bg-red-200/80 dark:bg-red-500/20 flex items-center justify-center shrink-0">
-                                        <AlertCircle className="h-7 w-7 text-red-700 dark:text-red-400" />
-                                    </div>
-                                    <div>
-                                        <p className="font-semibold text-red-900 dark:text-red-300 text-lg">Application not approved</p>
-                                        <p className="text-zinc-600 dark:text-gray-400 mt-1">
-                                            {myRequest.reviewNote
-                                                ? `Your request was not approved: ${myRequest.reviewNote}. You can submit a new application.`
-                                                : 'Your request was not approved. You can submit a new application.'}
-                                        </p>
-                                    </div>
+                                <div>
+                                    <p className="font-semibold text-zinc-900 dark:text-white text-lg">Choose an Organizer or Studio Plan</p>
+                                    <p className="text-zinc-600 dark:text-gray-400 mt-1">
+                                        Start with a 14-day free trial, pick a single event pass, or subscribe to an annual studio membership.
+                                    </p>
                                 </div>
-                                <Button onClick={() => setShowApplyModal(true)} className="shrink-0">
-                                    Apply again
-                                </Button>
                             </div>
+                            <Link href="/pricing" className="btn-gradient inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold shrink-0">
+                                View Plans & Pricing
+                                <ArrowRight className="h-4 w-4" />
+                            </Link>
                         </div>
-                    ) : (
-                        <div className="rounded-2xl border border-blue-200/90 bg-gradient-to-br from-blue-50 to-indigo-50 p-6 dark:border-blue-500/20 dark:from-blue-500/10 dark:to-indigo-500/10">
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                <div className="flex items-start gap-4">
-                                    <div className="w-14 h-14 rounded-xl bg-blue-200/80 dark:bg-blue-500/20 flex items-center justify-center shrink-0">
-                                        <Briefcase className="h-7 w-7 text-blue-700 dark:text-blue-400" />
-                                    </div>
-                                    <div>
-                                        <p className="font-semibold text-blue-900 dark:text-blue-300 text-lg">Apply to become an organizer</p>
-                                        <p className="text-zinc-600 dark:text-gray-400 mt-1">
-                                            Create and manage events, upload photos, and run your organization on Roopixo.
-                                        </p>
-                                    </div>
-                                </div>
-                                <Button onClick={() => setShowApplyModal(true)} className="shrink-0">
-                                    Apply for Organizer
-                                </Button>
-                            </div>
-                        </div>
-                    )}
+                    </div>
                 </div>
             )}
 
@@ -437,12 +380,6 @@ export default function ProfilePage() {
                     )}
                 </div>
             )}
-
-            <ApplyOrganizerModal
-                isOpen={showApplyModal}
-                onClose={() => setShowApplyModal(false)}
-                onSubmitted={fetchMyRequest}
-            />
         </div>
     );
 }
