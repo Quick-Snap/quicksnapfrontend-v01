@@ -97,11 +97,14 @@ const STUDIO_TIERS: PricingTier[] = [
     features: [
       '30,000 Photos / year (approx 15-20 events)',
       'Unlimited Events & Galleries',
+      'Interactive Big-Screen Live Wall (TV / Projector Mode with QR)',
+      'Guest Candid Photo Contributions (Crowdsourced Album)',
+      'Multi-Ceremony Event Tabs (Haldi, Mehendi, Wedding, Reception)',
       'Unlimited Guest AI Face Searches (Zero per-guest fees)',
       'Instant AI Selfie Photo Discovery (<1 second)',
       'Client Proofing: ❤️ Album Favorites & 🔖 Keepers',
       'Adobe Lightroom Selection Export (1-click copy filenames)',
-      '1 Full Year Live Guest Gallery Access',
+      '6 Months Live Guest Gallery Access',
       'QR Code Event Join & Instant Downloads'
     ],
     ctaLabel: 'Get Started with Starter',
@@ -131,9 +134,10 @@ const STUDIO_TIERS: PricingTier[] = [
       '1,50,000 Photos / year (1.5 Lakh - approx 50-70 weddings)',
       'Custom Studio Watermark (Text & Logo with Opacity & Placement)',
       'Google Drive Background Auto-Sync (Dump camera files & auto-deliver)',
+      'Branded Live Projector Wall (Studio logo & colors on big screen)',
       'Custom Studio Logo & Branding on all Galleries',
       '2 Team Photographer / Assistant Logins',
-      '2 Full Years Live Guest Gallery Access',
+      '1 Full Year Live Guest Gallery Access',
       'Original RAW + WebP High-Res Downloads',
       'Priority Email & Live Chat Support'
     ],
@@ -161,9 +165,10 @@ const STUDIO_TIERS: PricingTier[] = [
     cumulativeHeader: '👑 EVERYTHING IN STUDIO PRO, PLUS:',
     features: [
       '3,50,000 Photos / year (3.5 Lakh - custom quota available on request)',
-      'Up to 5 Team Photographer Accounts',
       'White-Label Custom Subdomain (gallery.yourstudio.com)',
-      '3 Full Years Live Guest Gallery Access',
+      'White-Label Live Wall (Full custom sponsor & studio branding)',
+      'Up to 5 Team Photographer Accounts',
+      '1.5 Years (18 Months) Live Guest Gallery Access',
       'Dedicated WhatsApp Account Manager & VIP Setup',
       'Fast-Track Priority AI Indexing Queue'
     ],
@@ -236,8 +241,17 @@ const COMPARISON_ROWS = [
     items: [
       { name: 'Annual Photos Allowance', starter: '30,000', pro: '1,50,000 (1.5 Lakh)', enterprise: '3,50,000 (3.5 Lakh) / Custom' },
       { name: 'Active Events Allowed', starter: 'Unlimited', pro: 'Unlimited', enterprise: 'Unlimited' },
-      { name: 'Live Guest Gallery Duration', starter: '1 Full Year', pro: '2 Full Years', enterprise: '3 Full Years' },
+      { name: 'Live Guest Gallery Duration', starter: '6 Months', pro: '1 Full Year', enterprise: '1.5 Years (18 Months)' },
       { name: 'Download Quality', starter: 'WebP High-Res', pro: 'Original RAW + WebP', enterprise: 'Original RAW + WebP' }
+    ]
+  },
+  {
+    category: 'Event Experience & Live Wall',
+    items: [
+      { name: 'Live Photo Wall (TV & Projector Mode)', starter: 'Included (Standard QR Wall)', pro: 'Studio Logo Branded Screen', enterprise: 'Full White-Label Wall' },
+      { name: 'Guest Public Candid Contributions', starter: 'Included (with Moderation)', pro: 'Included (Live Wall Auto-Sync)', enterprise: 'Included (VIP Fast Indexing)' },
+      { name: 'Multi-Ceremony Event Tabs', starter: 'Included Free', pro: 'Included Free', enterprise: 'Included Free' },
+      { name: 'Instant QR Event Standee Join', starter: 'Included Free', pro: 'Included Free', enterprise: 'Included Free' }
     ]
   },
   {
@@ -279,7 +293,15 @@ const COMPARISON_ROWS = [
 const STUDIO_FAQS = [
   {
     q: 'What does "Live Guest Gallery Duration" mean?',
-    a: 'Your subscription gives you 1 full year of platform access to host events and upload photos. "Live Guest Gallery Duration" is how long your clients and wedding guests can open the gallery link, search photos with selfies, and download pictures. Starter Pro includes 1 full year per event, Studio Pro includes 2 full years, and Enterprise includes 3 full years! Even if you upload an event in the 11th month of your subscription, your clients enjoy the full multi-year duration.'
+    a: 'Your subscription gives you 1 full year of platform access to host events and upload photos. "Live Guest Gallery Duration" is how long your clients and wedding guests can open the gallery link, search photos with selfies, and download pictures—even AFTER your annual subscription ends! Starter Pro includes 6 months per event, Studio Pro includes 1 full year, and Enterprise includes 1.5 years (18 months).'
+  },
+  {
+    q: 'Can I use the Live Photo Wall at wedding receptions and parties?',
+    a: 'Yes, absolutely! All studio plans include Roopixo\'s interactive Big-Screen Live Wall. Simply connect your laptop or venue AV setup to the projector or TV screens. As you upload official photos—or as guests contribute live candids from their phones—a cinematic real-time slideshow plays on the big screen with your event QR code, creating an unforgettable interactive experience.'
+  },
+  {
+    q: 'Can wedding guests contribute their own photos into the gallery?',
+    a: 'Yes! Roopixo features Guest Public Uploads (Crowdsourced Album). Guests scan the event QR code, click "Add Photos", and submit their phone pictures. As the organizer, you can enable auto-approval or review submissions in your moderation queue before they go live on the gallery and big-screen Live Wall.'
   },
   {
     q: 'How does client selection for album design work?',
@@ -287,7 +309,7 @@ const STUDIO_FAQS = [
   },
   {
     q: 'Are client proofing and watermarking charged as paid add-ons?',
-    a: 'No! Unlike other platforms that charge ₹3,000 to ₹5,000 extra for watermarking and proofing, custom watermarking (your studio text or PNG logo with opacity and position control) and Lightroom selection exports are 100% included across all plans at zero extra cost.'
+    a: 'No! Unlike other platforms that charge ₹3,000 to ₹5,000 extra for watermarking and proofing tools, client proofing and Lightroom selection exports are included across all plans at zero extra cost, and custom watermark protection is included in Studio Pro and Enterprise.'
   },
   {
     q: 'Are guest selfie searches really unlimited?',

@@ -58,8 +58,8 @@ export default function UpgradeModal({
       monthly: 349,
       photos: '30,000 Photos',
       events: 'Unlimited Events',
-      gallery: '1 Full Year Live Gallery',
-      perk4: 'Lightroom Selection Export',
+      gallery: '6 Months Live Gallery',
+      perk4: 'Live Wall & Client Proofing',
       description: 'Ideal for freelance photographers & solo creators delivering modern AI event galleries.'
     },
     studio_pro: {
@@ -68,8 +68,8 @@ export default function UpgradeModal({
       monthly: 899,
       photos: '1,50,000 Photos',
       events: 'Google Drive Auto-Sync',
-      gallery: '2 Full Years Live Gallery',
-      perk4: '2 Team Logins',
+      gallery: '1 Full Year Live Gallery',
+      perk4: 'Branded Live Wall & 2 Logins',
       description: 'For active wedding studios & commercial photographers doing 2 to 4 shoots a month.'
     },
     enterprise: {
@@ -78,7 +78,7 @@ export default function UpgradeModal({
       monthly: 2199,
       photos: '3,50,000 Photos / Custom',
       events: 'White-Label CNAME Domain',
-      gallery: '3 Full Years Live Gallery',
+      gallery: '1.5 Years Live Gallery',
       perk4: '5 Team Logins & WhatsApp VIP',
       description: 'For high-volume wedding production houses, collegiate fests & event agencies.'
     }
