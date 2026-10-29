@@ -93,15 +93,15 @@ const STUDIO_TIERS: PricingTier[] = [
       }
     },
     features: [
-      '30,000 Photos Annual Allowance',
+      '30,000 Photos / year (approx 15-20 events)',
       'Unlimited Events & Galleries',
-      'Unlimited Guest AI Face Searches (No per-search charges)',
+      'Unlimited Guest AI Face Searches (Zero per-guest fees)',
       'Instant AI Selfie Photo Discovery (<1 second)',
       'Client Proofing: ❤️ Album Favorites & 🔖 Keepers',
-      'Custom Watermark Protection (Included Free)',
-      'Multi-Ceremony Event Tabs (Haldi, Sangeet, Wedding, etc.)',
-      '1 Full Year Active Guest Gallery & Downloads',
-      'QR Code Event Join & Instant Guest Delivery'
+      'Adobe Lightroom Selection Export (1-click copy filenames)',
+      'Custom Studio Watermark (Text or Logo with Opacity & Placement)',
+      '1 Full Year Live Guest Gallery Access',
+      'QR Code Event Join & Instant Downloads'
     ],
     ctaLabel: 'Get Started with Starter',
     ctaHref: '/register?plan=starter'
@@ -127,14 +127,12 @@ const STUDIO_TIERS: PricingTier[] = [
     },
     cumulativeHeader: '✨ EVERYTHING IN STARTER PRO, PLUS:',
     features: [
-      '1,50,000 Photos Annual Allowance (1.5 Lakh)',
-      'Google Drive Background Auto-Sync (Hands-free upload)',
+      '1,50,000 Photos / year (1.5 Lakh - approx 50-70 weddings)',
+      'Google Drive Background Auto-Sync (Dump camera files & auto-deliver)',
       'Custom Studio Logo & Branding on all Galleries',
-      '2 Photographer Team Member Logins',
-      '1 Year Active Guest Access + 1 Year Archival Backup',
-      'Uncompressed Full-Resolution RAW Downloads',
-      'Instant WebP & High-Res Dual Delivery',
-      'Studio Client Selections Dashboard & CSV Export',
+      '2 Team Photographer / Assistant Logins',
+      '2 Full Years Live Guest Gallery Access',
+      'Original RAW + WebP High-Res Downloads',
       'Priority Email & Live Chat Support'
     ],
     ctaLabel: 'Choose Studio Pro',
@@ -160,15 +158,12 @@ const STUDIO_TIERS: PricingTier[] = [
     },
     cumulativeHeader: '👑 EVERYTHING IN STUDIO PRO, PLUS:',
     features: [
-      '3,50,000 Photos Annual Allowance (3.5 Lakh)',
+      '3,50,000 Photos / year (3.5 Lakh - high-volume production)',
       'Up to 5 Team Photographer Accounts',
       'White-Label Custom Subdomain (gallery.yourstudio.com)',
-      'Dual Cloud Sync: Google Drive + Google Photos',
-      '2 Years Extended Cloud Gallery Backup',
-      'Priority Fast-Track AI Photo Indexing Queue',
-      'Custom Watermark Presets per event',
-      'Dedicated Account Manager & WhatsApp Onboarding',
-      'Custom SLA & Invoicing Support'
+      '3 Full Years Live Guest Gallery Access',
+      'Dedicated WhatsApp Account Manager & VIP Setup',
+      'Fast-Track Priority AI Indexing Queue'
     ],
     ctaLabel: 'Choose Enterprise',
     ctaHref: '/register?plan=enterprise'
@@ -237,10 +232,10 @@ const COMPARISON_ROWS = [
   {
     category: 'Capacity & Gallery Limits',
     items: [
-      { name: 'Annual Photos Limit', starter: '30,000', pro: '1,50,000 (1.5 Lakh)', enterprise: '3,50,000 (3.5 Lakh)' },
+      { name: 'Annual Photos Allowance', starter: '30,000', pro: '1,50,000 (1.5 Lakh)', enterprise: '3,50,000 (3.5 Lakh)' },
       { name: 'Active Events Allowed', starter: 'Unlimited', pro: 'Unlimited', enterprise: 'Unlimited' },
-      { name: 'Guest Gallery Online Access', starter: '1 Full Year', pro: '1 Year + 1 Yr Archive', enterprise: '2 Years Extended Archive' },
-      { name: 'Original & WebP Downloads', starter: 'WebP Optimized', pro: 'Raw + WebP', enterprise: 'Raw + WebP' }
+      { name: 'Live Guest Gallery Duration', starter: '1 Full Year', pro: '2 Full Years', enterprise: '3 Full Years' },
+      { name: 'Download Quality', starter: 'WebP High-Res', pro: 'Original RAW + WebP', enterprise: 'Original RAW + WebP' }
     ]
   },
   {
@@ -248,26 +243,25 @@ const COMPARISON_ROWS = [
     items: [
       { name: 'Guest Selfie Searches', starter: 'Unlimited (Zero extra fees)', pro: 'Unlimited (Zero extra fees)', enterprise: 'Unlimited (Zero extra fees)' },
       { name: 'Face Match Speed', starter: 'Instant (<1 second)', pro: 'Instant (<1 second)', enterprise: 'Priority VIP Pipeline' },
-      { name: 'Multi-Face Group Photos', starter: 'Yes (Up to 100 faces)', pro: 'Yes (Up to 100 faces)', enterprise: 'Yes (Up to 100 faces)' },
-      { name: 'Mobile App Required?', starter: 'No (Browser-based)', pro: 'No (Browser-based)', enterprise: 'No (Browser-based)' }
+      { name: 'Group Photo AI Matching', starter: 'Stage & Crowd Photos', pro: 'Stage & Crowd Photos', enterprise: 'Stage & Crowd Photos' },
+      { name: 'Mobile App Required?', starter: 'No (Direct Browser)', pro: 'No (Direct Browser)', enterprise: 'No (Direct Browser)' }
     ]
   },
   {
-    category: 'Studio & Client Proofing',
+    category: 'Photographer Workflow & Proofing',
     items: [
       { name: 'Client Proofing Suite (❤️ & 🔖)', starter: 'Included Free', pro: 'Included Free', enterprise: 'Included Free' },
-      { name: 'Custom Watermarking Protection', starter: 'Included Free', pro: 'Custom Studio Watermark', enterprise: 'Unlimited Custom Presets' },
-      { name: 'Multi-Ceremony Event Tabs', starter: 'Included Free', pro: 'Included Free', enterprise: 'Included Free' },
-      { name: 'Client Selection CSV Export', starter: 'Included Free', pro: 'Advanced Studio Export', enterprise: 'Advanced Studio Export' }
+      { name: 'Adobe Lightroom Filename Export', starter: 'Included Free', pro: 'Included Free', enterprise: 'Included Free' },
+      { name: 'Custom Studio Watermark (Text & Logo)', starter: 'Included Free', pro: 'Included Free', enterprise: 'Included Free' },
+      { name: 'Multi-Ceremony Event Tabs', starter: 'Included Free', pro: 'Included Free', enterprise: 'Included Free' }
     ]
   },
   {
-    category: 'Automation & Collaboration',
+    category: 'Automation & Branding',
     items: [
       { name: 'Google Drive Auto-Sync', starter: '—', pro: 'Included Free', enterprise: 'Included Free' },
-      { name: 'Google Photos Direct Sync', starter: '—', pro: '—', enterprise: 'Included Free' },
       { name: 'Team Member Logins', starter: '1 Account', pro: '2 Accounts', enterprise: 'Up to 5 Accounts' },
-      { name: 'Studio Logo & Branding', starter: 'Roopixo Powered', pro: 'Custom Studio Branding', enterprise: 'Full White-Label' },
+      { name: 'Gallery Branding', starter: 'Roopixo Powered', pro: 'Custom Studio Logo & Name', enterprise: 'Full White-Label' },
       { name: 'Custom Domain / CNAME', starter: '—', pro: '—', enterprise: 'gallery.yourstudio.com' }
     ]
   },
@@ -282,24 +276,28 @@ const COMPARISON_ROWS = [
 
 const STUDIO_FAQS = [
   {
-    q: 'What does "Guest Gallery Online Access" mean?',
-    a: 'Your subscription gives you 1 full year to host and manage all your shoots. "Gallery Access Duration" is how long your clients and wedding guests can open the gallery link, find their photos, and download them after the event date. Even if you upload an event in month 11 of your subscription, your clients enjoy a full year of live access from the event date!'
+    q: 'What does "Live Guest Gallery Duration" mean?',
+    a: 'Your subscription gives you 1 full year of platform access to host events and upload photos. "Live Guest Gallery Duration" is how long your clients and wedding guests can open the gallery link, search photos with selfies, and download pictures. Starter Pro includes 1 full year per event, Studio Pro includes 2 full years, and Enterprise includes 3 full years! Even if you upload an event in the 11th month of your subscription, your clients enjoy the full multi-year duration.'
+  },
+  {
+    q: 'How does client selection for album design work?',
+    a: 'Clients open their private gallery link on any phone or laptop and tap the Heart (❤️) or Bookmark (🔖) icon to shortlist photos for their wedding album. In your studio dashboard, you can 1-click copy the chosen filenames straight into Adobe Lightroom Classic, Photoshop, or Photo Mechanic to filter and edit without manual cross-referencing.'
+  },
+  {
+    q: 'Are client proofing and watermarking charged as paid add-ons?',
+    a: 'No! Unlike other platforms that charge ₹3,000 to ₹5,000 extra for watermarking and proofing, custom watermarking (your studio text or PNG logo with opacity and position control) and Lightroom selection exports are 100% included across all plans at zero extra cost.'
   },
   {
     q: 'Are guest selfie searches really unlimited?',
     a: 'Yes, 100% unlimited. Unlike other platforms that meter guest face scans or charge ₹0.50 to ₹1.00 per attendee, Roopixo includes unlimited AI face searches. You never pay a single rupee extra when 100 or 1,000 guests find their photos.'
   },
   {
-    q: 'What happens if I cross my annual photo allowance?',
-    a: 'You can easily purchase photo top-up packs or upgrade to the next tier anytime with prorated billing. Your existing galleries and client links will never be interrupted or locked.'
-  },
-  {
     q: 'How does Google Drive Auto-Sync work?',
     a: 'Simply connect your Google Drive folder link in your event settings. As your team dumps photos into Drive from camera memory cards, Roopixo automatically detects new files in the background, compresses them, runs AI face indexing, and delivers them live to guests automatically.'
   },
   {
-    q: 'Are client proofing (❤️) and watermarking charged as add-ons?',
-    a: 'No! Unlike other platforms that charge ₹3,000 to ₹5,000 extra for watermarking and proofing, all these professional tools are completely included in your plan at zero additional cost.'
+    q: 'What happens if I cross my annual photo allowance?',
+    a: 'You can easily purchase photo top-up packs or upgrade to the next tier anytime with prorated billing. Your existing galleries and client links will never be interrupted or locked.'
   },
   {
     q: 'What payment methods do you accept?',
