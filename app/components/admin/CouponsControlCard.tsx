@@ -121,7 +121,7 @@ export default function CouponsControlCard() {
   const handleGrantBypass = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!targetId.trim()) {
-      toast.error(`Please provide the ${bypassType === 'organizer' ? 'User ID' : 'Event ID'}`);
+      toast.error(`Please provide the ${bypassType === 'organizer' ? 'Organizer Email or ID' : 'Event Code or ID'}`);
       return;
     }
 
@@ -130,6 +130,7 @@ export default function CouponsControlCard() {
       if (bypassType === 'organizer') {
         const res = await adminBypassApi.grantOrganizerBypass({
           userId: targetId.trim(),
+          email: targetId.trim(),
           effectiveTier: bypassTier,
           days: bypassDays,
           customPhotoQuota: customPhotoQuota ? Number(customPhotoQuota) : undefined,
@@ -143,6 +144,7 @@ export default function CouponsControlCard() {
       } else {
         const res = await adminBypassApi.grantEventBypass({
           eventId: targetId.trim(),
+          eventCode: targetId.trim(),
           days: bypassDays,
           customPhotoLimit: customPhotoQuota ? Number(customPhotoQuota) : undefined,
           allowGoogleDriveSync: true,
@@ -404,11 +406,11 @@ export default function CouponsControlCard() {
 
               <div>
                 <label className="text-xs font-semibold block mb-1">
-                  {bypassType === 'organizer' ? 'User ID (MongoDB _id)' : 'Event ID (MongoDB _id)'}
+                  {bypassType === 'organizer' ? 'Organizer Email ID (or User ID)' : 'Event Code (or Event ID)'}
                 </label>
                 <input
                   type="text"
-                  placeholder="Paste 24-character MongoDB ID"
+                  placeholder={bypassType === 'organizer' ? 'e.g. photographer@example.com or User ID' : 'e.g. WED2026 or Event ID'}
                   value={targetId}
                   onChange={(e) => setTargetId(e.target.value.trim())}
                   required

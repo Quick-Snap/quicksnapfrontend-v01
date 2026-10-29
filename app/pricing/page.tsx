@@ -101,7 +101,6 @@ const STUDIO_TIERS: PricingTier[] = [
       'Instant AI Selfie Photo Discovery (<1 second)',
       'Client Proofing: ❤️ Album Favorites & 🔖 Keepers',
       'Adobe Lightroom Selection Export (1-click copy filenames)',
-      'Custom Studio Watermark (Text or Logo with Opacity & Placement)',
       '1 Full Year Live Guest Gallery Access',
       'QR Code Event Join & Instant Downloads'
     ],
@@ -130,6 +129,7 @@ const STUDIO_TIERS: PricingTier[] = [
     cumulativeHeader: '✨ EVERYTHING IN STARTER PRO, PLUS:',
     features: [
       '1,50,000 Photos / year (1.5 Lakh - approx 50-70 weddings)',
+      'Custom Studio Watermark (Text & Logo with Opacity & Placement)',
       'Google Drive Background Auto-Sync (Dump camera files & auto-deliver)',
       'Custom Studio Logo & Branding on all Galleries',
       '2 Team Photographer / Assistant Logins',
@@ -160,7 +160,7 @@ const STUDIO_TIERS: PricingTier[] = [
     },
     cumulativeHeader: '👑 EVERYTHING IN STUDIO PRO, PLUS:',
     features: [
-      '3,50,000 Photos / year (3.5 Lakh - high-volume production)',
+      '3,50,000 Photos / year (3.5 Lakh - custom quota available on request)',
       'Up to 5 Team Photographer Accounts',
       'White-Label Custom Subdomain (gallery.yourstudio.com)',
       '3 Full Years Live Guest Gallery Access',
@@ -234,7 +234,7 @@ const COMPARISON_ROWS = [
   {
     category: 'Capacity & Gallery Limits',
     items: [
-      { name: 'Annual Photos Allowance', starter: '30,000', pro: '1,50,000 (1.5 Lakh)', enterprise: '3,50,000 (3.5 Lakh)' },
+      { name: 'Annual Photos Allowance', starter: '30,000', pro: '1,50,000 (1.5 Lakh)', enterprise: '3,50,000 (3.5 Lakh) / Custom' },
       { name: 'Active Events Allowed', starter: 'Unlimited', pro: 'Unlimited', enterprise: 'Unlimited' },
       { name: 'Live Guest Gallery Duration', starter: '1 Full Year', pro: '2 Full Years', enterprise: '3 Full Years' },
       { name: 'Download Quality', starter: 'WebP High-Res', pro: 'Original RAW + WebP', enterprise: 'Original RAW + WebP' }
@@ -245,7 +245,7 @@ const COMPARISON_ROWS = [
     items: [
       { name: 'Guest Selfie Searches', starter: 'Unlimited (Zero extra fees)', pro: 'Unlimited (Zero extra fees)', enterprise: 'Unlimited (Zero extra fees)' },
       { name: 'Face Match Speed', starter: 'Instant (<1 second)', pro: 'Instant (<1 second)', enterprise: 'Priority VIP Pipeline' },
-      { name: 'Group Photo AI Matching', starter: 'Stage & Crowd Photos', pro: 'Stage & Crowd Photos', enterprise: 'Stage & Crowd Photos' },
+      { name: 'Group Photo AI Matching', starter: 'Up to 100+ faces per photo', pro: 'Up to 100+ faces per photo', enterprise: 'Up to 100+ faces per photo' },
       { name: 'Mobile App Required?', starter: 'No (Direct Browser)', pro: 'No (Direct Browser)', enterprise: 'No (Direct Browser)' }
     ]
   },
@@ -254,7 +254,7 @@ const COMPARISON_ROWS = [
     items: [
       { name: 'Client Proofing Suite (❤️ & 🔖)', starter: 'Included Free', pro: 'Included Free', enterprise: 'Included Free' },
       { name: 'Adobe Lightroom Filename Export', starter: 'Included Free', pro: 'Included Free', enterprise: 'Included Free' },
-      { name: 'Custom Studio Watermark (Text & Logo)', starter: 'Included Free', pro: 'Included Free', enterprise: 'Included Free' },
+      { name: 'Custom Studio Watermark (Text & Logo)', starter: '—', pro: 'Included Free', enterprise: 'Included Free' },
       { name: 'Multi-Ceremony Event Tabs', starter: 'Included Free', pro: 'Included Free', enterprise: 'Included Free' }
     ]
   },
@@ -355,58 +355,8 @@ export default function PricingPage() {
         <div className="absolute top-2/3 -left-40 h-[400px] w-[500px] rounded-full bg-indigo-600/10 blur-3xl" />
       </div>
 
-      {/* Standalone Navigation Header */}
-      <header className="relative z-30 border-b border-white/10 bg-[#09090b]/80 backdrop-blur-xl">
-        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 sm:px-8">
-          <BrandLogo href="/" size="md" tone="light" />
-
-          <nav className="hidden items-center gap-8 md:flex">
-            <Link
-              href="/#features"
-              className="text-sm font-medium text-zinc-400 transition hover:text-white"
-            >
-              Features
-            </Link>
-            <Link
-              href="/#how-it-works"
-              className="text-sm font-medium text-zinc-400 transition hover:text-white"
-            >
-              How It Works
-            </Link>
-            <Link
-              href="/pricing"
-              className="text-sm font-semibold text-violet-400 transition"
-            >
-              Pricing
-            </Link>
-            <Link
-              href="/contact"
-              className="text-sm font-medium text-zinc-400 transition hover:text-white"
-            >
-              Contact
-            </Link>
-          </nav>
-
-          <div className="flex items-center gap-3">
-            <Link
-              href="/login"
-              className="rounded-xl px-4 py-2 text-sm font-medium text-zinc-300 transition hover:text-white hover:bg-white/5"
-            >
-              Log In
-            </Link>
-            <Link
-              href="/register"
-              className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-violet-500/20 transition hover:from-violet-500 hover:to-indigo-500"
-            >
-              Start Free Trial
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </div>
-      </header>
-
       {/* Hero Section */}
-      <main className="relative z-20 mx-auto max-w-7xl px-6 pt-16 pb-24 sm:px-8 sm:pt-20">
+      <main className="relative z-20 mx-auto max-w-7xl px-6 pt-10 pb-24 sm:px-8 sm:pt-14">
         <div className="text-center space-y-4 max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-2 rounded-full border border-violet-500/30 bg-violet-500/10 px-3.5 py-1 text-xs font-semibold text-violet-300 backdrop-blur-md">
             <Sparkles className="h-3.5 w-3.5 text-violet-400" />
@@ -544,7 +494,8 @@ export default function PricingPage() {
 
         {/* SECTION A: Photographers & Studios Cards */}
         {isStudio && (
-          <div className="mt-14 grid grid-cols-1 gap-8 lg:grid-cols-3 lg:gap-8 items-stretch">
+          <>
+            <div className="mt-14 grid grid-cols-1 gap-8 lg:grid-cols-3 lg:gap-8 items-stretch">
             {STUDIO_TIERS.map((tier) => {
               const priceData = tier.price[currency];
               const displayPrice = isAnnual ? priceData.annualPerMonth : priceData.monthly;
@@ -641,6 +592,32 @@ export default function PricingPage() {
               );
             })}
           </div>
+
+          {/* Custom & High-Volume Enterprise Plan Callout */}
+          <div className="mt-10 rounded-3xl border border-violet-500/30 bg-gradient-to-r from-violet-950/40 via-purple-950/20 to-indigo-950/30 p-6 sm:p-8 backdrop-blur-md">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="space-y-1.5 text-center md:text-left">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-500/20 px-3 py-1 text-xs font-semibold text-violet-300 border border-violet-400/30">
+                  <Sparkles className="h-3.5 w-3.5 text-violet-400" />
+                  Custom Volumes & Enterprise Customization
+                </span>
+                <h3 className="text-lg sm:text-xl font-bold text-white">
+                  Need a custom plan or higher photo volume than Enterprise?
+                </h3>
+                <p className="text-xs sm:text-sm text-zinc-300 max-w-2xl leading-relaxed">
+                  Shooting more than 3,50,000 photos/year or need multi-brand franchise support, custom CNAME domain mapping, and dedicated AI GPU pipelines? We craft custom enterprise packages with tailored SLAs and volume pricing.
+                </p>
+              </div>
+              <Link
+                href="/contact"
+                className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-zinc-950 transition hover:bg-zinc-200 shadow-lg shadow-white/10"
+              >
+                Get in Touch with Us
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+          </>
         )}
 
         {/* SECTION B: Individual & Single Event Passes */}

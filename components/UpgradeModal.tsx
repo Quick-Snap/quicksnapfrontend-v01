@@ -50,8 +50,39 @@ export default function UpgradeModal({
   if (!isOpen) return null;
 
   const isAnnual = billingCycle === 'annual';
-  const tierName = targetTier === 'enterprise' ? 'Enterprise' : 'Studio Pro';
-  const basePrice = isAnnual ? 7999 : 899;
+
+  const tierConfig = {
+    starter_pro: {
+      name: 'Starter Pro',
+      annual: 2999,
+      monthly: 349,
+      photos: '30,000 Photos',
+      events: 'Unlimited Events',
+      gallery: '1 Full Year Live Gallery',
+      perk4: 'Lightroom Selection Export'
+    },
+    studio_pro: {
+      name: 'Studio Pro',
+      annual: 7999,
+      monthly: 899,
+      photos: '1,50,000 Photos',
+      events: 'Google Drive Auto-Sync',
+      gallery: '2 Full Years Live Gallery',
+      perk4: '2 Team Logins'
+    },
+    enterprise: {
+      name: 'Enterprise',
+      annual: 19999,
+      monthly: 2199,
+      photos: '3,50,000 Photos / Custom',
+      events: 'White-Label CNAME Domain',
+      gallery: '3 Full Years Live Gallery',
+      perk4: '5 Team Logins & WhatsApp VIP'
+    }
+  };
+  const activeConfig = tierConfig[targetTier] || tierConfig.studio_pro;
+  const tierName = activeConfig.name;
+  const basePrice = isAnnual ? activeConfig.annual : activeConfig.monthly;
 
   const currentPrice = couponResult?.finalAmount ?? basePrice;
   const discountAmount = couponResult?.discountAmount ?? 0;
@@ -251,19 +282,19 @@ export default function UpgradeModal({
           <div className="grid grid-cols-2 gap-2 text-xs text-zinc-300 pt-2 border-t border-white/10">
             <div className="flex items-center gap-1.5">
               <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-              <span>1,50,000 Photos Allowance</span>
+              <span>{activeConfig.photos}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-              <span>Google Drive Auto-Sync</span>
+              <span>{activeConfig.events}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-              <span>2 Full Years Guest Gallery</span>
+              <span>{activeConfig.gallery}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-              <span>2 Photographer Logins</span>
+              <span>{activeConfig.perk4}</span>
             </div>
           </div>
         </div>

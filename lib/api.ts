@@ -1038,7 +1038,8 @@ export const adminCouponsApi = {
 
 export const adminBypassApi = {
   grantOrganizerBypass: async (data: {
-    userId: string;
+    userId?: string;
+    email?: string;
     effectiveTier?: string;
     days?: number;
     customPhotoQuota?: number;
@@ -1052,7 +1053,8 @@ export const adminBypassApi = {
     return response.data;
   },
   grantEventBypass: async (data: {
-    eventId: string;
+    eventId?: string;
+    eventCode?: string;
     days?: number;
     customPhotoLimit?: number;
     allowGoogleDriveSync?: boolean;
