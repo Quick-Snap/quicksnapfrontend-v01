@@ -96,7 +96,7 @@ export default function AdminDashboard() {
 
       <section className={`p-5 sm:p-8 ${softSurface}`}>
         <h2 className="mb-5 text-lg font-semibold text-zinc-900 dark:text-white sm:text-xl">Quick actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Link href="/admin" className="action-card group">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-100 transition-colors group-hover:bg-violet-200/80 dark:bg-violet-500/10 dark:group-hover:bg-violet-500/20">
               <Shield className="h-5 w-5 text-violet-700 dark:text-violet-400" />
@@ -117,15 +117,29 @@ export default function AdminDashboard() {
           </Link>
 
           <Link href="/admin" className="action-card group">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100 transition-colors group-hover:bg-indigo-200/80 dark:bg-indigo-500/10 dark:group-hover:bg-indigo-500/20">
+              <Sparkles className="h-5 w-5 text-indigo-700 dark:text-indigo-400" />
+            </div>
+            <div>
+              <p className="font-semibold text-zinc-900 dark:text-white">
+                Custom Plans & AI Pricing
+              </p>
+              <p className="text-sm text-zinc-500 dark:text-gray-400">
+                Configure bespoke quotas & feature entitlements
+              </p>
+            </div>
+          </Link>
+
+          <Link href="/admin" className="action-card group">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100 transition-colors group-hover:bg-amber-200/80 dark:bg-amber-500/10 dark:group-hover:bg-amber-500/20">
               <Tag className="h-5 w-5 text-amber-700 dark:text-amber-400" />
             </div>
             <div>
               <p className="font-semibold text-zinc-900 dark:text-white">
-                Coupons & quota bypass
+                Discount coupons
               </p>
               <p className="text-sm text-zinc-500 dark:text-gray-400">
-                Create promo codes or grant custom quota extensions
+                Create promotional promo codes for checkout
               </p>
             </div>
           </Link>
