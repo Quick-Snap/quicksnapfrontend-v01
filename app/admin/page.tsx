@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import RoleGuard from '@/app/components/RoleGuard';
 import OrganizerRequestsPanel from '@/app/components/admin/OrganizerRequestsPanel';
@@ -11,6 +11,20 @@ import OrganizersDirectoryCard from '@/app/components/admin/OrganizersDirectoryC
 import { Cpu, Users, Tag, Sparkles, Building2 } from 'lucide-react';
 
 export default function AdminPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-[60vh] items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-violet-500/20 border-t-violet-500" />
+        </div>
+      }
+    >
+      <AdminContent />
+    </Suspense>
+  );
+}
+
+function AdminContent() {
   const searchParams = useSearchParams();
   const initialTab = (searchParams.get('tab') as any) || 'directory';
 
