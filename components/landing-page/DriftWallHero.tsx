@@ -2,8 +2,10 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { LayoutDashboard, Sparkles, ArrowRight, ShieldCheck } from 'lucide-react';
 import DriftWall from '@/components/DriftWall/DriftWall';
 import { TrustRibbon } from './TrustRibbon';
+import { useAuthStore } from '@/stores';
 
 const EVENT_PHOTOS = [
   { image: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&q=80', title: 'Wedding moment' },
@@ -38,6 +40,10 @@ export function DriftWallHero({
   signupHref = '/register',
   loginHref = '/login',
 }: DriftWallHeroProps) {
+  const user = useAuthStore((state) => state.user);
+  const isLoggedIn = !!user;
+  const isOrganizerOrAdmin = user?.role === 'organizer' || user?.role === 'admin' || user?.role === 'photographer';
+
   return (
     <div className="relative h-full w-full overflow-hidden bg-[#060010]">
       {/* Drift wall background */}
@@ -118,18 +124,51 @@ export function DriftWallHero({
             transition={{ duration: 0.7, delay: 0.45 }}
             className="flex flex-wrap items-center justify-center gap-4"
           >
-            <Link
-              href={signupHref}
-              className="px-8 py-4 font-display text-sm font-semibold tracking-[0.08em] text-white transition-all border border-violet-500 bg-violet-600 hover:bg-violet-500"
-            >
-              Get Started Free
-            </Link>
-            <Link
-              href={loginHref}
-              className="px-8 py-4 font-display text-sm font-semibold tracking-[0.08em] text-white transition-all border border-white/15 bg-white/5 hover:bg-white/10"
-            >
-              Sign In
-            </Link>
+            {isLoggedIn ? (
+              <>
+                <Link
+                  href="/dashboard"
+                  className="group inline-flex items-center gap-2.5 px-8 py-4 font-display text-sm font-semibold tracking-[0.08em] text-white transition-all border border-violet-500 bg-violet-600 hover:bg-violet-500 shadow-xl shadow-violet-600/30 rounded-none"
+                >
+                  <LayoutDashboard className="w-4 h-4 text-violet-200 group-hover:scale-110 transition-transform" />
+                  <span>Go to Dashboard</span>
+                  <ArrowRight className="w-4 h-4 text-violet-300 group-hover:translate-x-1 transition-transform" />
+                </Link>
+
+                {isOrganizerOrAdmin ? (
+                  <Link
+                    href="/studio"
+                    className="inline-flex items-center gap-2 px-8 py-4 font-display text-sm font-semibold tracking-[0.08em] text-white transition-all border border-violet-500/30 bg-white/5 hover:bg-white/10 hover:border-violet-500/60 backdrop-blur-sm"
+                  >
+                    <Sparkles className="w-4 h-4 text-violet-400" />
+                    <span>Open Studio Suite</span>
+                  </Link>
+                ) : (
+                  <Link
+                    href="/pricing"
+                    className="inline-flex items-center gap-2 px-8 py-4 font-display text-sm font-semibold tracking-[0.08em] text-white transition-all border border-violet-500/30 bg-white/5 hover:bg-white/10 hover:border-violet-500/60 backdrop-blur-sm"
+                  >
+                    <Sparkles className="w-4 h-4 text-violet-400" />
+                    <span>Become an Organizer</span>
+                  </Link>
+                )}
+              </>
+            ) : (
+              <>
+                <Link
+                  href={signupHref}
+                  className="px-8 py-4 font-display text-sm font-semibold tracking-[0.08em] text-white transition-all border border-violet-500 bg-violet-600 hover:bg-violet-500 shadow-lg shadow-violet-600/20"
+                >
+                  Get Started Free
+                </Link>
+                <Link
+                  href={loginHref}
+                  className="px-8 py-4 font-display text-sm font-semibold tracking-[0.08em] text-white transition-all border border-white/15 bg-white/5 hover:bg-white/10"
+                >
+                  Sign In
+                </Link>
+              </>
+            )}
           </motion.div>
         </motion.div>
       </div>

@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     'Get in touch with the Roopixo team. We help event organizers and photographers deliver photos instantly with AI.',
 };
 
-const CONTACT_EMAIL = 'contact@roopixo.online';
+const CONTACT_EMAIL = 'contact@quicksnap.online';
 
 export default function ContactPage() {
   return (

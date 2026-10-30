@@ -2,8 +2,13 @@
 
 import { Header } from './Header';
 import { DriftWallHero } from './DriftWallHero';
+import { MetricsRibbon } from './MetricsRibbon';
+import { LiveDemoSection } from './LiveDemoSection';
 import { FeaturesSection } from './FeaturesSection';
+import { AudienceSwitcher } from './AudienceSwitcher';
+import { ExperienceOnPhone } from './ExperienceOnPhone';
 import { HowItWorks } from './HowItWorks';
+import { PricingSection } from './PricingSection';
 import { TestimonialsSection } from './TestimonialsSection';
 import { CTASection } from './CTASection';
 import { Footer } from './Footer';
@@ -78,9 +83,19 @@ export function LandingPage({
         />
       </section>
 
+      <MetricsRibbon />
+
+      <LiveDemoSection />
+
       <FeaturesSection />
 
+      <AudienceSwitcher />
+
+      <ExperienceOnPhone />
+
       <HowItWorks />
+
+      <PricingSection />
 
       <TestimonialsSection
         testimonials={testimonials}
@@ -105,10 +120,15 @@ export default LandingPage;
 
 export { Header } from './Header';
 export { DriftWallHero } from './DriftWallHero';
+export { MetricsRibbon } from './MetricsRibbon';
+export { LiveDemoSection } from './LiveDemoSection';
 export { TrustRibbon } from './TrustRibbon';
 export { ScrollMorphHero } from './ScrollMorphHero';
 export { FeaturesSection } from './FeaturesSection';
+export { AudienceSwitcher } from './AudienceSwitcher';
+export { ExperienceOnPhone } from './ExperienceOnPhone';
 export { HowItWorks } from './HowItWorks';
+export { PricingSection } from './PricingSection';
 export { TestimonialsSection } from './TestimonialsSection';
 export { CTASection } from './CTASection';
 export { Footer } from './Footer';

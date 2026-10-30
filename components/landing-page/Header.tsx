@@ -21,9 +21,43 @@ export function Header({
   const isLoggedIn = !!user;
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 px-4 py-3 sm:px-6 sm:py-4 md:px-12 md:py-6">
+    <header className="fixed top-0 left-0 right-0 z-50 px-4 py-3 sm:px-6 sm:py-3.5 md:px-10 bg-[#0a0a0a]/80 backdrop-blur-xl border-b border-white/[0.06]">
       <nav className="flex items-center justify-between max-w-7xl mx-auto">
         <BrandLogo href="/" size="md" tone="light" />
+
+        {/* Desktop Anchor Navigation */}
+        <div className="hidden lg:flex items-center gap-7">
+          <a
+            href="#landing-demo"
+            className="text-xs font-medium uppercase tracking-[0.12em] text-white/60 hover:text-white transition-colors"
+          >
+            Live Demo
+          </a>
+          <a
+            href="#landing-features"
+            className="text-xs font-medium uppercase tracking-[0.12em] text-white/60 hover:text-white transition-colors"
+          >
+            Features
+          </a>
+          <a
+            href="#landing-how-it-works"
+            className="text-xs font-medium uppercase tracking-[0.12em] text-white/60 hover:text-white transition-colors"
+          >
+            How It Works
+          </a>
+          <a
+            href="#landing-pricing"
+            className="text-xs font-medium uppercase tracking-[0.12em] text-white/60 hover:text-white transition-colors"
+          >
+            Pricing
+          </a>
+          <a
+            href="#landing-testimonials"
+            className="text-xs font-medium uppercase tracking-[0.12em] text-white/60 hover:text-white transition-colors"
+          >
+            Stories
+          </a>
+        </div>
 
         <div className="hidden sm:flex items-center gap-3 md:gap-4">
           {isLoggedIn ? (
@@ -62,8 +96,46 @@ export function Header({
       </nav>
 
       {mobileMenuOpen && (
-        <div className="sm:hidden absolute top-full left-0 right-0 bg-[#0a0a0a]/95 backdrop-blur-xl border-t border-white/10 py-4 px-4 animate-fade-in">
+        <div className="sm:hidden absolute top-full left-0 right-0 bg-[#0a0a0a]/95 backdrop-blur-xl border-t border-white/10 py-5 px-5 animate-fade-in">
           <div className="flex flex-col gap-3 max-w-7xl mx-auto">
+            <div className="flex flex-col gap-2 pb-3 border-b border-white/10 text-center">
+              <a
+                href="#landing-demo"
+                onClick={() => setMobileMenuOpen(false)}
+                className="py-2 text-sm text-white/70 hover:text-white"
+              >
+                Live Demo
+              </a>
+              <a
+                href="#landing-features"
+                onClick={() => setMobileMenuOpen(false)}
+                className="py-2 text-sm text-white/70 hover:text-white"
+              >
+                Features
+              </a>
+              <a
+                href="#landing-how-it-works"
+                onClick={() => setMobileMenuOpen(false)}
+                className="py-2 text-sm text-white/70 hover:text-white"
+              >
+                How It Works
+              </a>
+              <a
+                href="#landing-pricing"
+                onClick={() => setMobileMenuOpen(false)}
+                className="py-2 text-sm text-white/70 hover:text-white"
+              >
+                Pricing
+              </a>
+              <a
+                href="#landing-testimonials"
+                onClick={() => setMobileMenuOpen(false)}
+                className="py-2 text-sm text-white/70 hover:text-white"
+              >
+                Stories
+              </a>
+            </div>
+
             {isLoggedIn ? (
               <Link
                 href="/dashboard"

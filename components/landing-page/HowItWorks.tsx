@@ -28,7 +28,7 @@ export function HowItWorks({ customSteps }: HowItWorksProps) {
   const displaySteps = customSteps || steps;
   
   return (
-    <section className="relative py-32 px-6 bg-[#0a0a0a]">
+    <section id="landing-how-it-works" className="relative scroll-mt-20 py-32 px-6 bg-[#0a0a0a]">
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#1a1a1a_1px,transparent_1px),linear-gradient(to_bottom,#1a1a1a_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-10" />
       
       <div className="max-w-6xl mx-auto relative z-10">

@@ -26,11 +26,11 @@ export function FeaturesSection() {
             <span className="text-xs font-medium tracking-[0.2em] text-violet-400 uppercase">Features</span>
             <div className="h-px w-12 bg-gradient-to-l from-transparent to-violet-400/50" />
           </div>
-          <h2 className="font-display text-3xl md:text-4xl font-semibold tracking-[-0.03em] text-white mb-6">
-            Why Choose <span className="text-violet-400">Roopixo</span>?
+          <h2 className="font-display text-3xl md:text-5xl font-semibold tracking-[-0.03em] text-white mb-5">
+            Everything You Need for <span className="bg-gradient-to-r from-violet-400 via-fuchsia-300 to-indigo-300 bg-clip-text text-transparent">Flawless Events</span>
           </h2>
-          <p className="text-white/50 max-w-2xl mx-auto text-base md:text-lg font-light leading-relaxed">
-            We solve the two biggest pain points in event photography: slow delivery and missed sharing opportunities.
+          <p className="text-white/55 max-w-2xl mx-auto text-base md:text-lg font-light leading-relaxed">
+            Engineered for high-volume photographers, wedding planners, and unforgettable celebrations. From live wall projection to sub-second face matching.
           </p>
         </motion.div>
 

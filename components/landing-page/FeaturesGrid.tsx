@@ -1,84 +1,101 @@
 "use client";
 
-import { Zap, Shield, Users, ScanFace, Upload } from "lucide-react";
+import { ScanFace, Tv, Camera, MapPin, UploadCloud, ShieldCheck } from "lucide-react";
 import { GlowingEffect } from "./GlowingEffect";
 import { cn } from "@/lib/utils";
 
-export function FeaturesGrid() {
-  return (
-    <ul className="grid grid-cols-1 grid-rows-none gap-4 md:grid-cols-12 md:grid-rows-3 lg:gap-4 xl:max-h-[34rem] xl:grid-rows-2">
-      <GridItem
-        area="md:[grid-area:1/1/2/7] xl:[grid-area:1/1/2/5]"
-        icon={<Zap className="h-4 w-4 text-violet-400" />}
-        title="Instant Photo Delivery"
-        description="Get your event photos in real-time, not days later. No more waiting around."
-      />
-      <GridItem
-        area="md:[grid-area:1/7/2/13] xl:[grid-area:2/1/3/5]"
-        icon={<ScanFace className="h-4 w-4 text-violet-400" />}
-        title="AI Face Recognition"
-        description="Find yourself in thousands of photos with just a single selfie. Our AI does the work."
-      />
-      <GridItem
-        area="md:[grid-area:2/1/3/7] xl:[grid-area:1/5/3/8]"
-        icon={<Shield className="h-4 w-4 text-violet-400" />}
-        title="Secure & Private"
-        description="Your photos are encrypted and stored securely. Only you control who sees them."
-      />
-      <GridItem
-        area="md:[grid-area:2/7/3/13] xl:[grid-area:1/8/2/13]"
-        icon={<Upload className="h-4 w-4 text-violet-400" />}
-        title="Cloud-Based Platform"
-        description="Access your photos from anywhere, on any device. Always available, always fast."
-      />
-      <GridItem
-        area="md:[grid-area:3/1/4/13] xl:[grid-area:2/8/3/13]"
-        icon={<Users className="h-4 w-4 text-violet-400" />}
-        title="Real-Time Guest Sharing"
-        description="Guests can share and access photos instantly during events. No app downloads required."
-      />
-    </ul>
-  );
-}
-
-interface GridItemProps {
-  area: string;
+interface FeatureCard {
   icon: React.ReactNode;
   title: string;
-  description: React.ReactNode;
+  badge?: string;
+  description: string;
+  area: string;
 }
 
-const GridItem = ({ area, icon, title, description }: GridItemProps) => {
+const FEATURES: FeatureCard[] = [
+  {
+    area: "md:col-span-6 lg:col-span-4",
+    icon: <ScanFace className="h-5 w-5 text-violet-400" />,
+    title: "⚡ Instant AI Face Matching",
+    badge: "< 2s Speed",
+    description: "Guests snap one selfie and find every single candid photo they appear in across thousands of high-res shots.",
+  },
+  {
+    area: "md:col-span-6 lg:col-span-4",
+    icon: <Tv className="h-5 w-5 text-fuchsia-400" />,
+    title: "📺 Live Big-Screen Photo Wall",
+    badge: "Audience Favorite",
+    description: "Broadcast an elegant, real-time photo slideshow onto ballroom LED walls and TVs during receptions and ceremonies.",
+  },
+  {
+    area: "md:col-span-6 lg:col-span-4",
+    icon: <Camera className="h-5 w-5 text-indigo-400" />,
+    title: "📸 Guest Candid Contributions",
+    badge: "Interactive",
+    description: "Attendees capture raw, spontaneous moments right from their smartphones and contribute to the official event gallery.",
+  },
+  {
+    area: "md:col-span-6 lg:col-span-4",
+    icon: <MapPin className="h-5 w-5 text-emerald-400" />,
+    title: "📍 Geo-Fenced QR Event Distance",
+    badge: "Verified Venue",
+    description: "Proximity security ensures only verified attendees physically inside the event perimeter can participate and stream.",
+  },
+  {
+    area: "md:col-span-6 lg:col-span-4",
+    icon: <UploadCloud className="h-5 w-5 text-amber-400" />,
+    title: "🎨 Studio Suite & Watermarking",
+    badge: "For Photographers",
+    description: "Dedicated photographer studio for high-speed batch uploads, custom watermark overlays, and automated client galleries.",
+  },
+  {
+    area: "md:col-span-6 lg:col-span-4",
+    icon: <ShieldCheck className="h-5 w-5 text-teal-400" />,
+    title: "🔒 Biometric Privacy & PIN Lock",
+    badge: "Encrypted",
+    description: "No public search indexing. Biometric vectors are protected with bank-grade encryption and optional album PIN protection.",
+  },
+];
+
+export function FeaturesGrid() {
   return (
-    <li className={cn("min-h-[14rem] list-none", area)}>
-      <div className="relative h-full rounded-2xl border border-white/10 p-2 md:rounded-3xl md:p-3">
-        <GlowingEffect
-          spread={40}
-          glow={true}
-          disabled={false}
-          proximity={64}
-          inactiveZone={0.01}
-          borderWidth={3}
-        />
-        <div className="relative flex h-full flex-col justify-between gap-6 overflow-hidden rounded-xl border border-white/5 bg-[#111111] p-6 shadow-sm md:p-6">
-          <div className="relative flex flex-1 flex-col justify-between gap-3">
-            <div className="w-fit rounded-lg border border-white/10 bg-white/5 p-2.5">
-              {icon}
-            </div>
-            <div className="space-y-3">
-              <h3 className="pt-0.5 text-lg leading-tight font-medium tracking-tight md:text-xl text-white">
-                {title}
-              </h3>
-              <p className="text-sm leading-relaxed md:text-base text-white/50 font-light">
-                {description}
-              </p>
+    <div className="grid grid-cols-1 md:grid-cols-12 gap-4 lg:gap-5">
+      {FEATURES.map((feature) => (
+        <div key={feature.title} className={cn("min-h-[14rem]", feature.area)}>
+          <div className="relative h-full rounded-2xl border border-white/10 p-2 md:rounded-3xl md:p-3">
+            <GlowingEffect
+              spread={40}
+              glow={true}
+              disabled={false}
+              proximity={64}
+              inactiveZone={0.01}
+              borderWidth={2}
+            />
+            <div className="relative flex h-full flex-col justify-between gap-5 overflow-hidden rounded-xl border border-white/5 bg-[#10091d]/90 p-6 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div className="w-fit rounded-xl border border-white/10 bg-white/5 p-2.5">
+                  {feature.icon}
+                </div>
+                {feature.badge && (
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wider uppercase bg-white/[0.06] text-white/70 border border-white/10">
+                    {feature.badge}
+                  </span>
+                )}
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg leading-tight font-semibold tracking-tight text-white">
+                  {feature.title}
+                </h3>
+                <p className="text-sm leading-relaxed text-white/50 font-light">
+                  {feature.description}
+                </p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </li>
+      ))}
+    </div>
   );
-};
+}
 
 export default FeaturesGrid;
-
