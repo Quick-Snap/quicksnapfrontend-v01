@@ -120,7 +120,9 @@ export function DriftWallHero({
             className="mb-3 font-display text-xl font-medium tracking-[-0.02em] text-violet-300 sm:text-2xl md:text-3xl"
           >
             {isLoggedIn && firstName
-              ? `Hey ${firstName}, your photos are one selfie away.`
+              ? isOrganizerOrAdmin
+                ? `Ready to host your next event, ${firstName}?`
+                : `Planning your next celebration or wedding, ${firstName}?`
               : 'Your photos. One selfie away.'}
           </motion.p>
 
@@ -130,7 +132,11 @@ export function DriftWallHero({
             transition={{ duration: 0.7, delay: 0.35 }}
             className="mx-auto mb-10 max-w-lg text-base font-light leading-relaxed tracking-wide text-white/55 md:text-lg"
           >
-            AI face matching finds every shot of you at the event — instantly.
+            {isLoggedIn
+              ? isOrganizerOrAdmin
+                ? 'Launch a live big-screen photo wall, upload batch galleries, or manage your studio events.'
+                : 'Relive your matched event memories on your dashboard, or host your own celebration with an interactive AI photo wall.'
+              : 'AI face matching finds every shot of you at the event — instantly.'}
           </motion.p>
 
           <motion.div
@@ -164,7 +170,7 @@ export function DriftWallHero({
                     className="inline-flex items-center gap-2 px-8 py-4 font-display text-sm font-semibold tracking-[0.08em] text-white transition-all border border-violet-500/30 bg-white/5 hover:bg-white/10 hover:border-violet-500/60 backdrop-blur-sm"
                   >
                     <Sparkles className="w-4 h-4 text-violet-400" />
-                    <span>Become an Organizer</span>
+                    <span>Host Your Next Event</span>
                   </Link>
                 )}
               </>
