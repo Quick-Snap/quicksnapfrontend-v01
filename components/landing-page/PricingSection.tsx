@@ -44,8 +44,11 @@ export function PricingSection() {
             <div>
               <div className="text-xs font-semibold uppercase tracking-wider text-violet-400 mb-1">Freelancers & Creators</div>
               <h3 className="text-xl font-bold text-white mb-2">Starter Pro</h3>
-              <div className="text-2xl font-extrabold text-white mb-3">
-                From ₹349 <span className="text-xs text-white/45 font-light">/ month</span>
+              <div className="text-3xl font-extrabold text-white mb-1">
+                ₹249 <span className="text-xs text-white/50 font-normal">/ month</span>
+              </div>
+              <div className="text-[11px] text-emerald-400 font-medium mb-3">
+                billed annually (₹2,999/yr)
               </div>
               <ul className="space-y-2 text-xs text-white/70 font-light mb-4">
                 <li className="flex items-center gap-2">
@@ -76,8 +79,11 @@ export function PricingSection() {
             <div>
               <div className="text-xs font-semibold uppercase tracking-wider text-violet-300 mb-1">Active Wedding Studios</div>
               <h3 className="text-xl font-bold text-white mb-2">Studio Pro</h3>
-              <div className="text-2xl font-extrabold text-white mb-3">
-                From ₹899 <span className="text-xs text-white/45 font-light">/ month</span>
+              <div className="text-3xl font-extrabold text-white mb-1">
+                ₹666 <span className="text-xs text-white/50 font-normal">/ month</span>
+              </div>
+              <div className="text-[11px] text-emerald-400 font-medium mb-3">
+                billed annually (₹7,999/yr) • Save 25%
               </div>
               <ul className="space-y-2 text-xs text-white/75 font-light mb-4">
                 <li className="flex items-center gap-2">
@@ -105,8 +111,11 @@ export function PricingSection() {
             <div>
               <div className="text-xs font-semibold uppercase tracking-wider text-indigo-400 mb-1">Production Houses & Fests</div>
               <h3 className="text-xl font-bold text-white mb-2">Enterprise</h3>
-              <div className="text-2xl font-extrabold text-white mb-3">
-                From ₹2,199 <span className="text-xs text-white/45 font-light">/ month</span>
+              <div className="text-3xl font-extrabold text-white mb-1">
+                ₹1,666 <span className="text-xs text-white/50 font-normal">/ month</span>
+              </div>
+              <div className="text-[11px] text-emerald-400 font-medium mb-3">
+                billed annually (₹19,999/yr)
               </div>
               <ul className="space-y-2 text-xs text-white/70 font-light mb-4">
                 <li className="flex items-center gap-2">
