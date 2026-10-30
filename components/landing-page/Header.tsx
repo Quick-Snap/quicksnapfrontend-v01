@@ -45,12 +45,12 @@ export function Header({
           >
             How It Works
           </a>
-          <a
-            href="#landing-pricing"
+          <Link
+            href="/pricing"
             className="text-xs font-medium uppercase tracking-[0.12em] text-white/60 hover:text-white transition-colors"
           >
             Pricing
-          </a>
+          </Link>
           <a
             href="#landing-testimonials"
             className="text-xs font-medium uppercase tracking-[0.12em] text-white/60 hover:text-white transition-colors"
@@ -120,13 +120,13 @@ export function Header({
               >
                 How It Works
               </a>
-              <a
-                href="#landing-pricing"
+              <Link
+                href="/pricing"
                 onClick={() => setMobileMenuOpen(false)}
                 className="py-2 text-sm text-white/70 hover:text-white"
               >
                 Pricing
-              </a>
+              </Link>
               <a
                 href="#landing-testimonials"
                 onClick={() => setMobileMenuOpen(false)}
