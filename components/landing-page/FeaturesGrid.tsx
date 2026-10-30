@@ -1,6 +1,6 @@
 "use client";
 
-import { ScanFace, Tv, Camera, MapPin, UploadCloud, ShieldCheck } from "lucide-react";
+import { ScanFace, Tv, Camera, QrCode, UploadCloud, ShieldCheck } from "lucide-react";
 import { GlowingEffect } from "./GlowingEffect";
 import { cn } from "@/lib/utils";
 
@@ -36,10 +36,10 @@ const FEATURES: FeatureCard[] = [
   },
   {
     area: "md:col-span-6 lg:col-span-4",
-    icon: <MapPin className="h-5 w-5 text-emerald-400" />,
-    title: "📍 Geo-Fenced QR Event Distance",
-    badge: "Verified Venue",
-    description: "Proximity security ensures only verified attendees physically inside the event perimeter can participate and stream.",
+    icon: <QrCode className="h-5 w-5 text-emerald-400" />,
+    title: "📱 Zero-App Instant QR Join",
+    badge: "No App Required",
+    description: "Guests scan the table standee with their native phone camera to instantly search and contribute. Zero App Store downloads.",
   },
   {
     area: "md:col-span-6 lg:col-span-4",

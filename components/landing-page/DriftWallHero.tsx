@@ -43,6 +43,7 @@ export function DriftWallHero({
   const user = useAuthStore((state) => state.user);
   const isLoggedIn = !!user;
   const isOrganizerOrAdmin = user?.role === 'organizer' || user?.role === 'admin' || user?.role === 'photographer';
+  const firstName = user?.name ? user.name.trim().split(' ')[0] : (user?.email ? user.email.split('@')[0] : '');
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-[#060010]">
@@ -88,6 +89,18 @@ export function DriftWallHero({
           transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
           className="max-w-3xl"
         >
+          {isLoggedIn && firstName ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+              className="mb-4 inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-violet-400/40 bg-violet-950/70 backdrop-blur-md text-violet-200 text-xs sm:text-sm font-medium tracking-wide shadow-xl shadow-violet-600/30"
+            >
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>Welcome back, {firstName} 👋</span>
+            </motion.div>
+          ) : null}
+
           <motion.h1
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -106,7 +119,9 @@ export function DriftWallHero({
             transition={{ duration: 0.7, delay: 0.25 }}
             className="mb-3 font-display text-xl font-medium tracking-[-0.02em] text-violet-300 sm:text-2xl md:text-3xl"
           >
-            Your photos. One selfie away.
+            {isLoggedIn && firstName
+              ? `Hey ${firstName}, your photos are one selfie away.`
+              : 'Your photos. One selfie away.'}
           </motion.p>
 
           <motion.p
