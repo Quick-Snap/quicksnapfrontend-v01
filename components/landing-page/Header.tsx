@@ -28,16 +28,16 @@ export function Header({
         {/* Desktop Anchor Navigation */}
         <div className="hidden lg:flex items-center gap-7">
           <a
-            href="#landing-demo"
-            className="text-xs font-medium uppercase tracking-[0.12em] text-white/60 hover:text-white transition-colors"
-          >
-            Live Demo
-          </a>
-          <a
             href="#landing-features"
             className="text-xs font-medium uppercase tracking-[0.12em] text-white/60 hover:text-white transition-colors"
           >
             Features
+          </a>
+          <a
+            href="#landing-audience"
+            className="text-xs font-medium uppercase tracking-[0.12em] text-white/60 hover:text-white transition-colors"
+          >
+            Audience
           </a>
           <a
             href="#landing-how-it-works"
@@ -100,18 +100,18 @@ export function Header({
           <div className="flex flex-col gap-3 max-w-7xl mx-auto">
             <div className="flex flex-col gap-2 pb-3 border-b border-white/10 text-center">
               <a
-                href="#landing-demo"
-                onClick={() => setMobileMenuOpen(false)}
-                className="py-2 text-sm text-white/70 hover:text-white"
-              >
-                Live Demo
-              </a>
-              <a
                 href="#landing-features"
                 onClick={() => setMobileMenuOpen(false)}
                 className="py-2 text-sm text-white/70 hover:text-white"
               >
                 Features
+              </a>
+              <a
+                href="#landing-audience"
+                onClick={() => setMobileMenuOpen(false)}
+                className="py-2 text-sm text-white/70 hover:text-white"
+              >
+                Audience
               </a>
               <a
                 href="#landing-how-it-works"

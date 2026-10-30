@@ -3,7 +3,6 @@
 import { Header } from './Header';
 import { DriftWallHero } from './DriftWallHero';
 import { MetricsRibbon } from './MetricsRibbon';
-import { LiveDemoSection } from './LiveDemoSection';
 import { FeaturesSection } from './FeaturesSection';
 import { AudienceSwitcher } from './AudienceSwitcher';
 import { ExperienceOnPhone } from './ExperienceOnPhone';
@@ -85,8 +84,6 @@ export function LandingPage({
 
       <MetricsRibbon />
 
-      <LiveDemoSection />
-
       <FeaturesSection />
 
       <AudienceSwitcher />
@@ -121,7 +118,6 @@ export default LandingPage;
 export { Header } from './Header';
 export { DriftWallHero } from './DriftWallHero';
 export { MetricsRibbon } from './MetricsRibbon';
-export { LiveDemoSection } from './LiveDemoSection';
 export { TrustRibbon } from './TrustRibbon';
 export { ScrollMorphHero } from './ScrollMorphHero';
 export { FeaturesSection } from './FeaturesSection';

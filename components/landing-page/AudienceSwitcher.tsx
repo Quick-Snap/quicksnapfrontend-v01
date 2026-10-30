@@ -12,7 +12,7 @@ export function AudienceSwitcher() {
   const isLoggedIn = !!user;
 
   return (
-    <section className="relative py-24 px-6 bg-[#090314] border-t border-white/[0.06]">
+    <section id="landing-audience" className="relative scroll-mt-20 py-24 px-6 bg-[#090314] border-t border-white/[0.06] overflow-x-clip">
       <div className="max-w-6xl mx-auto relative z-10">
         {/* Section Header */}
         <div className="text-center mb-12">
