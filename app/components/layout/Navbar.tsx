@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRole } from '@/hooks/useRole';
-import { Menu, X, User, LogOut, Home, Image as ImageIcon, Calendar, Shield, Settings, Upload, ChevronDown, Sparkles } from 'lucide-react';
+import { Menu, X, User, LogOut, Home, Image as ImageIcon, Calendar, Shield, Settings, Upload, ChevronDown, Sparkles, LayoutDashboard } from 'lucide-react';
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useQuery } from 'react-query';
 import { UserRole } from '@/types';
@@ -74,7 +74,7 @@ export default function Navbar() {
     // Shared event / public pages: same nav labels, but require sign-in
     if (!isLoggedIn) {
       return [
-        { name: 'Home', href: LOGIN_PATH, icon: Home },
+        { name: 'Home', href: '/', icon: Home },
         { name: 'Events', href: LOGIN_PATH, icon: Calendar },
         { name: 'My Photos', href: LOGIN_PATH, icon: ImageIcon },
       ];
@@ -113,7 +113,7 @@ export default function Navbar() {
         <div className="flex h-16 items-center justify-between gap-2 md:grid md:grid-cols-[1fr_auto_1fr] md:items-center md:justify-normal md:gap-4">
           {/* Logo */}
           <div className="flex min-w-0 shrink-0 items-center md:justify-self-start">
-            <BrandLogo href={hrefForAuth('/dashboard', isLoggedIn)} size="sm" tone="auto" />
+            <BrandLogo href="/" size="sm" tone="auto" />
           </div>
 
           {/* Desktop Navigation — centered in navbar via middle grid column */}
@@ -156,6 +156,19 @@ export default function Navbar() {
             <div className="hidden md:flex md:items-center md:space-x-3">
             {user ? (
               <>
+                <Link
+                  href="/dashboard"
+                  className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-all shadow-sm ${
+                    pathname === '/dashboard'
+                      ? 'border-violet-500/50 bg-violet-500/15 text-violet-700 dark:border-violet-500/40 dark:bg-violet-500/20 dark:text-violet-300'
+                      : 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 dark:border-white/10 dark:bg-white/5 dark:text-zinc-200 dark:hover:bg-white/10'
+                  }`}
+                  title="Go to Dashboard"
+                >
+                  <LayoutDashboard className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400" />
+                  <span>Dashboard</span>
+                </Link>
+
                 {(hasRole('organizer') || hasRole('photographer') || hasRole('admin') || isOrganizer || isPhotographer || isAdmin) && (
                   <Link
                     href="/studio"
@@ -424,9 +437,12 @@ export default function Navbar() {
                   <Link
                     href="/dashboard"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center space-x-3 rounded-lg px-4 py-3 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-white"
+                    className={`flex items-center space-x-3 rounded-lg px-4 py-3 transition-all ${isActive('/dashboard')
+                      ? 'border border-violet-400/50 bg-violet-500/15 text-violet-700 dark:border-violet-500/30 dark:bg-violet-500/20 dark:text-violet-400'
+                      : 'text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-white'
+                      }`}
                   >
-                    <Home className="h-5 w-5" />
+                    <LayoutDashboard className="h-5 w-5" />
                     <span className="font-medium">Dashboard</span>
                   </Link>
                   <button
