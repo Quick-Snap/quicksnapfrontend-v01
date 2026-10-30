@@ -1098,5 +1098,55 @@ export const adminBypassApi = {
   }
 };
 
+export interface CustomPaymentLinkItem {
+  _id: string;
+  invoiceNumber: string;
+  amount: number;
+  status: 'created' | 'captured' | 'failed' | 'refunded';
+  gatewayPaymentLinkId?: string;
+  paymentLinkUrl?: string;
+  createdAt: string;
+  paidAt?: string;
+  targetEmail: string;
+  targetName?: string;
+  photoQuota?: number;
+  days?: number;
+  customFeatures?: Record<string, boolean>;
+}
+
+export const adminCustomPaymentLinksApi = {
+  createLink: async (data: {
+    email?: string;
+    userId?: string;
+    agreedPrice: number;
+    effectiveTier?: string;
+    days?: number;
+    customPhotoQuota?: number;
+    customFeatures?: Record<string, boolean>;
+    maxTeamMembers?: number;
+    reason?: string;
+  }) => {
+    const response = await api.post<ApiResponse<{
+      orderId: string;
+      paymentLinkId: string;
+      paymentLinkUrl: string;
+      invoiceNumber: string;
+      amount: number;
+      isLiveGateway: boolean;
+      targetUser: { id: string; name: string; email: string };
+      whatsAppShareText: string;
+    }>>('/admin/create-custom-payment-link', data);
+    return response.data;
+  },
+  listLinks: async () => {
+    const response = await api.get<ApiResponse<CustomPaymentLinkItem[]>>('/admin/custom-payment-links');
+    return response.data;
+  },
+  simulatePayment: async (data: { orderId?: string; paymentLinkId?: string }) => {
+    const response = await api.post<ApiResponse<any>>('/admin/simulate-custom-payment', data);
+    return response.data;
+  }
+};
+
 export default api;
 

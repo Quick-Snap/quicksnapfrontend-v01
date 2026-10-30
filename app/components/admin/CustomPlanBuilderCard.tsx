@@ -13,12 +13,21 @@ import {
   ShieldCheck,
   UserCheck,
   Layers,
-  Info
+  Info,
+  CreditCard,
+  ExternalLink,
+  Share2,
+  RefreshCw,
+  Clock,
+  CheckCircle2,
+  X
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
   adminBypassApi,
   adminPricingCalculatorApi,
+  adminCustomPaymentLinksApi,
+  CustomPaymentLinkItem,
   AIPricingCalculationResult
 } from '@/lib/api';
 
@@ -30,6 +39,7 @@ export default function CustomPlanBuilderCard() {
   const [customPhotoQuota, setCustomPhotoQuota] = useState<string>('150000');
   const [bypassReason, setBypassReason] = useState('Bespoke Enterprise Agreement');
   const [grantingBypass, setGrantingBypass] = useState(false);
+  const [generatingLink, setGeneratingLink] = useState(false);
 
   // Custom Feature Entitlements State
   const [customFeatures, setCustomFeatures] = useState<Record<string, boolean>>({
@@ -48,6 +58,43 @@ export default function CustomPlanBuilderCard() {
   const [aiPricing, setAiPricing] = useState<AIPricingCalculationResult | null>(null);
   const [calculatingPrice, setCalculatingPrice] = useState(false);
   const [copiedPitch, setCopiedPitch] = useState(false);
+
+  // Payment Link Modal & Recent Links
+  const [createdLinkModal, setCreatedLinkModal] = useState<{
+    orderId: string;
+    paymentLinkId: string;
+    paymentLinkUrl: string;
+    invoiceNumber: string;
+    amount: number;
+    whatsAppShareText: string;
+    targetEmail: string;
+    isLiveGateway: boolean;
+    status: 'created' | 'captured';
+  } | null>(null);
+
+  const [recentLinks, setRecentLinks] = useState<CustomPaymentLinkItem[]>([]);
+  const [loadingLinks, setLoadingLinks] = useState(false);
+  const [simulatingPaymentId, setSimulatingPaymentId] = useState<string | null>(null);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedMsg, setCopiedMsg] = useState(false);
+
+  const fetchRecentLinks = useCallback(async () => {
+    setLoadingLinks(true);
+    try {
+      const res = await adminCustomPaymentLinksApi.listLinks();
+      if (res.success && res.data) {
+        setRecentLinks(res.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch recent custom payment links:', err);
+    } finally {
+      setLoadingLinks(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchRecentLinks();
+  }, [fetchRecentLinks]);
 
   const applyPresetTier = (tier: 'starter_pro' | 'studio_pro' | 'enterprise') => {
     setBypassTier(tier);
@@ -134,6 +181,71 @@ export default function CustomPlanBuilderCard() {
     setTimeout(() => setCopiedPitch(false), 2500);
   };
 
+  const handleGeneratePaymentLink = async () => {
+    if (!targetId.trim()) {
+      toast.error('Please enter the Organizer Email ID or MongoDB User ID');
+      return;
+    }
+    const price = Number(agreedPrice);
+    if (!price || isNaN(price) || price < 1) {
+      toast.error('Please specify an agreed price (or apply AI recommended price) first');
+      return;
+    }
+
+    setGeneratingLink(true);
+    try {
+      const res = await adminCustomPaymentLinksApi.createLink({
+        email: targetId.trim(),
+        userId: targetId.trim(),
+        agreedPrice: price,
+        effectiveTier: bypassTier,
+        days: bypassDays,
+        customPhotoQuota: customPhotoQuota ? Number(customPhotoQuota) : undefined,
+        customFeatures,
+        maxTeamMembers,
+        reason: bypassReason
+      });
+
+      if (res.success && res.data) {
+        toast.success('Razorpay Payment Link generated successfully!');
+        setCreatedLinkModal({
+          orderId: res.data.orderId,
+          paymentLinkId: res.data.paymentLinkId,
+          paymentLinkUrl: res.data.paymentLinkUrl,
+          invoiceNumber: res.data.invoiceNumber,
+          amount: res.data.amount,
+          whatsAppShareText: res.data.whatsAppShareText,
+          targetEmail: res.data.targetUser.email,
+          isLiveGateway: res.data.isLiveGateway,
+          status: 'created'
+        });
+        fetchRecentLinks();
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to generate payment link');
+    } finally {
+      setGeneratingLink(false);
+    }
+  };
+
+  const handleSimulatePayment = async (orderId: string, paymentLinkId?: string) => {
+    setSimulatingPaymentId(orderId);
+    try {
+      const res = await adminCustomPaymentLinksApi.simulatePayment({ orderId, paymentLinkId });
+      if (res.success) {
+        toast.success(res.message || 'Payment successfully captured! Account provisioned.');
+        if (createdLinkModal && createdLinkModal.orderId === orderId) {
+          setCreatedLinkModal(prev => prev ? { ...prev, status: 'captured' } : null);
+        }
+        fetchRecentLinks();
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to simulate payment');
+    } finally {
+      setSimulatingPaymentId(null);
+    }
+  };
+
   const handleGrantBypass = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!targetId.trim()) {
@@ -196,7 +308,7 @@ export default function CustomPlanBuilderCard() {
                   Custom Enterprise Plan & AI Pricing Builder
                 </h2>
                 <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
-                  Configure bespoke organizer subscriptions, set custom photo quotas, toggle individual feature entitlements, and calculate AI-recommended pricing.
+                  Configure bespoke organizer subscriptions, set custom photo quotas, toggle individual feature entitlements, and generate automatic Razorpay checkout links.
                 </p>
               </div>
             </div>
@@ -558,28 +670,306 @@ export default function CustomPlanBuilderCard() {
             />
           </div>
 
-          {/* Activation Action Button */}
-          <div className="pt-2 border-t border-zinc-100 dark:border-white/10 flex justify-end">
-            <button
-              type="submit"
-              disabled={grantingBypass}
-              className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 px-7 py-3 text-sm font-bold text-white shadow-xl shadow-violet-500/25 hover:from-violet-500 hover:to-indigo-500 transition disabled:opacity-50"
-            >
-              {grantingBypass ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Activating Custom Plan…
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-4 w-4" />
-                  Activate Custom Plan & Entitlements
-                </>
-              )}
-            </button>
+          {/* Dual Action Options */}
+          <div className="pt-4 border-t border-zinc-100 dark:border-white/10 flex flex-wrap items-center justify-end gap-3">
+            {bypassType === 'organizer' ? (
+              <>
+                <button
+                  type="button"
+                  onClick={handleGeneratePaymentLink}
+                  disabled={generatingLink || grantingBypass}
+                  className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-3 text-sm font-bold text-white shadow-xl shadow-emerald-500/25 hover:from-emerald-500 hover:to-teal-500 transition disabled:opacity-50"
+                >
+                  {generatingLink ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Generating Razorpay Link…
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="h-4 w-4" />
+                      Generate Razorpay Payment Link
+                    </>
+                  )}
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={grantingBypass || generatingLink}
+                  className="inline-flex items-center gap-2 rounded-2xl border border-violet-500/30 bg-violet-500/10 px-5 py-3 text-sm font-semibold text-violet-300 hover:bg-violet-500/20 transition disabled:opacity-50"
+                >
+                  {grantingBypass ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Activating Directly…
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4" />
+                      Direct Activate (Manual / Cash)
+                    </>
+                  )}
+                </button>
+              </>
+            ) : (
+              <button
+                type="submit"
+                disabled={grantingBypass}
+                className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 px-7 py-3 text-sm font-bold text-white shadow-xl shadow-violet-500/25 hover:from-violet-500 hover:to-indigo-500 transition disabled:opacity-50"
+              >
+                {grantingBypass ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Activating Exemption…
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4" />
+                    Activate Event Exemption
+                  </>
+                )}
+              </button>
+            )}
           </div>
         </form>
       </div>
+
+      {/* RECENT CUSTOM PAYMENT LINKS TABLE */}
+      <div className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-zinc-900/60 backdrop-blur-xl space-y-4">
+        <div className="flex items-center justify-between border-b border-zinc-100 pb-4 dark:border-white/10">
+          <div className="flex items-center gap-2.5">
+            <CreditCard className="h-5 w-5 text-emerald-500" />
+            <div>
+              <h3 className="text-base font-bold text-zinc-900 dark:text-white">
+                Bespoke Custom Payment Links & Order Tracking
+              </h3>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                Track status of generated Razorpay checkout links. Plans auto-activate as soon as the client completes payment.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={fetchRecentLinks}
+            disabled={loadingLinks}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-1.5 text-xs font-semibold text-zinc-600 hover:bg-zinc-100 dark:border-white/10 dark:text-zinc-300 dark:hover:bg-white/5"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${loadingLinks ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+        </div>
+
+        {recentLinks.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="border-b border-zinc-100 dark:border-white/10 text-[11px] uppercase font-bold text-zinc-400">
+                <tr>
+                  <th className="py-2.5 px-3">Client Email</th>
+                  <th className="py-2.5 px-3">Invoice</th>
+                  <th className="py-2.5 px-3">Quota & Validity</th>
+                  <th className="py-2.5 px-3">Amount</th>
+                  <th className="py-2.5 px-3">Status</th>
+                  <th className="py-2.5 px-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100 dark:divide-white/5">
+                {recentLinks.map((link) => {
+                  const isPaid = link.status === 'captured';
+                  return (
+                    <tr key={link._id} className="hover:bg-zinc-50 dark:hover:bg-white/[0.02]">
+                      <td className="py-3 px-3">
+                        <p className="font-bold text-zinc-900 dark:text-white">{link.targetEmail}</p>
+                        <p className="text-[10px] text-zinc-400">{new Date(link.createdAt).toLocaleDateString()}</p>
+                      </td>
+                      <td className="py-3 px-3 font-mono text-[11px] text-zinc-500">
+                        {link.invoiceNumber}
+                      </td>
+                      <td className="py-3 px-3">
+                        <span className="font-semibold text-zinc-800 dark:text-zinc-200">
+                          {((link.photoQuota || 150000) / 1000).toFixed(0)}k photos
+                        </span>
+                        <span className="text-[10px] text-zinc-400 ml-1">({link.days || 365} days)</span>
+                      </td>
+                      <td className="py-3 px-3 font-bold text-zinc-900 dark:text-white">
+                        ₹{link.amount.toLocaleString()}
+                      </td>
+                      <td className="py-3 px-3">
+                        {isPaid ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-500 border border-emerald-500/20">
+                            <CheckCircle2 className="h-3 w-3" />
+                            Paid & Active
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-amber-500 border border-amber-500/20">
+                            <Clock className="h-3 w-3" />
+                            Pending Payment
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 px-3 text-right space-x-2">
+                        {link.paymentLinkUrl && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(link.paymentLinkUrl!);
+                              toast.success('Payment link copied!');
+                            }}
+                            className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 px-2.5 py-1 text-[11px] font-medium text-zinc-700 hover:bg-zinc-100 dark:border-white/10 dark:text-zinc-300 dark:hover:bg-white/5"
+                          >
+                            <Copy className="h-3 w-3" />
+                            Copy Link
+                          </button>
+                        )}
+                        {!isPaid && (
+                          <button
+                            type="button"
+                            onClick={() => handleSimulatePayment(link._id, link.gatewayPaymentLinkId)}
+                            disabled={simulatingPaymentId === link._id}
+                            className="inline-flex items-center gap-1 rounded-lg bg-emerald-600/10 border border-emerald-500/20 px-2.5 py-1 text-[11px] font-bold text-emerald-400 hover:bg-emerald-600/20 disabled:opacity-50"
+                          >
+                            {simulatingPaymentId === link._id ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <Zap className="h-3 w-3" />
+                            )}
+                            Simulate Pay
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-xs text-zinc-400 py-3 text-center">No custom payment links created yet.</p>
+        )}
+      </div>
+
+      {/* GENERATED LINK SUCCESS MODAL */}
+      {createdLinkModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in">
+          <div className="relative w-full max-w-lg rounded-3xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-white/10 dark:bg-zinc-900 space-y-5">
+            <div className="flex items-center justify-between border-b border-zinc-100 pb-3 dark:border-white/10">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500">
+                  <CreditCard className="h-4 w-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-zinc-900 dark:text-white">Razorpay Payment Link Ready</h3>
+                  <p className="text-[11px] text-zinc-400 font-mono">{createdLinkModal.invoiceNumber}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setCreatedLinkModal(null)}
+                className="rounded-full p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-white/5"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Status Indicator */}
+            <div className={`rounded-2xl p-3.5 border flex items-center justify-between text-xs font-semibold ${
+              createdLinkModal.status === 'captured'
+                ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
+                : 'border-amber-500/30 bg-amber-500/10 text-amber-400'
+            }`}>
+              <span className="flex items-center gap-1.5">
+                {createdLinkModal.status === 'captured' ? <CheckCircle2 className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
+                {createdLinkModal.status === 'captured' ? 'Payment Captured! Plan is ACTIVE' : 'Waiting for Client Payment…'}
+              </span>
+              <span className="font-bold text-sm text-zinc-900 dark:text-white">
+                ₹{createdLinkModal.amount.toLocaleString()}
+              </span>
+            </div>
+
+            {/* Direct URL */}
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block mb-1">
+                Checkout Link (Share with Client)
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={createdLinkModal.paymentLinkUrl}
+                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs font-mono text-zinc-800 dark:border-white/10 dark:bg-white/5 dark:text-zinc-200"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(createdLinkModal.paymentLinkUrl);
+                    setCopiedLink(true);
+                    toast.success('Link copied to clipboard!');
+                    setTimeout(() => setCopiedLink(false), 2000);
+                  }}
+                  className="rounded-xl border border-zinc-200 bg-zinc-100 px-3 py-2 text-xs font-bold hover:bg-zinc-200 dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/20 transition shrink-0"
+                >
+                  {copiedLink ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+
+            {/* WhatsApp Pitch */}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">
+                  Pre-Formatted Client Message
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(createdLinkModal.whatsAppShareText);
+                    setCopiedMsg(true);
+                    toast.success('WhatsApp note copied!');
+                    setTimeout(() => setCopiedMsg(false), 2000);
+                  }}
+                  className="text-[11px] text-violet-400 hover:underline flex items-center gap-1 font-semibold"
+                >
+                  {copiedMsg ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                  {copiedMsg ? 'Copied' : 'Copy Message'}
+                </button>
+              </div>
+              <textarea
+                rows={4}
+                readOnly
+                value={createdLinkModal.whatsAppShareText}
+                className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 text-[11px] font-sans dark:border-white/10 dark:bg-white/5 dark:text-zinc-300"
+              />
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-zinc-100 dark:border-white/10">
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(createdLinkModal.whatsAppShareText)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-500 transition shadow-md shadow-emerald-500/20"
+              >
+                <Share2 className="h-3.5 w-3.5" />
+                Open WhatsApp Web
+              </a>
+
+              {createdLinkModal.status !== 'captured' && (
+                <button
+                  type="button"
+                  onClick={() => handleSimulatePayment(createdLinkModal.orderId, createdLinkModal.paymentLinkId)}
+                  disabled={simulatingPaymentId === createdLinkModal.orderId}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-violet-500/30 bg-violet-500/10 px-3.5 py-2 text-xs font-bold text-violet-300 hover:bg-violet-500/20 transition disabled:opacity-50"
+                >
+                  {simulatingPaymentId === createdLinkModal.orderId ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Zap className="h-3.5 w-3.5" />
+                  )}
+                  Simulate Client Pay (Test)
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
