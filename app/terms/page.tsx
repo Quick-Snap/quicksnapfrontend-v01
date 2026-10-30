@@ -28,7 +28,7 @@ const sections: { heading: string; body: string[] }[] = [
     heading: '3. Accounts & Authentication',
     body: [
       'When you create an account using email/password or Google OAuth, you must provide accurate and complete information. You are responsible for safeguarding your credentials and for all activities that occur under your account.',
-      'You agree to notify us immediately of any unauthorized use of your account at contact@quicksnap.online.',
+      'You agree to notify us immediately of any unauthorized use of your account at contact@roopixo.com.',
     ],
   },
   {
@@ -85,7 +85,7 @@ const sections: { heading: string; body: string[] }[] = [
     heading: '12. Contact Information',
     body: [
       'If you have any questions concerning these Terms, please reach out to us at:',
-      '• Email: contact@quicksnap.online',
+      '• Email: contact@roopixo.com',
       '• Website: https://roopixo.com',
     ],
   },
@@ -139,10 +139,10 @@ export default function TermsPage() {
             <p className="text-sm font-light text-zinc-500 dark:text-white/40">
               Questions? Reach out at{' '}
               <a
-                href="mailto:contact@quicksnap.online"
+                href="mailto:contact@roopixo.com"
                 className="text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300 transition-colors"
               >
-                contact@quicksnap.online
+                contact@roopixo.com
               </a>
               .
             </p>

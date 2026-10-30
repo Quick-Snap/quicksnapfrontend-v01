@@ -76,7 +76,7 @@ const sections = [
     heading: '8. Your Privacy Rights & Data Deletion',
     body: [
       'Depending on your location, you have rights regarding your personal information, including the right to access, correct, export, or permanently delete your data.',
-      'To request the deletion of your account, facial embeddings, or uploaded photos, you can use the in-app settings or email us directly at contact@quicksnap.online.',
+      'To request the deletion of your account, facial embeddings, or uploaded photos, you can use the in-app settings or email us directly at contact@roopixo.com.',
     ],
   },
   {
@@ -89,7 +89,7 @@ const sections = [
     heading: '10. Contact Us',
     body: [
       'If you have questions, comments, or concerns about this Privacy Policy or our privacy practices, please contact us at:',
-      '• Email: contact@quicksnap.online',
+      '• Email: contact@roopixo.com',
       '• Website: https://roopixo.com',
     ],
   },
@@ -143,10 +143,10 @@ export default function PrivacyPage() {
             <p className="text-sm font-light text-zinc-500 dark:text-white/40">
               Questions? Reach out at{' '}
               <a
-                href="mailto:contact@quicksnap.online"
+                href="mailto:contact@roopixo.com"
                 className="text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300 transition-colors"
               >
-                contact@quicksnap.online
+                contact@roopixo.com
               </a>
               .
             </p>

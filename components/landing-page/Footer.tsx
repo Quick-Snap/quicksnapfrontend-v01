@@ -8,7 +8,7 @@ export interface FooterProps {
   year?: number;
 }
 
-const CONTACT_EMAIL = 'contact@quicksnap.online';
+const CONTACT_EMAIL = 'contact@roopixo.com';
 
 export function Footer({
   brandName = 'Roopixo',
