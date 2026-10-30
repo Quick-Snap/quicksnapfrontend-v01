@@ -1,15 +1,29 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import RoleGuard from '@/app/components/RoleGuard';
 import OrganizerRequestsPanel from '@/app/components/admin/OrganizerRequestsPanel';
 import AIEngineControlCard from '@/app/components/admin/AIEngineControlCard';
 import CouponsControlCard from '@/app/components/admin/CouponsControlCard';
 import CustomPlanBuilderCard from '@/app/components/admin/CustomPlanBuilderCard';
-import { Cpu, Users, Tag, Sparkles } from 'lucide-react';
+import OrganizersDirectoryCard from '@/app/components/admin/OrganizersDirectoryCard';
+import { Cpu, Users, Tag, Sparkles, Building2 } from 'lucide-react';
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<'requests' | 'custom_plans' | 'coupons' | 'ai'>('requests');
+  const searchParams = useSearchParams();
+  const initialTab = (searchParams.get('tab') as any) || 'directory';
+
+  const [activeTab, setActiveTab] = useState<'directory' | 'custom_plans' | 'coupons' | 'requests' | 'ai'>(
+    ['directory', 'custom_plans', 'coupons', 'requests', 'ai'].includes(initialTab) ? initialTab : 'directory'
+  );
+
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && ['directory', 'custom_plans', 'coupons', 'requests', 'ai'].includes(tabParam)) {
+      setActiveTab(tabParam as any);
+    }
+  }, [searchParams]);
 
   return (
     <RoleGuard allowedRoles={['admin']}>
@@ -17,15 +31,15 @@ export default function AdminPage() {
         {/* Navigation Tabs */}
         <div className="flex border-b border-zinc-200 dark:border-white/10 overflow-x-auto">
           <button
-            onClick={() => setActiveTab('requests')}
+            onClick={() => setActiveTab('directory')}
             className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-semibold whitespace-nowrap transition-colors ${
-              activeTab === 'requests'
+              activeTab === 'directory'
                 ? 'border-violet-600 text-violet-600 dark:border-violet-400 dark:text-violet-400'
                 : 'border-transparent text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200'
             }`}
           >
-            <Users className="h-4 w-4" />
-            Organizer Requests
+            <Building2 className="h-4 w-4" />
+            Studios &amp; Events Directory
           </button>
           <button
             onClick={() => setActiveTab('custom_plans')}
@@ -36,7 +50,7 @@ export default function AdminPage() {
             }`}
           >
             <Sparkles className="h-4 w-4" />
-            Custom Plans & AI Pricing
+            Custom Plans &amp; AI Pricing
           </button>
           <button
             onClick={() => setActiveTab('coupons')}
@@ -50,6 +64,17 @@ export default function AdminPage() {
             Discount Coupons
           </button>
           <button
+            onClick={() => setActiveTab('requests')}
+            className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-semibold whitespace-nowrap transition-colors ${
+              activeTab === 'requests'
+                ? 'border-violet-600 text-violet-600 dark:border-violet-400 dark:text-violet-400'
+                : 'border-transparent text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200'
+            }`}
+          >
+            <Users className="h-4 w-4" />
+            Organizer Requests
+          </button>
+          <button
             onClick={() => setActiveTab('ai')}
             className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-semibold whitespace-nowrap transition-colors ${
               activeTab === 'ai'
@@ -58,14 +83,21 @@ export default function AdminPage() {
             }`}
           >
             <Cpu className="h-4 w-4" />
-            AI Face Engine & Stats
+            AI Face Engine &amp; Stats
           </button>
         </div>
 
         {/* Tab Content */}
-        {activeTab === 'requests' && <OrganizerRequestsPanel />}
+        {activeTab === 'directory' && (
+          <OrganizersDirectoryCard
+            onSelectOrganizerForCustomPlan={() => {
+              setActiveTab('custom_plans');
+            }}
+          />
+        )}
         {activeTab === 'custom_plans' && <CustomPlanBuilderCard />}
         {activeTab === 'coupons' && <CouponsControlCard />}
+        {activeTab === 'requests' && <OrganizerRequestsPanel />}
         {activeTab === 'ai' && (
           <div className="space-y-6">
             <AIEngineControlCard />

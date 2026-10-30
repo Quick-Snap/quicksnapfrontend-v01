@@ -1114,6 +1114,66 @@ export interface CustomPaymentLinkItem {
   customFeatures?: Record<string, boolean>;
 }
 
+export interface OrganizerDirectoryEvent {
+  _id: string;
+  name: string;
+  accessCode: string;
+  coverImage?: string | null;
+  startDate?: string;
+  endDate?: string;
+  venue?: string;
+  photosCount: number;
+  isActive: boolean;
+  googleDriveSyncEnabled: boolean;
+  hasLiveWall: boolean;
+  adminBypass?: any;
+  createdAt?: string;
+}
+
+export interface OrganizerDirectoryItem {
+  _id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  avatar?: string;
+  businessName?: string;
+  role: string;
+  roles: string[];
+  subscription: {
+    tier: string;
+    status: string;
+    currentPeriodEnd?: string;
+    photosUsedInPeriod: number;
+    customPhotoQuota?: number;
+    agreedPrice?: number;
+    customInvoiceNumber?: string;
+    customFeatures?: Record<string, boolean>;
+    adminBypass?: any;
+  };
+  totalEventsCount: number;
+  totalPhotosCount: number;
+  events: OrganizerDirectoryEvent[];
+  createdAt: string;
+  lastActiveAt?: string;
+}
+
+export interface OrganizerDirectorySummary {
+  totalOrganizers: number;
+  totalEvents: number;
+  totalPhotos: number;
+  payingStudiosCount: number;
+}
+
+export const organizerDirectoryApi = {
+  getDirectory: async () => {
+    const response = await api.get<ApiResponse<{
+      summary: OrganizerDirectorySummary;
+      organizers: OrganizerDirectoryItem[];
+    }>>('/admin/organizers-directory');
+    return response.data;
+  }
+};
+
 export const adminCustomPaymentLinksApi = {
   createLink: async (data: {
     email?: string;

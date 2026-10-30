@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from 'react-query';
-import { Shield, Clock, CheckCircle, XCircle, Sparkles, Tag } from 'lucide-react';
+import { Shield, Clock, CheckCircle, XCircle, Sparkles, Tag, Building2 } from 'lucide-react';
 import Link from 'next/link';
 import { adminOrganizerRequestApi } from '@/lib/api';
 import { softSurface } from '@/lib/dashboardUi';
@@ -22,14 +22,14 @@ export default function AdminDashboard() {
           <div>
             <div className="mb-2 flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-violet-100" />
-              <span className="text-sm font-medium text-violet-100">Admin Panel</span>
+              <span className="text-sm font-medium text-violet-100">Admin Control Center</span>
             </div>
             <h1 className="mb-2 flex flex-wrap items-center gap-3 text-2xl font-bold tracking-tight text-white sm:text-3xl md:text-4xl">
               <Shield className="h-7 w-7 shrink-0 sm:h-8 sm:w-8" />
-              Organizer requests
+              Organizer Controls
             </h1>
             <p className="max-w-xl text-sm leading-relaxed text-violet-100/95 sm:text-base">
-              Review and approve users who want to become event organizers.
+              Browse studios and shoots by organizer, configure bespoke enterprise plans, and manage platform permissions.
             </p>
           </div>
           {stats.pending > 0 && (
@@ -95,28 +95,23 @@ export default function AdminDashboard() {
       <AIEngineControlCard />
 
       <section className={`p-5 sm:p-8 ${softSurface}`}>
-        <h2 className="mb-5 text-lg font-semibold text-zinc-900 dark:text-white sm:text-xl">Quick actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Link href="/admin" className="action-card group">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-100 transition-colors group-hover:bg-violet-200/80 dark:bg-violet-500/10 dark:group-hover:bg-violet-500/20">
-              <Shield className="h-5 w-5 text-violet-700 dark:text-violet-400" />
+        <h2 className="mb-5 text-lg font-semibold text-zinc-900 dark:text-white sm:text-xl">Organizer & Platform Controls</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Link href="/admin?tab=directory" className="action-card group">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 transition-colors group-hover:bg-emerald-200/80 dark:bg-emerald-500/10 dark:group-hover:bg-emerald-500/20">
+              <Building2 className="h-5 w-5 text-emerald-700 dark:text-emerald-400" />
             </div>
             <div>
               <p className="font-semibold text-zinc-900 dark:text-white">
-                Review organizer requests
-                {stats.pending > 0 && (
-                  <span className="ml-2 rounded-full bg-amber-500 px-2 py-0.5 text-xs font-bold text-white">
-                    {stats.pending}
-                  </span>
-                )}
+                Studios & Events Directory
               </p>
               <p className="text-sm text-zinc-500 dark:text-gray-400">
-                Approve or reject pending applications
+                Browse studios and all events sorted by organizer
               </p>
             </div>
           </Link>
 
-          <Link href="/admin" className="action-card group">
+          <Link href="/admin?tab=custom_plans" className="action-card group">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100 transition-colors group-hover:bg-indigo-200/80 dark:bg-indigo-500/10 dark:group-hover:bg-indigo-500/20">
               <Sparkles className="h-5 w-5 text-indigo-700 dark:text-indigo-400" />
             </div>
@@ -125,21 +120,40 @@ export default function AdminDashboard() {
                 Custom Plans & AI Pricing
               </p>
               <p className="text-sm text-zinc-500 dark:text-gray-400">
-                Configure bespoke quotas & feature entitlements
+                Configure bespoke quotas & Razorpay payment links
               </p>
             </div>
           </Link>
 
-          <Link href="/admin" className="action-card group">
+          <Link href="/admin?tab=coupons" className="action-card group">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100 transition-colors group-hover:bg-amber-200/80 dark:bg-amber-500/10 dark:group-hover:bg-amber-500/20">
               <Tag className="h-5 w-5 text-amber-700 dark:text-amber-400" />
             </div>
             <div>
               <p className="font-semibold text-zinc-900 dark:text-white">
-                Discount coupons
+                Discount Coupons
               </p>
               <p className="text-sm text-zinc-500 dark:text-gray-400">
                 Create promotional promo codes for checkout
+              </p>
+            </div>
+          </Link>
+
+          <Link href="/admin?tab=requests" className="action-card group">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-100 transition-colors group-hover:bg-violet-200/80 dark:bg-violet-500/10 dark:group-hover:bg-violet-500/20">
+              <Shield className="h-5 w-5 text-violet-700 dark:text-violet-400" />
+            </div>
+            <div>
+              <p className="font-semibold text-zinc-900 dark:text-white">
+                Organizer Requests
+                {stats.pending > 0 && (
+                  <span className="ml-2 rounded-full bg-amber-500 px-2 py-0.5 text-xs font-bold text-white">
+                    {stats.pending}
+                  </span>
+                )}
+              </p>
+              <p className="text-sm text-zinc-500 dark:text-gray-400">
+                Approve or reject pending organizer access
               </p>
             </div>
           </Link>

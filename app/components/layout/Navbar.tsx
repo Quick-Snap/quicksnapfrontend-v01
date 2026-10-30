@@ -88,7 +88,7 @@ export default function Navbar() {
     if (isAdmin) {
       nav.push({ name: 'Events', href: '/events', icon: Calendar });
       nav.push({ name: 'My Photos', href: '/photos', icon: ImageIcon });
-      nav.push({ name: 'Organizer Requests', href: '/admin', icon: Shield });
+      nav.push({ name: 'Organizer Controls', href: '/admin', icon: Shield });
     } else if (isOrganizer) {
       // Organizers only see My Events (no Events, My Photos, or Photographer Upload)
       nav.push({ name: 'My Events', href: '/organizer/events', icon: Calendar });
