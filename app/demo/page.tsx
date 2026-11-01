@@ -22,6 +22,13 @@ import {
 import toast from 'react-hot-toast';
 import BrandLogo from '@/components/BrandLogo';
 
+interface DemoFaceBox {
+  name: string;
+  personaId: string;
+  confidence: number;
+  box: { x: number; y: number; w: number; h: number };
+}
+
 interface DemoPersona {
   id: string;
   name: string;
@@ -36,6 +43,7 @@ interface DemoPhoto {
   caption: string;
   tag: string;
   matchedPersonaIds: string[];
+  faces: DemoFaceBox[];
 }
 
 const DEMO_PERSONAS: DemoPersona[] = [
@@ -43,144 +51,161 @@ const DEMO_PERSONAS: DemoPersona[] = [
     id: 'rohan',
     name: 'Rohan',
     role: "Groom's Brother",
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80',
-    photoIds: [1, 2, 5, 8, 11, 14]
+    avatar: '/demo/rohan_1.jpg',
+    photoIds: [1, 5, 7, 8, 11, 12]
   },
   {
     id: 'priya',
     name: 'Priya',
     role: "Bride's Sister",
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
-    photoIds: [2, 3, 6, 9, 12, 15]
+    avatar: '/demo/priya_1.jpg',
+    photoIds: [2, 6, 7, 9, 11]
   },
   {
     id: 'kabir',
     name: 'Kabir',
     role: 'College Bestie',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop&q=80',
-    photoIds: [4, 7, 10, 13, 16]
+    avatar: '/demo/kabir_1.jpg',
+    photoIds: [3, 5, 9, 10, 11]
   },
   {
     id: 'ananya',
     name: 'Ananya',
     role: 'Childhood Friend',
-    avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&auto=format&fit=crop&q=80',
-    photoIds: [3, 5, 8, 11, 15]
+    avatar: '/demo/ananya_1.jpg',
+    photoIds: [4, 6, 8, 10, 11]
   }
 ];
 
 const DEMO_PHOTOS: DemoPhoto[] = [
   {
     id: 1,
-    url: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=900&auto=format&fit=crop&q=80',
-    caption: 'Baraat entrance & celebration',
-    tag: 'Baraat',
-    matchedPersonaIds: ['rohan']
+    url: '/demo/rohan_1.jpg',
+    caption: "Rohan's Sangeet Reception Portrait",
+    tag: 'Sangeet',
+    matchedPersonaIds: ['rohan'],
+    faces: [
+      { name: 'Rohan', personaId: 'rohan', confidence: 99.4, box: { x: 30, y: 14, w: 40, h: 36 } }
+    ]
   },
   {
     id: 2,
-    url: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=900&auto=format&fit=crop&q=80',
-    caption: 'Sangeet stage dance performance',
-    tag: 'Sangeet',
-    matchedPersonaIds: ['rohan', 'priya']
+    url: '/demo/priya_1.jpg',
+    caption: "Priya's Bridal Sister Portrait",
+    tag: 'Ceremony',
+    matchedPersonaIds: ['priya'],
+    faces: [
+      { name: 'Priya', personaId: 'priya', confidence: 99.6, box: { x: 30, y: 14, w: 40, h: 36 } }
+    ]
   },
   {
     id: 3,
-    url: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=900&auto=format&fit=crop&q=80',
-    caption: 'Haldi laughter & smiles',
-    tag: 'Haldi',
-    matchedPersonaIds: ['priya', 'ananya']
+    url: '/demo/kabir_1.jpg',
+    caption: "Kabir's Cocktail Evening Portrait",
+    tag: 'Cocktail',
+    matchedPersonaIds: ['kabir'],
+    faces: [
+      { name: 'Kabir', personaId: 'kabir', confidence: 99.1, box: { x: 30, y: 14, w: 40, h: 36 } }
+    ]
   },
   {
     id: 4,
-    url: 'https://images.unsplash.com/photo-1522673607200-164d1b6ce486?w=900&auto=format&fit=crop&q=80',
-    caption: 'Cocktail evening squad toast',
-    tag: 'Cocktail',
-    matchedPersonaIds: ['kabir']
+    url: '/demo/ananya_1.jpg',
+    caption: "Ananya's Haldi & Mehendi Glow",
+    tag: 'Haldi',
+    matchedPersonaIds: ['ananya'],
+    faces: [
+      { name: 'Ananya', personaId: 'ananya', confidence: 98.9, box: { x: 30, y: 14, w: 40, h: 36 } }
+    ]
   },
   {
     id: 5,
-    url: 'https://images.unsplash.com/photo-1532712938310-34cb3982ef74?w=900&auto=format&fit=crop&q=80',
-    caption: 'Mehendi joy & sisterhood moments',
-    tag: 'Mehendi',
-    matchedPersonaIds: ['rohan', 'ananya']
+    url: '/demo/rohan_kabir.jpg',
+    caption: 'Rohan & Kabir Celebrating at Sangeet',
+    tag: 'Sangeet',
+    matchedPersonaIds: ['rohan', 'kabir'],
+    faces: [
+      { name: 'Rohan', personaId: 'rohan', confidence: 99.2, box: { x: 18, y: 18, w: 28, h: 30 } },
+      { name: 'Kabir', personaId: 'kabir', confidence: 98.8, box: { x: 54, y: 20, w: 28, h: 30 } }
+    ]
   },
   {
     id: 6,
-    url: 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=900&auto=format&fit=crop&q=80',
-    caption: 'Bridal entry candid',
-    tag: 'Ceremony',
-    matchedPersonaIds: ['priya']
+    url: '/demo/priya_ananya.jpg',
+    caption: 'Priya & Ananya Sisterhood Moments',
+    tag: 'Mehendi',
+    matchedPersonaIds: ['priya', 'ananya'],
+    faces: [
+      { name: 'Priya', personaId: 'priya', confidence: 99.5, box: { x: 18, y: 18, w: 28, h: 30 } },
+      { name: 'Ananya', personaId: 'ananya', confidence: 99.1, box: { x: 54, y: 19, w: 28, h: 30 } }
+    ]
   },
   {
     id: 7,
-    url: 'https://images.unsplash.com/photo-1529636798458-92182e662485?w=900&auto=format&fit=crop&q=80',
-    caption: 'Friends selfie at the reception photobooth',
-    tag: 'Reception',
-    matchedPersonaIds: ['kabir']
+    url: '/demo/rohan_priya.jpg',
+    caption: 'Rohan & Priya at Wedding Mandap',
+    tag: 'Ceremony',
+    matchedPersonaIds: ['rohan', 'priya'],
+    faces: [
+      { name: 'Rohan', personaId: 'rohan', confidence: 99.3, box: { x: 20, y: 18, w: 28, h: 30 } },
+      { name: 'Priya', personaId: 'priya', confidence: 99.4, box: { x: 52, y: 19, w: 28, h: 30 } }
+    ]
   },
   {
     id: 8,
-    url: 'https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?w=900&auto=format&fit=crop&q=80',
-    caption: 'Ring exchange ceremony moment',
-    tag: 'Ceremony',
-    matchedPersonaIds: ['rohan', 'ananya']
+    url: '/demo/rohan_ananya.jpg',
+    caption: 'Rohan & Ananya on the Dance Floor',
+    tag: 'Sangeet',
+    matchedPersonaIds: ['rohan', 'ananya'],
+    faces: [
+      { name: 'Rohan', personaId: 'rohan', confidence: 98.9, box: { x: 22, y: 18, w: 28, h: 30 } },
+      { name: 'Ananya', personaId: 'ananya', confidence: 99.2, box: { x: 52, y: 20, w: 28, h: 30 } }
+    ]
   },
   {
     id: 9,
-    url: 'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=900&auto=format&fit=crop&q=80',
-    caption: 'Warm smiles during the cocktail speech',
-    tag: 'Cocktail',
-    matchedPersonaIds: ['priya']
+    url: '/demo/kabir_priya.jpg',
+    caption: 'Kabir & Priya at Reception Banquet',
+    tag: 'Reception',
+    matchedPersonaIds: ['kabir', 'priya'],
+    faces: [
+      { name: 'Kabir', personaId: 'kabir', confidence: 98.9, box: { x: 20, y: 18, w: 28, h: 30 } },
+      { name: 'Priya', personaId: 'priya', confidence: 99.3, box: { x: 52, y: 19, w: 28, h: 30 } }
+    ]
   },
   {
     id: 10,
-    url: 'https://images.unsplash.com/photo-1520854221256-17451cc331bf?w=900&auto=format&fit=crop&q=80',
-    caption: 'Group dance euphoria on the dance floor',
-    tag: 'Sangeet',
-    matchedPersonaIds: ['kabir']
+    url: '/demo/kabir_ananya.jpg',
+    caption: 'Kabir & Ananya Toasting Cocktail Hour',
+    tag: 'Cocktail',
+    matchedPersonaIds: ['kabir', 'ananya'],
+    faces: [
+      { name: 'Kabir', personaId: 'kabir', confidence: 99.0, box: { x: 20, y: 18, w: 28, h: 30 } },
+      { name: 'Ananya', personaId: 'ananya', confidence: 99.1, box: { x: 52, y: 19, w: 28, h: 30 } }
+    ]
   },
   {
     id: 11,
-    url: 'https://images.unsplash.com/photo-1469371670807-013ccf25f16a?w=900&auto=format&fit=crop&q=80',
-    caption: 'Candids under the fairy lights',
+    url: '/demo/squad_all.jpg',
+    caption: 'The Entire Squad Together Under Fairy Lights',
     tag: 'Reception',
-    matchedPersonaIds: ['rohan', 'ananya']
+    matchedPersonaIds: ['rohan', 'priya', 'kabir', 'ananya'],
+    faces: [
+      { name: 'Rohan', personaId: 'rohan', confidence: 99.1, box: { x: 10, y: 18, w: 20, h: 26 } },
+      { name: 'Kabir', personaId: 'kabir', confidence: 98.6, box: { x: 32, y: 20, w: 20, h: 26 } },
+      { name: 'Priya', personaId: 'priya', confidence: 99.4, box: { x: 54, y: 19, w: 20, h: 26 } },
+      { name: 'Ananya', personaId: 'ananya', confidence: 98.8, box: { x: 74, y: 21, w: 20, h: 26 } }
+    ]
   },
   {
     id: 12,
-    url: 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=900&auto=format&fit=crop&q=80',
-    caption: 'Golden hour outdoor portraits',
-    tag: 'Portraits',
-    matchedPersonaIds: ['priya']
-  },
-  {
-    id: 13,
-    url: 'https://images.unsplash.com/photo-1523438885200-e635ba2c371e?w=900&auto=format&fit=crop&q=80',
-    caption: 'College squad cheering the couple',
+    url: '/demo/rohan_dance.jpg',
+    caption: "Rohan's Energetic Baraat Dance",
     tag: 'Baraat',
-    matchedPersonaIds: ['kabir']
-  },
-  {
-    id: 14,
-    url: 'https://images.unsplash.com/photo-1509927083803-4bd519298ac4?w=900&auto=format&fit=crop&q=80',
-    caption: 'Emotional blessings candid',
-    tag: 'Ceremony',
-    matchedPersonaIds: ['rohan']
-  },
-  {
-    id: 15,
-    url: 'https://images.unsplash.com/photo-1537633552985-df8429e8048b?w=900&auto=format&fit=crop&q=80',
-    caption: 'Grand celebration sparklers farewell',
-    tag: 'Reception',
-    matchedPersonaIds: ['priya', 'ananya']
-  },
-  {
-    id: 16,
-    url: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=900&auto=format&fit=crop&q=80',
-    caption: 'Midnight dance beats & laughter',
-    tag: 'Afterparty',
-    matchedPersonaIds: ['kabir']
+    matchedPersonaIds: ['rohan'],
+    faces: [
+      { name: 'Rohan', personaId: 'rohan', confidence: 99.0, box: { x: 30, y: 14, w: 40, h: 36 } }
+    ]
   }
 ];
 
@@ -351,7 +376,7 @@ export default function DemoPage() {
                     <img
                       src={persona.avatar}
                       alt={persona.name}
-                      className="h-full w-full object-cover"
+                      className="h-full w-full object-cover object-top"
                     />
                     {isSelected && (
                       <div className="absolute inset-0 bg-violet-600/40 flex items-center justify-center">
@@ -430,7 +455,7 @@ export default function DemoPage() {
                 <img
                   src={selectedPersona.avatar}
                   alt={selectedPersona.name}
-                  className="h-full w-full object-cover"
+                  className="h-full w-full object-cover object-top"
                 />
               </div>
               <div>
@@ -477,6 +502,39 @@ export default function DemoPage() {
                   loading="lazy"
                 />
 
+                {/* AI Detected Face Bounding Targets */}
+                {photo.faces.map((face) => {
+                  const isMatchedPerson = selectedPersona?.id === face.personaId;
+                  return (
+                    <div
+                      key={face.name}
+                      style={{
+                        left: `${face.box.x}%`,
+                        top: `${face.box.y}%`,
+                        width: `${face.box.w}%`,
+                        height: `${face.box.h}%`,
+                      }}
+                      className={`absolute pointer-events-none rounded-xl transition-all duration-300 ${
+                        isMatchedPerson
+                          ? 'border-2 border-violet-400 bg-violet-500/15 shadow-[0_0_20px_rgba(168,85,247,0.5)] opacity-100 scale-100'
+                          : 'border border-white/40 opacity-0 group-hover:opacity-100 group-hover:border-violet-400/80 group-hover:bg-violet-500/10'
+                      }`}
+                    >
+                      {/* Corner accents */}
+                      <div className="absolute -top-1 -left-1 w-2.5 h-2.5 border-t-2 border-l-2 border-violet-400 rounded-tl-sm" />
+                      <div className="absolute -top-1 -right-1 w-2.5 h-2.5 border-t-2 border-r-2 border-violet-400 rounded-tr-sm" />
+                      <div className="absolute -bottom-1 -left-1 w-2.5 h-2.5 border-b-2 border-l-2 border-violet-400 rounded-bl-sm" />
+                      <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 border-b-2 border-r-2 border-violet-400 rounded-br-sm" />
+
+                      {/* Name Tag */}
+                      <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap px-1.5 py-0.5 rounded-md bg-black/85 backdrop-blur-md text-[9px] font-bold text-violet-200 border border-violet-400/50 shadow-md flex items-center gap-1">
+                        <span>{face.name}</span>
+                        <span className="text-[8px] text-emerald-400 font-mono">{face.confidence}%</span>
+                      </div>
+                    </div>
+                  );
+                })}
+
                 {/* Top Overlay Tag */}
                 <div className="absolute top-2.5 left-2.5 z-10">
                   <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-zinc-300 border border-white/10">
@@ -498,11 +556,28 @@ export default function DemoPage() {
                   <Heart className={`h-4 w-4 ${isFav ? 'fill-current' : ''}`} />
                 </button>
 
-                {/* Bottom Caption Pill */}
-                <div className="absolute inset-x-0 bottom-0 p-2.5 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
+                {/* Bottom Caption Pill with in-photo members */}
+                <div className="absolute inset-x-0 bottom-0 p-2.5 bg-gradient-to-t from-black/95 via-black/60 to-transparent">
                   <p className="text-xs font-semibold text-white truncate drop-shadow-sm">
                     {photo.caption}
                   </p>
+                  <div className="flex items-center gap-1 mt-1 overflow-hidden">
+                    <span className="text-[9px] text-violet-300/80 font-medium shrink-0">In photo:</span>
+                    <div className="flex items-center gap-1 truncate">
+                      {photo.faces.map((f) => (
+                        <span
+                          key={f.name}
+                          className={`text-[9px] px-1 py-0.5 rounded font-semibold ${
+                            selectedPersona?.id === f.personaId
+                              ? 'bg-violet-600 text-white shadow-sm'
+                              : 'bg-white/15 text-zinc-300'
+                          }`}
+                        >
+                          {f.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
             );
@@ -559,13 +634,37 @@ export default function DemoPage() {
               <X className="h-5 w-5" />
             </button>
 
-            <div className="relative aspect-[4/3] sm:aspect-[16/10] w-full bg-black">
+            <div className="relative aspect-[4/3] sm:aspect-[16/10] w-full bg-black flex items-center justify-center overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={selectedPhoto.url}
                 alt={selectedPhoto.caption}
                 className="h-full w-full object-contain"
               />
+
+              {/* Detected Face Overlay on Lightbox */}
+              {selectedPhoto.faces.map((face) => (
+                <div
+                  key={face.name}
+                  style={{
+                    left: `${face.box.x}%`,
+                    top: `${face.box.y}%`,
+                    width: `${face.box.w}%`,
+                    height: `${face.box.h}%`,
+                  }}
+                  className="absolute pointer-events-none rounded-xl border-2 border-violet-400 bg-violet-500/15 shadow-[0_0_25px_rgba(168,85,247,0.5)]"
+                >
+                  <div className="absolute -top-1.5 -left-1.5 w-3 h-3 border-t-2 border-l-2 border-violet-400 rounded-tl-sm" />
+                  <div className="absolute -top-1.5 -right-1.5 w-3 h-3 border-t-2 border-r-2 border-violet-400 rounded-tr-sm" />
+                  <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 border-b-2 border-l-2 border-violet-400 rounded-bl-sm" />
+                  <div className="absolute -bottom-1.5 -right-1.5 w-3 h-3 border-b-2 border-r-2 border-violet-400 rounded-br-sm" />
+
+                  <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-0.5 rounded-md bg-black/90 backdrop-blur-md text-[10px] font-bold text-violet-200 border border-violet-400/50 shadow-md flex items-center gap-1.5">
+                    <span>{face.name}</span>
+                    <span className="text-[9px] text-emerald-400 font-mono">{face.confidence}% Match</span>
+                  </div>
+                </div>
+              ))}
             </div>
 
             <div className="p-4 sm:p-5 flex items-center justify-between gap-4 border-t border-white/10 bg-[#0d0a19]">
@@ -574,7 +673,7 @@ export default function DemoPage() {
                   {selectedPhoto.caption}
                 </h4>
                 <p className="text-xs text-zinc-400 mt-0.5">
-                  Category: {selectedPhoto.tag} • High Resolution 4K
+                  Category: {selectedPhoto.tag} • Detected: {selectedPhoto.faces.map((f) => `${f.name} (${f.confidence}%)`).join(', ')}
                 </p>
               </div>
 
