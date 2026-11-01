@@ -79,6 +79,8 @@ export default function LiveMomentsWallPage() {
   const [prioritizeJoined, setPrioritizeJoined] = useState(true);
   const [slideDuration, setSlideDuration] = useState<number>(7); // seconds
   const [showQrCode, setShowQrCode] = useState(true);
+  const [showAnnouncement, setShowAnnouncement] = useState(false);
+  const [announcementText, setAnnouncementText] = useState('');
 
   // Copy Public Live Wall Link
   const handleCopyWallLink = () => {
@@ -108,6 +110,8 @@ export default function LiveMomentsWallPage() {
           slideDuration,
           showQrCode,
           aspectRatio,
+          showAnnouncement,
+          announcementText: announcementText.trim(),
         }
       });
       setEmergencyToast('Live Wall settings saved successfully');
@@ -174,6 +178,8 @@ export default function LiveMomentsWallPage() {
           if (ev.liveWallSettings.slideDuration) setSlideDuration(ev.liveWallSettings.slideDuration);
           if (ev.liveWallSettings.showQrCode !== undefined) setShowQrCode(ev.liveWallSettings.showQrCode);
           if (ev.liveWallSettings.aspectRatio) setAspectRatio(ev.liveWallSettings.aspectRatio);
+          if (ev.liveWallSettings.showAnnouncement !== undefined) setShowAnnouncement(ev.liveWallSettings.showAnnouncement);
+          if (ev.liveWallSettings.announcementText) setAnnouncementText(ev.liveWallSettings.announcementText);
         }
       }
 
@@ -618,6 +624,26 @@ export default function LiveMomentsWallPage() {
               </div>
             </div>
 
+            {/* Pinned Live Wall Announcement Banner */}
+            {showAnnouncement && announcementText && (
+              <div className="absolute top-3 sm:top-6 left-1/2 -translate-x-1/2 z-30 max-w-[85vw] sm:max-w-[70vw] w-auto pointer-events-none">
+                <div className="px-4 py-2 sm:px-6 sm:py-2.5 rounded-2xl bg-black/85 backdrop-blur-xl border border-amber-400/50 shadow-2xl shadow-amber-500/10 flex items-center gap-2.5 sm:gap-3 text-left">
+                  <span className="flex h-2.5 w-2.5 relative shrink-0">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500" />
+                  </span>
+                  <div className="min-w-0">
+                    <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-amber-300 block">
+                      Live Announcement
+                    </span>
+                    <p className="text-xs sm:text-sm md:text-base font-semibold text-white tracking-wide truncate sm:whitespace-normal">
+                      {announcementText}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Bottom Left: Subtle Brand Watermark (Landscape / Standard TV displays) */}
             {aspectRatio !== '9-16' && (
               <div className="absolute bottom-6 left-6 z-20 pointer-events-none hidden md:block">
@@ -964,6 +990,37 @@ export default function LiveMomentsWallPage() {
                     className="w-4 h-4 rounded text-violet-600 focus:ring-violet-500 bg-zinc-800 border-white/20 shrink-0"
                   />
                 </label>
+
+                {/* Organizer Pinned Announcement Banner */}
+                {isOrganizer && (
+                  <div className="p-3 rounded-xl sm:rounded-2xl bg-white/5 border border-white/10 space-y-2.5">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                        <span className="text-xs font-semibold text-white">Pinned Live Wall Announcement</span>
+                      </div>
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={showAnnouncement}
+                          onChange={(e) => setShowAnnouncement(e.target.checked)}
+                          className="w-4 h-4 rounded text-amber-500 focus:ring-amber-400 bg-zinc-800 border-white/20 shrink-0"
+                        />
+                      </label>
+                    </div>
+                    <input
+                      type="text"
+                      value={announcementText}
+                      onChange={(e) => setAnnouncementText(e.target.value)}
+                      placeholder="e.g. 🍽️ Dinner buffet is open in Hall B, or 💍 Pheras starting in 15m"
+                      className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 text-white placeholder-zinc-500 text-xs focus:outline-none focus:border-amber-400 transition-colors"
+                      maxLength={120}
+                    />
+                    <p className="text-[10px] text-zinc-400">
+                      Broadcasts a live notice banner at the top of the projector/TV screen for guests.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Slide Duration */}

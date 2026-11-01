@@ -57,6 +57,12 @@ export function Header({
           >
             Stories
           </a>
+          <a
+            href="#landing-faq"
+            className="text-xs font-medium uppercase tracking-[0.12em] text-white/60 hover:text-white transition-colors"
+          >
+            FAQ
+          </a>
         </div>
 
         <div className="hidden sm:flex items-center gap-3 md:gap-4">
@@ -133,6 +139,13 @@ export function Header({
                 className="py-2 text-sm text-white/70 hover:text-white"
               >
                 Stories
+              </a>
+              <a
+                href="#landing-faq"
+                onClick={() => setMobileMenuOpen(false)}
+                className="py-2 text-sm text-white/70 hover:text-white"
+              >
+                FAQ
               </a>
             </div>
 

@@ -6,9 +6,11 @@ import { MetricsRibbon } from './MetricsRibbon';
 import { FeaturesSection } from './FeaturesSection';
 import { AudienceSwitcher } from './AudienceSwitcher';
 import { ExperienceOnPhone } from './ExperienceOnPhone';
+import { ComparisonSection } from './ComparisonSection';
 import { HowItWorks } from './HowItWorks';
 import { PricingSection } from './PricingSection';
 import { TestimonialsSection } from './TestimonialsSection';
+import { FAQSection } from './FAQSection';
 import { CTASection } from './CTASection';
 import { Footer } from './Footer';
 
@@ -90,6 +92,8 @@ export function LandingPage({
 
       <ExperienceOnPhone />
 
+      <ComparisonSection />
+
       <HowItWorks />
 
       <PricingSection />
@@ -102,6 +106,8 @@ export function LandingPage({
         trustedCompanies={["Weddings", "Corporate Events", "Festivals", "Concerts", "Conferences"]}
         trustedCompaniesTitle="Trusted across all event types"
       />
+
+      <FAQSection />
 
       <CTASection
         signupHref={signupHref}
@@ -123,9 +129,11 @@ export { ScrollMorphHero } from './ScrollMorphHero';
 export { FeaturesSection } from './FeaturesSection';
 export { AudienceSwitcher } from './AudienceSwitcher';
 export { ExperienceOnPhone } from './ExperienceOnPhone';
+export { ComparisonSection } from './ComparisonSection';
 export { HowItWorks } from './HowItWorks';
 export { PricingSection } from './PricingSection';
 export { TestimonialsSection } from './TestimonialsSection';
+export { FAQSection } from './FAQSection';
 export { CTASection } from './CTASection';
 export { Footer } from './Footer';
 export { FeaturesGrid } from './FeaturesGrid';
