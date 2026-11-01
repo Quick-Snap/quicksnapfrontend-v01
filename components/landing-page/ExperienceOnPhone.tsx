@@ -9,8 +9,8 @@ export function ExperienceOnPhone() {
   const user = useAuthStore((state) => state.user);
   const isLoggedIn = !!user;
 
-  // Use a reliable QR code generator URL pointing to live app
-  const demoQrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https%3A%2F%2Fwww.roopixo.com%2Fevents&color=ffffff&bgcolor=15082a';
+  // Point QR code directly to the public interactive demo
+  const demoQrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https%3A%2F%2Fwww.roopixo.com%2Fdemo&color=ffffff&bgcolor=15082a';
 
   return (
     <section className="relative py-24 px-6 bg-[#06010f] border-t border-white/[0.06] overflow-hidden">
@@ -112,6 +112,14 @@ export function ExperienceOnPhone() {
               <p className="text-[11px] text-white/45 font-light">
                 Opens live Roopixo mobile guest experience instantly
               </p>
+
+              <Link
+                href="/demo"
+                className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-violet-400 hover:text-violet-300 underline underline-offset-4 transition-colors"
+              >
+                <span>Or open interactive demo in browser</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
             </div>
           </motion.div>
         </div>

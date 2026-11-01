@@ -42,6 +42,7 @@ import { fetchAllEventPhotos, fetchEventPhotosProgressive } from '@/lib/photoFet
 import { canAccessEventManagePage, canFullManageEvent } from '@/lib/eventPermissions';
 import { enrichPhotosWithDisplayUrls, getPhotoDisplayUrl } from '@/lib/photoUrl';
 import RefreshAttendeeMatchesCard from '@/app/components/events/RefreshAttendeeMatchesCard';
+import EventSpotlightCard from '@/components/events/EventSpotlightCard';
 import EditEventModal from '@/app/components/events/EditEventModal';
 import CustomizeAccessCodeModal from '@/app/components/events/CustomizeAccessCodeModal';
 import PrintableEventKitModal from '@/app/components/events/PrintableEventKitModal';
@@ -1049,6 +1050,17 @@ export default function ManageEventPage() {
                 </div>
 
                 <RefreshAttendeeMatchesCard eventId={eventId} event={event} variant={uiTheme === 'dark' ? 'dark' : 'light'} />
+
+                {/* VIP / Couple Spotlight Showcase Card */}
+                {canFullManage && (
+                    <EventSpotlightCard
+                        eventId={eventId}
+                        event={event}
+                        onUpdate={() => {
+                            queryClient.invalidateQueries(['event', eventId]);
+                        }}
+                    />
+                )}
 
                 {/* Select photos for dashboard (official gallery) */}
                 {canFullManage && (

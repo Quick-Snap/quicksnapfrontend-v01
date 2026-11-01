@@ -609,6 +609,18 @@ export const eventApi = {
     return response.data;
   },
 
+  getSpotlightPhotos: async (eventId: string) => {
+    const response = await api.get<ApiResponse<{
+      enabled: boolean;
+      title: string;
+      matchMode: 'all' | 'any';
+      vipUsers?: any[];
+      photos: any[];
+      totalCount: number;
+    }>>(`/events/${eventId}/spotlight-photos`);
+    return response.data;
+  },
+
   notifySelectionReady: async (eventId: string, data?: { clientName?: string; clientContact?: string }) => {
     const response = await api.post<
       ApiResponse<{

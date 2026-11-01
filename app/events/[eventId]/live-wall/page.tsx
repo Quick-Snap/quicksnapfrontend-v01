@@ -28,7 +28,10 @@ import {
   ShieldAlert,
   Share2,
   Copy,
-  Check
+  Check,
+  Pin,
+  Plus,
+  Trash2
 } from 'lucide-react';
 import { eventApi } from '@/lib/api';
 import { fetchAllEventPhotos, normalizePhotosFromGet } from '@/lib/photoFetch';
@@ -49,6 +52,19 @@ interface PhotoScoreItem {
   hasJoinedAttendee: boolean;
   confidence: number;
 }
+
+interface AnnouncementPreset {
+  id: string;
+  text: string;
+  createdAt?: string | Date;
+}
+
+const DEFAULT_ANNOUNCEMENTS: AnnouncementPreset[] = [
+  { id: 'preset-1', text: '🍽️ Dinner buffet is now open in the dining hall' },
+  { id: 'preset-2', text: '💍 Main ceremony & rituals starting shortly at the stage' },
+  { id: 'preset-3', text: '📸 Scan the QR code to find all photos of you instantly!' },
+  { id: 'preset-4', text: '🎉 Welcome to all friends and family! Keep smiling!' }
+];
 
 export default function LiveMomentsWallPage() {
   const params = useParams();
@@ -81,6 +97,9 @@ export default function LiveMomentsWallPage() {
   const [showQrCode, setShowQrCode] = useState(true);
   const [showAnnouncement, setShowAnnouncement] = useState(false);
   const [announcementText, setAnnouncementText] = useState('');
+  const [announcements, setAnnouncements] = useState<AnnouncementPreset[]>(DEFAULT_ANNOUNCEMENTS);
+  const [activeAnnouncementId, setActiveAnnouncementId] = useState<string | null>(null);
+  const [newPresetText, setNewPresetText] = useState('');
 
   // Copy Public Live Wall Link
   const handleCopyWallLink = () => {
@@ -112,6 +131,8 @@ export default function LiveMomentsWallPage() {
           aspectRatio,
           showAnnouncement,
           announcementText: announcementText.trim(),
+          activeAnnouncementId,
+          announcements
         }
       });
       setEmergencyToast('Live Wall settings saved successfully');
@@ -120,6 +141,94 @@ export default function LiveMomentsWallPage() {
       console.error('Failed to persist live wall settings:', err);
     } finally {
       setSavingSettings(false);
+    }
+  };
+
+  // 1-Click StreamYard Style Pin/Unpin Announcement
+  const handleTogglePinAnnouncement = async (preset: AnnouncementPreset) => {
+    const isCurrentlyPinned = activeAnnouncementId === preset.id && showAnnouncement;
+    const nextActiveId = isCurrentlyPinned ? null : preset.id;
+    const nextShow = !isCurrentlyPinned;
+    const nextText = isCurrentlyPinned ? '' : preset.text;
+
+    setActiveAnnouncementId(nextActiveId);
+    setShowAnnouncement(nextShow);
+    setAnnouncementText(nextText);
+
+    if (isOrganizer && eventId) {
+      await eventApi.update(eventId, {
+        liveWallSettings: {
+          streamMode,
+          prioritizeGroups,
+          prioritizeJoined,
+          slideDuration,
+          showQrCode,
+          aspectRatio,
+          showAnnouncement: nextShow,
+          announcementText: nextText,
+          activeAnnouncementId: nextActiveId,
+          announcements
+        }
+      }).catch(console.error);
+    }
+  };
+
+  const handleAddPreset = async () => {
+    if (!newPresetText.trim()) return;
+    const newPreset: AnnouncementPreset = {
+      id: `preset-${Date.now()}`,
+      text: newPresetText.trim(),
+      createdAt: new Date()
+    };
+    const updated = [newPreset, ...announcements];
+    setAnnouncements(updated);
+    setNewPresetText('');
+    if (isOrganizer && eventId) {
+      await eventApi.update(eventId, {
+        liveWallSettings: {
+          streamMode,
+          prioritizeGroups,
+          prioritizeJoined,
+          slideDuration,
+          showQrCode,
+          aspectRatio,
+          showAnnouncement,
+          announcementText,
+          activeAnnouncementId,
+          announcements: updated
+        }
+      }).catch(console.error);
+    }
+  };
+
+  const handleDeletePreset = async (presetId: string) => {
+    const updated = announcements.filter(p => p.id !== presetId);
+    setAnnouncements(updated);
+    const wasActive = activeAnnouncementId === presetId;
+    const nextShow = wasActive ? false : showAnnouncement;
+    const nextText = wasActive ? '' : announcementText;
+    const nextActiveId = wasActive ? null : activeAnnouncementId;
+
+    if (wasActive) {
+      setActiveAnnouncementId(null);
+      setShowAnnouncement(false);
+      setAnnouncementText('');
+    }
+    if (isOrganizer && eventId) {
+      await eventApi.update(eventId, {
+        liveWallSettings: {
+          streamMode,
+          prioritizeGroups,
+          prioritizeJoined,
+          slideDuration,
+          showQrCode,
+          aspectRatio,
+          showAnnouncement: nextShow,
+          announcementText: nextText,
+          activeAnnouncementId: nextActiveId,
+          announcements: updated
+        }
+      }).catch(console.error);
     }
   };
 
@@ -180,6 +289,10 @@ export default function LiveMomentsWallPage() {
           if (ev.liveWallSettings.aspectRatio) setAspectRatio(ev.liveWallSettings.aspectRatio);
           if (ev.liveWallSettings.showAnnouncement !== undefined) setShowAnnouncement(ev.liveWallSettings.showAnnouncement);
           if (ev.liveWallSettings.announcementText) setAnnouncementText(ev.liveWallSettings.announcementText);
+          if (ev.liveWallSettings.activeAnnouncementId !== undefined) setActiveAnnouncementId(ev.liveWallSettings.activeAnnouncementId);
+          if (Array.isArray(ev.liveWallSettings.announcements) && ev.liveWallSettings.announcements.length > 0) {
+            setAnnouncements(ev.liveWallSettings.announcements);
+          }
         }
       }
 
@@ -991,34 +1104,92 @@ export default function LiveMomentsWallPage() {
                   />
                 </label>
 
-                {/* Organizer Pinned Announcement Banner */}
+                {/* Organizer StreamYard-Style Pinned Announcement Banners */}
                 {isOrganizer && (
-                  <div className="p-3 rounded-xl sm:rounded-2xl bg-white/5 border border-white/10 space-y-2.5">
+                  <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-3">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-                        <span className="text-xs font-semibold text-white">Pinned Live Wall Announcement</span>
+                        <span className={`w-2.5 h-2.5 rounded-full ${showAnnouncement && announcementText ? 'bg-amber-400 animate-ping' : 'bg-zinc-600'}`} />
+                        <span className="text-xs font-bold text-white tracking-wide">Live StreamYard Banners</span>
                       </div>
-                      <label className="flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={showAnnouncement}
-                          onChange={(e) => setShowAnnouncement(e.target.checked)}
-                          className="w-4 h-4 rounded text-amber-500 focus:ring-amber-400 bg-zinc-800 border-white/20 shrink-0"
-                        />
-                      </label>
+                      <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300">
+                        {showAnnouncement && announcementText ? '1 Pinned Live' : 'No Banner Active'}
+                      </span>
                     </div>
-                    <input
-                      type="text"
-                      value={announcementText}
-                      onChange={(e) => setAnnouncementText(e.target.value)}
-                      placeholder="e.g. 🍽️ Dinner buffet is open in Hall B, or 💍 Pheras starting in 15m"
-                      className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 text-white placeholder-zinc-500 text-xs focus:outline-none focus:border-amber-400 transition-colors"
-                      maxLength={120}
-                    />
-                    <p className="text-[10px] text-zinc-400">
-                      Broadcasts a live notice banner at the top of the projector/TV screen for guests.
+
+                    <p className="text-[11px] text-zinc-400 leading-relaxed">
+                      1-click pin pre-written announcements on the projector / TV in real-time.
                     </p>
+
+                    {/* Pre-saved Banner Cards */}
+                    <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                      {announcements.map((preset) => {
+                        const isPinned = activeAnnouncementId === preset.id && showAnnouncement;
+                        return (
+                          <div
+                            key={preset.id}
+                            className={`p-2.5 rounded-xl border transition-all flex items-center justify-between gap-2.5 ${
+                              isPinned
+                                ? 'bg-amber-500/15 border-amber-400/80 shadow-md shadow-amber-500/10'
+                                : 'bg-black/30 border-white/10 hover:border-white/20'
+                            }`}
+                          >
+                            <p className="text-xs text-white font-medium flex-1 leading-snug">
+                              {preset.text}
+                            </p>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => handleTogglePinAnnouncement(preset)}
+                                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1 transition-all ${
+                                  isPinned
+                                    ? 'bg-amber-500 hover:bg-amber-400 text-black shadow-sm'
+                                    : 'bg-white/10 hover:bg-white/20 text-zinc-300'
+                                }`}
+                              >
+                                <Pin className={`h-3 w-3 ${isPinned ? 'fill-current' : ''}`} />
+                                <span>{isPinned ? 'Unpin' : 'Pin'}</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeletePreset(preset.id)}
+                                className="p-1 rounded-lg text-zinc-500 hover:text-rose-400 hover:bg-white/5 transition-colors"
+                                title="Delete preset"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Add Custom Banner Form */}
+                    <div className="pt-2 border-t border-white/10 flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={newPresetText}
+                        onChange={(e) => setNewPresetText(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddPreset();
+                          }
+                        }}
+                        placeholder="Add quick banner (e.g. 💍 Varmala starting in 5m)..."
+                        className="flex-1 px-3 py-1.5 rounded-xl bg-black/40 border border-white/10 text-white placeholder-zinc-500 text-xs focus:outline-none focus:border-amber-400"
+                        maxLength={120}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddPreset}
+                        disabled={!newPresetText.trim()}
+                        className="px-3 py-1.5 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:bg-zinc-800 text-white disabled:text-zinc-500 text-xs font-semibold flex items-center gap-1 transition-all"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                        <span>Add</span>
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

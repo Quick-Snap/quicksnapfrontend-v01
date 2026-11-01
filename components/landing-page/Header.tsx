@@ -39,6 +39,15 @@ export function Header({
           >
             Audience
           </a>
+          <Link
+            href="/demo"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-violet-400 hover:text-violet-300 transition-colors"
+          >
+            <span>Demo</span>
+            <span className="px-1.5 py-0.5 text-[9px] font-bold tracking-widest text-white bg-violet-600 rounded-full animate-pulse">
+              LIVE
+            </span>
+          </Link>
           <a
             href="#landing-how-it-works"
             className="text-xs font-medium uppercase tracking-[0.12em] text-white/60 hover:text-white transition-colors"
@@ -119,6 +128,16 @@ export function Header({
               >
                 Audience
               </a>
+              <Link
+                href="/demo"
+                onClick={() => setMobileMenuOpen(false)}
+                className="py-2 text-sm font-semibold text-violet-400 hover:text-violet-300 flex items-center justify-center gap-1.5"
+              >
+                <span>Interactive Demo</span>
+                <span className="px-1.5 py-0.5 text-[9px] font-bold text-white bg-violet-600 rounded-full animate-pulse">
+                  LIVE
+                </span>
+              </Link>
               <a
                 href="#landing-how-it-works"
                 onClick={() => setMobileMenuOpen(false)}

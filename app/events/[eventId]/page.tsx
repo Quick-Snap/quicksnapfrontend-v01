@@ -114,7 +114,7 @@ export default function PublicEventPage() {
     const [selectedPhoto, setSelectedPhoto] = useState<any>(null);
     const [selectedSubEventId, setSelectedSubEventId] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
-    const [photoViewMode, setPhotoViewMode] = useState<'all' | 'my' | 'album' | 'bookmark' | 'circle'>('all');
+    const [photoViewMode, setPhotoViewMode] = useState<'all' | 'my' | 'album' | 'bookmark' | 'circle' | 'spotlight'>('all');
     const [myPhotosFilter, setMyPhotosFilter] = useState<'all' | 'favorites'>('all');
     const [batchDownloading, setBatchDownloading] = useState(false);
     const [notifying, setNotifying] = useState(false);
@@ -437,6 +437,26 @@ export default function PublicEventPage() {
         return circlePhotosResult?.data?.photos || [];
     }, [circlePhotosResult]);
 
+    // Fetch VIP Couple Spotlight photos
+    const isSpotlightEnabled = Boolean(
+        event?.spotlight?.enabled &&
+        Array.isArray(event.spotlight.primaryUserIds) &&
+        event.spotlight.primaryUserIds.length > 0
+    );
+
+    const { data: spotlightResult, isLoading: loadingSpotlightPhotos } = useQuery(
+        ['spotlightPhotos', eventId],
+        () => eventApi.getSpotlightPhotos(eventId),
+        {
+            enabled: !!eventId && isSpotlightEnabled,
+            staleTime: 30 * 1000,
+            retry: reactQueryRetry
+        }
+    );
+    const spotlightPhotos = useMemo(() => spotlightResult?.data?.photos || [], [spotlightResult]);
+    const spotlightCount = spotlightPhotos.length;
+    const spotlightTitle = event?.spotlight?.title || 'Couple';
+
     // Build unified map of all known event photos (official, personal matched, and selections)
     const allKnownPhotosMap = useMemo(() => {
         const map = new Map<string, any>();
@@ -563,6 +583,9 @@ export default function PublicEventPage() {
 
     // Base photos before ceremony / sub-event filtering
     const baseDisplayPhotos = useMemo(() => {
+        if (photoViewMode === 'spotlight') {
+            return spotlightPhotos;
+        }
         if (photoViewMode === 'circle') {
             return circlePhotos;
         }
@@ -582,7 +605,7 @@ export default function PublicEventPage() {
             return myBookmarkPhotos;
         }
         return allKnownPhotosList;
-    }, [photoViewMode, myPhotosFilter, currentUser, myPhotos, myLikedPhotos, myAlbumPhotos, myBookmarkPhotos, allKnownPhotosList, circlePhotos]);
+    }, [photoViewMode, myPhotosFilter, currentUser, myPhotos, myLikedPhotos, myAlbumPhotos, myBookmarkPhotos, allKnownPhotosList, circlePhotos, spotlightPhotos]);
 
     // Filter by selected ceremony / sub-event if active
     const displayPhotos = useMemo(() => {
@@ -602,7 +625,7 @@ export default function PublicEventPage() {
         }).length;
     }, [baseDisplayPhotos]);
 
-    const handleSwitchViewMode = useCallback((mode: 'all' | 'my' | 'album' | 'bookmark' | 'circle') => {
+    const handleSwitchViewMode = useCallback((mode: 'all' | 'my' | 'album' | 'bookmark' | 'circle' | 'spotlight') => {
         setPhotoViewMode(mode);
         if (mode === 'my') {
             setMyPhotosFilter('all');
@@ -1001,13 +1024,15 @@ export default function PublicEventPage() {
     const isLoadingPhotos =
         !currentUser && !isProofingMode
             ? previewLoading
-            : photoViewMode === 'circle'
-              ? loadingCirclePhotos
-              : photoViewMode === 'my' && !!currentUser
-              ? myPhotosLoading
-              : photoViewMode === 'all'
-                ? photosLoading
-                : false;
+            : photoViewMode === 'spotlight'
+              ? loadingSpotlightPhotos
+              : photoViewMode === 'circle'
+                ? loadingCirclePhotos
+                : photoViewMode === 'my' && !!currentUser
+                ? myPhotosLoading
+                : photoViewMode === 'all'
+                  ? photosLoading
+                  : false;
 
     // Pagination calculations
     const totalPhotos = displayPhotos.length;
@@ -1491,7 +1516,9 @@ export default function PublicEventPage() {
                     <p className="mx-auto mt-2 max-w-lg px-2 text-sm leading-relaxed text-zinc-600 sm:text-base dark:text-gray-400">
                         {!currentUser && !isProofingMode
                             ? 'Preview below — sign in for the full set and downloads.'
-                            : photoViewMode === 'circle'
+                            : photoViewMode === 'spotlight'
+                              ? `Curated ${spotlightTitle} moments (${spotlightCount} photos)`
+                              : photoViewMode === 'circle'
                               ? selectedCircle
                                 ? `Showing mutual shots for "${selectedCircle.name}"`
                                 : 'Circle mutual photos'
@@ -1664,6 +1691,34 @@ export default function PublicEventPage() {
                                     </span>
                                 )}
                             </button>
+
+                            {/* TAB: VIP SPOTLIGHT / COUPLE */}
+                            {isSpotlightEnabled && (
+                                <button
+                                    type="button"
+                                    onClick={() => handleSwitchViewMode('spotlight')}
+                                    aria-label={`View ${spotlightTitle} photos`}
+                                    className={`min-h-[44px] whitespace-nowrap rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 ease-out flex items-center justify-center gap-1.5 ${
+                                        photoViewMode === 'spotlight'
+                                            ? 'flex-1 sm:flex-initial px-4 sm:px-5 py-2.5 bg-gradient-to-r from-rose-500 to-pink-600 text-white shadow-md shadow-rose-500/25'
+                                            : 'flex-initial shrink-0 px-2.5 sm:px-3.5 py-2 text-zinc-600 hover:bg-zinc-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white'
+                                    }`}
+                                >
+                                    <Sparkles className={`h-3.5 w-3.5 shrink-0 ${photoViewMode === 'spotlight' ? 'text-white' : 'text-rose-500'}`} />
+                                    <span className={photoViewMode === 'spotlight' ? 'inline' : 'hidden sm:inline'}>
+                                        {spotlightTitle}
+                                    </span>
+                                    {spotlightCount > 0 && (
+                                        <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                                            photoViewMode === 'spotlight'
+                                                ? 'bg-white/20 text-white'
+                                                : 'bg-rose-500/10 text-rose-600 dark:bg-rose-500/20 dark:text-rose-300'
+                                        }`}>
+                                            {spotlightCount}
+                                        </span>
+                                    )}
+                                </button>
+                            )}
 
                             {/* TAB 5: ROOPIXO CIRCLES */}
                             <button
@@ -2149,7 +2204,28 @@ export default function PublicEventPage() {
                         )}
                     </>
                 ) : (
-                    photoViewMode === 'circle' ? (
+                    photoViewMode === 'spotlight' ? (
+                        <div className={`rounded-[1.65rem] px-6 py-12 sm:py-16 text-center ${softSurface} border border-rose-500/20 bg-gradient-to-b from-rose-500/5 via-transparent to-transparent`}>
+                            <div className="mx-auto mb-5 relative flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-rose-500 to-pink-600 text-white shadow-xl shadow-rose-500/25">
+                                <Sparkles className="h-9 w-9" />
+                            </div>
+                            <h3 className="mb-2 text-xl sm:text-2xl font-bold text-zinc-900 dark:text-white">
+                                No {spotlightTitle} Photos Found Yet
+                            </h3>
+                            <p className="mx-auto max-w-md text-sm sm:text-base leading-relaxed text-zinc-600 dark:text-gray-300 mb-6">
+                                Uploaded shots of the VIP spotlight will automatically appear here as soon as photographers sync them!
+                            </p>
+                            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => handleSwitchViewMode('all')}
+                                    className="w-full sm:w-auto h-11 px-5 rounded-xl border-zinc-300 dark:border-white/20 font-semibold"
+                                >
+                                    Browse All Photos ({authenticatedPhotoTotal || totalPhotos})
+                                </Button>
+                            </div>
+                        </div>
+                    ) : photoViewMode === 'circle' ? (
                         <div className={`rounded-[1.65rem] px-6 py-12 sm:py-16 text-center ${softSurface} border border-violet-500/20 bg-gradient-to-b from-violet-500/5 via-transparent to-transparent`}>
                             <div className="mx-auto mb-5 relative flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-purple-600 to-indigo-600 text-white shadow-xl shadow-purple-500/25">
                                 <Users className="h-9 w-9" />
