@@ -1208,5 +1208,73 @@ export const adminCustomPaymentLinksApi = {
   }
 };
 
+export interface CircleMember {
+  userId: any;
+  name: string;
+  avatar?: string;
+  status: 'pending' | 'accepted' | 'declined';
+  role: 'creator' | 'member';
+  joinedAt?: string;
+}
+
+export interface EventCircleItem {
+  _id: string;
+  eventId: string;
+  name: string;
+  inviteCode: string;
+  createdBy: any;
+  members: CircleMember[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CircleInviteInfo {
+  _id: string;
+  name: string;
+  eventId: string;
+  creatorName: string;
+  memberCount: number;
+  maxMembers: number;
+  isFull: boolean;
+  isAlreadyMember: boolean;
+}
+
+export const circleApi = {
+  getEventCircles: async (eventId: string) => {
+    const response = await api.get<ApiResponse<EventCircleItem[]>>(`/events/${eventId}/circles`);
+    return response.data;
+  },
+  createCircle: async (eventId: string, name: string) => {
+    const response = await api.post<ApiResponse<EventCircleItem>>(`/events/${eventId}/circles`, { name });
+    return response.data;
+  },
+  getInviteInfo: async (eventId: string, inviteCode: string) => {
+    const response = await api.get<ApiResponse<CircleInviteInfo>>(`/events/${eventId}/circles/invite/${inviteCode}`);
+    return response.data;
+  },
+  joinCircle: async (eventId: string, inviteCode: string) => {
+    const response = await api.post<ApiResponse<EventCircleItem>>(`/events/${eventId}/circles/invite/${inviteCode}/join`);
+    return response.data;
+  },
+  leaveCircle: async (eventId: string, circleId: string) => {
+    const response = await api.post<ApiResponse<any>>(`/events/${eventId}/circles/${circleId}/leave`);
+    return response.data;
+  },
+  deleteCircle: async (eventId: string, circleId: string) => {
+    const response = await api.delete<ApiResponse<any>>(`/events/${eventId}/circles/${circleId}`);
+    return response.data;
+  },
+  getCirclePhotos: async (eventId: string, circleId: string, memberIds?: string[]) => {
+    const params = memberIds && memberIds.length > 0 ? { memberIds: memberIds.join(',') } : {};
+    const response = await api.get<ApiResponse<{
+      circle: EventCircleItem;
+      activeMemberIds: string[];
+      photos: any[];
+      totalCount: number;
+    }>>(`/events/${eventId}/circles/${circleId}/photos`, { params });
+    return response.data;
+  }
+};
+
 export default api;
 

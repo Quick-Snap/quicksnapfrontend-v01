@@ -55,6 +55,10 @@ import GuestUploadModal from '@/app/components/events/GuestUploadModal';
 import AIDiscoveryLounge from '@/app/components/events/AIDiscoveryLounge';
 import { formatEventSchedule } from '@/lib/eventDateUtils';
 import { getEventProfile } from '@/lib/eventProfiles';
+import { circleApi, EventCircleItem } from '@/lib/api';
+import CirclesModal from '@/components/circles/CirclesModal';
+import JoinCircleModal from '@/components/circles/JoinCircleModal';
+import CircleSquadFilter from '@/components/circles/CircleSquadFilter';
 
 const PHOTOS_PER_PAGE = 48;
 const PREVIEW_PHOTO_COUNT = 4;
@@ -94,6 +98,7 @@ function extractTotalFromPhotosApi(res: any): number | undefined {
 
 export default function PublicEventPage() {
     const { user: currentUser, activeRole, updateUser } = useAuth();
+    const currentUserId = (currentUser?.id || (currentUser as any)?._id)?.toString() || '';
     const { isUser: isViewingAsUser, isOrganizer: isRoleOrganizer, isAdmin: isRoleAdmin } = useRole();
     const params = useParams();
     const router = useRouter();
@@ -103,12 +108,13 @@ export default function PublicEventPage() {
 
     const proofTokenParam = searchParams?.get('proofToken') || '';
     const accessCodeParam = searchParams?.get('code') || '';
+    const circleInviteParam = searchParams?.get('circleInvite') || '';
 
     const [downloading, setDownloading] = useState<string | null>(null);
     const [selectedPhoto, setSelectedPhoto] = useState<any>(null);
     const [selectedSubEventId, setSelectedSubEventId] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
-    const [photoViewMode, setPhotoViewMode] = useState<'all' | 'my' | 'album' | 'bookmark'>('all');
+    const [photoViewMode, setPhotoViewMode] = useState<'all' | 'my' | 'album' | 'bookmark' | 'circle'>('all');
     const [myPhotosFilter, setMyPhotosFilter] = useState<'all' | 'favorites'>('all');
     const [batchDownloading, setBatchDownloading] = useState(false);
     const [notifying, setNotifying] = useState(false);
@@ -118,6 +124,20 @@ export default function PublicEventPage() {
     const [showPostJoinSelfieModal, setShowPostJoinSelfieModal] = useState(false);
     const [isScanningUpdatedSelfie, setIsScanningUpdatedSelfie] = useState(false);
     const [showSelectionAuthModal, setShowSelectionAuthModal] = useState(false);
+
+    // Roopixo Circles state
+    const [isCirclesModalOpen, setIsCirclesModalOpen] = useState(false);
+    const [isJoinCircleModalOpen, setIsJoinCircleModalOpen] = useState(false);
+    const [activeInviteCode, setActiveInviteCode] = useState('');
+    const [selectedCircle, setSelectedCircle] = useState<EventCircleItem | null>(null);
+    const [selectedSquadMemberIds, setSelectedSquadMemberIds] = useState<string[]>([]);
+
+    useEffect(() => {
+        if (circleInviteParam) {
+            setActiveInviteCode(circleInviteParam);
+            setIsJoinCircleModalOpen(true);
+        }
+    }, [circleInviteParam]);
     const loadUser = useAuthStore((state) => state.loadUser);
 
     useEffect(() => {
@@ -390,6 +410,33 @@ export default function PublicEventPage() {
         }
     );
 
+    // Fetch User Circles for this event
+    const { data: userCirclesResult } = useQuery(
+        ['userCircles', eventId, currentUserId],
+        () => circleApi.getEventCircles(eventId),
+        {
+            enabled: !!eventId && !!currentUser,
+            staleTime: 30 * 1000,
+            retry: reactQueryRetry,
+        }
+    );
+    const userCircles = useMemo(() => userCirclesResult?.data || [], [userCirclesResult]);
+    const circlesCount = userCircles.length;
+
+    // Fetch Mutual Photos for the active Circle
+    const { data: circlePhotosResult, isLoading: loadingCirclePhotos } = useQuery(
+        ['circlePhotos', eventId, selectedCircle?._id, selectedSquadMemberIds],
+        () => circleApi.getCirclePhotos(eventId, selectedCircle!._id, selectedSquadMemberIds),
+        {
+            enabled: photoViewMode === 'circle' && !!selectedCircle?._id && !!currentUser,
+            staleTime: 15 * 1000,
+            retry: reactQueryRetry,
+        }
+    );
+    const circlePhotos = useMemo(() => {
+        return circlePhotosResult?.data?.photos || [];
+    }, [circlePhotosResult]);
+
     // Build unified map of all known event photos (official, personal matched, and selections)
     const allKnownPhotosMap = useMemo(() => {
         const map = new Map<string, any>();
@@ -516,6 +563,9 @@ export default function PublicEventPage() {
 
     // Base photos before ceremony / sub-event filtering
     const baseDisplayPhotos = useMemo(() => {
+        if (photoViewMode === 'circle') {
+            return circlePhotos;
+        }
         if (photoViewMode === 'my') {
             if (!currentUser) return [];
             if (myPhotosFilter === 'favorites') {
@@ -532,7 +582,7 @@ export default function PublicEventPage() {
             return myBookmarkPhotos;
         }
         return allKnownPhotosList;
-    }, [photoViewMode, myPhotosFilter, currentUser, myPhotos, myLikedPhotos, myAlbumPhotos, myBookmarkPhotos, allKnownPhotosList]);
+    }, [photoViewMode, myPhotosFilter, currentUser, myPhotos, myLikedPhotos, myAlbumPhotos, myBookmarkPhotos, allKnownPhotosList, circlePhotos]);
 
     // Filter by selected ceremony / sub-event if active
     const displayPhotos = useMemo(() => {
@@ -552,14 +602,33 @@ export default function PublicEventPage() {
         }).length;
     }, [baseDisplayPhotos]);
 
-    const handleSwitchViewMode = useCallback((mode: 'all' | 'my' | 'album' | 'bookmark') => {
+    const handleSwitchViewMode = useCallback((mode: 'all' | 'my' | 'album' | 'bookmark' | 'circle') => {
         setPhotoViewMode(mode);
         if (mode === 'my') {
             setMyPhotosFilter('all');
         }
+        if (mode !== 'circle') {
+            setSelectedCircle(null);
+        }
         setSelectedSubEventId(null);
         setCurrentPage(1);
     }, []);
+
+    const handleSelectCircle = useCallback((circle: EventCircleItem) => {
+        setSelectedCircle(circle);
+        const acceptedOtherIds = circle.members
+            .filter((m: any) => m.status === 'accepted' && (m.userId?._id || m.userId)?.toString() !== currentUserId)
+            .map((m: any) => (m.userId?._id || m.userId)?.toString());
+        setSelectedSquadMemberIds(acceptedOtherIds);
+        setPhotoViewMode('circle');
+        setSelectedSubEventId(null);
+        setCurrentPage(1);
+    }, [currentUserId]);
+
+    const handleCircleJoined = useCallback((circle: EventCircleItem) => {
+        queryClient.invalidateQueries(['userCircles', eventId]);
+        handleSelectCircle(circle);
+    }, [queryClient, eventId, handleSelectCircle]);
 
     const getSelectionTooltip = useCallback((photo: any, type: 'album' | 'original') => {
         const isMyPick = isSelectedByCurrentUser(photo, type);
@@ -932,7 +1001,9 @@ export default function PublicEventPage() {
     const isLoadingPhotos =
         !currentUser && !isProofingMode
             ? previewLoading
-            : photoViewMode === 'my' && !!currentUser
+            : photoViewMode === 'circle'
+              ? loadingCirclePhotos
+              : photoViewMode === 'my' && !!currentUser
               ? myPhotosLoading
               : photoViewMode === 'all'
                 ? photosLoading
@@ -1311,6 +1382,21 @@ export default function PublicEventPage() {
                                     </Button>
 
                                     <Button
+                                        onClick={() => {
+                                            if (!currentUser) {
+                                                router.push(`/login?redirect=${encodeURIComponent(`/events/${eventId}`)}`);
+                                            } else {
+                                                setIsCirclesModalOpen(true);
+                                            }
+                                        }}
+                                        variant="outline"
+                                        className="h-12 w-full justify-center rounded-2xl border-purple-300/80 bg-purple-50/70 font-semibold text-purple-700 shadow-sm hover:bg-purple-100 hover:text-purple-800 dark:border-purple-500/30 dark:bg-purple-500/10 dark:text-purple-200 dark:hover:bg-purple-500/20 sm:h-[3rem] sm:w-auto sm:min-w-[10rem]"
+                                    >
+                                        <Users size={18} className="mr-2 shrink-0 text-purple-600 dark:text-purple-400" />
+                                        Circles{circlesCount > 0 ? ` (${circlesCount})` : ''}
+                                    </Button>
+
+                                    <Button
                                         onClick={handleShare}
                                         variant="outline"
                                         className="h-12 w-full justify-center rounded-2xl border-zinc-300 bg-white/95 font-semibold shadow-sm dark:border-white/15 dark:bg-white/5 sm:h-[3rem] sm:w-auto sm:min-w-[10rem]"
@@ -1405,7 +1491,11 @@ export default function PublicEventPage() {
                     <p className="mx-auto mt-2 max-w-lg px-2 text-sm leading-relaxed text-zinc-600 sm:text-base dark:text-gray-400">
                         {!currentUser && !isProofingMode
                             ? 'Preview below — sign in for the full set and downloads.'
-                            : photoViewMode === 'my'
+                            : photoViewMode === 'circle'
+                              ? selectedCircle
+                                ? `Showing mutual shots for "${selectedCircle.name}"`
+                                : 'Circle mutual photos'
+                              : photoViewMode === 'my'
                               ? !currentUser
                                 ? 'Sign in to match your face and find your photos.'
                                 : myPhotos.length > 0
@@ -1574,6 +1664,42 @@ export default function PublicEventPage() {
                                     </span>
                                 )}
                             </button>
+
+                            {/* TAB 5: ROOPIXO CIRCLES */}
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (!currentUser) {
+                                        router.push(`/login?redirect=${encodeURIComponent(`/events/${eventId}`)}`);
+                                        return;
+                                    }
+                                    if (selectedCircle && photoViewMode !== 'circle') {
+                                        handleSwitchViewMode('circle');
+                                    } else {
+                                        setIsCirclesModalOpen(true);
+                                    }
+                                }}
+                                aria-label="View or manage Roopixo Circles"
+                                className={`min-h-[44px] whitespace-nowrap rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 ease-out flex items-center justify-center gap-1.5 ${
+                                    photoViewMode === 'circle'
+                                        ? 'flex-1 sm:flex-initial px-4 sm:px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-500/25'
+                                        : 'flex-initial shrink-0 px-2.5 sm:px-3.5 py-2 text-zinc-600 hover:bg-zinc-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white'
+                                }`}
+                            >
+                                <Users className={`h-3.5 w-3.5 shrink-0 ${photoViewMode === 'circle' ? 'text-white' : 'text-purple-500 dark:text-purple-400'}`} />
+                                <span className={photoViewMode === 'circle' ? 'inline' : 'hidden sm:inline'}>
+                                    {selectedCircle ? selectedCircle.name : 'Circles'}
+                                </span>
+                                {circlesCount > 0 && (
+                                    <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                                        photoViewMode === 'circle'
+                                            ? 'bg-white/20 text-white'
+                                            : 'bg-purple-500/10 text-purple-600 dark:bg-purple-500/20 dark:text-purple-300'
+                                    }`}>
+                                        {circlesCount}
+                                    </span>
+                                )}
+                            </button>
                         </div>
 
                         {/* Quick Notify Bar when client has selected items */}
@@ -1591,6 +1717,28 @@ export default function PublicEventPage() {
                                 </Button>
                             </div>
                         )}
+                    </div>
+                )}
+
+                {/* ACTIVE ROOPIXO CIRCLE SQUAD FILTER */}
+                {photoViewMode === 'circle' && selectedCircle && (
+                    <div className="max-w-3xl mx-auto w-full px-1 mb-4">
+                        <CircleSquadFilter
+                            circle={selectedCircle}
+                            currentUserId={currentUserId}
+                            selectedMemberIds={selectedSquadMemberIds}
+                            onToggleMember={(userId) => {
+                                setSelectedSquadMemberIds((prev) =>
+                                    prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]
+                                );
+                            }}
+                            onOpenManageCircles={() => setIsCirclesModalOpen(true)}
+                            onExitCircle={() => {
+                                setSelectedCircle(null);
+                                handleSwitchViewMode('all');
+                            }}
+                            totalPhotosCount={displayPhotos.length}
+                        />
                     </div>
                 )}
 
@@ -2001,7 +2149,36 @@ export default function PublicEventPage() {
                         )}
                     </>
                 ) : (
-                    photoViewMode === 'my' ? (
+                    photoViewMode === 'circle' ? (
+                        <div className={`rounded-[1.65rem] px-6 py-12 sm:py-16 text-center ${softSurface} border border-violet-500/20 bg-gradient-to-b from-violet-500/5 via-transparent to-transparent`}>
+                            <div className="mx-auto mb-5 relative flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-purple-600 to-indigo-600 text-white shadow-xl shadow-purple-500/25">
+                                <Users className="h-9 w-9" />
+                            </div>
+                            <h3 className="mb-2 text-xl sm:text-2xl font-bold text-zinc-900 dark:text-white">
+                                No Mutual Photos Found Yet
+                            </h3>
+                            <p className="mx-auto max-w-md text-sm sm:text-base leading-relaxed text-zinc-600 dark:text-gray-300 mb-6">
+                                We haven&apos;t detected a photo where you and all selected squad members appear together. Try toggling off one member above to check smaller group shots!
+                            </p>
+                            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setIsCirclesModalOpen(true)}
+                                    className="w-full sm:w-auto h-11 px-5 rounded-xl border-zinc-300 dark:border-white/20 font-semibold"
+                                >
+                                    <Users className="h-4 w-4 mr-2" />
+                                    Manage Circles
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => handleSwitchViewMode('all')}
+                                    className="w-full sm:w-auto h-11 px-5 rounded-xl border-zinc-300 dark:border-white/20 font-semibold"
+                                >
+                                    Browse All Photos ({authenticatedPhotoTotal || totalPhotos})
+                                </Button>
+                            </div>
+                        </div>
+                    ) : photoViewMode === 'my' ? (
                         !currentUser ? (
                             <div className={`rounded-[1.65rem] px-6 py-12 sm:py-16 text-center ${softSurface} border border-violet-500/20 bg-gradient-to-b from-violet-500/5 via-transparent to-transparent`}>
                                 <div className="mx-auto mb-5 relative flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-xl shadow-violet-500/25">
@@ -2426,6 +2603,30 @@ export default function PublicEventPage() {
                     </div>
                 </div>
             )}
+
+            {/* Roopixo Circles Management Modal */}
+            <CirclesModal
+                isOpen={isCirclesModalOpen}
+                onClose={() => setIsCirclesModalOpen(false)}
+                eventId={eventId}
+                eventName={event?.name || 'Event'}
+                currentUserId={currentUserId}
+                onSelectCircle={handleSelectCircle}
+            />
+
+            {/* Roopixo Join Circle Invitation Modal */}
+            <JoinCircleModal
+                isOpen={isJoinCircleModalOpen}
+                onClose={() => {
+                    setIsJoinCircleModalOpen(false);
+                    setActiveInviteCode('');
+                }}
+                eventId={eventId}
+                eventName={event?.name || 'Event'}
+                inviteCode={activeInviteCode}
+                currentUser={currentUser}
+                onJoined={handleCircleJoined}
+            />
             </div>
         </div>
     );
