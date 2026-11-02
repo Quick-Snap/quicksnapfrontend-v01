@@ -153,7 +153,6 @@ export default function EventsPage() {
         await navigator.share({
           title: event.name,
           text,
-          url,
         });
       } catch (err) {
         console.error('Error sharing:', err);

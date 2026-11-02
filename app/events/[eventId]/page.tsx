@@ -26,7 +26,8 @@ import {
     Heart,
     Bookmark,
     AlertCircle,
-    Layers
+    Layers,
+    LogOut
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { eventApi, photoApi } from '@/lib/api';
@@ -119,6 +120,8 @@ export default function PublicEventPage() {
     const [batchDownloading, setBatchDownloading] = useState(false);
     const [notifying, setNotifying] = useState(false);
     const [joining, setJoining] = useState(false);
+    const [leaving, setLeaving] = useState(false);
+    const [showLeaveModal, setShowLeaveModal] = useState(false);
     const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
     const [isGuestUploadModalOpen, setIsGuestUploadModalOpen] = useState(false);
     const [showPostJoinSelfieModal, setShowPostJoinSelfieModal] = useState(false);
@@ -273,6 +276,31 @@ export default function PublicEventPage() {
             setJoining(false);
         }
     }, [currentUser, eventId, event?.name, isGuest, loadUser, queryClient, router]);
+
+    const handleLeaveEvent = useCallback(async () => {
+        if (!eventId) return;
+        setLeaving(true);
+        try {
+            const res = await eventApi.unregister(eventId);
+            if (res.success) {
+                toast.success(`You have left ${event?.name || 'the event'}.`);
+                await loadUser({ force: true });
+                queryClient.invalidateQueries(['event', eventId]);
+                queryClient.invalidateQueries(['events']);
+                queryClient.invalidateQueries(['myEvents']);
+                queryClient.invalidateQueries(['myPhotos']);
+                queryClient.invalidateQueries(['myEventPhotos']);
+                queryClient.invalidateQueries(['userStats']);
+                setShowLeaveModal(false);
+            } else {
+                toast.error(res.message || 'Failed to leave event');
+            }
+        } catch (err: any) {
+            toast.error(err.response?.data?.message || 'Error leaving event');
+        } finally {
+            setLeaving(false);
+        }
+    }, [eventId, event?.name, loadUser, queryClient]);
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -953,11 +981,11 @@ export default function PublicEventPage() {
             );
 
             // 3. Open Native Share Sheet if available (iOS / Android: WhatsApp, Instagram, Messages, etc.)
+            // Note: shareText already contains the URL at the end. Passing url separately causes platforms like WhatsApp to duplicate the link.
             if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
                 navigator.share({
                     title: `Photo Selection - ${event?.name || 'Event'}`,
                     text: shareText,
-                    url: shareUrl,
                 }).catch((shareErr: any) => {
                     if (shareErr?.name !== 'AbortError') {
                         console.warn('Native share dismissed or not supported:', shareErr);
@@ -1143,7 +1171,6 @@ export default function PublicEventPage() {
                 await navigator.share({
                     title: event.name,
                     text,
-                    url,
                 });
             } catch (err) {
                 console.error('Error sharing:', err);
@@ -1342,9 +1369,22 @@ export default function PublicEventPage() {
                                     {event.isPublic !== false ? (
                                         // Public Event: 1-click Join
                                         isAttendee ? (
-                                            <div className="inline-flex h-12 items-center gap-2 rounded-2xl border border-emerald-300 bg-emerald-50/90 px-5 text-sm font-semibold text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-200 sm:h-[3rem]">
-                                                <Check size={18} className="text-emerald-600 dark:text-emerald-400" />
-                                                Joined
+                                            <div className="inline-flex items-center gap-2">
+                                                <div className="inline-flex h-12 items-center gap-2 rounded-2xl border border-emerald-300 bg-emerald-50/90 px-4 text-sm font-semibold text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-200 sm:h-[3rem]">
+                                                    <Check size={18} className="text-emerald-600 dark:text-emerald-400" />
+                                                    Joined
+                                                </div>
+                                                {!isOrganizer && (
+                                                    <Button
+                                                        variant="outline"
+                                                        onClick={() => setShowLeaveModal(true)}
+                                                        className="h-12 rounded-2xl border-zinc-200/90 bg-white/70 dark:bg-zinc-800/70 hover:border-rose-300 hover:bg-rose-50/80 dark:border-zinc-700 dark:hover:bg-rose-950/30 text-zinc-600 dark:text-zinc-300 hover:text-rose-600 dark:hover:text-rose-400 px-3.5 transition sm:h-[3rem] font-medium"
+                                                        title="Leave this event"
+                                                    >
+                                                        <LogOut size={16} className="mr-1.5 shrink-0" />
+                                                        Leave
+                                                    </Button>
+                                                )}
                                             </div>
                                         ) : !isActive ? (
                                             <div className="inline-flex h-12 items-center gap-2 rounded-2xl border border-zinc-200/90 bg-zinc-100 px-5 text-sm font-semibold text-zinc-600 dark:border-white/10 dark:bg-white/10 dark:text-gray-300 sm:h-[3rem]">
@@ -1372,9 +1412,22 @@ export default function PublicEventPage() {
                                     ) : (
                                         // Private Event: Join with Code
                                         isAttendee ? (
-                                            <div className="inline-flex h-12 items-center gap-2 rounded-2xl border border-emerald-300 bg-emerald-50/90 px-5 text-sm font-semibold text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-200 sm:h-[3rem]">
-                                                <Check size={18} className="text-emerald-600 dark:text-emerald-400" />
-                                                Joined
+                                            <div className="inline-flex items-center gap-2">
+                                                <div className="inline-flex h-12 items-center gap-2 rounded-2xl border border-emerald-300 bg-emerald-50/90 px-4 text-sm font-semibold text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-200 sm:h-[3rem]">
+                                                    <Check size={18} className="text-emerald-600 dark:text-emerald-400" />
+                                                    Joined
+                                                </div>
+                                                {!isOrganizer && (
+                                                    <Button
+                                                        variant="outline"
+                                                        onClick={() => setShowLeaveModal(true)}
+                                                        className="h-12 rounded-2xl border-zinc-200/90 bg-white/70 dark:bg-zinc-800/70 hover:border-rose-300 hover:bg-rose-50/80 dark:border-zinc-700 dark:hover:bg-rose-950/30 text-zinc-600 dark:text-zinc-300 hover:text-rose-600 dark:hover:text-rose-400 px-3.5 transition sm:h-[3rem] font-medium"
+                                                        title="Leave this event"
+                                                    >
+                                                        <LogOut size={16} className="mr-1.5 shrink-0" />
+                                                        Leave
+                                                    </Button>
+                                                )}
                                             </div>
                                         ) : !isActive ? (
                                             <div className="inline-flex h-12 items-center gap-2 rounded-2xl border border-zinc-200/90 bg-zinc-100 px-5 text-sm font-semibold text-zinc-600 dark:border-white/10 dark:bg-white/10 dark:text-gray-300 sm:h-[3rem]">
@@ -2674,6 +2727,55 @@ export default function PublicEventPage() {
                                 className="w-full h-11 rounded-xl font-semibold border-zinc-200 dark:border-white/15 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-white/5"
                             >
                                 Create Quick Account
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Leave Event Confirmation Modal */}
+            {showLeaveModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="relative w-full max-w-md rounded-3xl bg-white p-6 sm:p-8 shadow-2xl dark:bg-[#13111f] dark:border dark:border-white/10 text-center">
+                        <button
+                            type="button"
+                            onClick={() => setShowLeaveModal(false)}
+                            className="absolute top-4 right-4 p-2 rounded-full text-zinc-400 hover:text-zinc-600 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/10 transition"
+                            aria-label="Close modal"
+                        >
+                            <X className="h-5 w-5" />
+                        </button>
+                        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-tr from-rose-500 to-amber-500 text-white shadow-lg shadow-rose-500/25">
+                            <LogOut className="h-8 w-8" />
+                        </div>
+                        <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">
+                            Leave &quot;{event?.name || 'this event'}&quot;?
+                        </h3>
+                        <p className="text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed mb-6">
+                            Are you sure you want to leave this event? You will no longer receive updates, and you can re-join anytime {event?.isPublic !== false ? 'from the event page' : 'with the event join code'}.
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-3">
+                            <Button
+                                variant="outline"
+                                onClick={() => setShowLeaveModal(false)}
+                                disabled={leaving}
+                                className="flex-1 h-11 rounded-xl font-semibold border-zinc-200 dark:border-white/15 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-white/5"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                onClick={handleLeaveEvent}
+                                disabled={leaving}
+                                className="flex-1 h-11 rounded-xl font-semibold bg-rose-600 hover:bg-rose-500 text-white shadow-md shadow-rose-500/25"
+                            >
+                                {leaving ? (
+                                    <>
+                                        <Loader2 size={16} className="mr-2 animate-spin" />
+                                        Leaving...
+                                    </>
+                                ) : (
+                                    'Yes, Leave Event'
+                                )}
                             </Button>
                         </div>
                     </div>

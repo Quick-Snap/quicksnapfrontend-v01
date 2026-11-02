@@ -101,7 +101,6 @@ export default function CirclesModal({
         await navigator.share({
           title: `Join "${circle.name}" on Roopixo`,
           text: shareText,
-          url: inviteUrl
         });
         return;
       } catch (err: any) {
