@@ -65,6 +65,7 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
 
   const navItems = [
     { name: 'Shoots & Proofing', href: '/studio', icon: Layers },
+    { name: '1-Click Batch Fixer', href: '/studio/fixer', icon: Sparkles, badge: 'NEW' },
     { name: 'Bulk Upload', href: '/studio/upload', icon: Upload },
     { name: 'Studio Settings', href: '/studio/settings', icon: Settings },
   ];
@@ -146,6 +147,11 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
                 >
                   <Icon size={18} className={active ? 'text-violet-600 dark:text-violet-400' : 'text-zinc-400 dark:text-zinc-500'} />
                   <span>{item.name}</span>
+                  {item.badge && (
+                    <span className="ml-auto text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-full bg-violet-600 text-white shadow-xs">
+                      {item.badge}
+                    </span>
+                  )}
                 </Link>
               );
             })}
@@ -191,6 +197,11 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
                     >
                       <Icon size={18} />
                       <span>{item.name}</span>
+                      {item.badge && (
+                        <span className="ml-auto text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-full bg-violet-600 text-white shadow-xs">
+                          {item.badge}
+                        </span>
+                      )}
                     </Link>
                   );
                 })}
