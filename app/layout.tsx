@@ -52,19 +52,19 @@ export const metadata: Metadata = {
       'Roopixo is the modern AI event photo sharing platform. Find all your event photos instantly with AI selfie matching. No app download needed.',
     images: [
       {
-        url: '/favicon.png',
-        width: 512,
-        height: 512,
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
         alt: 'Roopixo AI Event Photo Sharing',
       },
     ],
   },
   twitter: {
-    card: 'summary',
+    card: 'summary_large_image',
     title: 'Roopixo — AI Event Photo Sharing',
     description:
       'Find all your event photos in seconds using AI face matching. Instant photo sharing for weddings and events.',
-    images: ['/favicon.png'],
+    images: ['/og-image.png'],
   },
   robots: {
     index: true,
@@ -79,9 +79,12 @@ export const metadata: Metadata = {
   },
   /** PNG in `public/favicon.png`. `/favicon.ico` rewrites to the same file (see `next.config.js`). */
   icons: {
-    icon: [{ url: '/favicon.png', type: 'image/png' }],
-    shortcut: '/favicon.png',
-    apple: '/favicon.png',
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/favicon.png', type: 'image/png', sizes: '512x512' },
+    ],
+    shortcut: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
   },
 };
 

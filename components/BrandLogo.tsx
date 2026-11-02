@@ -3,29 +3,41 @@ import { cn } from '@/lib/utils';
 
 export type BrandLogoProps = {
   href?: string | null;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   /** Prefer white text on dark surfaces; default adapts to light/dark theme. */
   tone?: 'auto' | 'light' | 'dark';
   className?: string;
   showMark?: boolean;
+  showText?: boolean;
+  /** Layout orientation: text to the right (horizontal) or below (vertical). */
+  layout?: 'horizontal' | 'vertical';
 };
 
 const sizeStyles = {
+  xs: {
+    mark: 'h-5 w-auto',
+    word: 'text-sm',
+    gap: 'gap-2',
+  },
   sm: {
-    mark: 'h-6 w-6 text-[11px]',
-    word: 'text-base',
+    mark: 'h-6 w-auto sm:h-7',
+    word: 'text-base sm:text-lg',
+    gap: 'gap-2.5',
   },
   md: {
-    mark: 'h-8 w-8 text-sm',
-    word: 'text-xl',
+    mark: 'h-8 w-auto sm:h-9',
+    word: 'text-xl sm:text-2xl',
+    gap: 'gap-3',
   },
   lg: {
-    mark: 'h-10 w-10 text-base',
-    word: 'text-2xl',
+    mark: 'h-10 w-auto sm:h-12',
+    word: 'text-2xl sm:text-3xl',
+    gap: 'gap-3.5',
   },
   xl: {
-    mark: 'h-12 w-12 text-lg',
-    word: 'text-3xl',
+    mark: 'h-14 w-auto sm:h-16',
+    word: 'text-3xl sm:text-4xl',
+    gap: 'gap-4',
   },
 } as const;
 
@@ -36,7 +48,7 @@ const toneWord = {
 } as const;
 
 /**
- * Modern text wordmark for Roopixo — geometric "R" mark + Syne display type.
+ * Official BrandLogo for Roopixo — Infinity Lens logomark + Syne display wordmark.
  */
 export function BrandLogo({
   href = '/',
@@ -44,34 +56,45 @@ export function BrandLogo({
   tone = 'auto',
   className,
   showMark = true,
+  showText = true,
+  layout = 'horizontal',
 }: BrandLogoProps) {
-  const styles = sizeStyles[size];
+  const styles = sizeStyles[size] || sizeStyles.md;
 
   const content = (
-    <span className={cn('inline-flex items-center gap-2.5', className)}>
+    <span
+      className={cn(
+        'inline-flex items-center',
+        layout === 'vertical' ? 'flex-col justify-center text-center' : 'flex-row',
+        styles.gap,
+        className
+      )}
+    >
       {showMark && (
-        <span
-          className={cn(
-            'inline-flex shrink-0 items-center justify-center rounded-[0.35rem] bg-gradient-to-br from-violet-500 to-fuchsia-600 font-display font-extrabold text-white shadow-[0_0_24px_-6px_rgba(139,92,246,0.65)]',
-            styles.mark
-          )}
-          aria-hidden
-        >
-          R
+        <span className="relative inline-flex shrink-0 items-center justify-center">
+          <img
+            src="/logo-mark.png"
+            alt="Roopixo"
+            className={cn('object-contain select-none transition-transform hover:scale-105', styles.mark)}
+            loading="eager"
+            decoding="async"
+          />
         </span>
       )}
-      <span
-        className={cn(
-          'font-display font-extrabold tracking-[-0.045em] leading-none',
-          styles.word,
-          toneWord[tone]
-        )}
-      >
-        Roo
-        <span className="bg-gradient-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-transparent">
-          pixo
+      {showText && (
+        <span
+          className={cn(
+            'font-display font-extrabold tracking-[-0.04em] leading-none select-none',
+            styles.word,
+            toneWord[tone]
+          )}
+        >
+          Roo
+          <span className="bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500 bg-clip-text text-transparent">
+            pixo
+          </span>
         </span>
-      </span>
+      )}
     </span>
   );
 
@@ -82,7 +105,7 @@ export function BrandLogo({
   return (
     <Link
       href={href}
-      className="inline-flex items-center transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-sm"
+      className="inline-flex items-center transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-lg"
       aria-label="Roopixo home"
     >
       {content}
