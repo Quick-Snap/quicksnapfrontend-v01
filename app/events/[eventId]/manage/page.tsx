@@ -151,6 +151,8 @@ export default function ManageEventPage() {
     const [isPrintKitOpen, setIsPrintKitOpen] = useState(false);
     const [showSelectAllModal, setShowSelectAllModal] = useState(false);
     const [selectAllStep, setSelectAllStep] = useState<1 | 2>(1);
+    const [showDeselectAllModal, setShowDeselectAllModal] = useState(false);
+    const [deselectAllStep, setDeselectAllStep] = useState<1 | 2>(1);
     const [attendeeSearch, setAttendeeSearch] = useState('');
 
     const fetchTrashCount = useCallback(async () => {
@@ -365,6 +367,18 @@ export default function ManageEventPage() {
         });
         setSelectedOfficialIds(next);
         toast.success('Deselected all pool photos.');
+    };
+
+    const handleDeselectAllGalleryPhotos = () => {
+        const next = new Set(selectedOfficialIds);
+        photosOnDashboard.forEach((p) => {
+            const id = getPhotoId(p);
+            if (id) next.delete(id);
+        });
+        setSelectedOfficialIds(next);
+        setShowDeselectAllModal(false);
+        setDeselectAllStep(1);
+        toast.success(`Deselected all ${photosOnDashboard.length} gallery photos. Click "Update dashboard" to save.`);
     };
 
     const handleDeletePhoto = async (photoId: string) => {
@@ -1135,10 +1149,26 @@ export default function ManageEventPage() {
 
                             {photosOnDashboard.length > 0 && (
                                 <div id="organizer-gallery-photos" className="mb-8">
-                                    <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-emerald-800 dark:text-emerald-300/90">
-                                        <span className="inline-block h-2 w-2 rounded-full bg-emerald-500 dark:bg-emerald-400" />
-                                        On public gallery
-                                    </h3>
+                                    <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                                        <h3 className="flex items-center gap-2 text-sm font-semibold text-emerald-800 dark:text-emerald-300/90">
+                                            <span className="inline-block h-2 w-2 rounded-full bg-emerald-500 dark:bg-emerald-400" />
+                                            On public gallery
+                                            <span className="text-xs font-normal text-zinc-500 dark:text-gray-400">({photosOnDashboard.length} live)</span>
+                                        </h3>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setDeselectAllStep(1);
+                                                    setShowDeselectAllModal(true);
+                                                }}
+                                                className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50/80 px-3 py-1.5 text-xs font-semibold text-rose-700 shadow-sm transition-all hover:bg-rose-100 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300 dark:hover:bg-rose-500/20"
+                                            >
+                                                <Square size={13} />
+                                                Deselect All ({photosOnDashboard.length})
+                                            </button>
+                                        </div>
+                                    </div>
                                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                                         {paginatedGalleryPhotos.map((photo: any, index: number) => {
                                             const id = getPhotoId(photo);
@@ -1255,11 +1285,11 @@ export default function ManageEventPage() {
                                             <button
                                                 type="button"
                                                 onClick={handleDeselectAllPoolPhotos}
-                                                className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white/80 px-2.5 py-1.5 text-xs font-medium text-zinc-600 transition-all hover:bg-zinc-100 dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10"
-                                                title="Clear selection for pool photos"
+                                                className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white/80 px-3 py-1.5 text-xs font-semibold text-zinc-700 shadow-sm transition-all hover:bg-zinc-100 dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10"
+                                                title="Deselect all pool photos"
                                             >
                                                 <Square size={13} />
-                                                Clear
+                                                Deselect All
                                             </button>
                                         </div>
                                     )}
@@ -1595,6 +1625,77 @@ export default function ManageEventPage() {
                                             className="px-4 py-2 text-xs font-semibold rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-md transition-all"
                                         >
                                             Yes, Select All for Gallery
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* Double-Confirmation Modal: Deselect All Photos From Public Gallery */}
+                {showDeselectAllModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                        <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 animate-in fade-in zoom-in-95 duration-200">
+                            {deselectAllStep === 1 ? (
+                                <>
+                                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300 mb-4">
+                                        <Square className="h-6 w-6" />
+                                    </div>
+                                    <h3 className="text-lg font-bold text-zinc-900 dark:text-white mb-2">
+                                        Deselect All {photosOnDashboard.length} Photos?
+                                    </h3>
+                                    <p className="text-sm text-zinc-600 dark:text-gray-300 mb-5 leading-relaxed">
+                                        You are about to deselect all <strong>{photosOnDashboard.length}</strong> photos currently on the public gallery so they move back to the uncurated pool.
+                                    </p>
+                                    <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-3.5 text-xs text-amber-800 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200 mb-5">
+                                        💡 <strong>Tip:</strong> You will still have a chance to review before clicking &quot;Update dashboard&quot; to apply changes.
+                                    </div>
+                                    <div className="flex items-center justify-end gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowDeselectAllModal(false)}
+                                            className="px-4 py-2 text-xs font-semibold rounded-xl text-zinc-700 bg-zinc-100 hover:bg-zinc-200 dark:text-gray-300 dark:bg-white/10 dark:hover:bg-white/15 transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setDeselectAllStep(2)}
+                                            className="px-4 py-2 text-xs font-semibold rounded-xl bg-rose-600 hover:bg-rose-700 text-white transition-colors shadow-sm"
+                                        >
+                                            Proceed to Confirmation →
+                                        </button>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300 mb-4">
+                                        <AlertTriangle className="h-6 w-6" />
+                                    </div>
+                                    <h3 className="text-lg font-bold text-zinc-900 dark:text-white mb-2">
+                                        Are you definitely sure?
+                                    </h3>
+                                    <p className="text-sm text-zinc-600 dark:text-gray-300 mb-4 leading-relaxed">
+                                        This will remove all <strong className="text-rose-600 dark:text-rose-400">{photosOnDashboard.length} photos</strong> from public view on the event gallery once you save.
+                                    </p>
+                                    <div className="rounded-xl border border-red-200 bg-red-50/80 p-3 text-xs text-red-800 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-200 mb-5">
+                                        ⚠️ Normal visitors and guests will not be able to browse these photos until you promote photos again.
+                                    </div>
+                                    <div className="flex items-center justify-end gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => setDeselectAllStep(1)}
+                                            className="px-4 py-2 text-xs font-semibold rounded-xl text-zinc-700 bg-zinc-100 hover:bg-zinc-200 dark:text-gray-300 dark:bg-white/10 dark:hover:bg-white/15 transition-colors"
+                                        >
+                                            Back
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={handleDeselectAllGalleryPhotos}
+                                            className="px-4 py-2 text-xs font-semibold rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white shadow-md transition-all"
+                                        >
+                                            Yes, Deselect All from Gallery
                                         </button>
                                     </div>
                                 </>

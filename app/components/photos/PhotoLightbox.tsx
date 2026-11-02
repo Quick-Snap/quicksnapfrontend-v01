@@ -208,10 +208,34 @@ export function PhotoLightbox({
     if (!container || targetScale <= 1) return { maxX: 0, maxY: 0 };
     const width = container.offsetWidth;
     const height = container.offsetHeight;
-    const maxX = Math.max(0, ((targetScale - 1) * width) / 2);
-    const maxY = Math.max(0, ((targetScale - 1) * height) / 2);
+    const maxX = Math.max(20, ((targetScale - 1) * width) / 2);
+    const maxY = Math.max(20, ((targetScale - 1) * height) / 2);
     return { maxX, maxY };
   }, []);
+
+  // Zoom In / Out helpers
+  const zoomIn = useCallback(() => {
+    const newScale = Math.min(4, scale + 0.5);
+    setIsZoomAnimating(true);
+    setScale(newScale);
+    setTimeout(() => setIsZoomAnimating(false), 240);
+  }, [scale]);
+
+  const zoomOut = useCallback(() => {
+    const newScale = Math.max(1, scale - 0.5);
+    if (newScale <= 1.05) {
+      resetZoom();
+    } else {
+      setIsZoomAnimating(true);
+      setScale(newScale);
+      const { maxX, maxY } = getPanBounds(newScale);
+      setPan((prev) => ({
+        x: Math.max(-maxX, Math.min(maxX, prev.x)),
+        y: Math.max(-maxY, Math.min(maxY, prev.y)),
+      }));
+      setTimeout(() => setIsZoomAnimating(false), 240);
+    }
+  }, [scale, resetZoom, getPanBounds]);
 
   // Double tap handler: toggle between 1x and 2.5x centered at tap point
   const handleDoubleTap = useCallback(
@@ -245,7 +269,140 @@ export function PhotoLightbox({
     [scale, resetZoom, getPanBounds]
   );
 
-  // Touch Events
+  // Pointer & Drag state for Desktop Mouse + Touch
+  const isPointerDownRef = useRef(false);
+  const pointerStartRef = useRef<{ x: number; y: number; time: number }>({ x: 0, y: 0, time: 0 });
+  const [isPointerDragging, setIsPointerDragging] = useState(false);
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0 || isSlideAnimating) return;
+
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('[role="button"]')) return;
+
+    if (e.pointerType === 'touch' && isPinchingRef.current) return;
+
+    isPointerDownRef.current = true;
+    setIsPointerDragging(true);
+    pointerStartRef.current = { x: e.clientX, y: e.clientY, time: Date.now() };
+
+    if (scale > 1.05) {
+      isPanningRef.current = true;
+      isSwipingRef.current = false;
+      startPanRef.current = { ...pan };
+    } else {
+      isSwipingRef.current = true;
+      isPanningRef.current = false;
+    }
+
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {}
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isPointerDownRef.current) return;
+    if (isPinchingRef.current) return;
+
+    const deltaX = e.clientX - pointerStartRef.current.x;
+    const deltaY = e.clientY - pointerStartRef.current.y;
+
+    if (isPanningRef.current && scale > 1.05) {
+      const { maxX, maxY } = getPanBounds(scale);
+      const targetX = startPanRef.current.x + deltaX;
+      const targetY = startPanRef.current.y + deltaY;
+
+      // Dampen when dragged beyond bounds
+      let newX = targetX;
+      if (targetX > maxX) {
+        newX = maxX + (targetX - maxX) * 0.25;
+      } else if (targetX < -maxX) {
+        newX = -maxX + (targetX - (-maxX)) * 0.25;
+      }
+
+      let newY = targetY;
+      if (targetY > maxY) {
+        newY = maxY + (targetY - maxY) * 0.25;
+      } else if (targetY < -maxY) {
+        newY = -maxY + (targetY - (-maxY)) * 0.25;
+      }
+
+      setPan({ x: newX, y: newY });
+    } else if (isSwipingRef.current && scale <= 1.05) {
+      let offset = deltaX;
+      if ((currentIndex === 0 && deltaX > 0) || (currentIndex === slides.length - 1 && deltaX < 0)) {
+        offset = deltaX * 0.28;
+      }
+      setDragOffset(offset);
+    }
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isPointerDownRef.current) return;
+    isPointerDownRef.current = false;
+    setIsPointerDragging(false);
+
+    try {
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch {}
+
+    const deltaX = e.clientX - pointerStartRef.current.x;
+    const deltaY = e.clientY - pointerStartRef.current.y;
+    const duration = Date.now() - pointerStartRef.current.time;
+
+    if (isPanningRef.current && scale > 1.05) {
+      isPanningRef.current = false;
+      const { maxX, maxY } = getPanBounds(scale);
+
+      // Snap smoothly back within bounds
+      setIsZoomAnimating(true);
+      setPan((prev) => ({
+        x: Math.max(-maxX, Math.min(maxX, prev.x)),
+        y: Math.max(-maxY, Math.min(maxY, prev.y)),
+      }));
+      setTimeout(() => setIsZoomAnimating(false), 200);
+
+      // If dragged with strong horizontal intent at edge to slide to next/prev
+      if (Math.abs(deltaX) > 120 && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
+        if (deltaX < -120 && currentIndex < slides.length - 1) {
+          goToNext();
+        } else if (deltaX > 120 && currentIndex > 0) {
+          goToPrev();
+        }
+      }
+      return;
+    }
+
+    if (isSwipingRef.current) {
+      isSwipingRef.current = false;
+      const containerWidth = containerRef.current?.offsetWidth || window.innerWidth;
+      const velocity = Math.abs(dragOffset) / Math.max(duration, 1);
+      const isQuickFlick = velocity > 0.22 && Math.abs(dragOffset) > 25;
+      const isPastDistance = Math.abs(dragOffset) > containerWidth * 0.15;
+
+      if ((isPastDistance || isQuickFlick) && dragOffset < 0 && currentIndex < slides.length - 1) {
+        setIsSlideAnimating(true);
+        setDragOffset(-containerWidth);
+        setTimeout(() => {
+          commitIndex(currentIndex + 1);
+        }, 240);
+      } else if ((isPastDistance || isQuickFlick) && dragOffset > 0 && currentIndex > 0) {
+        setIsSlideAnimating(true);
+        setDragOffset(containerWidth);
+        setTimeout(() => {
+          commitIndex(currentIndex - 1);
+        }, 240);
+      } else {
+        setIsSlideAnimating(true);
+        setDragOffset(0);
+        setTimeout(() => {
+          setIsSlideAnimating(false);
+        }, 200);
+      }
+    }
+  };
+
+  // Touch Events (Multi-touch pinch zoom & double tap)
   const handleTouchStart = (e: TouchEvent<HTMLDivElement>) => {
     if (isSlideAnimating) return;
 
@@ -277,19 +434,6 @@ export function PhotoLightbox({
       }
 
       lastTapRef.current = { time: now, x: touch.clientX, y: touch.clientY };
-      touchStartRef.current = { x: touch.clientX, y: touch.clientY, time: now };
-      touchCurrentRef.current = { x: touch.clientX, y: touch.clientY };
-
-      if (scale > 1.05) {
-        // Pan mode
-        isPanningRef.current = true;
-        isSwipingRef.current = false;
-        startPanRef.current = { ...pan };
-      } else {
-        // Swipe mode
-        isSwipingRef.current = true;
-        isPanningRef.current = false;
-      }
     }
   };
 
@@ -302,30 +446,6 @@ export function PhotoLightbox({
       const ratio = dist / Math.max(pinchStartDistRef.current, 1);
       const newScale = Math.max(0.85, Math.min(4.5, pinchStartScaleRef.current * ratio));
       setScale(newScale);
-      return;
-    }
-
-    if (e.touches.length === 1) {
-      const touch = e.touches[0];
-      touchCurrentRef.current = { x: touch.clientX, y: touch.clientY };
-      const deltaX = touch.clientX - touchStartRef.current.x;
-      const deltaY = touch.clientY - touchStartRef.current.y;
-
-      if (isPanningRef.current && scale > 1.05) {
-        // Pan the zoomed image
-        const { maxX, maxY } = getPanBounds(scale);
-        const newX = Math.max(-maxX, Math.min(maxX, startPanRef.current.x + deltaX));
-        const newY = Math.max(-maxY, Math.min(maxY, startPanRef.current.y + deltaY));
-        setPan({ x: newX, y: newY });
-      } else if (isSwipingRef.current && scale <= 1.05) {
-        // Track swipe gesture horizontally
-        // Resistance at ends
-        let offset = deltaX;
-        if ((currentIndex === 0 && deltaX > 0) || (currentIndex === slides.length - 1 && deltaX < 0)) {
-          offset = deltaX * 0.28;
-        }
-        setDragOffset(offset);
-      }
     }
   };
 
@@ -339,8 +459,28 @@ export function PhotoLightbox({
         setScale(4);
         setTimeout(() => setIsZoomAnimating(false), 200);
       } else {
-        // Clamp pan bounds after pinch
         const { maxX, maxY } = getPanBounds(scale);
+        setPan((prev) => ({
+          x: Math.max(-maxX, Math.min(maxX, prev.x)),
+          y: Math.max(-maxY, Math.min(maxY, prev.y)),
+        }));
+      }
+    }
+  };
+
+  // Mouse Wheel & Mac Trackpad gestures
+  const handleWheel = (e: WheelEvent<HTMLDivElement>) => {
+    e.preventDefault();
+
+    // 1. Pinch gesture on Mac trackpad (emits ctrlKey=true)
+    if (e.ctrlKey) {
+      const zoomFactor = -e.deltaY * 0.01;
+      const newScale = Math.max(1, Math.min(4.5, scale + zoomFactor));
+      if (newScale <= 1.02) {
+        resetZoom();
+      } else {
+        setScale(newScale);
+        const { maxX, maxY } = getPanBounds(newScale);
         setPan((prev) => ({
           x: Math.max(-maxX, Math.min(maxX, prev.x)),
           y: Math.max(-maxY, Math.min(maxY, prev.y)),
@@ -349,62 +489,23 @@ export function PhotoLightbox({
       return;
     }
 
-    if (isPanningRef.current) {
-      isPanningRef.current = false;
+    // 2. When zoomed in, 2-finger scroll on trackpad or mouse wheel pans the image!
+    if (scale > 1.05) {
+      const { maxX, maxY } = getPanBounds(scale);
+      setPan((prev) => ({
+        x: Math.max(-maxX, Math.min(maxX, prev.x - e.deltaX)),
+        y: Math.max(-maxY, Math.min(maxY, prev.y - e.deltaY)),
+      }));
       return;
     }
 
-    if (isSwipingRef.current) {
-      isSwipingRef.current = false;
-      const containerWidth = containerRef.current?.offsetWidth || window.innerWidth;
-      const duration = Date.now() - touchStartRef.current.time;
-      const velocity = Math.abs(dragOffset) / Math.max(duration, 1); // px/ms
-
-      // Effortless swipe threshold:
-      // Either > 15% of viewport width, OR flick velocity > 0.22 px/ms with at least 25px travel
-      const distanceThreshold = containerWidth * 0.15;
-      const isQuickFlick = velocity > 0.22 && Math.abs(dragOffset) > 25;
-      const isPastDistance = Math.abs(dragOffset) > distanceThreshold;
-
-      if ((isPastDistance || isQuickFlick) && dragOffset < 0 && currentIndex < slides.length - 1) {
-        // Slide to next
-        setIsSlideAnimating(true);
-        setDragOffset(-containerWidth);
-        setTimeout(() => {
-          commitIndex(currentIndex + 1);
-        }, 240);
-      } else if ((isPastDistance || isQuickFlick) && dragOffset > 0 && currentIndex > 0) {
-        // Slide to prev
-        setIsSlideAnimating(true);
-        setDragOffset(containerWidth);
-        setTimeout(() => {
-          commitIndex(currentIndex - 1);
-        }, 240);
-      } else {
-        // Rubber band snap back to center
-        setIsSlideAnimating(true);
-        setDragOffset(0);
-        setTimeout(() => {
-          setIsSlideAnimating(false);
-        }, 200);
+    // 3. When at 1x scale, horizontal trackpad swipe slides to next/prev
+    if (Math.abs(e.deltaX) > 40 && Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+      if (e.deltaX > 50 && currentIndex < slides.length - 1) {
+        goToNext();
+      } else if (e.deltaX < -50 && currentIndex > 0) {
+        goToPrev();
       }
-    }
-  };
-
-  // Mouse Wheel Zoom (Desktop)
-  const handleWheel = (e: WheelEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    const zoomFactor = -e.deltaY * 0.003;
-    const newScale = Math.max(1, Math.min(4, scale + zoomFactor));
-    if (newScale <= 1.02) {
-      resetZoom();
-    } else {
-      setScale(newScale);
-      const { maxX, maxY } = getPanBounds(newScale);
-      setPan((prev) => ({
-        x: Math.max(-maxX, Math.min(maxX, prev.x)),
-        y: Math.max(-maxY, Math.min(maxY, prev.y)),
-      }));
     }
   };
 
@@ -555,10 +656,20 @@ export function PhotoLightbox({
       {/* Main Viewport Container */}
       <div
         ref={containerRef}
-        className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden touch-none"
+        className={`relative flex min-h-0 flex-1 items-center justify-center overflow-hidden touch-none ${
+          scale > 1.05
+            ? isPointerDragging
+              ? 'cursor-grabbing'
+              : 'cursor-grab'
+            : 'cursor-default'
+        }`}
         role="dialog"
         aria-modal="true"
         aria-label="Photo preview"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -656,9 +767,10 @@ export function PhotoLightbox({
                     src={currentSlide.image}
                     alt={currentSlide.caption || 'Photo preview'}
                     className={`max-h-full max-w-full object-contain rounded-md shadow-2xl ring-1 ring-white/10 select-none ${
-                      scale > 1 ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'
+                      scale > 1.05 ? (isPointerDragging ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-default'
                     }`}
                     draggable={false}
+                    onDragStart={(e) => e.preventDefault()}
                   />
                 </div>
               </div>
@@ -682,6 +794,7 @@ export function PhotoLightbox({
                   alt={nextSlide.caption || 'Next photo'}
                   className="max-h-full max-w-full object-contain rounded-md shadow-2xl opacity-90"
                   draggable={false}
+                  onDragStart={(e) => e.preventDefault()}
                 />
               </div>
             )}
@@ -690,19 +803,49 @@ export function PhotoLightbox({
           <p className="px-4 text-center text-sm text-gray-400">Preview unavailable for this photo.</p>
         )}
 
-        {/* Reset Zoom Pill (Appears whenever user is zoomed in) */}
+        {/* Floating Zoom & Pan Controls Pill */}
         {scale > 1.05 && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              resetZoom();
-            }}
-            className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[215] flex items-center gap-1.5 rounded-full border border-white/20 bg-black/80 px-3.5 py-1.5 text-xs font-semibold text-white shadow-xl backdrop-blur-md transition-all hover:bg-black/95 active:scale-95 animate-in fade-in zoom-in-95 duration-150"
-          >
-            <RotateCcw className="h-3.5 w-3.5" />
-            <span>{Math.round(scale * 100)}% · Tap to reset</span>
-          </button>
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[215] flex items-center gap-1.5 rounded-full border border-white/20 bg-black/85 px-2.5 py-1.5 text-xs font-semibold text-white shadow-2xl backdrop-blur-md animate-in fade-in zoom-in-95 duration-150">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                zoomOut();
+              }}
+              className="flex h-7 w-7 items-center justify-center rounded-full text-white/80 hover:bg-white/20 hover:text-white transition-colors"
+              title="Zoom Out"
+              aria-label="Zoom Out"
+            >
+              <ZoomOut className="h-3.5 w-3.5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                resetZoom();
+              }}
+              className="flex items-center gap-1 px-2 py-0.5 rounded-full hover:bg-white/15 text-xs font-semibold text-white transition-colors"
+              title="Click to reset zoom"
+            >
+              <RotateCcw className="h-3 w-3" />
+              <span>{Math.round(scale * 100)}%</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                zoomIn();
+              }}
+              disabled={scale >= 4}
+              className="flex h-7 w-7 items-center justify-center rounded-full text-white/80 hover:bg-white/20 hover:text-white disabled:opacity-30 transition-colors"
+              title="Zoom In"
+              aria-label="Zoom In"
+            >
+              <ZoomIn className="h-3.5 w-3.5" />
+            </button>
+          </div>
         )}
 
         {/* Mobile Swipe / Zoom Helper hint (fades out or shows slide dots if multiple) */}
