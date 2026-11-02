@@ -28,8 +28,8 @@ export function HowItWorks({ customSteps }: HowItWorksProps) {
   const displaySteps = customSteps || steps;
   
   return (
-    <section id="landing-how-it-works" className="relative scroll-mt-20 py-32 px-6 bg-[#0a0a0a]">
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#1a1a1a_1px,transparent_1px),linear-gradient(to_bottom,#1a1a1a_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-10" />
+    <section id="landing-how-it-works" className="relative scroll-mt-20 py-32 px-6 bg-white dark:bg-[#0a0a0a] transition-colors duration-200">
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#e5e7eb_1px,transparent_1px),linear-gradient(to_bottom,#e5e7eb_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#1a1a1a_1px,transparent_1px),linear-gradient(to_bottom,#1a1a1a_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-40 dark:opacity-10" />
       
       <div className="max-w-6xl mx-auto relative z-10">
         <motion.div 
@@ -39,11 +39,11 @@ export function HowItWorks({ customSteps }: HowItWorksProps) {
           viewport={{ once: true }}
           className="text-center mb-20"
         >
-          <div className="mb-6 h-px w-16 bg-violet-400/50 mx-auto" />
-          <h2 className="font-display text-3xl md:text-4xl font-semibold tracking-[-0.03em] text-white mb-6">
+          <div className="mb-6 h-px w-16 bg-violet-500/50 mx-auto" />
+          <h2 className="font-display text-3xl md:text-4xl font-semibold tracking-[-0.03em] text-zinc-900 dark:text-white mb-6">
             How It Works
           </h2>
-          <p className="text-white/50 max-w-2xl mx-auto text-lg font-light leading-relaxed">
+          <p className="text-zinc-600 dark:text-white/50 max-w-2xl mx-auto text-lg font-normal dark:font-light leading-relaxed">
             Three simple steps to access all your event photos instantly.
           </p>
         </motion.div>
@@ -56,15 +56,15 @@ export function HowItWorks({ customSteps }: HowItWorksProps) {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: index * 0.15 }}
               viewport={{ once: true }}
-              className="relative p-8 border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-colors"
+              className="relative p-8 rounded-2xl border border-zinc-200/90 bg-zinc-50/70 hover:bg-zinc-100/70 dark:border-white/5 dark:bg-white/[0.02] dark:hover:bg-white/[0.04] transition-colors duration-200 shadow-sm dark:shadow-none"
             >
               <span className="font-display text-5xl font-bold text-violet-500/20 absolute top-4 right-6">
                 {item.step}
               </span>
-              <h3 className="font-display text-lg font-semibold tracking-tight text-white mb-4 mt-8">
+              <h3 className="font-display text-lg font-semibold tracking-tight text-zinc-900 dark:text-white mb-4 mt-8">
                 {item.title}
               </h3>
-              <p className="text-white/50 text-sm leading-relaxed font-light">
+              <p className="text-zinc-600 dark:text-white/50 text-sm leading-relaxed font-normal dark:font-light">
                 {item.description}
               </p>
             </motion.div>

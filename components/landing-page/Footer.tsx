@@ -15,43 +15,43 @@ export function Footer({
   year = new Date().getFullYear(),
 }: FooterProps) {
   return (
-    <footer className="border-t border-white/5 bg-[#0a0a0a] py-16 px-6">
+    <footer className="border-t border-zinc-200/80 bg-zinc-50 dark:border-white/5 dark:bg-[#0a0a0a] py-16 px-6 transition-colors duration-200">
       <div className="max-w-6xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-8">
           {/* Brand */}
           <div className="flex flex-col items-center md:items-start gap-4">
-            <BrandLogo href="/" size="md" tone="light" />
-            <p className="text-sm font-light leading-relaxed text-white/40 text-center md:text-left max-w-xs">
+            <BrandLogo href="/" size="md" tone="auto" />
+            <p className="text-sm font-light leading-relaxed text-zinc-600 dark:text-white/40 text-center md:text-left max-w-xs">
               AI-powered photo delivery for events. Find your photos instantly with just a selfie.
             </p>
           </div>
 
           {/* Contact */}
           <div className="flex flex-col items-center md:items-start gap-3">
-            <h3 className="font-display text-xs font-semibold uppercase tracking-[0.2em] text-white/55">
+            <h3 className="font-display text-xs font-semibold uppercase tracking-[0.2em] text-zinc-900 dark:text-white/55">
               Contact
             </h3>
             <a
               href={`mailto:${CONTACT_EMAIL}`}
-              className="text-sm font-light text-white/40 hover:text-violet-400 transition-colors"
+              className="text-sm font-light text-zinc-600 hover:text-violet-600 dark:text-white/40 dark:hover:text-violet-400 transition-colors"
             >
               {CONTACT_EMAIL}
             </a>
             <Link
               href="/contact"
-              className="text-sm font-light text-white/40 hover:text-violet-400 transition-colors"
+              className="text-sm font-light text-zinc-600 hover:text-violet-600 dark:text-white/40 dark:hover:text-violet-400 transition-colors"
             >
               Contact page
             </Link>
             <Link
               href="/terms"
-              className="text-sm font-light text-white/40 hover:text-violet-400 transition-colors"
+              className="text-sm font-light text-zinc-600 hover:text-violet-600 dark:text-white/40 dark:hover:text-violet-400 transition-colors"
             >
               Terms & Conditions
             </Link>
             <Link
               href="/privacy"
-              className="text-sm font-light text-white/40 hover:text-violet-400 transition-colors"
+              className="text-sm font-light text-zinc-600 hover:text-violet-600 dark:text-white/40 dark:hover:text-violet-400 transition-colors"
             >
               Privacy Policy
             </Link>
@@ -59,7 +59,7 @@ export function Footer({
 
           {/* Social Links */}
           <div className="flex flex-col items-center md:items-start gap-3">
-            <h3 className="font-display text-xs font-semibold uppercase tracking-[0.2em] text-white/55">
+            <h3 className="font-display text-xs font-semibold uppercase tracking-[0.2em] text-zinc-900 dark:text-white/55">
               Follow Us
             </h3>
             <div className="flex items-center gap-4">
@@ -67,7 +67,7 @@ export function Footer({
                 href="https://www.linkedin.com/company/roopixo"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-white/40 hover:text-violet-400 transition-colors"
+                className="text-zinc-500 hover:text-violet-600 dark:text-white/40 dark:hover:text-violet-400 transition-colors"
                 aria-label="Roopixo on LinkedIn"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -78,7 +78,7 @@ export function Footer({
                 href="https://www.instagram.com/roopixo"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-white/40 hover:text-violet-400 transition-colors"
+                className="text-zinc-500 hover:text-violet-600 dark:text-white/40 dark:hover:text-violet-400 transition-colors"
                 aria-label="Roopixo on Instagram"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -89,7 +89,7 @@ export function Footer({
                 href="https://x.com/Roopixo"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-white/40 hover:text-violet-400 transition-colors"
+                className="text-zinc-500 hover:text-violet-600 dark:text-white/40 dark:hover:text-violet-400 transition-colors"
                 aria-label="Roopixo on X"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -101,13 +101,13 @@ export function Footer({
         </div>
 
         {/* Bottom Bar */}
-        <div className="mt-12 pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs font-light tracking-wider text-white/30">
+        <div className="mt-12 pt-8 border-t border-zinc-200 dark:border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-xs font-light tracking-wider text-zinc-500 dark:text-white/30">
             © {year} {brandName}. All rights reserved.
           </p>
           <a
             href={`mailto:${CONTACT_EMAIL}`}
-            className="text-xs font-light tracking-wider text-white/30 hover:text-violet-400 transition-colors"
+            className="text-xs font-light tracking-wider text-zinc-500 dark:text-white/30 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
           >
             {CONTACT_EMAIL}
           </a>

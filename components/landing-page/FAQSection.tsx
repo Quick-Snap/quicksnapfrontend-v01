@@ -44,9 +44,9 @@ export function FAQSection() {
   };
 
   return (
-    <section id="landing-faq" className="relative scroll-mt-20 py-24 md:py-32 px-4 sm:px-6 bg-[#06010f] border-t border-white/[0.06] overflow-hidden">
+    <section id="landing-faq" className="relative scroll-mt-20 py-24 md:py-32 px-4 sm:px-6 bg-zinc-50 border-t border-zinc-200/80 dark:bg-[#06010f] dark:border-white/[0.06] transition-colors duration-200 overflow-hidden">
       {/* Background glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-violet-600/10 blur-[150px] rounded-full pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-violet-600/10 blur-[150px] rounded-full pointer-events-none opacity-40 dark:opacity-100" />
 
       <div className="max-w-4xl mx-auto relative z-10 w-full">
         {/* Header */}
@@ -57,14 +57,14 @@ export function FAQSection() {
           viewport={{ once: true }}
           className="text-center mb-14"
         >
-          <div className="mb-4 inline-flex items-center gap-2 px-3 py-1 rounded-full border border-violet-500/30 bg-violet-500/10 text-violet-300 text-xs font-semibold uppercase tracking-wider">
+          <div className="mb-4 inline-flex items-center gap-2 px-3 py-1 rounded-full border border-violet-500/30 bg-violet-500/10 text-violet-700 dark:text-violet-300 text-xs font-semibold uppercase tracking-wider">
             <HelpCircle className="w-3.5 h-3.5" />
             Frequently Asked Questions
           </div>
-          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-semibold tracking-[-0.03em] text-white mb-5">
-            Got Questions? We’ve Got <span className="bg-gradient-to-r from-violet-400 via-fuchsia-300 to-indigo-300 bg-clip-text text-transparent">Answers</span>
+          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-semibold tracking-[-0.03em] text-zinc-900 dark:text-white mb-5">
+            Got Questions? We’ve Got <span className="bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-600 dark:from-violet-400 dark:via-fuchsia-300 dark:to-indigo-300 bg-clip-text text-transparent">Answers</span>
           </h2>
-          <p className="text-white/60 max-w-xl mx-auto text-base sm:text-lg font-light leading-relaxed">
+          <p className="text-zinc-600 dark:text-white/60 max-w-xl mx-auto text-base sm:text-lg font-light leading-relaxed">
             Everything you need to know about hosting events, guest privacy, studio tools, and one-time passes.
           </p>
         </motion.div>
@@ -82,7 +82,7 @@ export function FAQSection() {
             return (
               <div
                 key={faq.q}
-                className="rounded-2xl border border-white/10 bg-white/[0.02] backdrop-blur-md overflow-hidden transition-all duration-200 hover:border-white/20"
+                className="rounded-2xl border border-zinc-200 bg-white dark:border-white/10 dark:bg-white/[0.02] shadow-sm dark:shadow-none backdrop-blur-md overflow-hidden transition-all duration-200 hover:border-violet-300 dark:hover:border-white/20"
               >
                 <button
                   type="button"
@@ -90,12 +90,14 @@ export function FAQSection() {
                   className="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 focus:outline-none"
                   aria-expanded={isOpen}
                 >
-                  <span className="font-display text-base sm:text-lg font-medium text-white/90">
+                  <span className="font-display text-base sm:text-lg font-medium text-zinc-900 dark:text-white/90">
                     {faq.q}
                   </span>
                   <div
-                    className={`w-7 h-7 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center shrink-0 transition-transform duration-300 ${
-                      isOpen ? 'rotate-180 bg-violet-500/20 border-violet-500/40 text-violet-300' : 'text-white/60'
+                    className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 ${
+                      isOpen
+                        ? 'rotate-180 bg-violet-100 border border-violet-300 text-violet-700 dark:bg-violet-500/20 dark:border-violet-500/40 dark:text-violet-300'
+                        : 'bg-zinc-100 border border-zinc-200 text-zinc-600 dark:bg-white/[0.05] dark:border-white/10 dark:text-white/60'
                     }`}
                   >
                     <ChevronDown className="w-4 h-4" />
@@ -110,7 +112,7 @@ export function FAQSection() {
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.25, ease: 'easeInOut' }}
                     >
-                      <div className="px-5 pb-5 sm:px-6 sm:pb-6 text-sm sm:text-base font-light text-white/65 leading-relaxed border-t border-white/[0.04] pt-4">
+                      <div className="px-5 pb-5 sm:px-6 sm:pb-6 text-sm sm:text-base font-light text-zinc-600 dark:text-white/65 leading-relaxed border-t border-zinc-100 dark:border-white/[0.04] pt-4">
                         {faq.a}
                       </div>
                     </motion.div>

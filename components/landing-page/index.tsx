@@ -69,7 +69,7 @@ export function LandingPage({
   brandName = 'Roopixo'
 }: LandingPageProps) {
   return (
-    <div className="relative min-h-screen bg-[#0a0a0a] font-sans">
+    <div className="relative min-h-screen bg-zinc-50 text-zinc-900 dark:bg-[#0a0a0a] dark:text-white font-sans transition-colors duration-200">
       <Header
         brandName={brandName}
         loginHref={loginHref}

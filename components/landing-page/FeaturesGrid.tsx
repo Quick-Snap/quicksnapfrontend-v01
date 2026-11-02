@@ -71,22 +71,22 @@ export function FeaturesGrid() {
               inactiveZone={0.01}
               borderWidth={2}
             />
-            <div className="relative flex h-full flex-col justify-between gap-5 overflow-hidden rounded-xl border border-white/5 bg-[#10091d]/90 p-6 shadow-sm">
+            <div className="relative flex h-full flex-col justify-between gap-5 overflow-hidden rounded-xl border border-zinc-200/90 bg-white/90 p-6 shadow-sm dark:border-white/5 dark:bg-[#10091d]/90 transition-colors duration-200">
               <div className="flex items-center justify-between">
-                <div className="w-fit rounded-xl border border-white/10 bg-white/5 p-2.5">
+                <div className="w-fit rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 dark:border-white/10 dark:bg-white/5">
                   {feature.icon}
                 </div>
                 {feature.badge && (
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wider uppercase bg-white/[0.06] text-white/70 border border-white/10">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wider uppercase bg-zinc-100 text-zinc-700 border border-zinc-200 dark:bg-white/[0.06] dark:text-white/70 dark:border-white/10">
                     {feature.badge}
                   </span>
                 )}
               </div>
               <div className="space-y-2">
-                <h3 className="text-lg leading-tight font-semibold tracking-tight text-white">
+                <h3 className="text-lg leading-tight font-semibold tracking-tight text-zinc-900 dark:text-white">
                   {feature.title}
                 </h3>
-                <p className="text-sm leading-relaxed text-white/50 font-light">
+                <p className="text-sm leading-relaxed text-zinc-600 dark:text-white/50 font-normal dark:font-light">
                   {feature.description}
                 </p>
               </div>

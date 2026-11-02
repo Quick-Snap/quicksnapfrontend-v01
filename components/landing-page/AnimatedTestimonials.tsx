@@ -160,7 +160,7 @@ export function AnimatedTestimonials({
   }
 
   return (
-    <section ref={sectionRef} id="landing-testimonials" className={`scroll-mt-20 py-24 overflow-hidden bg-[#0a0a0a] ${className || ""}`}>
+    <section ref={sectionRef} id="landing-testimonials" className={`scroll-mt-20 py-24 overflow-hidden bg-white dark:bg-[#0a0a0a] border-t border-zinc-200/80 dark:border-white/5 transition-colors duration-200 ${className || ""}`}>
       <div className="px-6 md:px-12 max-w-6xl mx-auto">
         <motion.div
           initial="hidden"
@@ -172,22 +172,22 @@ export function AnimatedTestimonials({
           <motion.div variants={itemVariants} className="flex flex-col justify-center">
             <div className="space-y-6">
               {badgeText && (
-                <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-violet-500/10 text-violet-400 border border-violet-500/20">
-                  <Star className="mr-1.5 h-3.5 w-3.5 fill-violet-400" />
+                <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20">
+                  <Star className="mr-1.5 h-3.5 w-3.5 fill-violet-600 dark:fill-violet-400" />
                   <span>{badgeText}</span>
                 </div>
               )}
 
-              <h2 className="font-display text-3xl font-semibold tracking-[-0.03em] text-white sm:text-4xl md:text-5xl">{title}</h2>
+              <h2 className="font-display text-3xl font-semibold tracking-[-0.03em] text-zinc-900 dark:text-white sm:text-4xl md:text-5xl">{title}</h2>
 
-              <p className="max-w-[600px] text-white/50 font-light md:text-lg leading-relaxed">{subtitle}</p>
+              <p className="max-w-[600px] text-zinc-600 dark:text-white/50 font-light md:text-lg leading-relaxed">{subtitle}</p>
 
               <div className="flex items-center gap-3 pt-4">
                 {testimonials.map((_, index) => (
                   <button
                     key={index}
                     onClick={() => setActiveIndex(index)}
-                    className={`h-2 rounded-full transition-all duration-300 ${activeIndex === index ? "w-10 bg-violet-500" : "w-2 bg-white/20 hover:bg-white/30"
+                    className={`h-2 rounded-full transition-all duration-300 ${activeIndex === index ? "w-10 bg-violet-600 dark:bg-violet-500" : "w-2 bg-zinc-300 hover:bg-zinc-400 dark:bg-white/20 dark:hover:bg-white/30"
                       }`}
                     aria-label={`View testimonial ${index + 1}`}
                   />
@@ -211,7 +211,7 @@ export function AnimatedTestimonials({
                 transition={{ duration: 0.5, ease: "easeInOut" }}
                 style={{ zIndex: activeIndex === index ? 10 : 0 }}
               >
-                <div className="bg-[#111111] border border-white/10 shadow-2xl rounded-2xl p-8 h-full flex flex-col">
+                <div className="bg-zinc-50 border border-zinc-200 shadow-xl dark:bg-[#111111] dark:border-white/10 dark:shadow-2xl rounded-2xl p-8 h-full flex flex-col">
                   <div className="mb-6 flex gap-1">
                     {Array(testimonial.rating)
                       .fill(0)
@@ -222,19 +222,19 @@ export function AnimatedTestimonials({
 
                   <div className="relative mb-6 flex-1">
                     <Quote className="absolute -top-2 -left-2 h-8 w-8 text-violet-500/20 rotate-180" />
-                    <p className="relative z-10 text-lg font-light leading-relaxed text-white/80">"{testimonial.content}"</p>
+                    <p className="relative z-10 text-lg font-light leading-relaxed text-zinc-800 dark:text-white/80">"{testimonial.content}"</p>
                   </div>
 
-                  <Separator className="my-4 bg-white/10" />
+                  <Separator className="my-4 bg-zinc-200 dark:bg-white/10" />
 
                   <div className="flex items-center gap-4">
-                    <Avatar className="h-12 w-12 border border-white/10">
+                    <Avatar className="h-12 w-12 border border-zinc-200 dark:border-white/10">
                       <AvatarImage src={testimonial.avatar} alt={testimonial.name} />
-                      <AvatarFallback className="bg-violet-500/20 text-violet-400">{testimonial.name.charAt(0)}</AvatarFallback>
+                      <AvatarFallback className="bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-400">{testimonial.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div>
-                      <h3 className="font-medium text-white">{testimonial.name}</h3>
-                      <p className="text-sm text-white/50">
+                      <h3 className="font-medium text-zinc-900 dark:text-white">{testimonial.name}</h3>
+                      <p className="text-sm text-zinc-500 dark:text-white/50">
                         {testimonial.role}, {testimonial.company}
                       </p>
                     </div>
@@ -252,10 +252,10 @@ export function AnimatedTestimonials({
         {/* Logo cloud */}
         {trustedCompanies.length > 0 && (
           <motion.div variants={itemVariants} initial="hidden" animate={controls} className="mt-24 text-center">
-            <h3 className="text-sm font-medium text-white/30 mb-8 tracking-wider uppercase">{trustedCompaniesTitle}</h3>
+            <h3 className="text-sm font-medium text-zinc-400 dark:text-white/30 mb-8 tracking-wider uppercase">{trustedCompaniesTitle}</h3>
             <div className="flex flex-wrap justify-center gap-x-12 gap-y-8">
               {trustedCompanies.map((company) => (
-                <div key={company} className="text-xl font-light text-white/20 hover:text-white/40 transition-colors">
+                <div key={company} className="text-xl font-light text-zinc-400 hover:text-zinc-600 dark:text-white/20 dark:hover:text-white/40 transition-colors">
                   {company}
                 </div>
               ))}
