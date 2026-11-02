@@ -54,32 +54,32 @@ export default function UpgradeModal({
   const tierConfig = {
     starter_pro: {
       name: 'Starter Pro',
-      annual: 2999,
-      monthly: 349,
+      annual: 3999,
+      monthly: 449,
       photos: '30,000 Photos',
       events: 'Unlimited Events',
       gallery: '6 Months Live Gallery',
-      perk4: 'Live Wall & Client Proofing',
+      perk4: 'Face Circle, Couple AI & Live Wall',
       description: 'Ideal for freelance photographers & solo creators delivering modern AI event galleries.'
     },
     studio_pro: {
       name: 'Studio Pro',
-      annual: 7999,
-      monthly: 899,
+      annual: 9999,
+      monthly: 1149,
       photos: '1,50,000 Photos',
       events: 'Google Drive Auto-Sync',
       gallery: '1 Full Year Live Gallery',
-      perk4: 'Branded Live Wall & 2 Logins',
+      perk4: 'Face Circles, Couple AI & 2 Logins',
       description: 'For active wedding studios & commercial photographers doing 2 to 4 shoots a month.'
     },
     enterprise: {
       name: 'Enterprise',
-      annual: 19999,
-      monthly: 2199,
+      annual: 24999,
+      monthly: 2749,
       photos: '3,50,000 Photos / Custom',
       events: 'White-Label CNAME Domain',
       gallery: '1.5 Years Live Gallery',
-      perk4: '5 Team Logins & WhatsApp VIP',
+      perk4: '5 Team Logins & VIP Face Circles',
       description: 'For high-volume wedding production houses, collegiate fests & event agencies.'
     }
   };

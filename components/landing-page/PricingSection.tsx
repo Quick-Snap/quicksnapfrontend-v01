@@ -171,15 +171,19 @@ export function PricingSection() {
                 <div className="text-xs font-semibold uppercase tracking-wider text-violet-600 dark:text-violet-400 mb-1">Freelancers & Creators</div>
                 <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">Starter Pro</h3>
                 <div className="text-3xl font-extrabold text-zinc-900 dark:text-white mb-1">
-                  ₹249 <span className="text-xs text-zinc-500 dark:text-white/50 font-normal">/ month</span>
+                  ₹333 <span className="text-xs text-zinc-500 dark:text-white/50 font-normal">/ month</span>
                 </div>
                 <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mb-3">
-                  billed annually (₹2,999/yr)
+                  billed annually (₹3,999/yr)
                 </div>
                 <ul className="space-y-2 text-xs text-zinc-700 dark:text-white/70 font-light mb-4">
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 shrink-0" />
                     <span>30,000 Photos / year</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 shrink-0" />
+                    <span>Face Circle AI & Couple Pictures Match</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 shrink-0" />
@@ -206,15 +210,19 @@ export function PricingSection() {
                 <div className="text-xs font-semibold uppercase tracking-wider text-violet-700 dark:text-violet-300 mb-1">Active Wedding Studios</div>
                 <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">Studio Pro</h3>
                 <div className="text-3xl font-extrabold text-zinc-900 dark:text-white mb-1">
-                  ₹666 <span className="text-xs text-zinc-500 dark:text-white/50 font-normal">/ month</span>
+                  ₹833 <span className="text-xs text-zinc-500 dark:text-white/50 font-normal">/ month</span>
                 </div>
                 <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mb-3">
-                  billed annually (₹7,999/yr) • Save 25%
+                  billed annually (₹9,999/yr) • Save 27%
                 </div>
                 <ul className="space-y-2 text-xs text-zinc-700 dark:text-white/75 font-light mb-4">
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 shrink-0" />
                     <span>1,50,000 Photos / year (1.5 Lakh)</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 shrink-0" />
+                    <span>Unlimited Face Circles & Couple Photo AI</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 shrink-0" />
@@ -238,15 +246,19 @@ export function PricingSection() {
                 <div className="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-1">Production Houses & Fests</div>
                 <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">Enterprise</h3>
                 <div className="text-3xl font-extrabold text-zinc-900 dark:text-white mb-1">
-                  ₹1,666 <span className="text-xs text-zinc-500 dark:text-white/50 font-normal">/ month</span>
+                  ₹2,083 <span className="text-xs text-zinc-500 dark:text-white/50 font-normal">/ month</span>
                 </div>
                 <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mb-3">
-                  billed annually (₹19,999/yr)
+                  billed annually (₹24,999/yr)
                 </div>
                 <ul className="space-y-2 text-xs text-zinc-700 dark:text-white/70 font-light mb-4">
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 shrink-0" />
                     <span>3,50,000+ Photos / year (Custom Quota)</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 shrink-0" />
+                    <span>Dedicated VIP Face Circles & Fast Indexing</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 shrink-0" />

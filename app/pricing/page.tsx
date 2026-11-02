@@ -84,19 +84,21 @@ const STUDIO_TIERS: PricingTier[] = [
     photoLimit: '30,000 Photos / year',
     price: {
       INR: {
-        annualTotal: '₹2,999',
-        annualPerMonth: '₹249',
-        monthly: '₹349'
+        annualTotal: '₹3,999',
+        annualPerMonth: '₹333',
+        monthly: '₹449'
       },
       USD: {
-        annualTotal: '$36',
-        annualPerMonth: '$3.00',
-        monthly: '$4.50'
+        annualTotal: '$48',
+        annualPerMonth: '$4.00',
+        monthly: '$5.99'
       }
     },
     features: [
       '30,000 Photos / year (approx 15-20 events)',
       'Unlimited Events & Galleries',
+      'Face Circle AI (VIP & Family Member Grouping)',
+      'AI Couple Pictures (Automatic Pair & Co-Occurrence Matching)',
       'Interactive Big-Screen Live Wall (TV / Projector Mode with QR)',
       'Guest Candid Photo Contributions (Crowdsourced Album)',
       'Multi-Ceremony Event Tabs (Haldi, Mehendi, Wedding, Reception)',
@@ -119,19 +121,21 @@ const STUDIO_TIERS: PricingTier[] = [
     photoLimit: '1,50,000 Photos / year (1.5 Lakh)',
     price: {
       INR: {
-        annualTotal: '₹7,999',
-        annualPerMonth: '₹666',
-        monthly: '₹899'
+        annualTotal: '₹9,999',
+        annualPerMonth: '₹833',
+        monthly: '₹1,149'
       },
       USD: {
-        annualTotal: '$96',
-        annualPerMonth: '$8.00',
-        monthly: '$11.00'
+        annualTotal: '$120',
+        annualPerMonth: '$10.00',
+        monthly: '$14.00'
       }
     },
     cumulativeHeader: '✨ EVERYTHING IN STARTER PRO, PLUS:',
     features: [
       '1,50,000 Photos / year (1.5 Lakh - approx 50-70 weddings)',
+      'Unlimited Face Circles & VIP Wedding Family Segments',
+      'AI Couple Pictures Filter (Bride & Groom, Duos & Co-occurrences)',
       'Custom Studio Watermark (Text & Logo with Opacity & Placement)',
       'Google Drive Background Auto-Sync (Dump camera files & auto-deliver)',
       'Branded Live Projector Wall (Studio logo & colors on big screen)',
@@ -152,19 +156,21 @@ const STUDIO_TIERS: PricingTier[] = [
     photoLimit: '3,50,000 Photos / year (3.5 Lakh)',
     price: {
       INR: {
-        annualTotal: '₹19,999',
-        annualPerMonth: '₹1,666',
-        monthly: '₹2,199'
+        annualTotal: '₹24,999',
+        annualPerMonth: '₹2,083',
+        monthly: '₹2,749'
       },
       USD: {
-        annualTotal: '$240',
-        annualPerMonth: '$20.00',
-        monthly: '$26.50'
+        annualTotal: '$300',
+        annualPerMonth: '$25.00',
+        monthly: '$34.00'
       }
     },
     cumulativeHeader: '👑 EVERYTHING IN STUDIO PRO, PLUS:',
     features: [
       '3,50,000 Photos / year (3.5 Lakh - custom quota available on request)',
+      'Dedicated VIP Face Circles with Custom Priority Group Tags',
+      'Enterprise Couple & Multi-Person Semantic Photo Clustering',
       'White-Label Custom Subdomain (gallery.yourstudio.com)',
       'White-Label Live Wall (Full custom sponsor & studio branding)',
       'Up to 5 Team Photographer Accounts',
@@ -259,6 +265,8 @@ const COMPARISON_ROWS = [
     items: [
       { name: 'Guest Selfie Searches', starter: 'Unlimited (Zero extra fees)', pro: 'Unlimited (Zero extra fees)', enterprise: 'Unlimited (Zero extra fees)' },
       { name: 'Face Match Speed', starter: 'Instant (<1 second)', pro: 'Instant (<1 second)', enterprise: 'Priority VIP Pipeline' },
+      { name: 'Face Circle (VIP & Family Member Grouping)', starter: 'Included Free', pro: 'Unlimited Face Circles', enterprise: 'Unlimited + VIP Custom Tags' },
+      { name: 'AI Couple Pictures (Bride & Groom Pair Match)', starter: 'Included Free', pro: 'Included Free', enterprise: 'Included Free' },
       { name: 'Group Photo AI Matching', starter: 'Up to 100+ faces per photo', pro: 'Up to 100+ faces per photo', enterprise: 'Up to 100+ faces per photo' },
       { name: 'Mobile App Required?', starter: 'No (Direct Browser)', pro: 'No (Direct Browser)', enterprise: 'No (Direct Browser)' }
     ]
@@ -291,6 +299,10 @@ const COMPARISON_ROWS = [
 ];
 
 const STUDIO_FAQS = [
+  {
+    q: 'How do Face Circles and Couple Pictures work?',
+    a: 'Face Circles automatically clusters recurring VIPs, family members, and friends into organized circles so organizers and guests can browse by social group with one tap. The Couple Pictures feature uses AI co-occurrence detection to automatically isolate and group every photo featuring the couple (or specific duos), making wedding album curation and sharing effortless.'
+  },
   {
     q: 'What does "Live Guest Gallery Duration" mean?',
     a: 'Your subscription gives you 1 full year of platform access to host events and upload photos. "Live Guest Gallery Duration" is how long your clients and wedding guests can open the gallery link, search photos with selfies, and download pictures—even AFTER your annual subscription ends! Starter Pro includes 6 months per event, Studio Pro includes 1 full year, and Enterprise includes 1.5 years (18 months).'
