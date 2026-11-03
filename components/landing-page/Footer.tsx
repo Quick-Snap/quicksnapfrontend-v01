@@ -86,7 +86,7 @@ export function Footer({
                 </svg>
               </a>
               <a
-                href="https://x.com/Roopixo"
+                href="https://x.com/under_roopixo"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-zinc-500 hover:text-violet-600 dark:text-white/40 dark:hover:text-violet-400 transition-colors"
