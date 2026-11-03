@@ -429,9 +429,15 @@ export default function GooglePhotosModal({ isOpen, onClose, eventId, onSyncComp
             });
 
             if (res.data?.success) {
-                toast.success('🚀 Google Drive import started in background! You can safely close your window.', {
-                    duration: 5000
-                });
+                if (res.data?.queued) {
+                    toast.success('📂 New folder queued! It will automatically start syncing right after the current folder completes.', {
+                        duration: 6000
+                    });
+                } else {
+                    toast.success('🚀 Google Drive import started in background! You can safely close your window.', {
+                        duration: 5000
+                    });
+                }
                 if (typeof window !== 'undefined') {
                     sessionStorage.setItem(`qs_event_photos_dirty_${eventId}`, '1');
                 }

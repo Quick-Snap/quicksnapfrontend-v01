@@ -130,6 +130,12 @@ export default function GoogleDriveSyncCard({ eventId, onPhotosUpdated }: Google
                             )}
                             {lastSynced && ` • Last synced ${lastSynced.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
                         </p>
+                        {syncData.folderQueue && syncData.folderQueue.length > 0 && (
+                            <p className="text-[11px] font-medium text-indigo-600 dark:text-indigo-400 mt-1 flex items-center gap-1.5">
+                                <span className="inline-block w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+                                {syncData.folderQueue.length} additional folder{syncData.folderQueue.length > 1 ? 's' : ''} queued (will sync automatically)
+                            </p>
+                        )}
                     </div>
                 </div>
 
