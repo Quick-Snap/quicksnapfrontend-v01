@@ -118,7 +118,7 @@ const jsonLd = {
       sameAs: [
         'https://www.linkedin.com/company/roopixo',
         'https://www.instagram.com/roopixo',
-        'https://x.com/under_roopixo',
+        'https://x.com/_roopixo',
       ],
     },
   ],

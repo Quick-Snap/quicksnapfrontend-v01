@@ -152,7 +152,7 @@ export default function ContactPage() {
                   <Instagram className="w-4 h-4" />
                 </a>
                 <a
-                  href="https://x.com/under_roopixo"
+                  href="https://x.com/_roopixo"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="X"
