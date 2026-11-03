@@ -48,6 +48,7 @@ export default function CreateEventPage() {
     });
     const [customCode, setCustomCode] = useState('');
     const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
+    const [isCodeInTrash, setIsCodeInTrash] = useState<boolean>(false);
     const [validationMsg, setValidationMsg] = useState<string | null>(null);
     const [checkingCode, setCheckingCode] = useState(false);
 
@@ -55,6 +56,7 @@ export default function CreateEventPage() {
     useEffect(() => {
         if (!customCode.trim()) {
             setIsAvailable(null);
+            setIsCodeInTrash(false);
             setValidationMsg(null);
             return;
         }
@@ -62,6 +64,7 @@ export default function CreateEventPage() {
         const cleanCode = customCode.trim().toUpperCase();
         if (cleanCode.length < 3 || cleanCode.length > 16) {
             setIsAvailable(false);
+            setIsCodeInTrash(false);
             setValidationMsg('Code length must be between 3 and 16 characters.');
             return;
         }
@@ -69,6 +72,7 @@ export default function CreateEventPage() {
         const codeRegex = /^[A-Z0-9]+(-[A-Z0-9]+)*$/;
         if (!codeRegex.test(cleanCode)) {
             setIsAvailable(false);
+            setIsCodeInTrash(false);
             setValidationMsg('Only uppercase letters, numbers, and hyphens (cannot start or end with a hyphen).');
             return;
         }
@@ -82,19 +86,23 @@ export default function CreateEventPage() {
                 const res: any = await eventApi.checkAccessCode(cleanCode);
                 if (isMounted) {
                     const availableVal = res?.data?.available !== undefined ? res.data.available : res?.available;
+                    const inTrash = res?.data?.inTrash !== undefined ? res.data.inTrash : res?.inTrash;
                     const msg = res?.data?.message || res?.message;
 
                     if (res?.success && typeof availableVal === 'boolean') {
                         setIsAvailable(availableVal);
+                        setIsCodeInTrash(Boolean(inTrash));
                         setValidationMsg(msg || (availableVal ? `Code "${cleanCode}" is available!` : 'Code is taken'));
                     } else {
                         setIsAvailable(false);
+                        setIsCodeInTrash(false);
                         setValidationMsg(msg || 'Error checking availability');
                     }
                 }
             } catch (err: any) {
                 if (isMounted) {
                     setIsAvailable(false);
+                    setIsCodeInTrash(false);
                     setValidationMsg(err.response?.data?.message || 'Error validating code');
                 }
             } finally {
@@ -687,10 +695,21 @@ export default function CreateEventPage() {
                                     </div>
 
                                     {validationMsg ? (
-                                        <p className={`text-xs flex items-center gap-1.5 ${isAvailable ? 'text-emerald-400 font-medium' : 'text-rose-400'}`}>
-                                            {isAvailable ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0" /> : <AlertCircle className="h-3.5 w-3.5 shrink-0" />}
-                                            {validationMsg}
-                                        </p>
+                                        <div className="space-y-1">
+                                            <p className={`text-xs flex items-center gap-1.5 ${isAvailable ? 'text-emerald-400 font-medium' : 'text-rose-400'}`}>
+                                                {isAvailable ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0" /> : <AlertCircle className="h-3.5 w-3.5 shrink-0" />}
+                                                <span>{validationMsg}</span>
+                                            </p>
+                                            {isCodeInTrash && (
+                                                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 pl-5">
+                                                    Need to reuse this code? Head to{' '}
+                                                    <Link href="/organizer/events" target="_blank" className="underline font-medium text-violet-500 hover:text-violet-400">
+                                                        My Events &gt; Trash Bin
+                                                    </Link>{' '}
+                                                    and permanently delete the older event first.
+                                                </p>
+                                            )}
+                                        </div>
                                     ) : (
                                         <p className="text-xs text-zinc-500 dark:text-gray-400">
                                             3–16 letters, numbers, and hyphens (e.g. BWAI-26 or TANVI-WEDDING). Leave blank to auto-generate a random 6-character code.

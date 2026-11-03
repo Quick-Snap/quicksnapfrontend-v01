@@ -22,12 +22,14 @@ export default function CustomizeAccessCodeModal({
   const [checking, setChecking] = useState(false);
   const [saving, setSaving] = useState(false);
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
+  const [isCodeInTrash, setIsCodeInTrash] = useState<boolean>(false);
   const [validationMessage, setValidationMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (event?.accessCode) {
       setCode(event.accessCode);
       setIsAvailable(null);
+      setIsCodeInTrash(false);
       setValidationMessage(null);
     }
   }, [event, isOpen]);
@@ -36,6 +38,7 @@ export default function CustomizeAccessCodeModal({
   useEffect(() => {
     if (!isOpen || !code) {
       setIsAvailable(null);
+      setIsCodeInTrash(false);
       setValidationMessage(null);
       return;
     }
@@ -45,6 +48,7 @@ export default function CustomizeAccessCodeModal({
     // If unchanged from current event's code
     if (cleanCode === event?.accessCode?.toUpperCase()) {
       setIsAvailable(true);
+      setIsCodeInTrash(false);
       setValidationMessage('Current event access code');
       return;
     }
@@ -52,6 +56,7 @@ export default function CustomizeAccessCodeModal({
     // Client-side quick validation
     if (cleanCode.length < 3 || cleanCode.length > 16) {
       setIsAvailable(false);
+      setIsCodeInTrash(false);
       setValidationMessage('Code length must be between 3 and 16 characters.');
       return;
     }
@@ -59,6 +64,7 @@ export default function CustomizeAccessCodeModal({
     const codeRegex = /^[A-Z0-9]+(-[A-Z0-9]+)*$/;
     if (!codeRegex.test(cleanCode)) {
       setIsAvailable(false);
+      setIsCodeInTrash(false);
       setValidationMessage('Only uppercase letters, numbers, and hyphens (cannot start or end with a hyphen).');
       return;
     }
@@ -72,19 +78,23 @@ export default function CustomizeAccessCodeModal({
         const res: any = await eventApi.checkAccessCode(cleanCode, event?._id);
         if (isMounted) {
           const availableVal = res?.data?.available !== undefined ? res.data.available : res?.available;
+          const inTrash = res?.data?.inTrash !== undefined ? res.data.inTrash : res?.inTrash;
           const msg = res?.data?.message || res?.message;
 
           if (res?.success && typeof availableVal === 'boolean') {
             setIsAvailable(availableVal);
+            setIsCodeInTrash(Boolean(inTrash));
             setValidationMessage(msg || (availableVal ? `Code "${cleanCode}" is available!` : 'Code is taken'));
           } else {
             setIsAvailable(false);
+            setIsCodeInTrash(false);
             setValidationMessage(msg || 'Error checking availability');
           }
         }
       } catch (err: any) {
         if (isMounted) {
           setIsAvailable(false);
+          setIsCodeInTrash(false);
           setValidationMessage(err.response?.data?.message || 'Error validating code');
         }
       } finally {
@@ -205,16 +215,23 @@ export default function CustomizeAccessCodeModal({
 
             {/* Validation Message */}
             {validationMessage && (
-              <div className={`mt-2 text-xs font-semibold flex items-center gap-1.5 ${
-                isAvailable === true 
-                  ? 'text-emerald-600 dark:text-emerald-400' 
-                  : isAvailable === false 
-                    ? 'text-red-600 dark:text-red-400' 
-                    : 'text-zinc-500 dark:text-gray-400'
-              }`}>
-                {isAvailable === true && <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />}
-                {isAvailable === false && <AlertCircle size={14} className="text-red-500 shrink-0" />}
-                <span>{validationMessage}</span>
+              <div className="mt-2 space-y-1">
+                <div className={`text-xs font-semibold flex items-center gap-1.5 ${
+                  isAvailable === true 
+                    ? 'text-emerald-600 dark:text-emerald-400' 
+                    : isAvailable === false 
+                      ? 'text-red-600 dark:text-red-400' 
+                      : 'text-zinc-500 dark:text-gray-400'
+                }`}>
+                  {isAvailable === true && <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />}
+                  {isAvailable === false && <AlertCircle size={14} className="text-red-500 shrink-0" />}
+                  <span>{validationMessage}</span>
+                </div>
+                {isCodeInTrash && (
+                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400 pl-5">
+                    Tip: The previous event with this code is currently in the Trash Bin. Permanently delete it first if you want to reuse this code.
+                  </p>
+                )}
               </div>
             )}
           </div>
