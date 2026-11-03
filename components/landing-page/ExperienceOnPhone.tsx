@@ -13,12 +13,12 @@ export function ExperienceOnPhone() {
   const demoQrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https%3A%2F%2Fwww.roopixo.com%2Fdemo&color=ffffff&bgcolor=15082a';
 
   return (
-    <section className="relative py-24 px-6 bg-white border-t border-zinc-200/80 dark:bg-[#06010f] dark:border-white/[0.06] overflow-hidden transition-colors duration-200">
+    <section className="relative py-16 sm:py-24 px-4 sm:px-6 bg-white border-t border-zinc-200/80 dark:bg-[#06010f] dark:border-white/[0.06] overflow-hidden transition-colors duration-200">
       {/* Glow */}
       <div className="absolute right-0 top-1/2 -translate-y-1/2 w-96 h-96 bg-fuchsia-600/10 blur-[120px] rounded-full pointer-events-none" />
 
-      <div className="max-w-6xl mx-auto relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+      <div className="max-w-6xl mx-auto relative z-10 w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           {/* Left Text */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -27,21 +27,38 @@ export function ExperienceOnPhone() {
             viewport={{ once: true }}
             className="lg:col-span-7"
           >
-            <div className="mb-4 inline-flex items-center gap-2 px-3 py-1 rounded-full border border-fuchsia-500/30 bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-300 text-xs font-semibold uppercase tracking-wider">
+            <div className="mb-3.5 inline-flex items-center gap-2 px-3 py-1 rounded-full border border-fuchsia-500/30 bg-fuchsia-500/10 text-fuchsia-700 dark:text-fuchsia-300 text-xs font-semibold uppercase tracking-wider">
               <Smartphone className="w-3.5 h-3.5" />
               Zero Friction Mobile Web
             </div>
-            <h2 className="font-display text-3xl md:text-5xl font-semibold tracking-[-0.03em] text-zinc-900 dark:text-white mb-6">
+            <h2 className="font-display text-2xl sm:text-4xl md:text-5xl font-semibold tracking-[-0.03em] text-zinc-900 dark:text-white mb-4 sm:mb-6 leading-tight">
               Scan with Your Phone. <br />
               <span className="bg-gradient-to-r from-violet-600 via-fuchsia-500 to-amber-500 dark:from-violet-400 dark:via-fuchsia-300 dark:to-amber-300 bg-clip-text text-transparent">
                 Experience It Right Now.
               </span>
             </h2>
-            <p className="text-zinc-600 dark:text-white/60 text-base md:text-lg font-normal dark:font-light leading-relaxed mb-8 max-w-xl">
-              Point your smartphone camera at the QR code on the right. No App Store visit. No 150MB download. Guests join in under 3 seconds directly in Safari or Chrome.
+            <p className="text-zinc-600 dark:text-white/60 text-sm sm:text-base md:text-lg font-normal dark:font-light leading-relaxed mb-6 sm:mb-8 max-w-xl">
+              Point your smartphone camera at the QR code. No App Store visit. No 150MB download. Guests join in under 3 seconds directly in Safari or Chrome.
             </p>
 
-            <div className="space-y-4 mb-8">
+            {/* Direct Mobile Launch Pill for phones */}
+            <div className="block lg:hidden mb-6 p-4 rounded-2xl bg-gradient-to-r from-violet-500/10 via-fuchsia-500/10 to-transparent border border-violet-500/20">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold text-zinc-900 dark:text-white">Browsing on your phone?</p>
+                  <p className="text-[11px] text-zinc-500 dark:text-white/50">Experience the live guest flow directly in your browser.</p>
+                </div>
+                <Link
+                  href="/demo"
+                  className="shrink-0 px-3.5 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-bold shadow-md shadow-violet-600/25 flex items-center gap-1.5 transition-all"
+                >
+                  <span>Try Demo</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            </div>
+
+            <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
               <div className="flex items-start gap-3">
                 <div className="w-5 h-5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-500 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
                   <Check className="w-3.5 h-3.5" />

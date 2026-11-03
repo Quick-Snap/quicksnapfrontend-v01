@@ -37,7 +37,7 @@ export function CTASection({
     : subtitle;
 
   return (
-    <section className="relative py-32 px-6 bg-white dark:bg-[#0a0a0a] border-t border-zinc-200/80 dark:border-white/5 transition-colors duration-200">
+    <section className="relative py-16 sm:py-24 md:py-32 px-4 sm:px-6 bg-white dark:bg-[#0a0a0a] border-t border-zinc-200/80 dark:border-white/5 transition-colors duration-200">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-violet-900/10 via-transparent to-transparent pointer-events-none" />
 
       <motion.div
@@ -45,13 +45,13 @@ export function CTASection({
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
         viewport={{ once: true }}
-        className="max-w-4xl mx-auto text-center relative z-10"
+        className="max-w-4xl mx-auto text-center relative z-10 w-full"
       >
-        <div className="mb-8 h-px w-16 bg-violet-500/50 mx-auto" />
-        <h2 className="font-display text-3xl md:text-5xl font-semibold tracking-[-0.03em] text-zinc-900 dark:text-white mb-6">
+        <div className="mb-6 sm:mb-8 h-px w-16 bg-violet-500/50 mx-auto" />
+        <h2 className="font-display text-2xl sm:text-4xl md:text-5xl font-semibold tracking-[-0.03em] text-zinc-900 dark:text-white mb-4 sm:mb-6 leading-tight">
           {headingText}
         </h2>
-        <p className="text-zinc-600 dark:text-white/50 max-w-xl mx-auto text-lg font-light leading-relaxed mb-10">
+        <p className="text-zinc-600 dark:text-white/50 max-w-xl mx-auto text-sm sm:text-base md:text-lg font-light leading-relaxed mb-8 sm:mb-10">
           {subText}
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">

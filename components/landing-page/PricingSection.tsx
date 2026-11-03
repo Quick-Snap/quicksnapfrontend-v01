@@ -6,7 +6,7 @@ import Link from 'next/link';
 
 export function PricingSection() {
   return (
-    <section id="landing-pricing" className="relative scroll-mt-20 py-24 md:py-32 px-4 sm:px-6 bg-zinc-50 border-t border-zinc-200/80 dark:bg-[#080214] dark:border-white/[0.06] transition-colors duration-200 overflow-hidden">
+    <section id="landing-pricing" className="relative scroll-mt-20 py-16 sm:py-24 md:py-32 px-4 sm:px-6 bg-zinc-50 border-t border-zinc-200/80 dark:bg-[#080214] dark:border-white/[0.06] transition-colors duration-200 overflow-hidden">
       {/* Background radial glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-violet-600/10 blur-[150px] rounded-full pointer-events-none opacity-40 dark:opacity-100" />
 
@@ -17,16 +17,16 @@ export function PricingSection() {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
-          className="mb-12"
+          className="mb-8 sm:mb-12"
         >
-          <div className="mb-4 inline-flex items-center gap-2 px-3 py-1 rounded-full border border-violet-500/30 bg-violet-500/10 text-violet-700 dark:text-violet-300 text-xs font-semibold uppercase tracking-wider">
+          <div className="mb-3.5 inline-flex items-center gap-2 px-3 py-1 rounded-full border border-violet-500/30 bg-violet-500/10 text-violet-700 dark:text-violet-300 text-xs font-semibold uppercase tracking-wider">
             <Sparkles className="w-3.5 h-3.5" />
             Transparent Event Pricing
           </div>
-          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-semibold tracking-[-0.03em] text-zinc-900 dark:text-white mb-5">
+          <h2 className="font-display text-2xl sm:text-4xl md:text-5xl font-semibold tracking-[-0.03em] text-zinc-900 dark:text-white mb-3 sm:mb-5 leading-tight">
             Plans for Hosts, Creators & Studios of <span className="bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-600 dark:from-violet-400 dark:via-fuchsia-300 dark:to-indigo-300 bg-clip-text text-transparent">Any Scale</span>
           </h2>
-          <p className="text-zinc-600 dark:text-white/60 max-w-2xl mx-auto text-base sm:text-lg font-light leading-relaxed">
+          <p className="text-zinc-600 dark:text-white/60 max-w-2xl mx-auto text-sm sm:text-base md:text-lg font-light leading-relaxed">
             Choose a one-time pass for your wedding or private celebration, or subscribe for high-volume studio shoots. Zero per-guest fees.
           </p>
         </motion.div>

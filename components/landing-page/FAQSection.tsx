@@ -44,7 +44,7 @@ export function FAQSection() {
   };
 
   return (
-    <section id="landing-faq" className="relative scroll-mt-20 py-24 md:py-32 px-4 sm:px-6 bg-zinc-50 border-t border-zinc-200/80 dark:bg-[#06010f] dark:border-white/[0.06] transition-colors duration-200 overflow-hidden">
+    <section id="landing-faq" className="relative scroll-mt-20 py-16 sm:py-24 md:py-32 px-4 sm:px-6 bg-zinc-50 border-t border-zinc-200/80 dark:bg-[#06010f] dark:border-white/[0.06] transition-colors duration-200 overflow-hidden">
       {/* Background glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-violet-600/10 blur-[150px] rounded-full pointer-events-none opacity-40 dark:opacity-100" />
 
@@ -55,16 +55,16 @@ export function FAQSection() {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
-          className="text-center mb-14"
+          className="text-center mb-10 sm:mb-14"
         >
-          <div className="mb-4 inline-flex items-center gap-2 px-3 py-1 rounded-full border border-violet-500/30 bg-violet-500/10 text-violet-700 dark:text-violet-300 text-xs font-semibold uppercase tracking-wider">
+          <div className="mb-3.5 inline-flex items-center gap-2 px-3 py-1 rounded-full border border-violet-500/30 bg-violet-500/10 text-violet-700 dark:text-violet-300 text-xs font-semibold uppercase tracking-wider">
             <HelpCircle className="w-3.5 h-3.5" />
             Frequently Asked Questions
           </div>
-          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-semibold tracking-[-0.03em] text-zinc-900 dark:text-white mb-5">
+          <h2 className="font-display text-2xl sm:text-4xl md:text-5xl font-semibold tracking-[-0.03em] text-zinc-900 dark:text-white mb-3 sm:mb-5 leading-tight">
             Got Questions? We’ve Got <span className="bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-600 dark:from-violet-400 dark:via-fuchsia-300 dark:to-indigo-300 bg-clip-text text-transparent">Answers</span>
           </h2>
-          <p className="text-zinc-600 dark:text-white/60 max-w-xl mx-auto text-base sm:text-lg font-light leading-relaxed">
+          <p className="text-zinc-600 dark:text-white/60 max-w-xl mx-auto text-sm sm:text-base md:text-lg font-light leading-relaxed">
             Everything you need to know about hosting events, guest privacy, studio tools, and one-time passes.
           </p>
         </motion.div>

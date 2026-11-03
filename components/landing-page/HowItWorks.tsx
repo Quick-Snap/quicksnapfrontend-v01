@@ -28,22 +28,22 @@ export function HowItWorks({ customSteps }: HowItWorksProps) {
   const displaySteps = customSteps || steps;
   
   return (
-    <section id="landing-how-it-works" className="relative scroll-mt-20 py-32 px-6 bg-white dark:bg-[#0a0a0a] transition-colors duration-200">
+    <section id="landing-how-it-works" className="relative scroll-mt-20 py-16 sm:py-24 md:py-32 px-4 sm:px-6 bg-white dark:bg-[#0a0a0a] transition-colors duration-200">
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#e5e7eb_1px,transparent_1px),linear-gradient(to_bottom,#e5e7eb_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#1a1a1a_1px,transparent_1px),linear-gradient(to_bottom,#1a1a1a_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-40 dark:opacity-10" />
       
-      <div className="max-w-6xl mx-auto relative z-10">
+      <div className="max-w-6xl mx-auto relative z-10 w-full">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
-          className="text-center mb-20"
+          className="text-center mb-10 sm:mb-16"
         >
-          <div className="mb-6 h-px w-16 bg-violet-500/50 mx-auto" />
-          <h2 className="font-display text-3xl md:text-4xl font-semibold tracking-[-0.03em] text-zinc-900 dark:text-white mb-6">
+          <div className="mb-4 sm:mb-6 h-px w-16 bg-violet-500/50 mx-auto" />
+          <h2 className="font-display text-2xl sm:text-4xl font-semibold tracking-[-0.03em] text-zinc-900 dark:text-white mb-3 sm:mb-6">
             How It Works
           </h2>
-          <p className="text-zinc-600 dark:text-white/50 max-w-2xl mx-auto text-lg font-normal dark:font-light leading-relaxed">
+          <p className="text-zinc-600 dark:text-white/50 max-w-2xl mx-auto text-sm sm:text-base md:text-lg font-normal dark:font-light leading-relaxed">
             Three simple steps to access all your event photos instantly.
           </p>
         </motion.div>

@@ -12,46 +12,52 @@ export function AudienceSwitcher() {
   const isLoggedIn = !!user;
 
   return (
-    <section id="landing-audience" className="relative scroll-mt-20 py-24 px-6 bg-zinc-50 border-t border-zinc-200/80 dark:bg-[#090314] dark:border-white/[0.06] overflow-x-clip transition-colors duration-200">
-      <div className="max-w-6xl mx-auto relative z-10">
+    <section id="landing-audience" className="relative scroll-mt-20 py-16 sm:py-24 px-4 sm:px-6 bg-zinc-50 border-t border-zinc-200/80 dark:bg-[#090314] dark:border-white/[0.06] overflow-x-clip transition-colors duration-200">
+      <div className="max-w-6xl mx-auto relative z-10 w-full">
         {/* Section Header */}
-        <div className="text-center mb-12">
-          <div className="mb-4 inline-flex items-center gap-2 px-3 py-1 rounded-full border border-violet-500/30 bg-violet-500/10 text-violet-600 dark:text-violet-300 text-xs font-semibold uppercase tracking-wider">
+        <div className="text-center mb-8 sm:mb-12">
+          <div className="mb-3.5 inline-flex items-center gap-2 px-3 py-1 rounded-full border border-violet-500/30 bg-violet-500/10 text-violet-700 dark:text-violet-300 text-xs font-semibold uppercase tracking-wider">
             <Sparkles className="w-3.5 h-3.5" />
             Built for Both Sides of the Lens
           </div>
-          <h2 className="font-display text-3xl md:text-5xl font-semibold tracking-[-0.03em] text-zinc-900 dark:text-white mb-4">
+          <h2 className="font-display text-2xl sm:text-4xl md:text-5xl font-semibold tracking-[-0.03em] text-zinc-900 dark:text-white mb-3 sm:mb-4 leading-tight">
             Tailored for <span className="bg-gradient-to-r from-violet-600 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400 bg-clip-text text-transparent">Your Success</span>
           </h2>
-          <p className="text-zinc-600 dark:text-white/50 max-w-xl mx-auto text-base font-normal dark:font-light">
+          <p className="text-zinc-600 dark:text-white/50 max-w-xl mx-auto text-sm sm:text-base font-normal dark:font-light">
             Whether you photograph 40 weddings a year or you are planning your own dream celebration.
           </p>
         </div>
 
         {/* Tab Toggle */}
-        <div className="flex justify-center mb-12">
-          <div className="inline-flex p-1.5 rounded-2xl bg-zinc-200/60 border border-zinc-300/80 dark:bg-white/[0.04] dark:border-white/10 backdrop-blur-md">
+        <div className="flex justify-center mb-8 sm:mb-12 px-2">
+          <div className="w-full max-w-md grid grid-cols-2 p-1.5 rounded-2xl bg-zinc-200/70 border border-zinc-300/80 dark:bg-white/[0.04] dark:border-white/10 backdrop-blur-md">
             <button
               onClick={() => setActiveTab('photographers')}
-              className={`flex items-center gap-2.5 px-6 py-3 rounded-xl font-display text-xs sm:text-sm font-semibold tracking-wide transition-all ${
+              className={`flex items-center justify-center gap-1.5 sm:gap-2 px-3 py-2.5 sm:px-6 sm:py-3 rounded-xl font-display text-xs sm:text-sm font-semibold tracking-wide transition-all ${
                 activeTab === 'photographers'
                   ? 'bg-violet-600 text-white shadow-lg shadow-violet-600/30'
                   : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-200/50 dark:text-white/60 dark:hover:text-white dark:hover:bg-white/[0.04]'
               }`}
             >
-              <Camera className="w-4 h-4" />
-              <span>For Photographers & Studios</span>
+              <Camera className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+              <span className="truncate">
+                <span className="hidden sm:inline">For Photographers & Studios</span>
+                <span className="sm:hidden">Photographers</span>
+              </span>
             </button>
             <button
               onClick={() => setActiveTab('hosts')}
-              className={`flex items-center gap-2.5 px-6 py-3 rounded-xl font-display text-xs sm:text-sm font-semibold tracking-wide transition-all ${
+              className={`flex items-center justify-center gap-1.5 sm:gap-2 px-3 py-2.5 sm:px-6 sm:py-3 rounded-xl font-display text-xs sm:text-sm font-semibold tracking-wide transition-all ${
                 activeTab === 'hosts'
                   ? 'bg-violet-600 text-white shadow-lg shadow-violet-600/30'
                   : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-200/50 dark:text-white/60 dark:hover:text-white dark:hover:bg-white/[0.04]'
               }`}
             >
-              <Heart className="w-4 h-4" />
-              <span>For Couples & Event Hosts</span>
+              <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+              <span className="truncate">
+                <span className="hidden sm:inline">For Couples & Event Hosts</span>
+                <span className="sm:hidden">Couples & Hosts</span>
+              </span>
             </button>
           </div>
         </div>
