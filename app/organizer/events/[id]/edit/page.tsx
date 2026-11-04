@@ -47,7 +47,7 @@ export default function EditEventPage() {
                     description: event.description || '',
                     startDate: formatDate(event.startDate),
                     endDate: formatDate(event.endDate),
-                    location: event.location || '',
+                    location: event.venue || event.location || '',
                     isPublic: event.isPublic
                 });
                 setSubEvents(event.subEvents || []);
@@ -129,6 +129,7 @@ export default function EditEventPage() {
         try {
             const payload = {
                 ...formData,
+                venue: formData.location,
                 startDate: new Date(formData.startDate).toISOString(),
                 endDate: new Date(formData.endDate).toISOString(),
             };

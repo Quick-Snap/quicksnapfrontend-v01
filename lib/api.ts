@@ -355,7 +355,9 @@ export const photoApi = {
   },
 
   moderatePhoto: async (photoId: string, action: 'approve' | 'reject', reason?: string) => {
+    const status = action === 'approve' ? 'approved' : 'rejected';
     const response = await api.patch<ApiResponse<any>>(`/photos/${photoId}/moderate`, {
+      status,
       action,
       reason,
     });

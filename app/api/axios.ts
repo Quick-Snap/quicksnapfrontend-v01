@@ -35,6 +35,8 @@ api.interceptors.response.use(
         const status = error.response?.status;
         if (status === 401 && typeof window !== 'undefined') {
             localStorage.removeItem('token');
+            localStorage.removeItem('activeRole');
+            window.dispatchEvent(new Event('auth:unauthorized'));
         }
         return Promise.reject(error);
     }

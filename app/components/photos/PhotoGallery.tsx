@@ -64,12 +64,27 @@ export default function PhotoGallery({ eventId }: PhotoGalleryProps) {
   }, [data]);
 
   const photos = useMemo(() => {
-    const userJoinedEvents = user?.events || [];
+    if (!rawPhotos || rawPhotos.length === 0) return [];
+
+    const userEvents = Array.isArray(user?.events) ? user.events : [];
+    const userJoined = Array.isArray((user as any)?.joinedEvents) ? (user as any).joinedEvents : [];
+    const eventIdSet = new Set(
+      [...userEvents, ...userJoined]
+        .map((e: any) => (typeof e === 'string' ? e : e?._id ? String(e._id) : ''))
+        .filter(Boolean)
+    );
+
+    if (eventIdSet.size === 0) {
+      return rawPhotos;
+    }
+
     return rawPhotos.filter((photo: any) => {
-      const photoEventId = photo.eventId?._id || photo.eventId;
-      return photoEventId && userJoinedEvents.includes(photoEventId);
+      const rawEventId = photo.eventId?._id || photo.eventId;
+      if (!rawEventId) return true;
+      const photoEventIdStr = String(rawEventId).trim();
+      return eventIdSet.has(photoEventIdStr);
     });
-  }, [rawPhotos, user?.events]);
+  }, [rawPhotos, user?.events, (user as any)?.joinedEvents]);
 
   const currentIndex = useMemo(() => {
     if (!selectedPhoto) return -1;

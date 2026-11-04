@@ -24,6 +24,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   useEffect(() => {
     void useAuthStore.getState().initialize();
+
+    const handleUnauthorized = () => {
+      useAuthStore.setState({ user: null, activeRole: null });
+    };
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
   }, []);
 
   // Clear react-query cache when user logs out
