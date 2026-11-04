@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { useDropzone } from 'react-dropzone';
+import { useDropzone, FileRejection } from 'react-dropzone';
 import { Upload, X, FileImage, AlertCircle, ImageIcon, Sparkles, Cloud } from 'lucide-react';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
@@ -39,7 +39,7 @@ export default function UploadZone({
         }
     }, [files, previews]);
 
-    const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    const onDrop = useCallback(async (acceptedFiles: File[], fileRejections: FileRejection[]) => {
         setError(null);
 
         // Role check
@@ -48,8 +48,30 @@ export default function UploadZone({
             return;
         }
 
+        // 1. Check if user attempted to drop/select more files than allowed (e.g. 102 photos)
+        if (fileRejections && fileRejections.length > 0) {
+            const isTooMany = fileRejections.some(r => r.errors.some(e => e.code === 'too-many-files'));
+            if (isTooMany || fileRejections.length > maxFiles) {
+                const totalAttempted = fileRejections.length + acceptedFiles.length;
+                const message = `Only ${maxFiles} photos at once are allowed. You selected ${totalAttempted} photos. Please select ${maxFiles} or fewer photos.`;
+                setError(message);
+                toast.error(message, { duration: 6000 });
+                return;
+            }
+
+            const invalidType = fileRejections.find(r => r.errors.some(e => e.code === 'file-invalid-type'));
+            if (invalidType) {
+                const message = `Some files were skipped: Only JPG, PNG, WEBP, and HEIC image formats are supported.`;
+                setError(message);
+                toast.error(message);
+                if (acceptedFiles.length === 0) return;
+            }
+        }
+
         if (acceptedFiles.length > maxFiles) {
-            setError(`You can only upload up to ${maxFiles} files at a time.`);
+            const message = `Only ${maxFiles} photos at once are allowed. You selected ${acceptedFiles.length} photos. Please select ${maxFiles} or fewer photos.`;
+            setError(message);
+            toast.error(message, { duration: 6000 });
             return;
         }
 
@@ -89,8 +111,18 @@ export default function UploadZone({
         onFilesSelected(processedFiles);
     }, [maxFiles, onFilesSelected, isPhotographerOrOrganizer]);
 
+    const onDropRejected = useCallback((fileRejections: FileRejection[]) => {
+        const isTooMany = fileRejections.some(r => r.errors.some(e => e.code === 'too-many-files'));
+        if (isTooMany || fileRejections.length > maxFiles) {
+            const message = `Only ${maxFiles} photos at once are allowed. You selected ${fileRejections.length} photos. Please select ${maxFiles} or fewer photos.`;
+            setError(message);
+            toast.error(message, { duration: 6000 });
+        }
+    }, [maxFiles]);
+
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         onDrop,
+        onDropRejected,
         accept: {
             'image/*': ['.jpeg', '.jpg', '.png', '.webp', '.heic', '.heif']
         },
@@ -205,7 +237,7 @@ export default function UploadZone({
                     {/* File Types Badge */}
                     <div className="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-zinc-50 border border-zinc-200 dark:bg-white/5 dark:border-white/10 max-w-full">
                         <ImageIcon size={14} className="text-zinc-500 dark:text-gray-400 shrink-0" />
-                        <span className="text-[11px] sm:text-xs text-zinc-500 dark:text-gray-400 truncate">JPG, PNG, WEBP, HEIC up to 20MB each</span>
+                        <span className="text-[11px] sm:text-xs text-zinc-500 dark:text-gray-400 truncate">JPG, PNG, WEBP, HEIC up to 20MB • Max {maxFiles} photos at once</span>
                     </div>
                 </div>
             </div>

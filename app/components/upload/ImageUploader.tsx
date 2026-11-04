@@ -2,9 +2,10 @@
 
 import { useState, useCallback } from 'react';
 import { Upload, X, CheckCircle, AlertCircle, Loader2, Image as ImageIcon } from 'lucide-react';
-import { useDropzone } from 'react-dropzone';
+import { useDropzone, FileRejection } from 'react-dropzone';
 import { photoApi } from '@/lib/api';
 import { Button } from '../ui/Button';
+import toast from 'react-hot-toast';
 
 interface ImageUploaderProps {
     eventId: string;
@@ -28,8 +29,38 @@ export default function ImageUploader({
 }: ImageUploaderProps) {
     const [files, setFiles] = useState<UploadFile[]>([]);
     const [isUploading, setIsUploading] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-    const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    const onDrop = useCallback(async (acceptedFiles: File[], fileRejections: FileRejection[]) => {
+        setErrorMessage(null);
+
+        // Check if user selected more files than allowed (e.g. 102 files)
+        if (fileRejections && fileRejections.length > 0) {
+            const isTooMany = fileRejections.some(r => r.errors.some(e => e.code === 'too-many-files'));
+            if (isTooMany || fileRejections.length > maxFiles) {
+                const totalAttempted = fileRejections.length + acceptedFiles.length;
+                const message = `Only ${maxFiles} photos at once are allowed. You selected ${totalAttempted} photos. Please select ${maxFiles} or fewer photos.`;
+                setErrorMessage(message);
+                toast.error(message, { duration: 6000 });
+                return;
+            }
+
+            const invalidType = fileRejections.find(r => r.errors.some(e => e.code === 'file-invalid-type'));
+            if (invalidType) {
+                const message = `Some files were skipped: Only JPG, PNG, WEBP, and HEIC image formats are supported.`;
+                setErrorMessage(message);
+                toast.error(message);
+                if (acceptedFiles.length === 0) return;
+            }
+        }
+
+        if (acceptedFiles.length > maxFiles) {
+            const message = `Only ${maxFiles} photos at once are allowed. You selected ${acceptedFiles.length} photos. Please select ${maxFiles} or fewer photos.`;
+            setErrorMessage(message);
+            toast.error(message, { duration: 6000 });
+            return;
+        }
+
         const processedFiles = await Promise.all(
             acceptedFiles.map(async (file) => {
                 const isHeic = file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif');
@@ -65,8 +96,18 @@ export default function ImageUploader({
         setFiles(prev => [...prev, ...newFiles].slice(0, maxFiles));
     }, [maxFiles]);
 
+    const onDropRejected = useCallback((fileRejections: FileRejection[]) => {
+        const isTooMany = fileRejections.some(r => r.errors.some(e => e.code === 'too-many-files'));
+        if (isTooMany || fileRejections.length > maxFiles) {
+            const message = `Only ${maxFiles} photos at once are allowed. You selected ${fileRejections.length} photos. Please select ${maxFiles} or fewer photos.`;
+            setErrorMessage(message);
+            toast.error(message, { duration: 6000 });
+        }
+    }, [maxFiles]);
+
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         onDrop,
+        onDropRejected,
         accept: {
             'image/*': ['.jpeg', '.jpg', '.png', '.webp', '.heic', '.heif']
         },
@@ -254,6 +295,14 @@ export default function ImageUploader({
                     </>
                 )}
             </div>
+
+            {/* Error Message */}
+            {errorMessage && (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3 text-sm text-red-700 animate-fade-in">
+                    <AlertCircle className="h-5 w-5 text-red-600 shrink-0" />
+                    <span>{errorMessage}</span>
+                </div>
+            )}
 
             {/* Upload Stats */}
             {files.length > 0 && (

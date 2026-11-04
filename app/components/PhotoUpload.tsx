@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { useDropzone } from 'react-dropzone';
+import { useDropzone, FileRejection } from 'react-dropzone';
 import { Upload, X, Image as ImageIcon, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { photoApi } from '@/lib/api';
 import toast from 'react-hot-toast';
@@ -24,7 +24,21 @@ export default function PhotoUpload({ eventId, onUploadComplete }: PhotoUploadPr
 
   const maxFiles = 100;
 
-  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+  const onDrop = useCallback(async (acceptedFiles: File[], fileRejections: FileRejection[]) => {
+    if (fileRejections && fileRejections.length > 0) {
+      const isTooMany = fileRejections.some(r => r.errors.some(e => e.code === 'too-many-files'));
+      if (isTooMany || fileRejections.length > maxFiles) {
+        const totalAttempted = fileRejections.length + acceptedFiles.length;
+        toast.error(`Only ${maxFiles} photos at once are allowed. You selected ${totalAttempted} photos. Please select ${maxFiles} or fewer photos.`, { duration: 6000 });
+        return;
+      }
+    }
+
+    if (acceptedFiles.length > maxFiles) {
+      toast.error(`Only ${maxFiles} photos at once are allowed. You selected ${acceptedFiles.length} photos.`, { duration: 6000 });
+      return;
+    }
+
     const processedFiles = await Promise.all(
       acceptedFiles.map(async (file) => {
         const isHeic = file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif');
@@ -58,8 +72,16 @@ export default function PhotoUpload({ eventId, onUploadComplete }: PhotoUploadPr
     setFileStates((prev) => [...prev, ...newStates].slice(0, maxFiles));
   }, []);
 
+  const onDropRejected = useCallback((fileRejections: FileRejection[]) => {
+    const isTooMany = fileRejections.some(r => r.errors.some(e => e.code === 'too-many-files'));
+    if (isTooMany || fileRejections.length > maxFiles) {
+      toast.error(`Only ${maxFiles} photos at once are allowed. You selected ${fileRejections.length} photos. Please select ${maxFiles} or fewer photos.`, { duration: 6000 });
+    }
+  }, []);
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
+    onDropRejected,
     accept: {
       'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp', '.heic', '.heif'],
     },

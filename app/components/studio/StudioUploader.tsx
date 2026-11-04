@@ -568,7 +568,7 @@ export default function StudioUploader({ presetEventId }: StudioUploaderProps) {
                 <UploadZone
                   files={files}
                   onFilesSelected={setFiles}
-                  maxFiles={200}
+                  maxFiles={100}
                   eventId={selectedEvent}
                   onSyncComplete={handleSyncComplete}
                   uploadQuality={uploadQuality}
