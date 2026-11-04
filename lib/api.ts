@@ -942,6 +942,7 @@ export interface AdminAISettings {
     totalAiCalls?: number;
     insightFacePercentage?: number;
     savingsEstimateUsd?: number;
+    rekognitionSpendUsd?: number;
     orphanPhotosCount?: number;
   };
   eventsList?: Array<{ _id: string; name: string; eventCode?: string }>;

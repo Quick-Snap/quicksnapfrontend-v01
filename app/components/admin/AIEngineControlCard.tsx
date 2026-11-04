@@ -146,6 +146,8 @@ export default function AIEngineControlCard() {
   const totalCalls = stats?.totalAiCalls ?? ((stats?.insightFaceIndexedPhotos ?? 0) + (stats?.rekognitionIndexedPhotos ?? 0));
   const auraCalls = stats?.totalAuraFaceCalls ?? (stats?.insightFaceIndexedPhotos ?? 0);
   const rekCalls = stats?.totalRekognitionCalls ?? (stats?.rekognitionIndexedPhotos ?? 0);
+  const rekognitionSpend = stats?.rekognitionSpendUsd ?? Number((rekCalls * 0.001).toFixed(3));
+  const savingsEstimate = stats?.savingsEstimateUsd ?? Number((auraCalls * 0.001).toFixed(3));
 
   const auraFacePercent = totalCalls > 0
     ? Math.round((auraCalls / totalCalls) * 100)
@@ -432,46 +434,48 @@ export default function AIEngineControlCard() {
         </div>
 
         {/* Workload Distribution & Cloud Savings Banner */}
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
           {/* Workload Share Progress */}
-          <div className="lg:col-span-2 rounded-2xl border border-zinc-200/80 bg-gradient-to-br from-zinc-50 to-white p-5 dark:border-white/10 dark:from-white/[0.03] dark:to-white/[0.01]">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-violet-600 dark:text-violet-400" />
-                <h4 className="text-sm font-semibold text-zinc-900 dark:text-white">
-                  Engine Workload Distribution (Indexing + Guest Matches)
-                </h4>
+          <div className="lg:col-span-2 rounded-2xl border border-zinc-200/80 bg-gradient-to-br from-zinc-50 to-white p-5 dark:border-white/10 dark:from-white/[0.03] dark:to-white/[0.01] flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+                  <h4 className="text-sm font-semibold text-zinc-900 dark:text-white">
+                    Engine Workload Distribution
+                  </h4>
+                </div>
+                <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                  {totalCalls.toLocaleString()} total AI calls
+                </span>
               </div>
-              <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                {totalCalls.toLocaleString()} total AI API calls
-              </span>
+
+              {/* Progress Bar */}
+              <div className="mt-3 h-3 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-white/10 flex">
+                <div
+                  style={{ width: `${auraFacePercent}%` }}
+                  className="bg-violet-600 transition-all duration-500"
+                  title={`AuraFace: ${auraFacePercent}%`}
+                />
+                <div
+                  style={{ width: `${rekognitionPercent}%` }}
+                  className="bg-blue-500 transition-all duration-500"
+                  title={`AWS Rekognition: ${rekognitionPercent}%`}
+                />
+              </div>
             </div>
 
-            {/* Progress Bar */}
-            <div className="mt-3 h-3 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-white/10 flex">
-              <div
-                style={{ width: `${auraFacePercent}%` }}
-                className="bg-violet-600 transition-all duration-500"
-                title={`AuraFace: ${auraFacePercent}%`}
-              />
-              <div
-                style={{ width: `${rekognitionPercent}%` }}
-                className="bg-blue-500 transition-all duration-500"
-                title={`AWS Rekognition: ${rekognitionPercent}%`}
-              />
-            </div>
-
-            <div className="mt-3 flex items-center justify-between text-xs">
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-xs">
               <div className="flex items-center gap-2">
                 <span className="h-2.5 w-2.5 rounded-full bg-violet-600" />
                 <span className="font-medium text-zinc-800 dark:text-zinc-200">
-                  AuraFace Microservice: <strong>{auraCalls}</strong> ({auraFacePercent}%)
+                  AuraFace: <strong>{auraCalls.toLocaleString()}</strong> ({auraFacePercent}%)
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="h-2.5 w-2.5 rounded-full bg-blue-500" />
                 <span className="font-medium text-zinc-800 dark:text-zinc-200">
-                  AWS Rekognition: <strong>{rekCalls}</strong> ({rekognitionPercent}%)
+                  AWS Rekognition: <strong>{rekCalls.toLocaleString()}</strong> ({rekognitionPercent}%)
                 </span>
               </div>
             </div>
@@ -485,19 +489,43 @@ export default function AIEngineControlCard() {
                   <DollarSign className="h-3 w-3" />
                   Total Self-Hosted ROI
                 </span>
-                <span className="text-[11px] text-emerald-700/80 dark:text-emerald-400/80">
+                <span className="text-[11px] text-emerald-700/80 dark:text-emerald-400/80 font-mono">
                   $0.001 / call saved
                 </span>
               </div>
               <p className="mt-2 text-2xl font-black text-emerald-700 dark:text-emerald-400">
-                ${(stats?.savingsEstimateUsd ?? 0).toFixed(3)} <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-500">USD</span>
+                ${savingsEstimate.toFixed(3)} <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-500">USD</span>
               </p>
               <p className="mt-1 text-xs text-emerald-800/80 dark:text-emerald-300/80">
-                Estimated AWS charges avoided across both Photo Indexing and Guest Matching searches.
+                Estimated AWS charges avoided across {auraCalls.toLocaleString()} self-hosted calls.
               </p>
             </div>
-            <div className="pt-2 text-[10px] text-emerald-600/80 dark:text-emerald-400/60">
-              Zero per-photo and zero per-guest search charges with local Apache 2.0 ONNX model.
+            <div className="pt-2 text-[10px] text-emerald-600/80 dark:text-emerald-400/60 border-t border-emerald-200/40 dark:border-emerald-500/10 mt-3">
+              Zero per-call fees via local Apache 2.0 ONNX model.
+            </div>
+          </div>
+
+          {/* Actual AWS Rekognition Cost Badge */}
+          <div className="rounded-2xl border border-blue-200/80 bg-blue-50/50 p-5 dark:border-blue-500/20 dark:bg-blue-950/20 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-semibold text-blue-800 dark:bg-blue-500/20 dark:text-blue-300">
+                  <Cloud className="h-3 w-3" />
+                  Rekognition Spent
+                </span>
+                <span className="text-[11px] text-blue-700/80 dark:text-blue-400/80 font-mono">
+                  $0.001 / call billed
+                </span>
+              </div>
+              <p className="mt-2 text-2xl font-black text-blue-700 dark:text-blue-400">
+                ${rekognitionSpend.toFixed(3)} <span className="text-sm font-semibold text-blue-600 dark:text-blue-500">USD</span>
+              </p>
+              <p className="mt-1 text-xs text-blue-800/80 dark:text-blue-300/80">
+                Actual AWS cloud charges incurred across {rekCalls.toLocaleString()} Rekognition calls.
+              </p>
+            </div>
+            <div className="pt-2 text-[10px] text-blue-600/80 dark:text-blue-400/60 border-t border-blue-200/40 dark:border-blue-500/10 mt-3">
+              Standard AWS tier: $0.001 per indexing & search call.
             </div>
           </div>
         </div>
