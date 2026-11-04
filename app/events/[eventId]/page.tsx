@@ -2459,7 +2459,7 @@ export default function PublicEventPage() {
                                         No Photos Matched to You Yet
                                     </h3>
                                     <p className="mx-auto max-w-md text-sm leading-relaxed text-zinc-600 dark:text-gray-400 mb-6">
-                                        Your face is registered and active! We scanned {authenticatedPhotoTotal} uploaded event photos, but didn&apos;t detect your face in them yet. Either the photographer hasn&apos;t uploaded photos of you yet, or you weren&apos;t captured in this event&apos;s current uploads.
+                                        Your face is registered and active! We&apos;ve scanned the event photos, but haven&apos;t detected your face in them yet. Either the photographer hasn&apos;t uploaded photos of you yet, or you weren&apos;t captured in this event&apos;s current uploads.
                                     </p>
                                     <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                                         <Button
@@ -2467,7 +2467,7 @@ export default function PublicEventPage() {
                                             onClick={() => setPhotoViewMode('all')}
                                             className="rounded-xl px-5 h-11"
                                         >
-                                            Browse All Event Photos ({authenticatedPhotoTotal})
+                                            Browse All Official Photos ({authenticatedPhotoTotal})
                                         </Button>
                                         <Link
                                             href={`/register-face?redirect=/events/${eventId}`}
