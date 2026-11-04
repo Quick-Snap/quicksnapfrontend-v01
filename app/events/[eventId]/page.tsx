@@ -127,6 +127,8 @@ export default function PublicEventPage() {
     const [showPostJoinSelfieModal, setShowPostJoinSelfieModal] = useState(false);
     const [isScanningUpdatedSelfie, setIsScanningUpdatedSelfie] = useState(false);
     const [showSelectionAuthModal, setShowSelectionAuthModal] = useState(false);
+    const [showGuestPreviewAuthModal, setShowGuestPreviewAuthModal] = useState(false);
+    const [guestPreviewClickedPhoto, setGuestPreviewClickedPhoto] = useState<any>(null);
 
     // Roopixo Circles state
     const [isCirclesModalOpen, setIsCirclesModalOpen] = useState(false);
@@ -1999,7 +2001,11 @@ export default function PublicEventPage() {
                                             key={photo._id || photo.imageId || index}
                                             type="button"
                                             className={`group relative aspect-square overflow-hidden rounded-xl text-left ring-1 ring-zinc-900/[0.06] transition-transform active:scale-[0.98] dark:ring-white/[0.08] sm:rounded-2xl ${softSurface} ${softSurfaceHover} focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500`}
-                                            onClick={() => setSelectedPhoto(photo)}
+                                            onClick={() => {
+                                                setGuestPreviewClickedPhoto(photo);
+                                                setShowGuestPreviewAuthModal(true);
+                                                toast('Sign in or create an account to view full-size photos', { icon: '🔒' });
+                                            }}
                                         >
                                             {src ? (
                                                 /* eslint-disable-next-line @next/next/no-img-element */
@@ -2014,7 +2020,8 @@ export default function PublicEventPage() {
                                                 </div>
                                             )}
                                             <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/55 to-transparent pt-8 opacity-100 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100" />
-                                            <span className="pointer-events-none absolute bottom-2 left-2 rounded-md bg-black/45 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm sm:text-[11px]">
+                                            <span className="pointer-events-none absolute bottom-2 left-2 flex items-center gap-1 rounded-md bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm sm:text-[11px]">
+                                                <Lock size={10} className="text-violet-300" />
                                                 Preview
                                             </span>
                                         </button>
@@ -2761,6 +2768,82 @@ export default function PublicEventPage() {
                                 className="w-full h-11 rounded-xl font-semibold border-zinc-200 dark:border-white/15 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-white/5"
                             >
                                 Create Quick Account
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Guest Preview Full-Size Photo Modal */}
+            {showGuestPreviewAuthModal && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+                    onClick={() => setShowGuestPreviewAuthModal(false)}
+                >
+                    <div
+                        className="relative w-full max-w-md rounded-3xl bg-white p-6 sm:p-8 shadow-2xl dark:bg-[#13111f] dark:border dark:border-white/10 text-center animate-in zoom-in-95 duration-150"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <button
+                            type="button"
+                            onClick={() => setShowGuestPreviewAuthModal(false)}
+                            className="absolute top-4 right-4 p-2 rounded-full text-zinc-400 hover:text-zinc-600 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/10 transition"
+                            aria-label="Close modal"
+                        >
+                            <X className="h-5 w-5" />
+                        </button>
+
+                        {guestPreviewClickedPhoto ? (
+                            <div className="relative mx-auto mb-5 h-28 w-28 overflow-hidden rounded-2xl ring-2 ring-violet-500/20 shadow-md">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                    src={
+                                        getPhotoDisplayUrl(guestPreviewClickedPhoto) ||
+                                        guestPreviewClickedPhoto.thumbnailUrl ||
+                                        guestPreviewClickedPhoto.url ||
+                                        guestPreviewClickedPhoto.s3Url
+                                    }
+                                    alt="Preview"
+                                    className="h-full w-full object-cover blur-[2px] scale-105"
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[1px]">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-600 text-white shadow-lg shadow-violet-500/40">
+                                        <Lock className="h-5 w-5" />
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-500/25">
+                                <Lock className="h-8 w-8" />
+                            </div>
+                        )}
+
+                        <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">
+                            Sign in to View Full Image
+                        </h3>
+                        <p className="text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed mb-6">
+                            Full-resolution viewing, downloads, and AI face recognition are reserved for attendees. Sign in or create a free account to unlock the entire event gallery!
+                        </p>
+
+                        <div className="flex flex-col gap-3">
+                            <Button
+                                onClick={() => {
+                                    const redirectUrl = `/events/${eventId}${proofTokenParam ? `?proofToken=${proofTokenParam}` : ''}`;
+                                    router.push(`/login?redirect=${encodeURIComponent(redirectUrl)}`);
+                                }}
+                                className="w-full h-11 rounded-xl font-semibold bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-md shadow-violet-500/25"
+                            >
+                                Log In to View Full Photo
+                            </Button>
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    const redirectUrl = `/events/${eventId}${proofTokenParam ? `?proofToken=${proofTokenParam}` : ''}`;
+                                    router.push(`/register?redirect=${encodeURIComponent(redirectUrl)}`);
+                                }}
+                                className="w-full h-11 rounded-xl font-semibold border-zinc-200 dark:border-white/15 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-white/5"
+                            >
+                                Create Free Account
                             </Button>
                         </div>
                     </div>
