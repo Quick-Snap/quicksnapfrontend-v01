@@ -73,6 +73,84 @@ export function getPhotoDisplayUrl(photo: unknown): string | undefined {
 }
 
 /**
+ * High-resolution photo URL selector for full-screen / projection experiences (Live Wall, Lightbox, High-Res Download).
+ * Prioritizes high-resolution 1920px web-optimized image or original asset before falling back to thumbnails.
+ */
+export function getPhotoFullResUrl(photo: unknown): string | undefined {
+    if (!photo || typeof photo !== 'object') return undefined;
+    const p = photo as Record<string, unknown>;
+
+    const pick = (v: unknown): string | undefined => {
+        if (typeof v !== 'string') return undefined;
+        const s = v.trim();
+        return s.length > 0 ? s : undefined;
+    };
+
+    // Prioritize high-res full image candidates first
+    const candidates: unknown[] = [
+        p.url,
+        p.s3Url,
+        p.s3_url,
+        p.imageUrl,
+        p.image_url,
+        p.originalUrl,
+        p.original_url,
+        p.webUrl,
+        p.web_url,
+        p.publicUrl,
+        p.public_url,
+        p.fileUrl,
+        p.file_url,
+        p.src,
+        p.downloadUrl,
+        p.download_url,
+        p.previewUrl,
+        p.preview_url,
+        p.cdnUrl,
+        p.cdn_url,
+        p.thumbnailUrl,
+        p.thumbnail_url,
+    ];
+
+    const urls = p.urls;
+    if (urls && typeof urls === 'object') {
+        const u = urls as Record<string, unknown>;
+        candidates.push(u.full, u.original, u.url, u.medium, u.small, u.thumbnail, u.thumb);
+    }
+    const media = p.media;
+    if (media && typeof media === 'object') {
+        const m = media as Record<string, unknown>;
+        candidates.push(m.url, m.src, m.thumbnailUrl, m.thumbnail_url);
+    }
+
+    for (const c of candidates) {
+        const s = pick(c);
+        if (s) return s;
+    }
+
+    const base =
+        typeof process !== 'undefined'
+            ? process.env.NEXT_PUBLIC_MEDIA_BASE_URL?.replace(/\/$/, '')
+            : undefined;
+    if (base) {
+        const keys = [
+            p.processedKey,
+            p.processed_key,
+            p.originalKey,
+            p.original_key,
+            p.publicKey,
+            p.public_key,
+        ];
+        for (const k of keys) {
+            const key = pick(k);
+            if (key) return `${base}/${key.replace(/^\//, '')}`;
+        }
+    }
+
+    return getPhotoDisplayUrl(photo);
+}
+
+/**
  * When list endpoints omit URLs (e.g. `all=true` lean projection), merge in `/photos/:id` details.
  */
 export async function enrichPhotosWithDisplayUrls(

@@ -35,7 +35,7 @@ import {
 } from 'lucide-react';
 import { eventApi } from '@/lib/api';
 import { fetchAllEventPhotos, normalizePhotosFromGet } from '@/lib/photoFetch';
-import { getPhotoDisplayUrl } from '@/lib/photoUrl';
+import { getPhotoDisplayUrl, getPhotoFullResUrl } from '@/lib/photoUrl';
 import { useAuth } from '@/contexts/AuthContext';
 import BrandLogo from '@/components/BrandLogo';
 
@@ -352,7 +352,7 @@ export default function LiveMomentsWallPage() {
     // Score computation
     const scored: PhotoScoreItem[] = safePhotos.map((p) => {
       const id = String(p._id || p.imageId || '');
-      const url = getPhotoDisplayUrl(p) || p.url || p.s3Url || p.imageUrl || '';
+      const url = getPhotoFullResUrl(p) || p.url || p.s3Url || p.imageUrl || getPhotoDisplayUrl(p) || '';
       const isOfficial = !!(p.isOfficial ?? p.is_official);
       const faceMatches: any[] = Array.isArray(p.faceMatches) ? p.faceMatches : [];
       const matchedUsers: any[] = Array.isArray(p.matchedUsers) ? p.matchedUsers : [];
@@ -685,16 +685,16 @@ export default function LiveMomentsWallPage() {
           </div>
         ) : (
           <div className="relative w-full h-full flex items-center justify-center">
-            {/* Active Slideshow Photo */}
+            {/* Active Slideshow Photo - Padded stage preserves full uncropped framing */}
             <div
               key={`${currentItem?.id}-${motionVariation}`}
-              className="absolute inset-0 flex items-center justify-center overflow-hidden"
+              className="absolute inset-0 flex items-center justify-center overflow-hidden p-2 sm:p-4 md:p-6"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={currentItem?.url}
                 alt="Event moment"
-                className={`w-full h-full object-contain transition-transform duration-[7000ms] ease-out will-change-transform ${getKenBurnsMotion(motionVariation)}`}
+                className={`max-w-full max-h-full w-auto h-auto object-contain transition-transform duration-[7000ms] ease-out will-change-transform shadow-2xl rounded-lg sm:rounded-xl ${getKenBurnsMotion(motionVariation)}`}
               />
             </div>
 

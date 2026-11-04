@@ -70,20 +70,20 @@ const config: Config = {
           to: { transform: 'translateX(-100%)' },
         },
         'kenburns-zoom-in': {
-          '0%': { transform: 'scale(1) translate(0, 0)' },
-          '100%': { transform: 'scale(1.08) translate(-1%, -1%)' },
+          '0%': { transform: 'scale(1)' },
+          '100%': { transform: 'scale(1.03)' },
         },
         'kenburns-zoom-out': {
-          '0%': { transform: 'scale(1.08) translate(1%, 1%)' },
-          '100%': { transform: 'scale(1) translate(0, 0)' },
+          '0%': { transform: 'scale(1.03)' },
+          '100%': { transform: 'scale(1)' },
         },
         'kenburns-pan-left': {
-          '0%': { transform: 'scale(1.05) translate(2%, 0)' },
-          '100%': { transform: 'scale(1.05) translate(-2%, -1%)' },
+          '0%': { transform: 'scale(1.02) translate(0.8%, 0)' },
+          '100%': { transform: 'scale(1.02) translate(-0.8%, 0)' },
         },
         'kenburns-pan-right': {
-          '0%': { transform: 'scale(1.05) translate(-2%, 0)' },
-          '100%': { transform: 'scale(1.05) translate(2%, 1%)' },
+          '0%': { transform: 'scale(1.02) translate(-0.8%, 0)' },
+          '100%': { transform: 'scale(1.02) translate(0.8%, 0)' },
         },
       },
     },
