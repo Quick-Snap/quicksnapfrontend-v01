@@ -1328,7 +1328,7 @@ export default function PublicEventPage() {
                                                     {studioInfo.businessName || 'Pro Studio Shoot'}
                                                 </p>
                                                 <p className="text-[10px] text-violet-600 dark:text-violet-400 font-medium">
-                                                    Client Proofing &amp; Selection Gallery
+                                                    {isProofingMode ? 'Client Proofing & Selection Gallery' : 'Official Photography Partner'}
                                                 </p>
                                             </div>
                                         </div>
