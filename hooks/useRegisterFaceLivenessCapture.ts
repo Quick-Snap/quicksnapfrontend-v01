@@ -46,7 +46,7 @@ function captureFrameWebpOrJpeg(video: HTMLVideoElement, webpQuality: number): s
 
 type Options = {
   videoRef: RefObject<HTMLVideoElement | null>;
-  onCapture: (webpBase64: string) => void;
+  onCapture: (webpBase64: string, extraAngles?: string[]) => void;
   stopMediaStream?: () => void;
   webpQuality?: number;
   stableDurationMs?: number;
@@ -60,7 +60,7 @@ export function useRegisterFaceLivenessCapture({
   stopMediaStream,
   webpQuality = 0.92,
   stableDurationMs = STABLE_CAPTURE_MS,
-  challengeCount = 3,
+  challengeCount = 2,
 }: Options) {
   const [phase, setPhase] = useState<RegistrationPhase>('framing');
   const [statusMessage, setStatusMessage] = useState('Fit your face in the circle');
@@ -78,6 +78,7 @@ export function useRegisterFaceLivenessCapture({
   const lastTsRef = useRef<number | null>(null);
   const capturedRef = useRef(false);
   const challengesRef = useRef<LivenessChallengeType[] | null>(null);
+  const angleFramesRef = useRef<string[]>([]);
 
   const blinkFsmRef = useRef(initBlinkFsm());
   const headFsmRef = useRef(initHeadTurnFsm());
@@ -101,6 +102,7 @@ export function useRegisterFaceLivenessCapture({
     phaseRef.current = 'framing';
     challengeIdxRef.current = 0;
     challengesRef.current = null;
+    angleFramesRef.current = [];
     setPhase('framing');
     setIsCaptureComplete(false);
     setProgressPercentage(0);
@@ -186,9 +188,11 @@ export function useRegisterFaceLivenessCapture({
         stableMsRef.current = 0;
         setProgressPercentage(0);
         if (evaluateRelaxedFraming(landmarks)) {
-          const seq = pickRandomChallenges(challengeCount);
+          // Guided multi-angle capture: First Left, then Right, followed by Center hold
+          const seq: LivenessChallengeType[] = ['head_left', 'head_right'];
           challengesRef.current = seq;
           challengeIdxRef.current = 0;
+          angleFramesRef.current = [];
           setChallengeTotal(seq.length);
           setChallengeStep(1);
           resetFsmForChallenge(seq[0]);
@@ -235,6 +239,14 @@ export function useRegisterFaceLivenessCapture({
           setIsFaceValid(true);
           setStatusMessage(challengePrompt(current));
           if (completed) {
+            // Automatically snap angle frame while user is turned
+            const video = videoRef.current;
+            if (video) {
+              const angleFrame = captureFrameWebpOrJpeg(video, webpQuality);
+              if (angleFrame) {
+                angleFramesRef.current.push(angleFrame);
+              }
+            }
             headFsmRef.current = initHeadTurnFsm();
             advanceToNextChallengeOrStabilizing(seq);
           }
@@ -310,7 +322,7 @@ export function useRegisterFaceLivenessCapture({
           setProgressPercentage(100);
           setIsCaptureComplete(true);
           stopMediaStream?.();
-          onCapture(base64);
+          onCapture(base64, angleFramesRef.current);
         }
       }
     },

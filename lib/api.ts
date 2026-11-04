@@ -45,10 +45,11 @@ export const authApi = {
     return response.data;
   },
 
-  registerFace: async (image: string, s3Key?: string) => {
+  registerFace: async (image?: string, s3Key?: string, extraAngles?: string[]) => {
     const response = await api.post<ApiResponse<{ faceId: string }>>('/auth/face', {
       image,
-      s3Key
+      s3Key,
+      extraAngles
     });
     return response.data;
   },

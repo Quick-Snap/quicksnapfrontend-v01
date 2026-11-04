@@ -91,6 +91,8 @@ export default function RegisterFacePage() {
     }
   }, []);
 
+  const extraAnglesRef = useRef<string[]>([]);
+
   const stopMediaStream = useCallback(() => {
     stopDetectionRef.current = true;
     streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -102,15 +104,16 @@ export default function RegisterFacePage() {
     setLandmarkerState('idle');
   }, []);
 
-  const onLiveCapture = useCallback(async (frameBase64: string) => {
+  const onLiveCapture = useCallback(async (frameBase64: string, extraAngles: string[] = []) => {
+    extraAnglesRef.current = extraAngles;
     try {
       const jpegDataUrl = await webpRawBase64ToJpegDataUrl(frameBase64);
       setCapturedImage(jpegDataUrl);
-      toast.success('Live selfie captured');
+      toast.success(extraAngles.length > 0 ? 'Multi-angle selfie captured' : 'Live selfie captured');
     } catch {
       try {
         setCapturedImage(`data:image/jpeg;base64,${frameBase64}`);
-        toast.success('Live selfie captured');
+        toast.success(extraAngles.length > 0 ? 'Multi-angle selfie captured' : 'Live selfie captured');
       } catch {
         toast.error('Could not process camera frame');
       }
@@ -339,7 +342,10 @@ export default function RegisterFacePage() {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ s3Key: key }),
+          body: JSON.stringify({
+            s3Key: key,
+            extraAngles: extraAnglesRef.current,
+          }),
         }
       );
 
@@ -382,6 +388,7 @@ export default function RegisterFacePage() {
 
   const handleRetake = () => {
     setCapturedImage(null);
+    extraAnglesRef.current = [];
     resetSelfie();
   };
 
