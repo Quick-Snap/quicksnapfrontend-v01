@@ -79,6 +79,7 @@ export function useRegisterFaceLivenessCapture({
   const capturedRef = useRef(false);
   const challengesRef = useRef<LivenessChallengeType[] | null>(null);
   const angleFramesRef = useRef<string[]>([]);
+  const challengeStartTimeRef = useRef<number>(Date.now());
 
   const blinkFsmRef = useRef(initBlinkFsm());
   const headFsmRef = useRef(initHeadTurnFsm());
@@ -103,6 +104,7 @@ export function useRegisterFaceLivenessCapture({
     challengeIdxRef.current = 0;
     challengesRef.current = null;
     angleFramesRef.current = [];
+    challengeStartTimeRef.current = Date.now();
     setPhase('framing');
     setIsCaptureComplete(false);
     setProgressPercentage(0);
@@ -119,21 +121,27 @@ export function useRegisterFaceLivenessCapture({
   const advanceToNextChallengeOrStabilizing = useCallback(
     (seq: LivenessChallengeType[]) => {
       challengeIdxRef.current += 1;
+      challengeStartTimeRef.current = Date.now();
       if (challengeIdxRef.current >= seq.length) {
-        setPhaseBoth('stabilizing');
-        setChallengeStep(seq.length);
-        setStatusMessage('Almost there — hold still');
-        stableMsRef.current = 0;
-        setStableElapsedMs(0);
-        setProgressPercentage(0);
+        const video = videoRef.current;
+        const base64 = video ? captureFrameWebpOrJpeg(video, webpQuality) : null;
+        if (base64 && !capturedRef.current) {
+          capturedRef.current = true;
+          setStatusMessage('Perfect!');
+          setProgressPercentage(100);
+          setIsCaptureComplete(true);
+          stopMediaStream?.();
+          onCapture(base64, angleFramesRef.current);
+        }
         return;
       }
       const next = seq[challengeIdxRef.current];
       resetFsmForChallenge(next);
       setChallengeStep(challengeIdxRef.current + 1);
+      setProgressPercentage(Math.round((challengeIdxRef.current / seq.length) * 100));
       setStatusMessage(challengePrompt(next));
     },
-    [resetFsmForChallenge, setPhaseBoth]
+    [onCapture, resetFsmForChallenge, stopMediaStream, videoRef, webpQuality]
   );
 
   const onFaceLandmarkerResults = useCallback(
@@ -188,10 +196,11 @@ export function useRegisterFaceLivenessCapture({
         stableMsRef.current = 0;
         setProgressPercentage(0);
         if (evaluateRelaxedFraming(landmarks)) {
-          // Guided multi-angle capture: First Left, then Right, followed by Center hold
-          const seq: LivenessChallengeType[] = ['head_left', 'head_right'];
+          // Guided 4-stage capture: Left Profile -> Right Profile -> Blink -> Smile & Capture
+          const seq: LivenessChallengeType[] = ['head_left', 'head_right', 'blink', 'smile'];
           challengesRef.current = seq;
           challengeIdxRef.current = 0;
+          challengeStartTimeRef.current = Date.now();
           angleFramesRef.current = [];
           setChallengeTotal(seq.length);
           setChallengeStep(1);
@@ -214,12 +223,36 @@ export function useRegisterFaceLivenessCapture({
 
       if (p === 'liveness') {
         stableMsRef.current = 0;
-        setProgressPercentage(0);
         const idx = challengeIdxRef.current;
         const current = seq[idx];
         if (!current) {
-          setPhaseBoth('stabilizing');
-          setStatusMessage('Almost there — hold still');
+          advanceToNextChallengeOrStabilizing(seq);
+          return;
+        }
+
+        // Soft grace timeout: if user is stuck for > 6.5s, auto-advance so they're never trapped
+        const challengeElapsed = Date.now() - challengeStartTimeRef.current;
+        if (challengeElapsed > 6500) {
+          challengeStartTimeRef.current = Date.now();
+          const video = videoRef.current;
+          if (current === 'head_left' || current === 'head_right') {
+            if (video) {
+              const f = captureFrameWebpOrJpeg(video, webpQuality);
+              if (f) angleFramesRef.current.push(f);
+            }
+          } else if (current === 'smile') {
+            const base64 = video ? captureFrameWebpOrJpeg(video, webpQuality) : null;
+            if (base64 && !capturedRef.current) {
+              capturedRef.current = true;
+              setStatusMessage('Perfect!');
+              setProgressPercentage(100);
+              setIsCaptureComplete(true);
+              stopMediaStream?.();
+              onCapture(base64, angleFramesRef.current);
+              return;
+            }
+          }
+          advanceToNextChallengeOrStabilizing(seq);
           return;
         }
 
@@ -279,8 +312,16 @@ export function useRegisterFaceLivenessCapture({
           setIsFaceValid(true);
           setStatusMessage(challengePrompt('smile'));
           if (completed) {
-            smileFsmRef.current = initSmileFsm();
-            advanceToNextChallengeOrStabilizing(seq);
+            const video = videoRef.current;
+            const base64 = video ? captureFrameWebpOrJpeg(video, webpQuality) : null;
+            if (base64 && !capturedRef.current) {
+              capturedRef.current = true;
+              setStatusMessage('Perfect!');
+              setProgressPercentage(100);
+              setIsCaptureComplete(true);
+              stopMediaStream?.();
+              onCapture(base64, angleFramesRef.current);
+            }
           }
           return;
         }
