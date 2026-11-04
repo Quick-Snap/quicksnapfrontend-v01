@@ -1030,6 +1030,15 @@ export default function PublicEventPage() {
         return Math.max(knownTotal, allPhotos.length);
     }, [event, photosResult, photosLoading, allPhotos.length]);
 
+    const rawEventPhotosCount = useMemo(() => {
+        const e = event as Record<string, unknown> | undefined;
+        const fromField = typeof e?.photoCount === 'number' && !Number.isNaN(e.photoCount) ? e.photoCount : 0;
+        const stats = e?.stats as Record<string, unknown> | undefined;
+        const fromStats = stats && typeof stats.totalPhotos === 'number' && !Number.isNaN(stats.totalPhotos) ? stats.totalPhotos : 0;
+        const fromArr = Array.isArray(e?.photos) ? e.photos.length : 0;
+        return Math.max(fromField, fromStats, fromArr);
+    }, [event]);
+
     const currentIndex = useMemo(() => {
         if (!selectedPhoto) return -1;
         const selId = selectedPhoto.imageId || selectedPhoto._id;
@@ -2402,7 +2411,7 @@ export default function PublicEventPage() {
                                     </Button>
                                 </div>
                             </div>
-                        ) : allPhotos.length === 0 ? (
+                        ) : allPhotos.length === 0 && rawEventPhotosCount === 0 ? (
                             <div className={`rounded-[1.65rem] px-6 py-16 text-center ${softSurface}`}>
                                 <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-100 dark:bg-violet-500/15">
                                     <ImageIcon className="h-8 w-8 text-violet-600 dark:text-violet-400" />
@@ -2412,6 +2421,31 @@ export default function PublicEventPage() {
                                 </h3>
                                 <p className="mx-auto max-w-md text-sm leading-relaxed text-zinc-600 dark:text-gray-400 mb-6">
                                     Your face is registered and ready! The photographer is still capturing moments or hasn&apos;t uploaded photos to this event yet. As soon as photos are uploaded, our AI will automatically find and deliver your shots here.
+                                </p>
+                                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => {
+                                            queryClient.invalidateQueries(['eventPhotos', eventId]);
+                                            queryClient.invalidateQueries(['myEventPhotos', eventId]);
+                                            toast.success('Gallery refreshed');
+                                        }}
+                                        className="rounded-xl px-5 h-11"
+                                    >
+                                        Refresh Gallery
+                                    </Button>
+                                </div>
+                            </div>
+                        ) : allPhotos.length === 0 && rawEventPhotosCount > 0 ? (
+                            <div className={`rounded-[1.65rem] px-6 py-16 text-center ${softSurface}`}>
+                                <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-100 dark:bg-violet-500/15">
+                                    <Sparkles className="h-8 w-8 text-violet-600 dark:text-violet-400" />
+                                </div>
+                                <h3 className="mb-2 text-xl font-bold text-zinc-900 dark:text-white">
+                                    Photos Being Curated & Matched
+                                </h3>
+                                <p className="mx-auto max-w-md text-sm leading-relaxed text-zinc-600 dark:text-gray-400 mb-6">
+                                    {rawEventPhotosCount} photos have been uploaded to this event! The organizer is currently reviewing and publishing official photos, and our AI is indexing your matches.
                                 </p>
                                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                                     <Button
