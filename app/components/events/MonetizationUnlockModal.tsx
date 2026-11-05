@@ -103,9 +103,9 @@ export function MonetizationUnlockModal({
             : `Individual Photo Pass (${eventName})`,
         order_id: orderData.razorpayOrderId,
         prefill: {
-          name: user?.name || '',
-          email: user?.email || '',
-          contact: user?.phone || '',
+          ...(user?.name ? { name: user.name } : {}),
+          ...(user?.email ? { email: user.email } : {}),
+          ...(user?.phone ? { contact: user.phone } : {}),
         },
         theme: {
           color: '#7c3aed',

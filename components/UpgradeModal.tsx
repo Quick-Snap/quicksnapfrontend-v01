@@ -174,18 +174,21 @@ export default function UpgradeModal({
 
       const orderData = orderRes.data;
 
+      const defaultKeyId = 'rzp_test_TwaunPsjxBYsK4';
+      const rzpKey = orderData.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || defaultKeyId;
+
       // 3. Open Razorpay Standard Checkout modal
       const options = {
-        key: orderData.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_TwaunPsjxBYsK4',
+        key: rzpKey,
         amount: Math.round(orderData.amount * 100),
         currency: orderData.currency || 'INR',
         name: 'Roopixo',
         description: `${tierName} Plan (${activeConfig.isOneTime ? 'One-Time Pass' : isAnnual ? 'Annual' : 'Monthly'})`,
         order_id: orderData.orderId,
         prefill: {
-          name: user?.name || '',
-          email: user?.email || '',
-          contact: user?.phone || ''
+          ...(user?.name ? { name: user.name } : {}),
+          ...(user?.email ? { email: user.email } : {}),
+          ...(user?.phone ? { contact: user.phone } : {})
         },
         theme: {
           color: '#7c3aed'
