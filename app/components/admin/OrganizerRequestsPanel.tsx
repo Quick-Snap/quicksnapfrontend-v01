@@ -14,6 +14,9 @@ import {
   X,
   Eye,
   Sparkles,
+  HeartHandshake,
+  Globe,
+  Users,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
@@ -68,7 +71,7 @@ function StatusBadge({ status }: { status: OrganizerRequestStatus }) {
 interface ApproveModalProps {
   request: OrganizerRequest;
   onClose: () => void;
-  onConfirm: (reviewNote: string, createOrganization: boolean, isTrustedUploader: boolean) => Promise<void>;
+  onConfirm: (reviewNote: string, createOrganization: boolean, isTrustedUploader: boolean, grantTier?: string) => Promise<void>;
   loading: boolean;
 }
 
@@ -78,6 +81,9 @@ function ApproveModal({ request, onClose, onConfirm, loading }: ApproveModalProp
     !!(request.organizationName && request.organizationEmail)
   );
   const [isTrustedUploader, setIsTrustedUploader] = useState(false);
+  const [grantTier, setGrantTier] = useState<string>(
+    request.requestType === 'community_grant' ? 'community_grant' : 'organizer'
+  );
   const user = getRequestUser(request);
 
   return (
@@ -86,9 +92,13 @@ function ApproveModal({ request, onClose, onConfirm, loading }: ApproveModalProp
       <div className="relative w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-white/10 dark:bg-[#141414]">
         <div className="mb-4 flex items-start justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-zinc-900 dark:text-white">Approve request</h3>
+            <h3 className="text-lg font-semibold text-zinc-900 dark:text-white">
+              {request.requestType === 'community_grant' ? 'Approve Community Grant' : 'Approve request'}
+            </h3>
             <p className="mt-1 text-sm text-zinc-500 dark:text-gray-400">
-              Promote {user?.name || 'this user'} to organizer
+              {request.requestType === 'community_grant'
+                ? `Grant ₹0 Community Tier with Attendee-Pays Mode to ${user?.name || 'this community'}`
+                : `Promote ${user?.name || 'this user'} to organizer`}
             </p>
           </div>
           <button onClick={onClose} className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/10">
@@ -99,11 +109,27 @@ function ApproveModal({ request, onClose, onConfirm, loading }: ApproveModalProp
         <div className="space-y-4">
           <div>
             <label className="mb-1.5 block text-sm font-medium text-zinc-700 dark:text-gray-300">
+              Subscription Grant Tier
+            </label>
+            <select
+              value={grantTier}
+              onChange={(e) => setGrantTier(e.target.value)}
+              className="input w-full"
+            >
+              <option value="community_grant">Community Grant (₹0 Tier, 5K photos, Attendee-Pays Mode)</option>
+              <option value="organizer">Standard Organizer (Free Trial 200 photos)</option>
+              <option value="starter_pro">Starter Pro (60K photos)</option>
+              <option value="studio_pro">Studio Pro (1.5 Lakh photos)</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-zinc-700 dark:text-gray-300">
               Review note (optional)
             </label>
             <textarea
               className="input min-h-[80px] resize-none"
-              placeholder="Welcome to Roopixo organizers!"
+              placeholder={request.requestType === 'community_grant' ? 'Your community grant has been approved! Enjoy hosting.' : 'Welcome to Roopixo organizers!'}
               value={reviewNote}
               onChange={(e) => setReviewNote(e.target.value)}
             />
@@ -152,7 +178,7 @@ function ApproveModal({ request, onClose, onConfirm, loading }: ApproveModalProp
             <Button
               className="flex-1"
               loading={loading}
-              onClick={() => onConfirm(reviewNote, createOrganization, isTrustedUploader)}
+              onClick={() => onConfirm(reviewNote, createOrganization, isTrustedUploader, grantTier)}
             >
               Approve
             </Button>
@@ -264,6 +290,21 @@ function DetailDrawer({ request, onClose, onApprove, onReject }: DetailDrawerPro
           )}
 
           <div>
+            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500">Request Type</p>
+            {request.requestType === 'community_grant' ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-400">
+                <HeartHandshake size={14} />
+                Non-Profit Community Grant
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/30 bg-violet-500/15 px-3 py-1 text-xs font-semibold text-violet-400">
+                <User size={14} />
+                Standard Organizer Role
+              </span>
+            )}
+          </div>
+
+          <div>
             <p className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500">Status</p>
             <StatusBadge status={request.status} />
           </div>
@@ -292,6 +333,20 @@ function DetailDrawer({ request, onClose, onApprove, onReject }: DetailDrawerPro
                 <div className="flex items-center gap-2 text-sm text-zinc-700 dark:text-gray-300">
                   <Phone size={16} className="text-zinc-400" />
                   {request.phone}
+                </div>
+              )}
+              {request.website && (
+                <div className="flex items-center gap-2 text-sm text-zinc-700 dark:text-gray-300">
+                  <Globe size={16} className="text-zinc-400" />
+                  <a href={request.website} target="_blank" rel="noopener noreferrer" className="text-violet-400 hover:underline">
+                    {request.website}
+                  </a>
+                </div>
+              )}
+              {request.expectedAttendees && (
+                <div className="flex items-center gap-2 text-sm text-zinc-700 dark:text-gray-300">
+                  <Users size={16} className="text-zinc-400" />
+                  ~{request.expectedAttendees} expected attendees
                 </div>
               )}
             </div>
@@ -429,7 +484,12 @@ export default function OrganizerRequestsPanel() {
     ]);
   };
 
-  const handleApprove = async (reviewNote: string, createOrganization: boolean, isTrustedUploader: boolean) => {
+  const handleApprove = async (
+    reviewNote: string,
+    createOrganization: boolean,
+    isTrustedUploader: boolean,
+    grantTier?: string
+  ) => {
     if (!approveTarget) return;
     setActionLoading(true);
     try {
@@ -437,8 +497,13 @@ export default function OrganizerRequestsPanel() {
         reviewNote: reviewNote || undefined,
         createOrganization,
         isTrustedUploader,
+        grantTier,
       });
-      toast.success('Organizer request approved. User can now create events.');
+      toast.success(
+        grantTier === 'community_grant'
+          ? 'Community grant approved with 90-day attendee-pays tier!'
+          : 'Organizer request approved. User can now create events.'
+      );
       setApproveTarget(null);
       setDetailTarget(null);
       await refreshAll();
@@ -599,9 +664,17 @@ export default function OrganizerRequestsPanel() {
                             )}
                           </div>
                           <div>
-                            <p className="font-medium text-zinc-900 dark:text-white">
-                              {user?.name || 'Unknown user'}
-                            </p>
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium text-zinc-900 dark:text-white">
+                                {user?.name || 'Unknown user'}
+                              </p>
+                              {request.requestType === 'community_grant' && (
+                                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-400">
+                                  <HeartHandshake size={10} />
+                                  GRANT
+                                </span>
+                              )}
+                            </div>
                             <p className="text-sm text-zinc-500">{user?.email || '—'}</p>
                           </div>
                         </div>

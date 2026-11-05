@@ -21,11 +21,13 @@ import {
   Calendar,
   PartyPopper,
   Briefcase,
-  Users
+  Users,
+  HeartHandshake
 } from 'lucide-react';
 import { BrandLogo } from '@/components/BrandLogo';
 import { useAuth } from '@/contexts/AuthContext';
 import UpgradeModal from '@/components/UpgradeModal';
+import ApplyCommunityGrantModal from '@/app/components/pricing/ApplyCommunityGrantModal';
 
 type Currency = 'INR' | 'USD';
 type BillingCycle = 'annual' | 'monthly';
@@ -367,6 +369,7 @@ export default function PricingPage() {
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('annual');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [upgradeTier, setUpgradeTier] = useState<'starter_pro' | 'studio_pro' | 'enterprise' | null>(null);
+  const [isCommunityGrantModalOpen, setIsCommunityGrantModalOpen] = useState(false);
 
   const isAnnual = billingCycle === 'annual';
   const isStudio = category === 'studio';
@@ -649,6 +652,32 @@ export default function PricingPage() {
                 Get in Touch with Us
                 <ArrowRight className="h-4 w-4" />
               </Link>
+            </div>
+          </div>
+
+          {/* Non-Profit & Student Community Grant Banner */}
+          <div className="mt-6 rounded-3xl border border-emerald-500/30 bg-gradient-to-r from-emerald-950/40 via-teal-950/20 to-zinc-950/40 p-6 sm:p-8 backdrop-blur-md">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="space-y-1.5 text-center md:text-left">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-300 border border-emerald-400/30">
+                  <HeartHandshake className="h-3.5 w-3.5 text-emerald-400" />
+                  Non-Profit & Student Community Grant
+                </span>
+                <h3 className="text-lg sm:text-xl font-bold text-white">
+                  Running a non-profit, student club, or open tech community?
+                </h3>
+                <p className="text-xs sm:text-sm text-zinc-300 max-w-2xl leading-relaxed">
+                  Host your events on Roopixo with ₹0 upfront cost. You receive 5,000 photos, full AI face-matching, interactive big-screen Live Wall, and Face Circles. Guests can view photos and unlock clean original downloads with a micro-pass (₹49 individual / ₹99 squad).
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCommunityGrantModalOpen(true)}
+                className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-bold text-zinc-950 transition hover:bg-emerald-400 shadow-lg shadow-emerald-500/20"
+              >
+                Apply for Community Grant
+                <ArrowRight className="h-4 w-4" />
+              </button>
             </div>
           </div>
           </>
@@ -950,6 +979,12 @@ export default function PricingPage() {
           targetTier={upgradeTier}
         />
       )}
+
+      {/* Community Grant Modal */}
+      <ApplyCommunityGrantModal
+        isOpen={isCommunityGrantModalOpen}
+        onClose={() => setIsCommunityGrantModalOpen(false)}
+      />
     </div>
   );
 }

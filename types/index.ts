@@ -60,6 +60,13 @@ export interface Event {
   };
   isProofingEnabled?: boolean;
   isProofingAuthorized?: boolean;
+  monetization?: {
+    mode: 'host_sponsored' | 'attendee_pays' | 'free_pass';
+    attendeePriceINR?: number;
+    circlePassPriceINR?: number;
+    adminLocked?: boolean;
+    adminNotes?: string;
+  };
   tags: string[];
   coverImage?: string;
   isDeleted?: boolean;
@@ -142,13 +149,18 @@ export interface OrganizerRequestUser {
   roles: string[];
 }
 
+export type OrganizerRequestType = 'organizer_role' | 'community_grant';
+
 export interface OrganizerRequest {
   _id: string;
   userId: string | OrganizerRequestUser;
+  requestType?: OrganizerRequestType;
   status: OrganizerRequestStatus;
   reason: string;
   organizationName?: string;
   organizationEmail?: string;
+  website?: string;
+  expectedAttendees?: number;
   phone?: string;
   reviewedBy?: string | { _id: string; name: string; email: string };
   reviewNote?: string;
@@ -166,9 +178,22 @@ export interface OrganizerRequestStats {
 }
 
 export interface SubmitOrganizerRequestDto {
+  requestType?: OrganizerRequestType;
   reason: string;
   organizationName?: string;
   organizationEmail?: string;
+  website?: string;
+  expectedAttendees?: number;
   phone?: string;
+}
+
+export interface PhotoAccessStatus {
+  status: 'clean' | 'watermarked' | 'face_mismatch';
+  watermarkOpacity: number;
+  reason: 'host_sponsored' | 'free_pass' | 'staff' | 'attendee_paid' | 'circle_paid' | 'unpaid' | 'face_swapped';
+  message?: string;
+  orderId?: string;
+  attendeePriceINR?: number;
+  circlePassPriceINR?: number;
 }
 

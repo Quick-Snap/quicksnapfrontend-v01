@@ -1,5 +1,5 @@
 import { AxiosError } from 'axios';
-import { ApiResponse, OrganizerRequest, OrganizerRequestStats, SubmitOrganizerRequestDto } from '@/types';
+import { ApiResponse, OrganizerRequest, OrganizerRequestStats, SubmitOrganizerRequestDto, PhotoAccessStatus } from '@/types';
 import api from '@/app/api/axios';
 
 export interface DownloadJobStatus {
@@ -805,7 +805,7 @@ export const adminOrganizerRequestApi = {
 
   approve: async (
     id: string,
-    body?: { reviewNote?: string; createOrganization?: boolean; isTrustedUploader?: boolean }
+    body?: { reviewNote?: string; createOrganization?: boolean; isTrustedUploader?: boolean; grantTier?: string }
   ) => {
     const response = await api.patch<ApiResponse<OrganizerRequest>>(
       `/organizer-requests/admin/${id}/approve`,
@@ -1290,6 +1290,38 @@ export const circleApi = {
     }>>(`/events/${eventId}/circles/${circleId}/photos`, { params });
     return response.data;
   }
+};
+
+export const eventMonetizationApi = {
+  getStatus: async (eventId: string) => {
+    const response = await api.get<ApiResponse<PhotoAccessStatus>>(`/events/${eventId}/monetization/status`);
+    return response.data;
+  },
+  checkoutPass: async (
+    eventId: string,
+    data: { passType: 'individual' | 'circle'; circleId?: string }
+  ) => {
+    const response = await api.post<ApiResponse<{
+      orderId: string;
+      orderNumber: string;
+      amount: number;
+      currency: string;
+      passType: string;
+      licensedMembersCount?: number;
+    }>>(`/events/${eventId}/monetization/pass/checkout`, data);
+    return response.data;
+  },
+  verifyPass: async (
+    eventId: string,
+    data: { orderId: string; gatewayPaymentId?: string; gatewaySignature?: string }
+  ) => {
+    const response = await api.post<ApiResponse<{
+      orderId: string;
+      status: string;
+      paidAt: string;
+    }>>(`/events/${eventId}/monetization/pass/verify`, data);
+    return response.data;
+  },
 };
 
 export default api;

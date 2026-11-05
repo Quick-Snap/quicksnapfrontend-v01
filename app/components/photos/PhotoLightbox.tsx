@@ -23,6 +23,7 @@ import {
   type MouseEvent,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { WatermarkOverlay } from '@/app/components/events/WatermarkOverlay';
 
 export type PhotoLightboxItem = {
   image: string;
@@ -48,6 +49,7 @@ type PhotoLightboxProps = {
   originalTooltip?: string;
   onToggleAlbum?: () => void;
   onToggleOriginal?: () => void;
+  watermarkOpacity?: number;
 };
 
 /**
@@ -78,6 +80,7 @@ export function PhotoLightbox({
   originalTooltip,
   onToggleAlbum,
   onToggleOriginal,
+  watermarkOpacity = 0,
 }: PhotoLightboxProps) {
   // Normalize slides
   const slides = (items || []).map((item) => ({
@@ -772,6 +775,9 @@ export function PhotoLightbox({
                     draggable={false}
                     onDragStart={(e) => e.preventDefault()}
                   />
+                  {watermarkOpacity > 0 && (
+                    <WatermarkOverlay opacity={watermarkOpacity} />
+                  )}
                 </div>
               </div>
             )}

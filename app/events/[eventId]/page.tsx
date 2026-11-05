@@ -26,11 +26,12 @@ import {
     Heart,
     Bookmark,
     AlertCircle,
+    AlertTriangle,
     Layers,
     LogOut
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { eventApi, photoApi } from '@/lib/api';
+import { eventApi, photoApi, eventMonetizationApi } from '@/lib/api';
 import {
     fetchAllEventPhotos,
     fetchAllMyPhotos,
@@ -60,6 +61,8 @@ import { circleApi, EventCircleItem } from '@/lib/api';
 import CirclesModal from '@/components/circles/CirclesModal';
 import JoinCircleModal from '@/components/circles/JoinCircleModal';
 import CircleSquadFilter from '@/components/circles/CircleSquadFilter';
+import WatermarkOverlay from '@/app/components/events/WatermarkOverlay';
+import MonetizationUnlockModal from '@/app/components/events/MonetizationUnlockModal';
 
 const PHOTOS_PER_PAGE = 48;
 const PREVIEW_PHOTO_COUNT = 4;
@@ -137,6 +140,9 @@ export default function PublicEventPage() {
     const [selectedCircle, setSelectedCircle] = useState<EventCircleItem | null>(null);
     const [selectedSquadMemberIds, setSelectedSquadMemberIds] = useState<string[]>([]);
 
+    // Monetization & Pass Unlock state
+    const [isUnlockModalOpen, setIsUnlockModalOpen] = useState(false);
+
     useEffect(() => {
         if (circleInviteParam) {
             setActiveInviteCode(circleInviteParam);
@@ -210,6 +216,21 @@ export default function PublicEventPage() {
         { enabled: !!eventId, staleTime: 60 * 1000, retry: reactQueryRetry }
     );
     const event = eventResult?.data;
+
+    // Fetch Event Monetization & Biometric Status (Attendee-Pays Mode, Face Binding)
+    const { data: monetizationResult, refetch: refetchMonetization } = useQuery(
+        ['eventMonetization', eventId, currentUserId],
+        () => eventMonetizationApi.getStatus(eventId),
+        {
+            enabled: !!eventId,
+            staleTime: 30 * 1000,
+            retry: false,
+        }
+    );
+    const monetizationStatus = monetizationResult?.data;
+    const isPassRequired = monetizationStatus?.status === 'watermarked' || monetizationStatus?.status === 'face_mismatch';
+    const isFaceMismatch = monetizationStatus?.status === 'face_mismatch';
+    const watermarkOpacity = monetizationStatus?.watermarkOpacity ?? 0;
     const eventProfile = getEventProfile(event?.category);
     const studioInfo = (event?.organizer as any)?.studioSettings;
     const isProofingAuthorized = Boolean(event?.isProofingAuthorized);
@@ -1099,6 +1120,10 @@ export default function PublicEventPage() {
 
     const handleDownload = async (photo: any) => {
         if (downloading) return;
+        if (isPassRequired) {
+            setIsUnlockModalOpen(true);
+            return;
+        }
         setDownloading(photo._id);
         const t = toast.loading('Preparing original high-quality download...');
 
@@ -1126,8 +1151,13 @@ export default function PublicEventPage() {
             } else {
                 throw new Error('Download URL not found');
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Download error:', error);
+            if (error?.response?.status === 402) {
+                toast.dismiss(t);
+                setIsUnlockModalOpen(true);
+                return;
+            }
             toast.error('Failed to download original image. Please try again.', { id: t });
         } finally {
             setDownloading(null);
@@ -1136,6 +1166,10 @@ export default function PublicEventPage() {
 
     const handleBatchDownloadFavorites = async (photosToDownload?: any[], customLabel?: string) => {
         if (batchDownloading) return;
+        if (isPassRequired) {
+            setIsUnlockModalOpen(true);
+            return;
+        }
         const list = photosToDownload || (photoViewMode === 'album' ? myAlbumPhotos : (myPhotosFilter === 'favorites' ? myLikedPhotos : myPhotos));
         if (!list || list.length === 0) {
             toast.error('No photos to download.');
@@ -1858,6 +1892,27 @@ export default function PublicEventPage() {
                             }}
                             totalPhotosCount={displayPhotos.length}
                         />
+
+                        {isPassRequired && (
+                            <div className="mt-3 flex flex-col sm:flex-row items-center justify-between gap-3 rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-emerald-950/40 via-teal-950/20 to-zinc-950/40 p-4 text-xs text-white">
+                                <div className="space-y-0.5 text-center sm:text-left">
+                                    <p className="font-bold text-emerald-300 flex items-center justify-center sm:justify-start gap-1.5">
+                                        <Sparkles className="h-4 w-4 text-emerald-400" />
+                                        Unlock for your whole Squad!
+                                    </p>
+                                    <p className="text-zinc-300 text-[11px]">
+                                        1 Squad Pass (₹{monetizationStatus?.circlePassPriceINR || 99}) unlocks all group candid moments and personal photos for up to 5 members in {selectedCircle.name}.
+                                    </p>
+                                </div>
+                                <Button
+                                    size="sm"
+                                    onClick={() => setIsUnlockModalOpen(true)}
+                                    className="shrink-0 bg-emerald-500 text-zinc-950 font-bold hover:bg-emerald-400 shadow-md shadow-emerald-500/20"
+                                >
+                                    Get Squad Pass (₹{monetizationStatus?.circlePassPriceINR || 99})
+                                </Button>
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -1977,6 +2032,48 @@ export default function PublicEventPage() {
                     </div>
                 )}
 
+                {/* BIOMETRIC EMBEDDING MISMATCH WARNING */}
+                {isFaceMismatch && (
+                    <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl border border-amber-500/30 bg-amber-950/30 p-4 text-xs text-amber-300 backdrop-blur-md">
+                        <div className="flex items-start gap-2.5">
+                            <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
+                            <div>
+                                <p className="font-semibold text-amber-200">New face registered!</p>
+                                <p className="mt-0.5 text-amber-300/90 leading-relaxed">
+                                    {monetizationStatus?.message || "Your previous pass was registered for a different face. Unlock this person's photos for ₹49 or restore your original selfie."}
+                                </p>
+                            </div>
+                        </div>
+                        <Button
+                            size="sm"
+                            onClick={() => setIsUnlockModalOpen(true)}
+                            className="shrink-0 bg-amber-500 text-zinc-950 hover:bg-amber-400 font-bold text-xs shadow-md"
+                        >
+                            Unlock New Face (₹{monetizationStatus?.attendeePriceINR || 49})
+                        </Button>
+                    </div>
+                )}
+
+                {/* ATTENDEE PAYS GALLERY BANNER */}
+                {isPassRequired && currentUser && !isFaceMismatch && (
+                    <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl border border-violet-500/30 bg-violet-950/20 p-4 text-xs text-white backdrop-blur-md">
+                        <div className="flex items-center gap-2.5">
+                            <Sparkles className="h-4 w-4 text-violet-400 shrink-0" />
+                            <div>
+                                <span className="font-semibold text-violet-200">Official Event Gallery:</span>{' '}
+                                <span className="text-zinc-300">Clean original downloads &amp; watermark-free photos available with an event pass.</span>
+                            </div>
+                        </div>
+                        <Button
+                            size="sm"
+                            onClick={() => setIsUnlockModalOpen(true)}
+                            className="shrink-0 bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold hover:from-violet-500 hover:to-indigo-500 shadow-md shadow-violet-500/20 text-xs"
+                        >
+                            Unlock Pristine Photos (₹{monetizationStatus?.attendeePriceINR || 49})
+                        </Button>
+                    </div>
+                )}
+
                 {isLoadingPhotos ? (
                     <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4 md:gap-4">
                         {[...Array(!currentUser && !isProofingMode ? 4 : 8)].map((_, i) => (
@@ -2018,6 +2115,9 @@ export default function PublicEventPage() {
                                                 <div className="absolute inset-0 flex items-center justify-center bg-zinc-100 dark:bg-white/5">
                                                     <ImageIcon className="text-zinc-400" size={36} />
                                                 </div>
+                                            )}
+                                            {isPassRequired && (
+                                                <WatermarkOverlay opacity={watermarkOpacity || 0.16} />
                                             )}
                                             <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/55 to-transparent pt-8 opacity-100 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100" />
                                             <span className="pointer-events-none absolute bottom-2 left-2 flex items-center gap-1 rounded-md bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm sm:text-[11px]">
@@ -2179,6 +2279,9 @@ export default function PublicEventPage() {
                                         alt={`Event photo ${startIndex + index + 1}`}
                                         className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                                     />
+                                    {isPassRequired && (
+                                        <WatermarkOverlay opacity={watermarkOpacity || 0.16} />
+                                    )}
                                     {/* Quick Selection Heart ❤️ and Bookmark 🔖 Buttons (Instagram-style counts) */}
                                     {(currentUser || isProofingMode) && (() => {
                                         const isMyAlbumPick = isSelectedByCurrentUser(photo, 'album');
@@ -2664,6 +2767,7 @@ export default function PublicEventPage() {
                     originalTooltip={selectedPhoto ? getSelectionTooltip(selectedPhoto, 'original') : undefined}
                     onToggleAlbum={(currentUser || isProofingMode) ? () => handleToggleSelection(selectedPhoto, 'album') : undefined}
                     onToggleOriginal={(currentUser || isProofingMode) ? () => handleToggleSelection(selectedPhoto, 'original') : undefined}
+                    watermarkOpacity={isPassRequired ? (watermarkOpacity || 0.16) : 0}
                     footer={
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                             <div className="min-w-0 flex-1">
@@ -2677,18 +2781,28 @@ export default function PublicEventPage() {
                                 </p>
                             </div>
                             {currentUser ? (
-                                <Button
-                                    onClick={() => handleDownload(selectedPhoto)}
-                                    disabled={!!downloading}
-                                    className="h-11 w-full shrink-0 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-500 hover:to-indigo-500 disabled:opacity-50 sm:h-10 sm:w-auto"
-                                >
-                                    {downloading === selectedPhoto._id ? (
-                                        <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                                    ) : (
-                                        <Download size={18} className="mr-2" />
-                                    )}
-                                    {downloading === selectedPhoto._id ? 'Downloading…' : 'Download'}
-                                </Button>
+                                isPassRequired ? (
+                                    <Button
+                                        onClick={() => setIsUnlockModalOpen(true)}
+                                        className="h-11 w-full shrink-0 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 font-bold text-zinc-950 hover:from-amber-400 hover:to-orange-400 sm:h-10 sm:w-auto shadow-lg shadow-amber-500/20"
+                                    >
+                                        <Sparkles size={16} className="mr-1.5" />
+                                        Unlock Clean Photo (₹{monetizationStatus?.attendeePriceINR || 49})
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        onClick={() => handleDownload(selectedPhoto)}
+                                        disabled={!!downloading}
+                                        className="h-11 w-full shrink-0 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-500 hover:to-indigo-500 disabled:opacity-50 sm:h-10 sm:w-auto"
+                                    >
+                                        {downloading === selectedPhoto._id ? (
+                                            <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                        ) : (
+                                            <Download size={18} className="mr-2" />
+                                        )}
+                                        {downloading === selectedPhoto._id ? 'Downloading…' : 'Download'}
+                                    </Button>
+                                )
                             ) : (
                                 <Button
                                     onClick={() => router.push('/login')}
@@ -2921,6 +3035,25 @@ export default function PublicEventPage() {
                 inviteCode={activeInviteCode}
                 currentUser={currentUser}
                 onJoined={handleCircleJoined}
+            />
+
+            {/* Attendee & Squad Monetization Pass Modal */}
+            <MonetizationUnlockModal
+                isOpen={isUnlockModalOpen}
+                onClose={() => setIsUnlockModalOpen(false)}
+                eventId={eventId}
+                eventName={event?.name}
+                isFaceMismatch={isFaceMismatch}
+                attendeePriceINR={monetizationStatus?.attendeePriceINR}
+                circlePassPriceINR={monetizationStatus?.circlePassPriceINR}
+                selectedCircleId={selectedCircle?._id}
+                circleName={selectedCircle?.name}
+                onSuccess={() => {
+                    refetchMonetization();
+                    queryClient.invalidateQueries(['eventPhotos', eventId]);
+                    queryClient.invalidateQueries(['myEventPhotos', eventId]);
+                    queryClient.invalidateQueries(['myPhotos']);
+                }}
             />
             </div>
         </div>
