@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQueryClient } from 'react-query';
-import { X, Building2, Phone, Mail, Globe, Users, HeartHandshake, FileText, User } from 'lucide-react';
+import { X, Building2, Phone, Mail, Globe, Users, HeartHandshake, FileText, User, Lock, ArrowRight } from 'lucide-react';
 import { organizerRequestApi } from '@/lib/api';
 import { SubmitOrganizerRequestDto } from '@/types';
 import { Button } from '@/app/components/ui/Button';
@@ -151,6 +151,29 @@ export default function ApplyCommunityGrantModal({
         </div>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          {!user && (
+            <div className="rounded-2xl border border-violet-500/30 bg-gradient-to-r from-violet-950/50 to-indigo-950/40 p-4 text-xs sm:text-sm text-violet-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-inner">
+              <div className="flex items-start gap-2.5">
+                <div className="rounded-lg bg-violet-500/20 p-1.5 border border-violet-500/30 text-violet-300 shrink-0 mt-0.5">
+                  <Lock className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="font-semibold text-white">Sign in required to apply</p>
+                  <p className="text-zinc-400 text-xs mt-0.5">
+                    Preview the required information below. Please log in or create an account to fill and submit your application.
+                  </p>
+                </div>
+              </div>
+              <Button
+                type="button"
+                onClick={() => router.push('/login?redirect=/pricing')}
+                className="w-full sm:w-auto shrink-0 bg-violet-600 hover:bg-violet-500 text-white font-semibold text-xs px-4 py-2 rounded-xl flex items-center justify-center gap-1.5 shadow-md shadow-violet-600/30"
+              >
+                Sign In <ArrowRight className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
               <label className="mb-1.5 flex items-center gap-2 text-xs font-semibold text-zinc-300">
@@ -160,11 +183,11 @@ export default function ApplyCommunityGrantModal({
               <input
                 type="text"
                 required
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 placeholder="e.g. GDG New Delhi / Rotaract"
                 value={form.organizationName}
                 onChange={(e) => handleChange('organizationName', e.target.value)}
-                disabled={loading}
+                disabled={loading || !user}
               />
             </div>
             <div>
@@ -175,11 +198,11 @@ export default function ApplyCommunityGrantModal({
               <input
                 type="text"
                 required
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 placeholder="e.g. Anurag Mishra (President / Lead)"
                 value={form.spocName}
                 onChange={(e) => handleChange('spocName', e.target.value)}
-                disabled={loading}
+                disabled={loading || !user}
               />
             </div>
           </div>
@@ -193,11 +216,11 @@ export default function ApplyCommunityGrantModal({
               <input
                 type="email"
                 required
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 placeholder="community@org.org"
                 value={form.organizationEmail}
                 onChange={(e) => handleChange('organizationEmail', e.target.value)}
-                disabled={loading}
+                disabled={loading || !user}
               />
             </div>
             <div>
@@ -208,11 +231,11 @@ export default function ApplyCommunityGrantModal({
               <input
                 type="tel"
                 required
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 placeholder="+91 98765 43210"
                 value={form.phone}
                 onChange={(e) => handleChange('phone', e.target.value)}
-                disabled={loading}
+                disabled={loading || !user}
               />
             </div>
           </div>
@@ -226,11 +249,11 @@ export default function ApplyCommunityGrantModal({
               <input
                 type="url"
                 required
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 placeholder="https://instagram.com/yourclub"
                 value={form.website}
                 onChange={(e) => handleChange('website', e.target.value)}
-                disabled={loading}
+                disabled={loading || !user}
               />
             </div>
             <div>
@@ -242,11 +265,11 @@ export default function ApplyCommunityGrantModal({
                 type="number"
                 min="10"
                 max="5000"
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 placeholder="e.g. 350"
                 value={form.expectedAttendees}
                 onChange={(e) => handleChange('expectedAttendees', e.target.value)}
-                disabled={loading}
+                disabled={loading || !user}
               />
             </div>
           </div>
@@ -259,11 +282,11 @@ export default function ApplyCommunityGrantModal({
             <textarea
               required
               rows={4}
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 resize-none leading-relaxed"
+              className="w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 resize-none leading-relaxed disabled:opacity-50 disabled:cursor-not-allowed"
               placeholder="Tell us about your community mission, upcoming meetups or conferences, and why you want to use Roopixo..."
               value={form.reason}
               onChange={(e) => handleChange('reason', e.target.value)}
-              disabled={loading}
+              disabled={loading || !user}
             />
           </div>
 
@@ -280,13 +303,24 @@ export default function ApplyCommunityGrantModal({
             >
               Cancel
             </button>
-            <Button
-              type="submit"
-              loading={loading}
-              className="flex-1 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-600/30 hover:from-violet-500 hover:to-indigo-500"
-            >
-              Submit Application
-            </Button>
+            {!user ? (
+              <Button
+                type="button"
+                onClick={() => router.push('/login?redirect=/pricing')}
+                className="flex-1 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-600/30 hover:from-violet-500 hover:to-indigo-500 flex items-center justify-center gap-2"
+              >
+                <Lock size={15} />
+                Sign In to Apply
+              </Button>
+            ) : (
+              <Button
+                type="submit"
+                loading={loading}
+                className="flex-1 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-600/30 hover:from-violet-500 hover:to-indigo-500"
+              >
+                Submit Application
+              </Button>
+            )}
           </div>
         </form>
       </div>
