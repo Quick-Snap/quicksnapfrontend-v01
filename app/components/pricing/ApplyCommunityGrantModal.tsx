@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQueryClient } from 'react-query';
-import { X, Building2, Phone, Mail, Globe, Users, HeartHandshake, FileText } from 'lucide-react';
+import { X, Building2, Phone, Mail, Globe, Users, HeartHandshake, FileText, User } from 'lucide-react';
 import { organizerRequestApi } from '@/lib/api';
 import { SubmitOrganizerRequestDto } from '@/types';
 import { Button } from '@/app/components/ui/Button';
@@ -19,6 +19,7 @@ interface ApplyCommunityGrantModalProps {
 interface CommunityGrantFormState {
   organizationName: string;
   organizationEmail: string;
+  spocName: string;
   phone: string;
   website: string;
   expectedAttendees: string;
@@ -28,6 +29,7 @@ interface CommunityGrantFormState {
 const emptyForm: CommunityGrantFormState = {
   organizationName: '',
   organizationEmail: '',
+  spocName: '',
   phone: '',
   website: '',
   expectedAttendees: '',
@@ -65,6 +67,11 @@ export default function ApplyCommunityGrantModal({
       return;
     }
 
+    if (!form.spocName.trim()) {
+      toast.error('Please enter the designated SPOC / lead organizer name');
+      return;
+    }
+
     if (!form.reason.trim()) {
       toast.error('Please describe your community and upcoming events');
       return;
@@ -76,6 +83,7 @@ export default function ApplyCommunityGrantModal({
         requestType: 'community_grant',
         organizationName: form.organizationName.trim(),
         organizationEmail: form.organizationEmail.trim() || user.email,
+        spocName: form.spocName.trim(),
         phone: form.phone.trim() || undefined,
         website: form.website.trim() || undefined,
         expectedAttendees: form.expectedAttendees ? parseInt(form.expectedAttendees, 10) : undefined,
@@ -128,20 +136,37 @@ export default function ApplyCommunityGrantModal({
         </div>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-          <div>
-            <label className="mb-1.5 flex items-center gap-2 text-xs font-semibold text-zinc-300">
-              <Building2 size={15} className="text-violet-400" />
-              Community / Organization / Club Name <span className="text-red-400">*</span>
-            </label>
-            <input
-              type="text"
-              required
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
-              placeholder="e.g. Google Developer Group New Delhi / Rotaract Club"
-              value={form.organizationName}
-              onChange={(e) => handleChange('organizationName', e.target.value)}
-              disabled={loading}
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div>
+              <label className="mb-1.5 flex items-center gap-2 text-xs font-semibold text-zinc-300">
+                <Building2 size={15} className="text-violet-400" />
+                Community / Club Name <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                placeholder="e.g. GDG New Delhi / Rotaract"
+                value={form.organizationName}
+                onChange={(e) => handleChange('organizationName', e.target.value)}
+                disabled={loading}
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 flex items-center gap-2 text-xs font-semibold text-zinc-300">
+                <User size={15} className="text-violet-400" />
+                Designated SPOC / Lead Name <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                placeholder="e.g. Anurag Mishra (President / Lead)"
+                value={form.spocName}
+                onChange={(e) => handleChange('spocName', e.target.value)}
+                disabled={loading}
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
@@ -225,7 +250,7 @@ export default function ApplyCommunityGrantModal({
           </div>
 
           <div className="rounded-2xl border border-emerald-500/20 bg-emerald-950/20 p-3 text-xs text-emerald-300 leading-relaxed">
-            💡 <strong>Grant Perks:</strong> Approved communities get a ₹0 tier with 5,000 photos, AI face-matching, Face Circles, and interactive Live Wall. Guests can view photos and unlock clean original downloads with a micro-pass (₹29 individual / ₹59 squad).
+            💡 <strong>Community Grant:</strong> Approved communities can host their events directly on Roopixo without any charges, with full AI face-matching, interactive Live Wall, and instant photo discovery.
           </div>
 
           <div className="flex items-center gap-3 pt-2">

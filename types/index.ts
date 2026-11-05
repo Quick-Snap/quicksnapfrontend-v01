@@ -159,6 +159,7 @@ export interface OrganizerRequest {
   reason: string;
   organizationName?: string;
   organizationEmail?: string;
+  spocName?: string;
   website?: string;
   expectedAttendees?: number;
   phone?: string;
@@ -182,6 +183,7 @@ export interface SubmitOrganizerRequestDto {
   reason: string;
   organizationName?: string;
   organizationEmail?: string;
+  spocName?: string;
   website?: string;
   expectedAttendees?: number;
   phone?: string;

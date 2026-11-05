@@ -323,6 +323,12 @@ function DetailDrawer({ request, onClose, onApprove, onReject }: DetailDrawerPro
                   {request.organizationName}
                 </div>
               )}
+              {request.spocName && (
+                <div className="flex items-center gap-2 text-sm text-zinc-700 dark:text-gray-300">
+                  <User size={16} className="text-zinc-400" />
+                  <span>Designated SPOC: <strong className="font-semibold text-zinc-900 dark:text-white">{request.spocName}</strong></span>
+                </div>
+              )}
               {request.organizationEmail && (
                 <div className="flex items-center gap-2 text-sm text-zinc-700 dark:text-gray-300">
                   <Mail size={16} className="text-zinc-400" />
