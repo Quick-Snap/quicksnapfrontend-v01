@@ -14,7 +14,22 @@ import {
 } from 'lucide-react';
 import { eventMonetizationApi } from '@/lib/api';
 import { Button } from '@/app/components/ui/Button';
+import { useAuth } from '@/contexts/AuthContext';
 import toast from 'react-hot-toast';
+
+const loadRazorpayScript = (): Promise<boolean> => {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined') return resolve(false);
+    if ((window as any).Razorpay) return resolve(true);
+
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
 
 interface MonetizationUnlockModalProps {
   isOpen: boolean;
@@ -41,6 +56,7 @@ export function MonetizationUnlockModal({
   circleName,
   onSuccess,
 }: MonetizationUnlockModalProps) {
+  const { user } = useAuth();
   const [passType, setPassType] = useState<'individual' | 'circle'>(
     selectedCircleId ? 'circle' : 'individual'
   );
@@ -53,7 +69,13 @@ export function MonetizationUnlockModal({
   const handleCheckout = async () => {
     setLoading(true);
     try {
-      // 1. Create Checkout Order
+      // 1. Ensure Razorpay Standard Checkout SDK is loaded
+      const isLoaded = await loadRazorpayScript();
+      if (!isLoaded) {
+        throw new Error('Failed to load secure Razorpay checkout. Please check your internet connection.');
+      }
+
+      // 2. Create Checkout Order on Backend & Razorpay
       const res = await eventMonetizationApi.checkoutPass(eventId, {
         passType,
         circleId: passType === 'circle' ? selectedCircleId : undefined,
@@ -63,30 +85,77 @@ export function MonetizationUnlockModal({
         throw new Error(res.message || 'Failed to initiate pass checkout');
       }
 
-      const orderId = res.data.orderId;
+      const orderData = res.data;
+      const razorpayKey =
+        orderData.keyId ||
+        process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
+        'rzp_test_TwaunPsjxBYsK4';
 
-      // 2. Complete / Verify Payment (Seamless simulation / Cashfree capture)
-      const verifyRes = await eventMonetizationApi.verifyPass(eventId, {
-        orderId,
-        gatewayPaymentId: `pay_${Date.now()}`,
-      });
-
-      if (verifyRes.success) {
-        toast.success(
+      // 3. Open Razorpay Standard Checkout Modal
+      const options = {
+        key: razorpayKey,
+        amount: Math.round(orderData.amount * 100), // in paise (e.g. ₹29 = 2900 paise)
+        currency: orderData.currency || 'INR',
+        name: 'Roopixo',
+        description:
           passType === 'circle'
-            ? '🎉 Squad Pass Unlocked! All circle & personal photos are now clean and downloadable for your squad!'
-            : '🎉 Photo Pass Unlocked! High-resolution clean downloads are now enabled!',
-          { duration: 5000 }
-        );
-        onSuccess();
-        onClose();
-      } else {
-        throw new Error(verifyRes.message || 'Payment verification failed');
-      }
+            ? `Squad Circle Pass (${eventName})`
+            : `Individual Photo Pass (${eventName})`,
+        order_id: orderData.razorpayOrderId,
+        prefill: {
+          name: user?.name || '',
+          email: user?.email || '',
+          contact: user?.phone || '',
+        },
+        theme: {
+          color: '#7c3aed',
+        },
+        handler: async (response: any) => {
+          try {
+            setLoading(true);
+            const verifyRes = await eventMonetizationApi.verifyPass(eventId, {
+              orderId: orderData.orderId,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+
+            if (verifyRes.success) {
+              toast.success(
+                passType === 'circle'
+                  ? '🎉 Squad Pass Unlocked! All circle & personal photos are now clean and downloadable for your squad!'
+                  : '🎉 Photo Pass Unlocked! High-resolution clean downloads are now enabled!',
+                { duration: 5000 }
+              );
+              onSuccess();
+              onClose();
+            } else {
+              throw new Error(verifyRes.message || 'Payment verification failed');
+            }
+          } catch (verifyErr: any) {
+            console.error('Pass verification error:', verifyErr);
+            toast.error(verifyErr.response?.data?.message || verifyErr.message || 'Payment verification failed');
+          } finally {
+            setLoading(false);
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            setLoading(false);
+            toast('Payment cancelled', { icon: 'ℹ️' });
+          },
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on('payment.failed', (failResp: any) => {
+        setLoading(false);
+        toast.error(failResp.error?.description || 'Payment processing failed');
+      });
+      rzp.open();
     } catch (err: any) {
       console.error('Checkout error:', err);
       toast.error(err.response?.data?.message || err.message || 'Payment checkout failed');
-    } finally {
       setLoading(false);
     }
   };

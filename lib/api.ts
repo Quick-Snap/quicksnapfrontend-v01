@@ -1303,17 +1303,26 @@ export const eventMonetizationApi = {
   ) => {
     const response = await api.post<ApiResponse<{
       orderId: string;
-      orderNumber: string;
+      razorpayOrderId?: string;
+      orderNumber?: string;
       amount: number;
       currency: string;
       passType: string;
+      keyId?: string;
       licensedMembersCount?: number;
     }>>(`/events/${eventId}/monetization/pass/checkout`, data);
     return response.data;
   },
   verifyPass: async (
     eventId: string,
-    data: { orderId: string; gatewayPaymentId?: string; gatewaySignature?: string }
+    data: {
+      orderId: string;
+      razorpay_order_id?: string;
+      razorpay_payment_id?: string;
+      razorpay_signature?: string;
+      gatewayPaymentId?: string;
+      gatewaySignature?: string;
+    }
   ) => {
     const response = await api.post<ApiResponse<{
       orderId: string;
