@@ -214,14 +214,22 @@ export default function MyPhotosPage() {
       }
       setDownloadJobId(res.data.jobId);
       setDownloadModalOpen(true);
-      toast.success(res.message || 'Packaging your photos…');
+      if ((res.data as any)?.excludedNotice) {
+        toast((res.data as any).excludedNotice, { icon: 'ℹ️', duration: 7000 });
+      } else {
+        toast.success(res.message || 'Packaging your photos…');
+      }
     } catch (error) {
       console.error('Bulk download error:', error);
       const axiosErr = error as AxiosError<ApiResponse<unknown>>;
       const message =
         axiosErr.response?.data?.message ||
         (error instanceof Error ? error.message : 'Failed to start download.');
-      toast.error(message);
+      if (axiosErr.response?.status === 402) {
+        toast.error(message, { duration: 6000 });
+      } else {
+        toast.error(message);
+      }
     } finally {
       setDownloading(false);
     }
