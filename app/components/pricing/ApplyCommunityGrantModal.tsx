@@ -72,6 +72,21 @@ export default function ApplyCommunityGrantModal({
       return;
     }
 
+    if (!form.organizationEmail.trim()) {
+      toast.error('Please provide an official contact email');
+      return;
+    }
+
+    if (!form.phone.trim()) {
+      toast.error('Please provide a contact phone / WhatsApp number');
+      return;
+    }
+
+    if (!form.website.trim()) {
+      toast.error('Please provide your community website or social profile link');
+      return;
+    }
+
     if (!form.reason.trim()) {
       toast.error('Please describe your community and upcoming events');
       return;
@@ -82,10 +97,10 @@ export default function ApplyCommunityGrantModal({
       const payload: SubmitOrganizerRequestDto = {
         requestType: 'community_grant',
         organizationName: form.organizationName.trim(),
-        organizationEmail: form.organizationEmail.trim() || user.email,
+        organizationEmail: form.organizationEmail.trim(),
         spocName: form.spocName.trim(),
-        phone: form.phone.trim() || undefined,
-        website: form.website.trim() || undefined,
+        phone: form.phone.trim(),
+        website: form.website.trim(),
         expectedAttendees: form.expectedAttendees ? parseInt(form.expectedAttendees, 10) : undefined,
         reason: form.reason.trim(),
       };
@@ -173,10 +188,11 @@ export default function ApplyCommunityGrantModal({
             <div>
               <label className="mb-1.5 flex items-center gap-2 text-xs font-semibold text-zinc-300">
                 <Mail size={15} className="text-violet-400" />
-                Official Email
+                Official Email <span className="text-red-400">*</span>
               </label>
               <input
                 type="email"
+                required
                 className="w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
                 placeholder="community@org.org"
                 value={form.organizationEmail}
@@ -187,10 +203,11 @@ export default function ApplyCommunityGrantModal({
             <div>
               <label className="mb-1.5 flex items-center gap-2 text-xs font-semibold text-zinc-300">
                 <Phone size={15} className="text-violet-400" />
-                Phone / WhatsApp
+                Phone / WhatsApp <span className="text-red-400">*</span>
               </label>
               <input
                 type="tel"
+                required
                 className="w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
                 placeholder="+91 98765 43210"
                 value={form.phone}
@@ -204,10 +221,11 @@ export default function ApplyCommunityGrantModal({
             <div>
               <label className="mb-1.5 flex items-center gap-2 text-xs font-semibold text-zinc-300">
                 <Globe size={15} className="text-violet-400" />
-                Website or Social Profile
+                Website or Social Profile <span className="text-red-400">*</span>
               </label>
               <input
                 type="url"
+                required
                 className="w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
                 placeholder="https://instagram.com/yourclub"
                 value={form.website}
