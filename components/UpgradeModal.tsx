@@ -23,10 +23,24 @@ declare global {
   }
 }
 
+const loadRazorpayScript = (): Promise<boolean> => {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined') return resolve(false);
+    if ((window as any).Razorpay) return resolve(true);
+
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
+
 interface UpgradeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  targetTier?: 'starter_pro' | 'studio_pro' | 'enterprise';
+  targetTier?: 'starter_pro' | 'studio_pro' | 'enterprise' | 'single_event_pass' | 'grand_celebration_pass';
   featureName?: string;
   reason?: string;
   onSuccess?: () => void;
@@ -51,7 +65,29 @@ export default function UpgradeModal({
 
   const isAnnual = billingCycle === 'annual';
 
-  const tierConfig = {
+  const tierConfig: Record<string, any> = {
+    single_event_pass: {
+      name: 'Single Event Pass',
+      annual: 799,
+      monthly: 799,
+      photos: 'Up to 2,500 Photos',
+      events: '1 Event Gallery',
+      gallery: '6 Months Live Gallery',
+      perk4: 'Full AI Face Search & QR Join',
+      description: 'Perfect for a single wedding, birthday party, anniversary, or college reunion.',
+      isOneTime: true
+    },
+    grand_celebration_pass: {
+      name: 'Grand Celebration Pass',
+      annual: 1499,
+      monthly: 1499,
+      photos: 'Up to 6,000 Photos',
+      events: 'Up to 2 Events / Multi-Day',
+      gallery: '1 Full Year Live Gallery',
+      perk4: 'Google Drive Auto-Sync & RAW Downloads',
+      description: 'Ideal for big multi-day Indian weddings, 2-day conferences, or 3-day cultural festivals.',
+      isOneTime: true
+    },
     starter_pro: {
       name: 'Starter Pro',
       annual: 3999,
@@ -85,7 +121,7 @@ export default function UpgradeModal({
   };
   const activeConfig = tierConfig[targetTier] || tierConfig.studio_pro;
   const tierName = activeConfig.name;
-  const basePrice = isAnnual ? activeConfig.annual : activeConfig.monthly;
+  const basePrice = activeConfig.isOneTime ? activeConfig.annual : (isAnnual ? activeConfig.annual : activeConfig.monthly);
 
   const currentPrice = couponResult?.finalAmount ?? basePrice;
   const discountAmount = couponResult?.discountAmount ?? 0;
@@ -119,10 +155,16 @@ export default function UpgradeModal({
   const handleCheckout = async () => {
     setCheckingOut(true);
     try {
-      // 1. Create order on backend
+      // 1. Ensure Razorpay Standard Checkout SDK is loaded
+      const isLoaded = await loadRazorpayScript();
+      if (!isLoaded) {
+        throw new Error('Failed to load secure Razorpay checkout. Please check your internet connection.');
+      }
+
+      // 2. Create order on backend
       const orderRes = await paymentApi.createOrder({
         tierId: targetTier,
-        billingCycle,
+        billingCycle: activeConfig.isOneTime ? 'one_time' : billingCycle,
         couponCode: couponResult?.code
       });
 
@@ -132,33 +174,13 @@ export default function UpgradeModal({
 
       const orderData = orderRes.data;
 
-      // 2. If sandbox test mode, verify and activate directly
-      if (orderData.isSandbox || typeof window === 'undefined' || !window.Razorpay) {
-        const verifyRes = await paymentApi.verifyPayment({
-          razorpay_order_id: orderData.orderId,
-          razorpay_payment_id: `pay_mock_${Date.now()}`,
-          razorpay_signature: 'sandbox_bypass_signature',
-          tierId: targetTier,
-          billingCycle,
-          couponCode: couponResult?.code
-        });
-
-        if (verifyRes.success) {
-          toast.success(`🎉 Upgraded to ${tierName}! All features are now unlocked.`);
-          if (onSuccess) onSuccess();
-          onClose();
-          window.location.reload();
-          return;
-        }
-      }
-
-      // 3. Open Razorpay Checkout modal
+      // 3. Open Razorpay Standard Checkout modal
       const options = {
-        key: orderData.keyId,
+        key: orderData.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_TwaunPsjxBYsK4',
         amount: Math.round(orderData.amount * 100),
-        currency: orderData.currency,
+        currency: orderData.currency || 'INR',
         name: 'Roopixo',
-        description: `${tierName} Plan (${isAnnual ? 'Annual' : 'Monthly'})`,
+        description: `${tierName} Plan (${activeConfig.isOneTime ? 'One-Time Pass' : isAnnual ? 'Annual' : 'Monthly'})`,
         order_id: orderData.orderId,
         prefill: {
           name: user?.name || '',
@@ -168,38 +190,48 @@ export default function UpgradeModal({
         theme: {
           color: '#7c3aed'
         },
+        modal: {
+          ondismiss: () => {
+            setCheckingOut(false);
+            toast('Payment cancelled', { icon: 'ℹ️' });
+          }
+        },
         handler: async (response: any) => {
           try {
+            setCheckingOut(true);
             const verifyRes = await paymentApi.verifyPayment({
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
               tierId: targetTier,
-              billingCycle,
+              billingCycle: activeConfig.isOneTime ? 'one_time' : billingCycle,
               couponCode: couponResult?.code
             });
 
             if (verifyRes.success) {
-              toast.success(`🎉 Upgraded to ${tierName}!`);
+              toast.success(`🎉 Upgraded to ${tierName}! All features are now unlocked.`);
               if (onSuccess) onSuccess();
               onClose();
               window.location.reload();
             }
           } catch (verifyErr: any) {
+            console.error('Verification error:', verifyErr);
             toast.error(verifyErr.response?.data?.message || 'Payment verification failed');
+          } finally {
+            setCheckingOut(false);
           }
         }
       };
 
-      const rzp = new window.Razorpay(options);
+      const rzp = new (window as any).Razorpay(options);
       rzp.on('payment.failed', (resp: any) => {
+        setCheckingOut(false);
         toast.error(resp.error?.description || 'Payment was cancelled or failed');
       });
       rzp.open();
     } catch (err: any) {
       console.error('Checkout error:', err);
       toast.error(err.response?.data?.message || err.message || 'Checkout failed');
-    } finally {
       setCheckingOut(false);
     }
   };
@@ -240,40 +272,47 @@ export default function UpgradeModal({
           </p>
         </div>
 
-        {/* Billing Toggle */}
-        <div className="mt-5 flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] p-1.5">
-          <button
-            type="button"
-            onClick={() => {
-              setBillingCycle('annual');
-              setCouponResult(null);
-            }}
-            className={`flex-1 rounded-xl py-2 text-xs font-semibold transition ${
-              isAnnual
-                ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md'
-                : 'text-zinc-400 hover:text-white'
-            }`}
-          >
-            Annual Billing
-            <span className="ml-1.5 rounded-full bg-emerald-500/20 px-1.5 py-0.5 text-[10px] text-emerald-300">
-              Save 25%
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setBillingCycle('monthly');
-              setCouponResult(null);
-            }}
-            className={`flex-1 rounded-xl py-2 text-xs font-semibold transition ${
-              !isAnnual
-                ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md'
-                : 'text-zinc-400 hover:text-white'
-            }`}
-          >
-            Monthly Billing
-          </button>
-        </div>
+        {/* Billing Toggle (Hidden for One-Time Event Passes) */}
+        {!activeConfig.isOneTime ? (
+          <div className="mt-5 flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] p-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                setBillingCycle('annual');
+                setCouponResult(null);
+              }}
+              className={`flex-1 rounded-xl py-2 text-xs font-semibold transition ${
+                isAnnual
+                  ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md'
+                  : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              Annual Billing
+              <span className="ml-1.5 rounded-full bg-emerald-500/20 px-1.5 py-0.5 text-[10px] text-emerald-300">
+                Save 25%
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setBillingCycle('monthly');
+                setCouponResult(null);
+              }}
+              className={`flex-1 rounded-xl py-2 text-xs font-semibold transition ${
+                !isAnnual
+                  ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md'
+                  : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              Monthly Billing
+            </button>
+          </div>
+        ) : (
+          <div className="mt-5 flex items-center justify-center rounded-2xl border border-emerald-500/30 bg-emerald-950/20 py-2.5 px-4 text-xs font-semibold text-emerald-300">
+            <Check className="h-4 w-4 mr-1.5 text-emerald-400" />
+            100% One-Time Payment • Zero recurring subscription
+          </div>
+        )}
 
         {/* Price & Perks Highlight */}
         <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.02] p-4 space-y-3">
@@ -283,7 +322,7 @@ export default function UpgradeModal({
                 ₹{currentPrice.toLocaleString()}
               </span>
               <span className="text-xs text-zinc-400 ml-1">
-                {isAnnual ? '/ year' : '/ month'}
+                {activeConfig.isOneTime ? '/ one-time pass' : (isAnnual ? '/ year' : '/ month')}
               </span>
             </div>
             {discountAmount > 0 && (

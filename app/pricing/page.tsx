@@ -368,7 +368,7 @@ export default function PricingPage() {
   const [currency, setCurrency] = useState<Currency>('INR');
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('annual');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const [upgradeTier, setUpgradeTier] = useState<'starter_pro' | 'studio_pro' | 'enterprise' | null>(null);
+  const [upgradeTier, setUpgradeTier] = useState<'starter_pro' | 'studio_pro' | 'enterprise' | 'single_event_pass' | 'grand_celebration_pass' | null>(null);
   const [isCommunityGrantModalOpen, setIsCommunityGrantModalOpen] = useState(false);
 
   const isAnnual = billingCycle === 'annual';
@@ -376,7 +376,12 @@ export default function PricingPage() {
 
   const handlePlanClick = (tierId: string, href: string) => {
     if (user) {
-      const mapped = tierId === 'starter' ? 'starter_pro' : tierId === 'enterprise' ? 'enterprise' : 'studio_pro';
+      let mapped: 'starter_pro' | 'studio_pro' | 'enterprise' | 'single_event_pass' | 'grand_celebration_pass' = 'studio_pro';
+      if (tierId === 'starter' || tierId === 'starter_pro') mapped = 'starter_pro';
+      else if (tierId === 'enterprise') mapped = 'enterprise';
+      else if (tierId === 'single-event' || tierId === 'single_event_pass') mapped = 'single_event_pass';
+      else if (tierId === 'grand-event' || tierId === 'grand_celebration_pass') mapped = 'grand_celebration_pass';
+      else mapped = 'studio_pro';
       setUpgradeTier(mapped);
     } else {
       window.location.href = href;
@@ -764,8 +769,9 @@ export default function PricingPage() {
 
                   {/* Card CTA */}
                   <div className="mt-8 pt-4">
-                    <Link
-                      href={pass.ctaHref}
+                    <button
+                      type="button"
+                      onClick={() => handlePlanClick(pass.id, pass.ctaHref)}
                       className={`flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-sm font-semibold transition-all ${
                         pass.popular
                           ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-500/30 hover:from-violet-500 hover:to-indigo-500'
@@ -774,7 +780,7 @@ export default function PricingPage() {
                     >
                       {pass.ctaLabel}
                       <ArrowRight className="h-4 w-4" />
-                    </Link>
+                    </button>
                     <p className="mt-2 text-center text-[11px] text-zinc-500">
                       Instant gallery setup • Share via QR or WhatsApp
                     </p>
