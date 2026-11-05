@@ -1901,7 +1901,7 @@ export default function PublicEventPage() {
                                         Unlock for your whole Squad!
                                     </p>
                                     <p className="text-zinc-300 text-[11px]">
-                                        1 Squad Pass (₹{monetizationStatus?.circlePassPriceINR || 99}) unlocks all group candid moments and personal photos for up to 5 members in {selectedCircle.name}.
+                                        1 Squad Pass (₹{monetizationStatus?.circlePassPriceINR || 59}) unlocks all group candid moments and personal photos for up to 5 members in {selectedCircle.name}.
                                     </p>
                                 </div>
                                 <Button
@@ -1909,7 +1909,7 @@ export default function PublicEventPage() {
                                     onClick={() => setIsUnlockModalOpen(true)}
                                     className="shrink-0 bg-emerald-500 text-zinc-950 font-bold hover:bg-emerald-400 shadow-md shadow-emerald-500/20"
                                 >
-                                    Get Squad Pass (₹{monetizationStatus?.circlePassPriceINR || 99})
+                                    Get Squad Pass (₹{monetizationStatus?.circlePassPriceINR || 59})
                                 </Button>
                             </div>
                         )}
@@ -2040,7 +2040,7 @@ export default function PublicEventPage() {
                             <div>
                                 <p className="font-semibold text-amber-200">New face registered!</p>
                                 <p className="mt-0.5 text-amber-300/90 leading-relaxed">
-                                    {monetizationStatus?.message || "Your previous pass was registered for a different face. Unlock this person's photos for ₹49 or restore your original selfie."}
+                                    {monetizationStatus?.message || "Your previous pass was registered for a different face. Unlock this person's photos for ₹29 or restore your original selfie."}
                                 </p>
                             </div>
                         </div>
@@ -2049,7 +2049,7 @@ export default function PublicEventPage() {
                             onClick={() => setIsUnlockModalOpen(true)}
                             className="shrink-0 bg-amber-500 text-zinc-950 hover:bg-amber-400 font-bold text-xs shadow-md"
                         >
-                            Unlock New Face (₹{monetizationStatus?.attendeePriceINR || 49})
+                            Unlock New Face (₹{monetizationStatus?.attendeePriceINR || 29})
                         </Button>
                     </div>
                 )}
@@ -2069,7 +2069,7 @@ export default function PublicEventPage() {
                             onClick={() => setIsUnlockModalOpen(true)}
                             className="shrink-0 bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold hover:from-violet-500 hover:to-indigo-500 shadow-md shadow-violet-500/20 text-xs"
                         >
-                            Unlock Pristine Photos (₹{monetizationStatus?.attendeePriceINR || 49})
+                            Unlock Pristine Photos (₹{monetizationStatus?.attendeePriceINR || 29})
                         </Button>
                     </div>
                 )}
@@ -2787,7 +2787,7 @@ export default function PublicEventPage() {
                                         className="h-11 w-full shrink-0 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 font-bold text-zinc-950 hover:from-amber-400 hover:to-orange-400 sm:h-10 sm:w-auto shadow-lg shadow-amber-500/20"
                                     >
                                         <Sparkles size={16} className="mr-1.5" />
-                                        Unlock Clean Photo (₹{monetizationStatus?.attendeePriceINR || 49})
+                                        Unlock Clean Photo (₹{monetizationStatus?.attendeePriceINR || 29})
                                     </Button>
                                 ) : (
                                     <Button

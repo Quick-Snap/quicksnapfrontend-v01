@@ -225,7 +225,7 @@ export default function ApplyCommunityGrantModal({
           </div>
 
           <div className="rounded-2xl border border-emerald-500/20 bg-emerald-950/20 p-3 text-xs text-emerald-300 leading-relaxed">
-            💡 <strong>Grant Perks:</strong> Approved communities get a ₹0 tier with 5,000 photos, AI face-matching, Face Circles, and interactive Live Wall. Guests can view photos and unlock clean original downloads with a micro-pass (₹49 individual / ₹99 squad).
+            💡 <strong>Grant Perks:</strong> Approved communities get a ₹0 tier with 5,000 photos, AI face-matching, Face Circles, and interactive Live Wall. Guests can view photos and unlock clean original downloads with a micro-pass (₹29 individual / ₹59 squad).
           </div>
 
           <div className="flex items-center gap-3 pt-2">

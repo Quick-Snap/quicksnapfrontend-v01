@@ -667,7 +667,7 @@ export default function PricingPage() {
                   Running a non-profit, student club, or open tech community?
                 </h3>
                 <p className="text-xs sm:text-sm text-zinc-300 max-w-2xl leading-relaxed">
-                  Host your events on Roopixo with ₹0 upfront cost. You receive 5,000 photos, full AI face-matching, interactive big-screen Live Wall, and Face Circles. Guests can view photos and unlock clean original downloads with a micro-pass (₹49 individual / ₹99 squad).
+                  Host your events on Roopixo with ₹0 upfront cost. You receive 5,000 photos, full AI face-matching, interactive big-screen Live Wall, and Face Circles. Guests can view photos and unlock clean original downloads with a micro-pass (₹29 individual / ₹59 squad).
                 </p>
               </div>
               <button
